@@ -100,6 +100,7 @@ const handleSubmit = async () => {
     if (mode.value === 'login') {
       const { error: e } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
       if (e) throw e
+      await supabase.auth.getSession()
     } else {
       const { data, error: e } = await supabase.auth.signUp({
         email: email.value,
