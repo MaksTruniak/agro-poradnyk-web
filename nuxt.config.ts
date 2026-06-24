@@ -1,0 +1,59 @@
+export default defineNuxtConfig({
+  compatibilityDate: '2025-07-15',
+  devtools: { enabled: true },
+
+  vite: {
+    server: {
+      hmr: {
+        protocol: 'ws',
+      },
+    },
+  },
+
+  devServer: {
+    port: 3012,
+    host: 'localhost',
+  },
+
+  modules: [
+    '@nuxtjs/supabase',
+    '@nuxtjs/tailwindcss',
+    '@pinia/nuxt',
+    '@vueuse/nuxt',
+  ],
+
+  supabase: {
+    redirect: false,
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: false,
+    },
+    clientOptions: {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    },
+  },
+
+  css: ['~/assets/css/main.css'],
+
+  app: {
+    head: {
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+      htmlAttrs: { lang: 'uk' },
+      titleTemplate: '%s — АгроПорадник',
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      agroApiKey: process.env.NUXT_PUBLIC_AGRO_API_KEY,
+      novaPostKey: process.env.NUXT_PUBLIC_NOVA_POST_KEY,
+    },
+  },
+})
