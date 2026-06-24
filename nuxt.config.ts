@@ -27,7 +27,7 @@ export default defineNuxtConfig({
     cookieOptions: {
       maxAge: 60 * 60 * 8,
       sameSite: 'lax',
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
     },
     clientOptions: {
       auth: {
@@ -53,6 +53,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       agroApiKey: process.env.NUXT_PUBLIC_AGRO_API_KEY,
+      agroApiBase: process.env.NUXT_PUBLIC_AGRO_API_BASE || '',
       novaPostKey: process.env.NUXT_PUBLIC_NOVA_POST_KEY,
     },
   },

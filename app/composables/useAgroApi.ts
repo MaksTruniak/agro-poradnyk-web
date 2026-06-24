@@ -1,8 +1,7 @@
-const API_BASE = 'http://127.0.0.1:4000'
-
 export const useAgroApi = () => {
   const config = useRuntimeConfig()
   const key = config.public.agroApiKey as string
+  const API_BASE = config.public.agroApiBase || 'http://127.0.0.1:4000'
 
   const headers = { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }
 
