@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-agro-bg flex">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-agro-border flex flex-col fixed h-full z-40">
+    <!-- Сайдбар (тільки десктоп) -->
+    <aside class="hidden lg:flex w-64 bg-white border-r border-agro-border flex-col fixed h-full z-40">
       <div class="p-5 border-b border-agro-border">
         <NuxtLink to="/" class="flex items-center gap-2">
           <span class="text-xl">🌾</span>
@@ -9,10 +9,9 @@
         </NuxtLink>
       </div>
 
-      <!-- Профіль -->
       <div class="p-4 border-b border-agro-border">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-agro-hover flex items-center justify-center text-agro font-bold">
+          <div class="w-10 h-10 rounded-full bg-agro-hover flex items-center justify-center text-agro font-bold shrink-0">
             {{ userInitial }}
           </div>
           <div class="flex-1 min-w-0">
@@ -22,7 +21,6 @@
         </div>
       </div>
 
-      <!-- Меню -->
       <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
         <NuxtLink
           v-for="item in navItems"
@@ -38,7 +36,6 @@
         </NuxtLink>
       </nav>
 
-      <!-- Вихід -->
       <div class="p-3 border-t border-agro-border">
         <button @click="logout" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors">
           <span>🚪</span> Вийти
@@ -46,12 +43,47 @@
       </div>
     </aside>
 
+    <!-- Мобільний хедер -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-agro-border h-14 flex items-center justify-between px-4">
+      <NuxtLink to="/" class="flex items-center gap-2">
+        <span class="text-lg">🌾</span>
+        <span class="font-bold text-agro-dark">АгроПорадник</span>
+      </NuxtLink>
+      <div class="flex items-center gap-2">
+        <NuxtLink to="/cart" class="relative p-2">
+          <span class="text-xl">🛒</span>
+          <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
+        </NuxtLink>
+        <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center text-agro font-bold text-sm">
+          {{ userInitial }}
+        </div>
+      </div>
+    </div>
+
     <!-- Контент -->
-    <div class="ml-64 flex-1 flex flex-col h-screen overflow-hidden">
-      <div class="flex-1 overflow-y-auto flex flex-col">
+    <div class="lg:ml-64 flex-1 flex flex-col min-h-screen">
+      <div class="flex-1 pt-14 lg:pt-0 pb-20 lg:pb-0 overflow-y-auto">
         <slot />
       </div>
     </div>
+
+    <!-- Мобільний bottom nav -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-agro-border">
+      <div class="grid grid-cols-5 h-16">
+        <NuxtLink
+          v-for="item in bottomNavItems"
+          :key="item.to"
+          :to="item.to"
+          class="flex flex-col items-center justify-center gap-0.5 transition-colors relative"
+          :class="(item.to === '/dashboard' ? $route.path === '/dashboard' : $route.path === item.to || $route.path.startsWith(item.to + '/')) ? 'text-agro' : 'text-agro-light'"
+        >
+          <span class="text-xl leading-none">{{ item.icon }}</span>
+          <span class="text-[10px] leading-none font-medium">{{ item.label }}</span>
+          <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="absolute top-1 right-3 w-4 h-4 bg-agro rounded-full text-white text-[9px] font-bold flex items-center justify-center">{{ unreadChats }}</span>
+          <span v-if="item.to === '/cart' && cartCount > 0" class="absolute top-1 right-3 w-4 h-4 bg-agro rounded-full text-white text-[9px] font-bold flex items-center justify-center">{{ cartCount }}</span>
+        </NuxtLink>
+      </div>
+    </nav>
   </div>
 </template>
 
@@ -96,7 +128,6 @@ const loadCartCount = async () => {
 
 onMounted(() => { loadUnread(); loadCartCount() })
 
-// Оновлюємо кошик при навігації
 const route = useRoute()
 watch(() => route.path, () => { if (route.path === '/cart' || route.path.includes('catalog')) loadCartCount() })
 
@@ -137,7 +168,6 @@ const navItems = computed(() => {
     { to: '/dashboard/subscription', icon: '💎', label: 'Підписка' },
     { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
   ]
-  // farmer / dacha
   const base = [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
     { to: '/dashboard/fields', icon: '🌾', label: role.value === 'dacha' ? 'Мої культури' : 'Мої поля' },
@@ -151,6 +181,30 @@ const navItems = computed(() => {
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
     { to: '/dashboard/subscription', icon: '💎', label: 'Підписка' },
     { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
+  ]
+})
+
+const bottomNavItems = computed(() => {
+  if (role.value === 'seller') return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/dashboard/products', icon: '📦', label: 'Товари' },
+    { to: '/dashboard/orders', icon: '🛒', label: 'Замовлення' },
+    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' },
+  ]
+  if (role.value === 'agronomist') return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/dashboard/fields', icon: '🌾', label: 'Поля' },
+    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
+    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/catalog', icon: '📖', label: 'Каталог' },
+  ]
+  return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/dashboard/fields', icon: '🌾', label: role.value === 'dacha' ? 'Культури' : 'Поля' },
+    { to: '/catalog', icon: '📖', label: 'Каталог' },
+    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/dashboard/settings', icon: '⚙️', label: 'Більше' },
   ]
 })
 
