@@ -4,8 +4,53 @@
       ← Назад до каталогу
     </NuxtLink>
 
-    <div v-if="loading" class="flex justify-center py-20">
-      <div class="animate-spin text-4xl">🌿</div>
+    <!-- Скелетон картки товару -->
+    <div v-if="loading" class="grid xl:grid-cols-3 gap-8 animate-pulse">
+      <div class="xl:col-span-2 space-y-6">
+        <div class="card">
+          <div class="flex items-start gap-4 mb-6">
+            <div class="w-12 h-12 bg-agro-bg rounded-xl shrink-0"></div>
+            <div class="flex-1">
+              <div class="h-5 bg-agro-bg rounded-full w-24 mb-3"></div>
+              <div class="h-7 bg-agro-bg rounded w-2/3 mb-2"></div>
+              <div class="h-4 bg-agro-bg rounded w-1/3"></div>
+            </div>
+          </div>
+          <div class="h-4 bg-agro-bg rounded w-full mb-2"></div>
+          <div class="h-4 bg-agro-bg rounded w-5/6 mb-2"></div>
+          <div class="h-4 bg-agro-bg rounded w-4/6 mb-6"></div>
+          <div class="h-4 bg-agro-bg rounded w-32 mb-3"></div>
+          <div class="flex gap-2">
+            <div class="h-8 bg-agro-bg rounded-lg w-28"></div>
+            <div class="h-8 bg-agro-bg rounded-lg w-24"></div>
+            <div class="h-8 bg-agro-bg rounded-lg w-32"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="h-5 bg-agro-bg rounded w-40 mb-4"></div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div v-for="i in 4" :key="i">
+              <div class="h-4 bg-agro-bg rounded w-24 mb-2"></div>
+              <div class="h-3 bg-agro-bg rounded w-full mb-1"></div>
+              <div class="h-3 bg-agro-bg rounded w-4/5"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-5">
+        <div class="card">
+          <div class="h-8 bg-agro-bg rounded w-28 mb-4"></div>
+          <div class="h-4 bg-agro-bg rounded w-full mb-2"></div>
+          <div class="h-4 bg-agro-bg rounded w-3/4 mb-5"></div>
+          <div class="h-12 bg-agro-bg rounded-xl w-full mb-3"></div>
+          <div class="h-10 bg-agro-bg rounded-xl w-full"></div>
+        </div>
+        <div class="card">
+          <div class="h-5 bg-agro-bg rounded w-32 mb-3"></div>
+          <div class="h-4 bg-agro-bg rounded w-full mb-2"></div>
+          <div class="h-4 bg-agro-bg rounded w-2/3"></div>
+        </div>
+      </div>
     </div>
 
     <div v-else-if="product" class="grid xl:grid-cols-3 gap-8">
