@@ -71,18 +71,23 @@
 
         <!-- Скелетон -->
         <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-          <div v-for="i in 9" :key="i" class="card animate-pulse">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-10 h-10 bg-agro-bg rounded-xl"></div>
-              <div class="h-5 bg-agro-bg rounded-full w-20"></div>
+          <div v-for="i in 6" :key="i" class="card animate-pulse">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-8 h-8 bg-agro-bg rounded-lg"></div>
+              <div class="h-6 bg-agro-bg rounded-full w-24"></div>
             </div>
-            <div class="h-5 bg-agro-bg rounded w-3/4 mb-2"></div>
-            <div class="h-4 bg-agro-bg rounded w-1/2 mb-4"></div>
-            <div class="h-3 bg-agro-bg rounded w-full mb-1.5"></div>
-            <div class="h-3 bg-agro-bg rounded w-5/6 mb-4"></div>
-            <div class="flex items-center justify-between pt-3 border-t border-agro-bg">
-              <div class="h-5 bg-agro-bg rounded w-16"></div>
-              <div class="h-8 bg-agro-bg rounded-xl w-24"></div>
+            <div class="h-5 bg-agro-bg rounded w-3/4 mb-1"></div>
+            <div class="h-5 bg-agro-bg rounded w-1/2 mb-3"></div>
+            <div class="h-4 bg-agro-bg rounded w-1/3 mb-4"></div>
+            <div class="border-t border-agro-bg pt-4 flex items-center justify-between">
+              <div>
+                <div class="h-3 bg-agro-bg rounded w-8 mb-1"></div>
+                <div class="h-6 bg-agro-bg rounded w-20"></div>
+              </div>
+              <div class="flex gap-2">
+                <div class="h-9 bg-agro-bg rounded-xl w-24"></div>
+                <div class="h-9 bg-agro-bg rounded-xl w-24"></div>
+              </div>
             </div>
           </div>
         </div>
