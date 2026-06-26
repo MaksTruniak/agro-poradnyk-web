@@ -47,6 +47,9 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
       htmlAttrs: { lang: 'uk' },
       titleTemplate: '%s — АгроПорадник',
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      ],
     },
   },
 
