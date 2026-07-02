@@ -31,7 +31,10 @@
             <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
               <span class="text-base">{{ phase.emoji }}</span>
               <span class="font-bold text-agro-dark">{{ phase.key }}</span>
-              <span class="ml-auto text-xs text-agro-light">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
+              <span class="ml-auto text-xs text-agro-light mr-2">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
+              <button @click="removePhase(phase)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-agro-light hover:text-red-400">
+                <X :size="13" />
+              </button>
             </div>
 
             <!-- Список обробок -->
@@ -150,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2, X } from 'lucide-vue-next'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const route = useRoute()
@@ -213,6 +216,17 @@ const ensureInlineT = (key: string) => {
   if (!inlineT.value[key]) {
     inlineT.value[key] = { product_name: '', type: 'підживлення', dosage: '' }
   }
+}
+
+const removePhase = async (phase: any) => {
+  const count = treatmentsByPhase.value[phase.key]?.length || 0
+  if (count > 0 && !confirm(`Видалити фазу "${phase.key}" і всі ${count} обробок у ній?`)) return
+  if (count > 0 && program.value) {
+    const ids = treatmentsByPhase.value[phase.key].map((t: any) => t.id)
+    await supabase.from('program_treatments').delete().in('id', ids)
+    treatments.value = treatments.value.filter(t => t.phase !== phase.key)
+  }
+  activePhasesKeys.value = activePhasesKeys.value.filter(k => k !== phase.key)
 }
 
 const addActivePhase = (phase: any) => {
