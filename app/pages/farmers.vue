@@ -73,14 +73,8 @@ definePageMeta({ layout: 'default' })
 useSeoMeta({ title: 'Фермери' })
 
 const supabase = useSupabaseClient()
-const loading = ref(true)
-const farmers = ref<any[]>([])
 const search = ref('')
 const regionFilter = ref('')
-
-const ROLE_LABEL: Record<string, string> = {
-  farmer: 'Фермер',
-}
 
 const pluralField = (n: number) => {
   if (!n) return 'полів'
@@ -89,34 +83,30 @@ const pluralField = (n: number) => {
   return 'полів'
 }
 
-const load = async () => {
-  loading.value = true
+const { data: farmersData, pending: loading } = await useAsyncData('farmers', async () => {
   const { data: usersData, error } = await supabase
     .from('users')
     .select('id, name, region, city, role')
     .eq('role', 'farmer')
     .order('name')
 
-  if (error) { console.error('farmers error:', error.message); loading.value = false; return }
+  if (error || !usersData?.length) return []
 
-  if (usersData?.length) {
-    const ids = usersData.map((u: any) => u.id)
-    const { data: farmsData } = await supabase
-      .from('farms')
-      .select('user_id, hectares, farm_crops(crop_type)')
-      .in('user_id', ids)
+  const ids = usersData.map((u: any) => u.id)
+  const { data: farmsData } = await supabase
+    .from('farms')
+    .select('user_id, hectares, farm_crops(crop_type)')
+    .in('user_id', ids)
 
-    farmers.value = usersData.map((u: any) => {
-      const userFarms = (farmsData || []).filter((f: any) => f.user_id === u.id)
-      const crops = [...new Set(userFarms.flatMap((f: any) => (f.farm_crops || []).map((c: any) => c.crop_type)))]
-      const total_ha = userFarms.reduce((sum: number, f: any) => sum + (f.hectares || 0), 0)
-      return { ...u, city: u.city || '', fields_count: userFarms.length, crops, total_ha: total_ha || null }
-    })
-  }
-  loading.value = false
-}
+  return usersData.map((u: any) => {
+    const userFarms = (farmsData || []).filter((f: any) => f.user_id === u.id)
+    const crops = [...new Set(userFarms.flatMap((f: any) => (f.farm_crops || []).map((c: any) => c.crop_type)))]
+    const total_ha = userFarms.reduce((sum: number, f: any) => sum + (f.hectares || 0), 0)
+    return { ...u, city: u.city || '', fields_count: userFarms.length, crops, total_ha: total_ha || null }
+  })
+})
 
-onMounted(load)
+const farmers = computed(() => farmersData.value || [])
 
 const regions = computed(() => [...new Set(farmers.value.map(f => f.region).filter(Boolean))].sort())
 
