@@ -339,7 +339,7 @@ const addTreatment = async () => {
   if (!newT.product_name || !program.value) return
   saving.value = true
   const phase = phases.value.find(p => p.key === newT.phase)
-  await supabase.from('program_treatments').insert({
+  const payload = {
     program_id: program.value.id,
     phase: newT.phase || null,
     phase_order: phase?.order || 99,
@@ -347,13 +347,17 @@ const addTreatment = async () => {
     product_name: newT.product_name,
     dosage: newT.dosage || null,
     notes: newT.notes || null,
-  })
+  }
+  const { data: inserted } = await supabase.from('program_treatments').insert(payload).select().single()
+  if (inserted) {
+    treatments.value = [...treatments.value, inserted].sort((a, b) => (a.phase_order ?? 99) - (b.phase_order ?? 99))
+  } else {
+    const { data } = await supabase.from('program_treatments').select('*').eq('program_id', program.value.id).order('phase_order', { ascending: true })
+    treatments.value = data || []
+  }
   Object.assign(newT, { product_name: '', phase: '', type: 'підживлення', dosage: '', notes: '' })
   showAdd.value = false
   saving.value = false
-
-  const { data } = await supabase.from('program_treatments').select('*').eq('program_id', program.value.id).order('phase_order', { ascending: true })
-  treatments.value = data || []
 }
 
 const deleteTreatment = async (t: any) => {
