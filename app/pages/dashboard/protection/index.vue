@@ -24,125 +24,126 @@
       </div>
 
       <template v-else>
-        <!-- Крок 1: вибір фази -->
-        <div class="mb-6">
-          <p class="text-sm font-semibold text-agro-dark mb-3">Оберіть фазу обробки:</p>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="phase in phases"
-              :key="phase.key"
-              @click="selectPhase(phase)"
-              class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border-2 transition-colors"
-              :class="selectedPhase?.key === phase.key
-                ? 'border-agro bg-agro text-white'
-                : 'border-agro-border text-agro-dark hover:border-agro bg-white'"
-            >
-              <span>{{ phase.emoji }}</span>
-              <span>{{ phase.key }}</span>
-              <span
-                v-if="treatmentsByPhase[phase.key]?.length"
-                class="ml-1 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
-                :class="selectedPhase?.key === phase.key ? 'bg-white/30 text-white' : 'bg-agro-bg text-agro'"
-              >{{ treatmentsByPhase[phase.key].length }}</span>
-            </button>
-
-            <!-- Додати нову фазу -->
-            <button
-              @click="showAddPhase = !showAddPhase; selectedPhase = null"
-              class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border-2 border-dashed transition-colors"
-              :class="showAddPhase ? 'border-agro text-agro bg-agro-bg' : 'border-agro-border text-agro-light hover:border-agro hover:text-agro'"
-            >
-              <span>+</span> Нова фаза
-            </button>
-          </div>
-
-          <!-- Форма нової фази -->
-          <div v-if="showAddPhase" class="card mt-3 flex gap-2 items-center flex-wrap">
-            <input v-model="newPhaseEmoji" class="input w-14 text-center text-lg px-2 py-2 shrink-0" placeholder="🌱" maxlength="2" />
-            <input v-model="newPhaseName" class="input flex-1 min-w-40 text-sm py-2" placeholder="Назва фази..." @keyup.enter="addCustomPhase" />
-            <button @click="showAddPhase = false; newPhaseName = ''" class="text-agro-light hover:text-agro-dark text-sm shrink-0">✕</button>
-            <button @click="addCustomPhase" :disabled="!newPhaseName.trim()" class="btn-primary py-2 text-sm shrink-0">Додати</button>
-          </div>
-        </div>
-
-        <!-- Крок 2: вміст вибраної фази -->
-        <div v-if="selectedPhase" class="card p-0 overflow-hidden">
-          <!-- Заголовок -->
-          <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
-            <span class="text-base">{{ selectedPhase.emoji }}</span>
-            <span class="font-bold text-agro-dark">{{ selectedPhase.key }}</span>
-            <span class="ml-auto text-xs text-agro-light">{{ treatmentsByPhase[selectedPhase.key]?.length || 0 }} обробок</span>
-          </div>
-
-          <!-- Список обробок -->
-          <div class="divide-y divide-agro-border">
-            <div v-if="!treatmentsByPhase[selectedPhase.key]?.length" class="px-5 py-6 text-center text-sm text-agro-light">
-              Обробок ще немає — додайте першу нижче
+        <!-- Блоки активних фаз -->
+        <div class="space-y-4 mb-4">
+          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-hidden">
+            <!-- Заголовок фази -->
+            <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
+              <span class="text-base">{{ phase.emoji }}</span>
+              <span class="font-bold text-agro-dark">{{ phase.key }}</span>
+              <span class="ml-auto text-xs text-agro-light">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
             </div>
-            <div v-for="t in treatmentsByPhase[selectedPhase.key] || []" :key="t.id" class="flex items-start gap-3 px-5 py-3.5">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" :class="TYPE_BG[t.type] || 'bg-agro-bg'">
-                <span class="text-sm">{{ TYPE_ICONS[t.type] || '🌿' }}</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <span class="text-xs font-medium px-2 py-0.5 rounded-full border" :class="TYPE_BADGE[t.type] || 'bg-agro-bg border-agro-border text-agro-light'">
-                  {{ t.type }}
-                </span>
-                <p class="font-semibold text-agro-dark mt-1 text-sm">{{ t.product_name }}</p>
-                <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5">📏 {{ t.dosage }}</p>
-              </div>
-              <button @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
-                <Trash2 :size="14" />
-              </button>
-            </div>
-          </div>
 
-          <!-- Форма додавання обробки -->
-          <div class="px-5 py-4 border-t border-agro-border bg-[#FAFDF7] space-y-3">
-            <p class="text-xs font-semibold text-agro-light uppercase tracking-wide">Додати обробку</p>
-            <select v-model="inlineT.type" class="input text-sm py-2">
-              <option value="підживлення">🌿 підживлення</option>
-              <option value="захист">🛡 захист</option>
-              <option value="гербіцид">🌾 гербіцид</option>
-              <option value="фунгіцид">🍄 фунгіцид</option>
-              <option value="інсектицид">🐛 інсектицид</option>
-            </select>
-            <div class="relative">
-              <input
-                v-model="inlineT.product_name"
-                @input="searchProducts"
-                @focus="showSuggestions = true"
-                @blur="hideSuggestions"
-                class="input text-sm py-2"
-                placeholder="Назва препарату або добрива..."
-                autocomplete="off"
-              />
-              <div v-if="showSuggestions && productSuggestions.length" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-44 overflow-y-auto">
-                <button
-                  v-for="p in productSuggestions"
-                  :key="p.id"
-                  type="button"
-                  @mousedown.prevent="selectProduct(p)"
-                  class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0"
-                >
-                  <p class="font-medium text-agro-dark">{{ p.product_name }}</p>
-                  <p class="text-xs text-agro-light">{{ p.price }} грн · {{ p.seller_profiles?.company_name }}</p>
+            <!-- Список обробок -->
+            <div class="divide-y divide-agro-border">
+              <div v-if="!treatmentsByPhase[phase.key]?.length" class="px-5 py-5 text-center text-sm text-agro-light">
+                Обробок ще немає — додайте першу нижче
+              </div>
+              <div v-for="t in treatmentsByPhase[phase.key] || []" :key="t.id" class="flex items-start gap-3 px-5 py-3.5">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" :class="TYPE_BG[t.type] || 'bg-agro-bg'">
+                  <span class="text-sm">{{ TYPE_ICONS[t.type] || '🌿' }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full border" :class="TYPE_BADGE[t.type] || 'bg-agro-bg border-agro-border text-agro-light'">
+                    {{ t.type }}
+                  </span>
+                  <p class="font-semibold text-agro-dark mt-1 text-sm">{{ t.product_name }}</p>
+                  <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5">📏 {{ t.dosage }}</p>
+                </div>
+                <button @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
+                  <Trash2 :size="14" />
                 </button>
               </div>
             </div>
-            <input v-model="inlineT.dosage" class="input text-sm py-2" placeholder="Доза (необов'язково)" />
-            <button
-              @click="saveTreatment"
-              :disabled="!inlineT.product_name || saving"
-              class="btn-primary w-full py-2.5 text-sm"
-            >
-              {{ saving ? '...' : '✓ Додати обробку' }}
-            </button>
+
+            <!-- Форма додавання в цю фазу -->
+            <div class="px-5 py-4 border-t border-agro-border bg-[#FAFDF7] space-y-3">
+              <select v-model="inlineT[phase.key].type" class="input text-sm py-2">
+                <option value="підживлення">🌿 підживлення</option>
+                <option value="захист">🛡 захист</option>
+                <option value="гербіцид">🌾 гербіцид</option>
+                <option value="фунгіцид">🍄 фунгіцид</option>
+                <option value="інсектицид">🐛 інсектицид</option>
+              </select>
+              <div class="relative">
+                <input
+                  v-model="inlineT[phase.key].product_name"
+                  @input="searchProducts(phase.key)"
+                  @focus="showSuggestionsFor = phase.key"
+                  @blur="hideSuggestions"
+                  class="input text-sm py-2"
+                  placeholder="Назва препарату або добрива..."
+                  autocomplete="off"
+                />
+                <div v-if="showSuggestionsFor === phase.key && productSuggestions.length" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-44 overflow-y-auto">
+                  <button
+                    v-for="p in productSuggestions"
+                    :key="p.id"
+                    type="button"
+                    @mousedown.prevent="selectProduct(phase.key, p)"
+                    class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0"
+                  >
+                    <p class="font-medium text-agro-dark">{{ p.product_name }}</p>
+                    <p class="text-xs text-agro-light">{{ p.price }} грн · {{ p.seller_profiles?.company_name }}</p>
+                  </button>
+                </div>
+              </div>
+              <input v-model="inlineT[phase.key].dosage" class="input text-sm py-2" placeholder="Доза (необов'язково)" />
+              <button
+                @click="saveTreatment(phase)"
+                :disabled="!inlineT[phase.key].product_name || savingPhase === phase.key"
+                class="btn-primary w-full py-2.5 text-sm"
+              >
+                {{ savingPhase === phase.key ? '...' : '✓ Додати обробку' }}
+              </button>
+            </div>
           </div>
         </div>
 
-        <p v-else-if="!showAddPhase" class="text-sm text-agro-light text-center mt-4">
-          ↑ Оберіть фазу, щоб переглянути або додати обробки
-        </p>
+        <!-- Кнопка / панель вибору фази -->
+        <div class="relative" ref="phasePickerRef">
+          <button
+            @click="showPhasePicker = !showPhasePicker"
+            class="btn-outline w-full text-sm py-3"
+          >
+            ➕ Додати фазу
+          </button>
+
+          <div v-if="showPhasePicker" class="card mt-2 p-0 overflow-hidden">
+            <!-- Існуючі фази зі списку -->
+            <div v-if="availablePhases.length" class="divide-y divide-agro-border">
+              <button
+                v-for="phase in availablePhases"
+                :key="phase.key"
+                @click="addActivePhase(phase)"
+                class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-agro-hover transition-colors text-left"
+              >
+                <span class="text-base">{{ phase.emoji }}</span>
+                <span class="font-medium text-agro-dark">{{ phase.key }}</span>
+              </button>
+            </div>
+            <p v-else class="px-4 py-3 text-sm text-agro-light">Всі фази вже додано</p>
+
+            <!-- Роздільник + додати власну -->
+            <div class="border-t border-agro-border">
+              <div v-if="!showAddPhaseInline" class="px-4 py-3">
+                <button @click="showAddPhaseInline = true" class="text-sm text-agro font-medium hover:underline">
+                  + Додати свою фазу
+                </button>
+              </div>
+              <div v-else class="px-4 py-3 space-y-2">
+                <div class="flex gap-2">
+                  <input v-model="newPhaseEmoji" class="input w-12 text-center text-base px-1 py-1.5 shrink-0" placeholder="🌱" maxlength="2" />
+                  <input v-model="newPhaseName" @keyup.enter="addCustomPhase" class="input flex-1 text-sm py-1.5" placeholder="Назва фази..." />
+                </div>
+                <div class="flex gap-2">
+                  <button @click="showAddPhaseInline = false; newPhaseName = ''" class="btn-outline flex-1 py-1.5 text-sm">Скасувати</button>
+                  <button @click="addCustomPhase" :disabled="!newPhaseName.trim()" class="btn-primary flex-1 py-1.5 text-sm">Додати</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </template>
     </div>
   </div>
@@ -159,17 +160,19 @@ const supabase = useSupabaseClient()
 
 const loading = ref(true)
 const saving = ref(false)
+const savingPhase = ref<string | null>(null)
 const program = ref<any>(null)
 const treatments = ref<any[]>([])
 const phases = ref<any[]>([])
-const selectedPhase = ref<any>(null)
+const activePhasesKeys = ref<string[]>([])
 
-const inlineT = reactive({ product_name: '', type: 'підживлення', dosage: '' })
-const showAddPhase = ref(false)
+const showPhasePicker = ref(false)
+const showAddPhaseInline = ref(false)
 const newPhaseName = ref('')
 const newPhaseEmoji = ref('🌱')
 const productSuggestions = ref<any[]>([])
-const showSuggestions = ref(false)
+const showSuggestionsFor = ref<string | null>(null)
+const inlineT = ref<Record<string, { product_name: string; type: string; dosage: string }>>({})
 let searchTimer: any = null
 
 const TYPE_ICONS: Record<string, string> = {
@@ -196,19 +199,35 @@ const treatmentsByPhase = computed(() => {
   return map
 })
 
-const selectPhase = (phase: any) => {
-  showAddPhase.value = false
-  selectedPhase.value = selectedPhase.value?.key === phase.key ? null : phase
-  inlineT.product_name = ''
-  inlineT.type = 'підживлення'
-  inlineT.dosage = ''
-  productSuggestions.value = []
+const activePhases = computed(() =>
+  activePhasesKeys.value
+    .map(key => phases.value.find(p => p.key === key))
+    .filter(Boolean)
+)
+
+const availablePhases = computed(() =>
+  phases.value.filter(p => !activePhasesKeys.value.includes(p.key))
+)
+
+const ensureInlineT = (key: string) => {
+  if (!inlineT.value[key]) {
+    inlineT.value[key] = { product_name: '', type: 'підживлення', dosage: '' }
+  }
 }
 
-const searchProducts = () => {
+const addActivePhase = (phase: any) => {
+  if (!activePhasesKeys.value.includes(phase.key)) {
+    activePhasesKeys.value.push(phase.key)
+    ensureInlineT(phase.key)
+  }
+  showPhasePicker.value = false
+  showAddPhaseInline.value = false
+}
+
+const searchProducts = (phaseKey: string) => {
   clearTimeout(searchTimer)
-  const q = inlineT.product_name.trim()
-  if (q.length < 2) { productSuggestions.value = []; return }
+  const q = inlineT.value[phaseKey]?.product_name.trim()
+  if (!q || q.length < 2) { productSuggestions.value = []; return }
   searchTimer = setTimeout(async () => {
     const { data } = await supabase
       .from('seller_offers')
@@ -220,14 +239,14 @@ const searchProducts = () => {
   }, 300)
 }
 
-const selectProduct = (p: any) => {
-  inlineT.product_name = p.product_name
+const selectProduct = (phaseKey: string, p: any) => {
+  inlineT.value[phaseKey].product_name = p.product_name
   productSuggestions.value = []
-  showSuggestions.value = false
+  showSuggestionsFor.value = null
 }
 
 const hideSuggestions = () => {
-  setTimeout(() => { showSuggestions.value = false }, 200)
+  setTimeout(() => { showSuggestionsFor.value = null }, 200)
 }
 
 const load = async () => {
@@ -243,6 +262,11 @@ const load = async () => {
       const { data: treatmentsData } = await supabase
         .from('program_treatments').select('*').eq('program_id', programData.id).order('phase_order', { ascending: true })
       treatments.value = treatmentsData || []
+      // Автоматично показуємо фази що вже мають обробки
+      const usedPhaseKeys = [...new Set(treatmentsData?.map((t: any) => t.phase).filter(Boolean) || [])]
+      const orderedKeys = phases.value.map(p => p.key).filter(k => usedPhaseKeys.includes(k))
+      activePhasesKeys.value = orderedKeys
+      orderedKeys.forEach(ensureInlineT)
     }
   }
   loading.value = false
@@ -250,16 +274,17 @@ const load = async () => {
 
 onMounted(load)
 
-const saveTreatment = async () => {
-  if (!inlineT.product_name || !program.value || !selectedPhase.value) return
-  saving.value = true
+const saveTreatment = async (phase: any) => {
+  const t = inlineT.value[phase.key]
+  if (!t?.product_name || !program.value) return
+  savingPhase.value = phase.key
   const payload = {
     program_id: program.value.id,
-    phase: selectedPhase.value.key,
-    phase_order: selectedPhase.value.order ?? 99,
-    type: inlineT.type,
-    product_name: inlineT.product_name,
-    dosage: inlineT.dosage || null,
+    phase: phase.key,
+    phase_order: phase.order ?? 99,
+    type: t.type,
+    product_name: t.product_name,
+    dosage: t.dosage || null,
     notes: null,
   }
   const { data: inserted, error } = await supabase.from('program_treatments').insert(payload).select().single()
@@ -269,9 +294,9 @@ const saveTreatment = async () => {
     const { data } = await supabase.from('program_treatments').select('*').eq('program_id', program.value.id).order('phase_order', { ascending: true })
     treatments.value = data || []
   }
-  inlineT.product_name = ''
-  inlineT.dosage = ''
-  saving.value = false
+  t.product_name = ''
+  t.dosage = ''
+  savingPhase.value = null
 }
 
 const addCustomPhase = async () => {
@@ -289,8 +314,8 @@ const addCustomPhase = async () => {
   phases.value = [...phases.value, newPhase]
   newPhaseName.value = ''
   newPhaseEmoji.value = '🌱'
-  showAddPhase.value = false
-  selectPhase(newPhase)
+  showAddPhaseInline.value = false
+  addActivePhase(newPhase)
 }
 
 const createProgram = async () => {
