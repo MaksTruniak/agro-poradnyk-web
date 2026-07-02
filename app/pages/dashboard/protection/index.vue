@@ -1,5 +1,5 @@
 <template>
-  <div class="p-8">
+  <div class="p-4 sm:p-8">
     <NuxtLink to="/dashboard/fields" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium transition-colors">
       ← Назад до полів
     </NuxtLink>
@@ -43,29 +43,42 @@
           </button>
         </div>
 
-        <!-- Список обробок -->
-        <div v-if="filteredTreatments.length === 0" class="card text-center py-10">
+        <!-- Список обробок згруповано по фазах -->
+        <div v-if="groupedPhases.length === 0" class="card text-center py-10">
           <p class="text-3xl mb-3">🌱</p>
           <p class="text-agro-light">Обробок ще немає. Додайте першу!</p>
         </div>
 
-        <div v-else class="space-y-3 mb-5">
-          <div v-for="t in filteredTreatments" :key="t.id" class="card">
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 flex-wrap mb-1">
-                  <span class="font-semibold text-agro-dark">{{ t.product_name }}</span>
-                  <span v-if="t.phase" class="text-xs bg-agro-bg text-agro px-2 py-0.5 rounded-full border border-agro/20">
-                    {{ phases.find(p => p.key === t.phase)?.emoji || '' }} {{ t.phase }}
-                  </span>
-                  <span v-if="t.type" class="text-xs bg-agro-border text-agro-light px-2 py-0.5 rounded-full">{{ t.type }}</span>
+        <div v-else class="space-y-4 mb-5">
+          <div v-for="group in groupedPhases" :key="group.phase" class="card p-0 overflow-hidden">
+            <!-- Заголовок фази -->
+            <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
+              <span class="text-base">{{ group.emoji }}</span>
+              <span class="font-bold text-agro-dark text-sm">{{ group.phase || 'Без фази' }}</span>
+              <span class="ml-auto text-xs text-agro-light">
+                {{ group.items.length }} {{ group.items.length === 1 ? 'обробка' : group.items.length <= 4 ? 'обробки' : 'обробок' }}
+              </span>
+            </div>
+            <!-- Список препаратів у фазі -->
+            <div class="divide-y divide-agro-border">
+              <div v-for="t in group.items" :key="t.id" class="flex items-start gap-3 px-5 py-3.5">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                  :class="TYPE_BG[t.type] || 'bg-agro-bg'">
+                  <span class="text-sm">{{ TYPE_ICONS[t.type] || '🌿' }}</span>
                 </div>
-                <p v-if="t.dosage" class="text-sm text-agro-light">📏 {{ t.dosage }}</p>
-                <p v-if="t.notes" class="text-sm text-agro-light mt-0.5">{{ t.notes }}</p>
+                <div class="flex-1 min-w-0">
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full border"
+                    :class="TYPE_BADGE[t.type] || 'bg-agro-bg border-agro-border text-agro-light'">
+                    {{ t.type }}
+                  </span>
+                  <p class="font-semibold text-agro-dark mt-1 text-sm">{{ t.product_name }}</p>
+                  <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5">📏 {{ t.dosage }}</p>
+                  <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
+                </div>
+                <button @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
+                  <Trash2 :size="14" />
+                </button>
               </div>
-              <button @click="deleteTreatment(t)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 ml-4 shrink-0">
-                <Trash2 :size="15" />
-              </button>
             </div>
           </div>
         </div>
@@ -185,6 +198,28 @@ const productSuggestions = ref<any[]>([])
 const showSuggestions = ref(false)
 let searchTimer: any = null
 
+const TYPE_ICONS: Record<string, string> = {
+  підживлення: '🌿',
+  захист: '🛡',
+  гербіцид: '🌾',
+  фунгіцид: '🍄',
+  інсектицид: '🐛',
+}
+const TYPE_BG: Record<string, string> = {
+  підживлення: 'bg-amber-50',
+  захист: 'bg-blue-50',
+  гербіцид: 'bg-orange-50',
+  фунгіцид: 'bg-purple-50',
+  інсектицид: 'bg-red-50',
+}
+const TYPE_BADGE: Record<string, string> = {
+  підживлення: 'bg-amber-50 border-amber-200 text-amber-700',
+  захист: 'bg-blue-50 border-blue-200 text-blue-700',
+  гербіцид: 'bg-orange-50 border-orange-200 text-orange-700',
+  фунгіцид: 'bg-purple-50 border-purple-200 text-purple-700',
+  інсектицид: 'bg-red-50 border-red-200 text-red-700',
+}
+
 const searchProducts = () => {
   clearTimeout(searchTimer)
   const q = newT.product_name.trim()
@@ -216,6 +251,30 @@ const filteredTreatments = computed(() =>
     : treatments.value
 )
 
+const groupedPhases = computed(() => {
+  const phaseOrder = Object.fromEntries(phases.value.map((p, i) => [p.key, i]))
+  const phaseEmoji = Object.fromEntries(phases.value.map(p => [p.key, p.emoji]))
+
+  const map = new Map<string, any[]>()
+  for (const t of filteredTreatments.value) {
+    const key = t.phase || ''
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(t)
+  }
+
+  return [...map.entries()]
+    .sort(([a], [b]) => {
+      const oa = phaseOrder[a] ?? 999
+      const ob = phaseOrder[b] ?? 999
+      return oa - ob
+    })
+    .map(([phase, items]) => ({
+      phase,
+      emoji: phaseEmoji[phase] || '🌱',
+      items,
+    }))
+})
+
 const load = async () => {
   loading.value = true
 
@@ -223,7 +282,7 @@ const load = async () => {
   phases.value = (phasesData || []).map((p: any) => ({ key: p.key, emoji: p.emoji, order: p.order_num }))
 
   if (farmCropId) {
-    const { data: programData, error: progError } = await supabase
+    const { data: programData } = await supabase
       .from('protection_programs')
       .select('*')
       .eq('farm_crop_id', farmCropId)
@@ -267,7 +326,7 @@ const addCustomPhase = async () => {
 
 const createProgram = async () => {
   saving.value = true
-  const { data, error } = await supabase.from('protection_programs').upsert({
+  const { data } = await supabase.from('protection_programs').upsert({
     farm_crop_id: farmCropId,
     name: `Програма для ${cropType}`,
     description: `Календар живлення та захисту для ${cropType}`,
