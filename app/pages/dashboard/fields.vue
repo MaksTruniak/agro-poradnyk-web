@@ -39,7 +39,7 @@
           <div class="flex items-start justify-between mb-3">
             <div>
               <h3 class="font-bold text-agro-dark text-lg">{{ farm.name }}</h3>
-              <p v-if="farm.region" class="text-xs text-agro-light">📍 {{ farm.region }}</p>
+              <p v-if="farm.region" class="text-xs text-agro-light">📍 {{ [farm.city, farm.region].filter(Boolean).join(', ') }}</p>
             </div>
             <span class="font-bold text-agro">{{ farm.hectares }} га</span>
           </div>
@@ -143,15 +143,65 @@
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Назва поля</label>
                 <input v-model="newFarm.name" class="input" placeholder="Наприклад: Поле №1" />
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-sm font-medium text-agro-dark mb-1.5">Регіон</label>
-                  <input v-model="newFarm.region" class="input" placeholder="Київська обл." />
+
+              <!-- Область -->
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1.5">Область</label>
+                <div class="relative">
+                  <input
+                    v-model="regionQuery"
+                    @input="onRegionInput"
+                    @focus="showRegionList = true"
+                    @blur="() => setTimeout(() => showRegionList = false, 150)"
+                    class="input"
+                    placeholder="Почніть вводити область..."
+                    autocomplete="off"
+                  />
+                  <div v-if="showRegionList && filteredAreas.length" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-48 overflow-y-auto">
+                    <button
+                      v-for="area in filteredAreas"
+                      :key="area.Ref"
+                      type="button"
+                      @mousedown.prevent="selectArea(area)"
+                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0 text-agro-dark"
+                    >
+                      {{ area.DescriptionUa }}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-sm font-medium text-agro-dark mb-1.5">Площа (га)</label>
-                  <input v-model="newFarm.hectares" class="input" type="number" placeholder="0.0" />
+              </div>
+
+              <!-- Населений пункт — з'являється після вибору області -->
+              <div v-if="selectedAreaRef">
+                <label class="block text-sm font-medium text-agro-dark mb-1.5">Населений пункт</label>
+                <div class="relative">
+                  <input
+                    v-model="settlementQuery"
+                    @input="onSettlementInput"
+                    @focus="showSettlementList = true"
+                    @blur="() => setTimeout(() => showSettlementList = false, 150)"
+                    class="input"
+                    placeholder="Місто або село..."
+                    autocomplete="off"
+                  />
+                  <div v-if="loadingSettlements" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-agro-light">...</div>
+                  <div v-if="showSettlementList && settlements.length" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-48 overflow-y-auto">
+                    <button
+                      v-for="s in settlements"
+                      :key="s.DeliveryCity"
+                      type="button"
+                      @mousedown.prevent="selectSettlement(s)"
+                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0 text-agro-dark"
+                    >
+                      {{ s.Present }}
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1.5">Площа (га)</label>
+                <input v-model="newFarm.hectares" class="input" type="number" placeholder="0.0" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Кадастровий номер <span class="text-agro-light font-normal">(необов'язково)</span></label>
@@ -214,9 +264,68 @@ const dachaCrops = ref<any[]>([])
 const showAddFarm = ref(false)
 const showAddCrop = ref(false)
 const showPaywall = ref(false)
-const newFarm = reactive({ name: '', region: '', hectares: '', cadastral_number: '' })
+const newFarm = reactive({ name: '', region: '', city: '', hectares: '', cadastral_number: '' })
 const newCropType = ref('')
 const newVariety = ref('')
+
+// Область + населений пункт
+const { getAreas, searchSettlements } = useNovaPost()
+const allAreas = ref<any[]>([])
+const regionQuery = ref('')
+const showRegionList = ref(false)
+const selectedAreaRef = ref('')
+const settlementQuery = ref('')
+const settlements = ref<any[]>([])
+const showSettlementList = ref(false)
+const loadingSettlements = ref(false)
+let settlementTimer: any = null
+
+const filteredAreas = computed(() => {
+  const q = regionQuery.value.toLowerCase().trim()
+  if (!q) return allAreas.value
+  return allAreas.value.filter(a => a.DescriptionUa.toLowerCase().includes(q))
+})
+
+const onRegionInput = () => {
+  selectedAreaRef.value = ''
+  settlementQuery.value = ''
+  newFarm.city = ''
+  newFarm.region = regionQuery.value
+  showRegionList.value = true
+}
+
+const selectArea = (area: any) => {
+  regionQuery.value = area.DescriptionUa
+  newFarm.region = area.DescriptionUa
+  selectedAreaRef.value = area.Ref
+  showRegionList.value = false
+  settlementQuery.value = ''
+  newFarm.city = ''
+}
+
+const onSettlementInput = () => {
+  clearTimeout(settlementTimer)
+  newFarm.city = settlementQuery.value
+  const q = settlementQuery.value.trim()
+  if (q.length < 2) { settlements.value = []; return }
+  loadingSettlements.value = true
+  settlementTimer = setTimeout(async () => {
+    settlements.value = await searchSettlements(q, selectedAreaRef.value)
+    loadingSettlements.value = false
+  }, 350)
+}
+
+const selectSettlement = (s: any) => {
+  const name = s.Present.split(',')[0].trim()
+  settlementQuery.value = s.Present
+  newFarm.city = name
+  settlements.value = []
+  showSettlementList.value = false
+}
+
+onMounted(async () => {
+  allAreas.value = await getAreas()
+})
 
 const CROP_EMOJI: Record<string, string> = {
   'Смородина': '🫐', 'Полуниця': '🍓', 'Томати': '🍅', 'Огірки': '🥒',
@@ -270,8 +379,11 @@ const addFarm = async () => {
     return
   }
   saving.value = true
-  await supabase.from('farms').insert({ user_id: uid, name: newFarm.name, region: newFarm.region, hectares: parseFloat(newFarm.hectares) || 0, cadastral_number: newFarm.cadastral_number || null })
-  Object.assign(newFarm, { name: '', region: '', hectares: '', cadastral_number: '' })
+  await supabase.from('farms').insert({ user_id: uid, name: newFarm.name, region: newFarm.region, city: newFarm.city || null, hectares: parseFloat(newFarm.hectares) || 0, cadastral_number: newFarm.cadastral_number || null })
+  Object.assign(newFarm, { name: '', region: '', city: '', hectares: '', cadastral_number: '' })
+  regionQuery.value = ''
+  settlementQuery.value = ''
+  selectedAreaRef.value = ''
   showAddFarm.value = false
   saving.value = false
   await load()
