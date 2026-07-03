@@ -396,6 +396,8 @@ const load = async () => {
 
 await load()
 
+const { error: showError } = useToast()
+
 const addFarm = async () => {
   if (!newFarm.name) return
   if (!isPro.value && farms.value.length >= 1) {
@@ -403,7 +405,29 @@ const addFarm = async () => {
     return
   }
   saving.value = true
-  await supabase.from('farms').insert({ user_id: uid, name: newFarm.name, region: newFarm.region, city: newFarm.city || null, hectares: parseFloat(newFarm.hectares) || 0, cadastral_number: newFarm.cadastral_number || null })
+  const payload: any = {
+    user_id: uid,
+    name: newFarm.name,
+    region: newFarm.region || null,
+    hectares: parseFloat(newFarm.hectares) || 0,
+    cadastral_number: newFarm.cadastral_number || null,
+  }
+  if (newFarm.city) payload.city = newFarm.city
+
+  const { error } = await supabase.from('farms').insert(payload)
+  if (error) {
+    console.error('addFarm error:', error)
+    if (error.message.includes('city')) {
+      // колонка city ще не існує — вставляємо без неї
+      const { error: e2 } = await supabase.from('farms').insert({ ...payload, city: undefined })
+      if (e2) { showError('Помилка збереження: ' + e2.message); saving.value = false; return }
+    } else {
+      showError('Помилка збереження: ' + error.message)
+      saving.value = false
+      return
+    }
+  }
+
   Object.assign(newFarm, { name: '', region: '', city: '', hectares: '', cadastral_number: '' })
   regionQuery.value = ''
   settlementQuery.value = ''
