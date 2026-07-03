@@ -72,7 +72,7 @@
       <div class="card">
         <div class="flex items-center justify-between mb-5">
           <h2 class="font-bold text-agro-dark text-lg">🌱 Культури</h2>
-          <button @click="isPro ? showAddCrop = true : showPaywall = true" class="btn-primary text-sm py-2">{{ isPro ? '➕ Додати' : '🔒 Додати' }}</button>
+          <button @click="isPro || crops.length === 0 ? showAddCrop = true : showPaywall = true" class="btn-primary text-sm py-2">➕ Додати</button>
         </div>
 
         <div v-if="crops.length === 0" class="text-center py-8 text-agro-light">
