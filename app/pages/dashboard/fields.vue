@@ -269,8 +269,36 @@ const newCropType = ref('')
 const newVariety = ref('')
 
 // Область + населений пункт
-const { getAreas, searchSettlements } = useNovaPost()
-const allAreas = ref<any[]>([])
+const { searchSettlements } = useNovaPost()
+
+const UA_AREAS = [
+  { name: 'Вінницька область', ref: 'Vinnytsia' },
+  { name: 'Волинська область', ref: 'Volyn' },
+  { name: 'Дніпропетровська область', ref: 'Dnipropetrovsk' },
+  { name: 'Донецька область', ref: 'Donetsk' },
+  { name: 'Житомирська область', ref: 'Zhytomyr' },
+  { name: 'Закарпатська область', ref: 'Zakarpattia' },
+  { name: 'Запорізька область', ref: 'Zaporizhzhia' },
+  { name: 'Івано-Франківська область', ref: 'Ivano-Frankivsk' },
+  { name: 'Київська область', ref: 'Kyiv' },
+  { name: 'Кіровоградська область', ref: 'Kirovohrad' },
+  { name: 'Луганська область', ref: 'Luhansk' },
+  { name: 'Львівська область', ref: 'Lviv' },
+  { name: 'Миколаївська область', ref: 'Mykolaiv' },
+  { name: 'Одеська область', ref: 'Odesa' },
+  { name: 'Полтавська область', ref: 'Poltava' },
+  { name: 'Рівненська область', ref: 'Rivne' },
+  { name: 'Сумська область', ref: 'Sumy' },
+  { name: 'Тернопільська область', ref: 'Ternopil' },
+  { name: 'Харківська область', ref: 'Kharkiv' },
+  { name: 'Херсонська область', ref: 'Kherson' },
+  { name: 'Хмельницька область', ref: 'Khmelnytskyi' },
+  { name: 'Черкаська область', ref: 'Cherkasy' },
+  { name: 'Чернівецька область', ref: 'Chernivtsi' },
+  { name: 'Чернігівська область', ref: 'Chernihiv' },
+  { name: 'м. Київ', ref: 'KyivCity' },
+]
+
 const regionQuery = ref('')
 const showRegionList = ref(false)
 const selectedAreaRef = ref('')
@@ -282,8 +310,8 @@ let settlementTimer: any = null
 
 const filteredAreas = computed(() => {
   const q = regionQuery.value.toLowerCase().trim()
-  if (!q) return allAreas.value
-  return allAreas.value.filter(a => a.DescriptionUa.toLowerCase().includes(q))
+  if (!q) return UA_AREAS
+  return UA_AREAS.filter(a => a.name.toLowerCase().includes(q))
 })
 
 const onRegionInput = () => {
@@ -295,9 +323,9 @@ const onRegionInput = () => {
 }
 
 const selectArea = (area: any) => {
-  regionQuery.value = area.DescriptionUa
-  newFarm.region = area.DescriptionUa
-  selectedAreaRef.value = area.Ref
+  regionQuery.value = area.name
+  newFarm.region = area.name
+  selectedAreaRef.value = area.ref
   showRegionList.value = false
   settlementQuery.value = ''
   newFarm.city = ''
@@ -310,7 +338,7 @@ const onSettlementInput = () => {
   if (q.length < 2) { settlements.value = []; return }
   loadingSettlements.value = true
   settlementTimer = setTimeout(async () => {
-    settlements.value = await searchSettlements(q, selectedAreaRef.value)
+    settlements.value = await searchSettlements(q)
     loadingSettlements.value = false
   }, 350)
 }
@@ -322,10 +350,6 @@ const selectSettlement = (s: any) => {
   settlements.value = []
   showSettlementList.value = false
 }
-
-onMounted(async () => {
-  allAreas.value = await getAreas()
-})
 
 const CROP_EMOJI: Record<string, string> = {
   'Смородина': '🫐', 'Полуниця': '🍓', 'Томати': '🍅', 'Огірки': '🥒',
