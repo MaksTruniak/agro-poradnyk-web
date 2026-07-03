@@ -52,6 +52,7 @@
                   </span>
                   <p class="font-semibold text-agro-dark mt-1 text-sm">{{ t.product_name }}</p>
                   <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5">📏 {{ t.dosage }}</p>
+                  <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
                 </div>
                 <button @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
                   <Trash2 :size="14" />
@@ -92,6 +93,7 @@
                 </div>
               </div>
               <input v-model="inlineT[phase.key].dosage" class="input text-sm py-2" placeholder="Доза (необов'язково)" />
+              <input v-model="inlineT[phase.key].notes" class="input text-sm py-2" placeholder="Коментар (необов'язково)" />
               <button
                 @click="saveTreatment(phase)"
                 :disabled="!inlineT[phase.key].product_name || savingPhase === phase.key"
@@ -175,7 +177,7 @@ const newPhaseName = ref('')
 const newPhaseEmoji = ref('🌱')
 const productSuggestions = ref<any[]>([])
 const showSuggestionsFor = ref<string | null>(null)
-const inlineT = ref<Record<string, { product_name: string; type: string; dosage: string }>>({})
+const inlineT = ref<Record<string, { product_name: string; type: string; dosage: string; notes: string }>>({})
 let searchTimer: any = null
 
 const TYPE_ICONS: Record<string, string> = {
@@ -214,7 +216,7 @@ const availablePhases = computed(() =>
 
 const ensureInlineT = (key: string) => {
   if (!inlineT.value[key]) {
-    inlineT.value[key] = { product_name: '', type: 'підживлення', dosage: '' }
+    inlineT.value[key] = { product_name: '', type: 'підживлення', dosage: '', notes: '' }
   }
 }
 
@@ -299,7 +301,7 @@ const saveTreatment = async (phase: any) => {
     type: t.type,
     product_name: t.product_name,
     dosage: t.dosage || null,
-    notes: null,
+    notes: t.notes || null,
   }
   const { data: inserted, error } = await supabase.from('program_treatments').insert(payload).select().single()
   if (inserted) {
@@ -310,6 +312,7 @@ const saveTreatment = async (phase: any) => {
   }
   t.product_name = ''
   t.dosage = ''
+  t.notes = ''
   savingPhase.value = null
 }
 
