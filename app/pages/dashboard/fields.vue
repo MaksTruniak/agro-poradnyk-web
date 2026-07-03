@@ -165,7 +165,7 @@
                       @mousedown.prevent="selectArea(area)"
                       class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0 text-agro-dark"
                     >
-                      {{ area.DescriptionUa }}
+                      {{ area.name }}
                     </button>
                   </div>
                 </div>
