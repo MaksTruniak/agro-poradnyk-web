@@ -106,7 +106,6 @@ const ROLES = [
 ]
 
 const handleSubmit = async () => {
-  error.value = ''
   loading.value = true
   try {
     if (mode.value === 'login') {
