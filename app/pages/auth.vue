@@ -60,8 +60,6 @@
             </div>
           </div>
 
-          <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
-
           <button type="submit" :disabled="loading" class="btn-primary w-full py-3">
             {{ loading ? 'Завантаження...' : mode === 'login' ? 'Увійти' : 'Зареєструватись' }}
           </button>
@@ -84,7 +82,15 @@ const password = ref('')
 const name = ref('')
 const role = ref('farmer')
 const loading = ref(false)
-const error = ref('')
+const { error: showError, success: showSuccess } = useToast()
+
+const AUTH_ERRORS: Record<string, string> = {
+  'Invalid login credentials': 'Невірний email або пароль',
+  'Email not confirmed': 'Підтвердіть email перед входом',
+  'User already registered': 'Акаунт з таким email вже існує',
+  'Password should be at least 6 characters': 'Пароль має бути не менше 6 символів',
+  'Unable to validate email address: invalid format': 'Невірний формат email',
+}
 
 const ROLES = [
   { value: 'farmer', label: 'Фермер', emoji: '🌾', desc: 'Веду поля, слідкую за культурами і програмами захисту' },
@@ -110,11 +116,13 @@ const handleSubmit = async () => {
       if (e) throw e
       if (data.user) {
         await supabase.from('users').insert({ id: data.user.id, email: email.value, name: name.value, role: role.value })
+        showSuccess('Акаунт створено! Ласкаво просимо 🌾')
       }
     }
     router.push('/dashboard')
   } catch (e: any) {
-    error.value = e.message
+    const msg = AUTH_ERRORS[e.message] || e.message
+    showError(msg)
   } finally {
     loading.value = false
   }
