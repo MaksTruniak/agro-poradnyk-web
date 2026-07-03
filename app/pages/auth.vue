@@ -32,7 +32,12 @@
 
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Пароль</label>
-            <input v-model="password" type="password" class="input" placeholder="••••••••" required />
+            <div class="relative">
+              <input v-model="password" :type="showPassword ? 'text' : 'password'" class="input pr-11" placeholder="••••••••" required />
+              <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark transition-colors">
+                <span class="text-lg">{{ showPassword ? '🙈' : '👁' }}</span>
+              </button>
+            </div>
           </div>
 
           <!-- Вибір ролі при реєстрації -->
@@ -82,6 +87,7 @@ const password = ref('')
 const name = ref('')
 const role = ref('farmer')
 const loading = ref(false)
+const showPassword = ref(false)
 const { error: showError, success: showSuccess } = useToast()
 
 const AUTH_ERRORS: Record<string, string> = {
