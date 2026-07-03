@@ -29,6 +29,10 @@
             <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Регіон</p>
             <p class="font-semibold text-agro-dark">{{ farm.region || '—' }}</p>
           </div>
+          <div v-if="farm.city">
+            <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Населений пункт</p>
+            <p class="font-semibold text-agro-dark">{{ farm.city }}</p>
+          </div>
           <div>
             <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Площа</p>
             <p class="font-semibold text-agro-dark">{{ farm.hectares }} га</p>
@@ -46,14 +50,58 @@
             <input v-model="editForm.name" class="input" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Регіон</label>
-            <input v-model="editForm.region" class="input" />
-          </div>
-          <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Площа (га)</label>
             <input v-model="editForm.hectares" type="number" class="input" />
           </div>
-          <div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">Область</label>
+            <div class="relative">
+              <input
+                v-model="editRegionQuery"
+                @input="onEditRegionInput"
+                @focus="showEditRegionList = true"
+                @blur="() => setTimeout(() => showEditRegionList = false, 150)"
+                class="input"
+                placeholder="Оберіть область..."
+                autocomplete="off"
+              />
+              <div v-if="showEditRegionList && editFilteredAreas.length" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-44 overflow-y-auto">
+                <button
+                  v-for="area in editFilteredAreas"
+                  :key="area.ref"
+                  type="button"
+                  @mousedown.prevent="selectEditArea(area)"
+                  class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0 text-agro-dark"
+                >{{ area.name }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">Населений пункт</label>
+            <div class="relative">
+              <input
+                v-model="editSettlementQuery"
+                @input="onEditSettlementInput"
+                @focus="showEditSettlementList = true"
+                @blur="() => setTimeout(() => showEditSettlementList = false, 150)"
+                class="input"
+                placeholder="Місто або село..."
+                autocomplete="off"
+                :disabled="!editForm.region"
+              />
+              <div v-if="loadingEditSettlements" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-agro-light">...</div>
+              <div v-if="showEditSettlementList && editSettlements.length" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-44 overflow-y-auto">
+                <button
+                  v-for="s in editSettlements"
+                  :key="s.DeliveryCity"
+                  type="button"
+                  @mousedown.prevent="selectEditSettlement(s)"
+                  class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0 text-agro-dark"
+                >{{ s.Present }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Кадастровий номер</label>
             <input v-model="editForm.cadastral_number" class="input" placeholder="Необов'язково" />
           </div>
@@ -369,7 +417,74 @@ const showAddRotation = ref(false)
 const rotation = ref<any[]>([])
 const rotationForm = reactive({ id: '', year: new Date().getFullYear(), crop_type: '', variety: '', area_ha: '', planned_yield_t: '', actual_yield_t: '', notes: '' })
 
-const editForm = reactive({ name: '', region: '', hectares: '', cadastral_number: '' })
+const editForm = reactive({ name: '', region: '', city: '', hectares: '', cadastral_number: '' })
+
+const { searchSettlements } = useNovaPost()
+
+const UA_AREAS = [
+  { name: 'Вінницька область', ref: 'Vinnytsia' }, { name: 'Волинська область', ref: 'Volyn' },
+  { name: 'Дніпропетровська область', ref: 'Dnipropetrovsk' }, { name: 'Донецька область', ref: 'Donetsk' },
+  { name: 'Житомирська область', ref: 'Zhytomyr' }, { name: 'Закарпатська область', ref: 'Zakarpattia' },
+  { name: 'Запорізька область', ref: 'Zaporizhzhia' }, { name: 'Івано-Франківська область', ref: 'Ivano-Frankivsk' },
+  { name: 'Київська область', ref: 'Kyiv' }, { name: 'Кіровоградська область', ref: 'Kirovohrad' },
+  { name: 'Луганська область', ref: 'Luhansk' }, { name: 'Львівська область', ref: 'Lviv' },
+  { name: 'Миколаївська область', ref: 'Mykolaiv' }, { name: 'Одеська область', ref: 'Odesa' },
+  { name: 'Полтавська область', ref: 'Poltava' }, { name: 'Рівненська область', ref: 'Rivne' },
+  { name: 'Сумська область', ref: 'Sumy' }, { name: 'Тернопільська область', ref: 'Ternopil' },
+  { name: 'Харківська область', ref: 'Kharkiv' }, { name: 'Херсонська область', ref: 'Kherson' },
+  { name: 'Хмельницька область', ref: 'Khmelnytskyi' }, { name: 'Черкаська область', ref: 'Cherkasy' },
+  { name: 'Чернівецька область', ref: 'Chernivtsi' }, { name: 'Чернігівська область', ref: 'Chernihiv' },
+  { name: 'м. Київ', ref: 'KyivCity' },
+]
+
+const editRegionQuery = ref('')
+const showEditRegionList = ref(false)
+const editSettlementQuery = ref('')
+const editSettlements = ref<any[]>([])
+const showEditSettlementList = ref(false)
+const loadingEditSettlements = ref(false)
+let editSettlementTimer: any = null
+
+const editFilteredAreas = computed(() => {
+  const q = editRegionQuery.value.toLowerCase().trim()
+  if (!q) return UA_AREAS
+  return UA_AREAS.filter(a => a.name.toLowerCase().includes(q))
+})
+
+const onEditRegionInput = () => {
+  editForm.region = editRegionQuery.value
+  editForm.city = ''
+  editSettlementQuery.value = ''
+  showEditRegionList.value = true
+}
+
+const selectEditArea = (area: any) => {
+  editRegionQuery.value = area.name
+  editForm.region = area.name
+  showEditRegionList.value = false
+  editSettlementQuery.value = ''
+  editForm.city = ''
+}
+
+const onEditSettlementInput = () => {
+  clearTimeout(editSettlementTimer)
+  editForm.city = editSettlementQuery.value
+  const q = editSettlementQuery.value.trim()
+  if (q.length < 2) { editSettlements.value = []; return }
+  loadingEditSettlements.value = true
+  editSettlementTimer = setTimeout(async () => {
+    editSettlements.value = await searchSettlements(q)
+    loadingEditSettlements.value = false
+  }, 350)
+}
+
+const selectEditSettlement = (s: any) => {
+  const name = s.Present.split(',')[0].trim()
+  editSettlementQuery.value = s.Present
+  editForm.city = name
+  editSettlements.value = []
+  showEditSettlementList.value = false
+}
 const selectedCrop = ref<any>(null)
 const cropSearch = ref('')
 const cropResults = ref<any[]>([])
@@ -422,13 +537,15 @@ const load = async () => {
 await load()
 
 const startEdit = () => {
-  Object.assign(editForm, { name: farm.value.name, region: farm.value.region || '', hectares: String(farm.value.hectares), cadastral_number: farm.value.cadastral_number || '' })
+  Object.assign(editForm, { name: farm.value.name, region: farm.value.region || '', city: farm.value.city || '', hectares: String(farm.value.hectares), cadastral_number: farm.value.cadastral_number || '' })
+  editRegionQuery.value = farm.value.region || ''
+  editSettlementQuery.value = farm.value.city || ''
   editing.value = true
 }
 
 const saveFarm = async () => {
   saving.value = true
-  await supabase.from('farms').update({ name: editForm.name, region: editForm.region, hectares: parseFloat(editForm.hectares) || 0, cadastral_number: editForm.cadastral_number || null }).eq('id', farmId)
+  await supabase.from('farms').update({ name: editForm.name, region: editForm.region || null, city: editForm.city || null, hectares: parseFloat(editForm.hectares) || 0, cadastral_number: editForm.cadastral_number || null }).eq('id', farmId)
   editing.value = false
   saving.value = false
   await load()
