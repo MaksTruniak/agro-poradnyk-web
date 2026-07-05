@@ -12,10 +12,6 @@
           <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
         </nav>
         <div class="flex items-center gap-2">
-          <NuxtLink v-if="user" to="/cart" class="relative p-2 hover:bg-agro-bg rounded-xl transition-colors">
-            <span class="text-xl">🛒</span>
-            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
-          </NuxtLink>
           <div class="hidden md:flex items-center gap-2">
             <NuxtLink v-if="!user" to="/auth" class="btn-outline text-sm py-2">Увійти</NuxtLink>
             <NuxtLink v-if="!user" to="/auth?mode=register" class="bg-agro-dark text-white font-semibold rounded-xl px-6 py-2 text-sm hover:bg-agro transition-colors">Реєстрація</NuxtLink>
