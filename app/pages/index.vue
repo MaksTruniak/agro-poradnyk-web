@@ -113,11 +113,13 @@ useSeoMeta({
 const supabase = useSupabaseClient()
 const api = useAgroApi()
 
+const MARKETPLACE = false
+
 const roles = [
   { emoji: '🌾', title: 'Фермер', desc: 'Облік полів і культур, програми захисту, консультації агрономів', link: '/for-farmers' },
   { emoji: '🏡', title: 'Дачник', desc: 'Схеми обробки городу і саду, підбір препаратів для ваших культур', link: '/for-dacha' },
   { emoji: '🔬', title: 'Агроном', desc: 'Кабінет консультанта, управління клієнтами, просування профілю', link: '/for-agronomists' },
-  { emoji: '🏪', title: 'Продавець', desc: 'Каталог товарів, замовлення клієнтів, статистика продажів', link: '/for-sellers' },
+  ...(MARKETPLACE ? [{ emoji: '🏪', title: 'Продавець', desc: 'Каталог товарів, замовлення клієнтів, статистика продажів', link: '/for-sellers' }] : []),
 ]
 
 const features = [
