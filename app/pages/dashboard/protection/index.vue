@@ -24,13 +24,6 @@
       </div>
 
       <template v-else>
-        <!-- Розумний підбір -->
-        <div v-if="treatments.length > 0" class="mb-4">
-          <button @click="openSmartBuy" class="w-full flex items-center justify-center gap-2 bg-white border-2 border-agro text-agro font-bold py-3 rounded-xl hover:bg-agro-hover transition-colors text-sm">
-            🛒 Розумний підбір препаратів
-          </button>
-        </div>
-
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
           <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-hidden">
@@ -95,7 +88,6 @@
                     class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0"
                   >
                     <p class="font-medium text-agro-dark">{{ p.product_name }}</p>
-                    <p class="text-xs text-agro-light">{{ p.price }} грн · {{ p.seller_profiles?.company_name }}</p>
                   </button>
                 </div>
               </div>
