@@ -117,18 +117,8 @@
               >{{ product.manufacturer?.name || product.manufacturer }}</NuxtLink>
             </NuxtLink>
 
-            <div class="border-t border-agro-border pt-4 flex items-center justify-between gap-2 pr-1">
-              <div v-if="offersMap[product.slug]?.length">
-                <p class="text-xs text-agro-light">від</p>
-                <p class="font-bold text-agro text-lg leading-none">
-                  {{ Math.min(...offersMap[product.slug].map((o: any) => o.price)) }} грн
-                </p>
-              </div>
-              <p v-else class="text-sm text-agro-light">Немає пропозицій</p>
-              <div class="flex gap-2 shrink-0">
-                <NuxtLink :to="`/catalog/${product.slug}`" class="btn-outline text-sm py-2 px-3">Детально</NuxtLink>
-                <button v-if="offersMap[product.slug]?.length" @click="openBuyModal(product)" class="btn-primary text-sm py-2 px-3">🛒 Купити</button>
-              </div>
+            <div class="border-t border-agro-border pt-4 flex justify-end pr-1">
+              <NuxtLink :to="`/catalog/${product.slug}`" class="btn-outline text-sm py-2 px-3">Детально</NuxtLink>
             </div>
           </div>
         </div>
@@ -149,53 +139,6 @@
       </div>
   </div>
 
-  <!-- Модалка продавців -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="buyModalOpen" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="buyModalOpen = false" />
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10">
-          <!-- Заголовок -->
-          <div class="flex items-start justify-between px-6 py-5 border-b border-agro-border">
-            <div>
-              <p class="text-xs text-agro-light mb-1">Пропозиції продавців</p>
-              <h3 class="font-bold text-agro-dark text-lg leading-snug">{{ buyModalProduct?.name }}</h3>
-            </div>
-            <button @click="buyModalOpen = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-agro-bg text-agro-light hover:text-agro-dark transition-colors ml-3 shrink-0">✕</button>
-          </div>
-
-          <!-- Продавці -->
-          <div class="px-4 py-3 space-y-2 max-h-80 overflow-y-auto">
-            <div
-              v-for="offer in buyModalOffers"
-              :key="offer.id"
-              class="flex items-center justify-between border border-agro-border rounded-xl px-4 py-3 hover:border-agro hover:bg-agro-bg transition-colors"
-            >
-              <div>
-                <p class="font-bold text-agro text-xl leading-none mb-1">{{ offer.price }} грн</p>
-                <p class="text-sm font-semibold text-agro-dark">{{ offer.seller_profiles?.company_name }}</p>
-                <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light mt-0.5">📍 {{ offer.seller_profiles.region }}</p>
-              </div>
-              <button
-                @click="addToCart(offer.id)"
-                :disabled="addingId === offer.id"
-                class="btn-primary text-sm py-2.5 px-5 shrink-0 ml-4"
-              >
-                {{ addingId === offer.id ? '...' : 'В кошик' }}
-              </button>
-            </div>
-          </div>
-
-          <div class="px-6 py-4 border-t border-agro-border flex items-center justify-between">
-            <NuxtLink :to="`/catalog/${buyModalProduct?.slug}`" @click="buyModalOpen = false" class="text-agro text-sm font-semibold hover:underline">
-              Детальніше про товар →
-            </NuxtLink>
-            <button @click="buyModalOpen = false" class="text-agro-light text-sm hover:text-agro-dark">Закрити</button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -206,8 +149,6 @@ useSeoMeta({
 })
 
 const api = useAgroApi()
-const supabaseClient = useSupabaseClient()
-const user = useSupabaseUser()
 
 const ingredientInput = ref('')
 const selectedIngredient = ref('')
@@ -243,27 +184,6 @@ const clearIngredient = () => {
   loadProducts(1, searchInput.value, selectedType.value, '')
 }
 
-const addingId = ref('')
-const buyModalOpen = ref(false)
-const buyModalProduct = ref<any>(null)
-const buyModalOffers = ref<any[]>([])
-
-const openBuyModal = (product: any) => {
-  buyModalProduct.value = product
-  buyModalOffers.value = offersMap.value[product.slug] || []
-  buyModalOpen.value = true
-}
-
-const addToCart = async (offerId: string) => {
-  const { data: { session } } = await supabaseClient.auth.getSession()
-  if (!session) { navigateTo('/auth'); return }
-  addingId.value = offerId
-  const { error } = await supabaseClient.from('cart_items').upsert({ user_id: session.user.id, offer_id: offerId, quantity: 1 }, { onConflict: "user_id,offer_id" })
-  if (error) { alert(error.message) }
-  addingId.value = ''
-  buyModalOpen.value = false
-  useNuxtApp().hooks.callHook('cart:updated' as any)
-}
 
 const TYPE_EMOJI: Record<string, string> = {
   herbicide: '🌿', fungicide: '🧴', insecticide: '🐛', fertilizer: '💊',
@@ -288,7 +208,6 @@ const typeLabel = (slug: string) => TYPE_LABELS[slug] || slug
 
 const types = ref<{ slug: string; name: string }[]>([])
 const products = ref<any[]>([])
-const offersMap = ref<Record<string, any[]>>({})
 const loading = ref(true)
 const loadingMore = ref(false)
 const hasMore = ref(true)
@@ -325,28 +244,12 @@ const loadProducts = async (p: number, q: string, type: string, ingredient = '',
     hasMore.value = items.length === 20
     page.value = p
 
-    if (items.length > 0) await loadOffers(items.map((p: any) => p.slug).filter(Boolean))
   } finally {
     loading.value = false
     loadingMore.value = false
   }
 }
 
-const loadOffers = async (slugs: string[]) => {
-  const { data } = await supabaseClient
-    .from('seller_offers')
-    .select('id, price, product_slug, seller_profiles(company_name, region)')
-    .in('product_slug', slugs)
-    .eq('in_stock', true)
-
-  if (!data) return
-  const map: Record<string, any[]> = { ...offersMap.value }
-  for (const offer of data) {
-    if (!map[offer.product_slug]) map[offer.product_slug] = []
-    map[offer.product_slug].push(offer)
-  }
-  offersMap.value = map
-}
 
 const selectType = (type: string) => {
   selectedType.value = type

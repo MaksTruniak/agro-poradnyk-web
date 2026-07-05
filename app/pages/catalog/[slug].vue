@@ -157,20 +157,23 @@ const loading = ref(true)
 const product = ref<any>(null)
 const analogs = ref<any[]>([])
 
-const [productData, analogsData] = await Promise.all([
-  api.getProduct(slug).catch(() => null),
-  api.getAnalogs(slug).catch(() => []),
-])
+const { data } = await useAsyncData(`catalog-${slug}`, async () => {
+  const [productData, analogsData] = await Promise.all([
+    api.getProduct(slug).catch(() => null),
+    api.getAnalogs(slug).catch(() => []),
+  ])
+  return { productData, analogsData }
+})
 
-product.value = productData?.product || productData
-const analogsList = analogsData?.analogs || analogsData?.items || analogsData
+product.value = data.value?.productData?.product || data.value?.productData || null
+const analogsList = data.value?.analogsData?.analogs || data.value?.analogsData?.items || data.value?.analogsData
 analogs.value = Array.isArray(analogsList) ? analogsList : []
 loading.value = false
 
 if (product.value) {
   useSeoMeta({
     title: product.value.name,
-    description: `${product.value.name} — ${TYPE_LABELS[product.value.type] || ''}. ${product.value.description?.slice(0, 150) || 'Купити в АгроПорадник з доставкою.'}`,
+    description: `${product.value.name} — ${TYPE_LABELS[product.value.type] || ''}. ${product.value.description?.slice(0, 150) || ''}`,
     ogTitle: product.value.name,
   })
 }
