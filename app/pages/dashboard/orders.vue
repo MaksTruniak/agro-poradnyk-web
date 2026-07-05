@@ -66,6 +66,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
+const MARKETPLACE = false
+if (!MARKETPLACE) await navigateTo('/dashboard')
+
 const supabase = useSupabaseClient()
 const loading = ref(true)
 const orders = ref<any[]>([])

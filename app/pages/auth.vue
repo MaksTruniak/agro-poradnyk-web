@@ -77,6 +77,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+const MARKETPLACE = false
+
 const supabase = useSupabaseClient()
 const router = useRouter()
 const route = useRoute()
@@ -102,7 +104,7 @@ const ROLES = [
   { value: 'farmer', label: 'Фермер', emoji: '🌾', desc: 'Веду поля, слідкую за культурами і програмами захисту' },
   { value: 'dacha', label: 'Дачник', emoji: '🏡', desc: 'Доглядаю сад і город, підбираю схеми обробки' },
   { value: 'agronomist', label: 'Агроном', emoji: '🔬', desc: 'Консультую фермерів і веду власні поля та культури' },
-  { value: 'seller', label: 'Продавець', emoji: '🏪', desc: 'Продаю препарати і добрива фермерам' },
+  ...(MARKETPLACE ? [{ value: 'seller', label: 'Продавець', emoji: '🏪', desc: 'Продаю препарати і добрива фермерам' }] : []),
 ]
 
 const handleSubmit = async () => {

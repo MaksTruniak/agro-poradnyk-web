@@ -61,8 +61,8 @@
             </div>
           </div>
 
-          <!-- Активні замовлення -->
-          <div class="card">
+          <!-- Активні замовлення (маркетплейс) -->
+          <div v-if="MARKETPLACE" class="card">
             <div class="flex items-center justify-between mb-4">
               <h2 class="font-bold text-agro-dark">📋 Активні замовлення</h2>
               <NuxtLink to="/dashboard/orders" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
@@ -106,8 +106,8 @@
       </div>
     </template>
 
-    <!-- Продавець -->
-    <template v-else-if="isSeller">
+    <!-- Продавець (маркетплейс) -->
+    <template v-else-if="MARKETPLACE && isSeller">
       <template v-if="loading">
         <div class="grid md:grid-cols-3 gap-5 mb-8">
           <div v-for="i in 3" :key="i" class="card animate-pulse h-24"></div>
@@ -173,6 +173,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
+const MARKETPLACE = false
+
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 
@@ -215,7 +217,7 @@ onMounted(async () => {
       isDacha ? Promise.resolve({ data: [] }) : supabase.from('farms').select('hectares, farm_crops(crop_type)').eq('user_id', uid),
       isDacha ? supabase.from('dacha_crops').select('crop_type').eq('user_id', uid) : Promise.resolve({ data: [] }),
       supabase.from('reminders').select('id, description, type, scheduled_date').eq('user_id', uid).gte('scheduled_date', new Date().toISOString()).order('scheduled_date').limit(3),
-      supabase.from('orders').select('id, status, total').eq('user_id', uid).in('status', ['pending', 'processing', 'shipped']).order('created_at', { ascending: false }).limit(3),
+      MARKETPLACE ? supabase.from('orders').select('id, status, total').eq('user_id', uid).in('status', ['pending', 'processing', 'shipped']).order('created_at', { ascending: false }).limit(3) : Promise.resolve({ data: [] }),
     ])
     const farms = farmsRes.data || []
     const allCrops = isDacha
@@ -231,7 +233,7 @@ onMounted(async () => {
     activeOrders.value = ordersRes.data || []
   }
 
-  if (isSeller.value) {
+  if (MARKETPLACE && isSeller.value) {
     const { data: seller } = await supabase.from('seller_profiles').select('id').eq('user_id', uid).single()
     if (seller) {
       const [{ count: p }, { data: orders }] = await Promise.all([
