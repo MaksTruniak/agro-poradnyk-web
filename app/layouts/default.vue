@@ -15,7 +15,11 @@
           <div class="hidden md:flex items-center gap-2">
             <NuxtLink v-if="!user" to="/auth" class="btn-outline text-sm py-2">Увійти</NuxtLink>
             <NuxtLink v-if="!user" to="/auth?mode=register" class="bg-agro-dark text-white font-semibold rounded-xl px-6 py-2 text-sm hover:bg-agro transition-colors">Реєстрація</NuxtLink>
-            <NuxtLink v-if="user" to="/dashboard" class="btn-primary text-sm py-2">Кабінет</NuxtLink>
+            <NuxtLink v-if="MARKETPLACE && user" to="/cart" class="relative p-2 hover:bg-agro-bg rounded-xl transition-colors">
+            <span class="text-xl">🛒</span>
+            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
+          </NuxtLink>
+          <NuxtLink v-if="user" to="/dashboard" class="btn-primary text-sm py-2">Кабінет</NuxtLink>
           </div>
           <!-- Бургер для мобільного -->
           <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-xl hover:bg-agro-bg transition-colors">
@@ -91,6 +95,8 @@
 </template>
 
 <script setup lang="ts">
+const MARKETPLACE = false
+
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const mobileMenu = ref(false)

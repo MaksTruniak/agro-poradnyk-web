@@ -50,6 +50,10 @@
         <span class="font-bold text-agro-dark">АгроПорадник</span>
       </NuxtLink>
       <div class="flex items-center gap-2">
+        <NuxtLink v-if="MARKETPLACE" to="/cart" class="relative p-2">
+          <span class="text-xl">🛒</span>
+          <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
+        </NuxtLink>
         <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center text-agro font-bold text-sm">
           {{ userInitial }}
         </div>
@@ -84,6 +88,8 @@
 </template>
 
 <script setup lang="ts">
+const MARKETPLACE = false
+
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const router = useRouter()
@@ -157,6 +163,7 @@ const navItems = computed(() => {
     { to: '/dashboard/chats', icon: '💬', label: 'Консультації' },
     { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
     { to: '/catalog', icon: '📖', label: 'Каталог' },
+    ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }] : []),
     { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' },
     { to: '/dashboard/agronomist-profile', icon: '🔬', label: 'Кабінет агронома' },
     { to: '/dashboard/promotion', icon: '🚀', label: 'Просування' },
@@ -170,6 +177,7 @@ const navItems = computed(() => {
   if (role.value !== 'dacha') base.push({ to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' })
   return [...base,
     { to: '/catalog', icon: '📖', label: 'Каталог' },
+    ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }] : []),
     { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' },
     { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },

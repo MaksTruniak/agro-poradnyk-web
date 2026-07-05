@@ -24,6 +24,13 @@
       </div>
 
       <template v-else>
+        <!-- Розумний підбір (маркетплейс) -->
+        <div v-if="MARKETPLACE && treatments.length > 0" class="mb-4">
+          <button @click="openSmartBuy" class="w-full flex items-center justify-center gap-2 bg-white border-2 border-agro text-agro font-bold py-3 rounded-xl hover:bg-agro-hover transition-colors text-sm">
+            🛒 Розумний підбір препаратів
+          </button>
+        </div>
+
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
           <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-hidden">
@@ -238,6 +245,8 @@
 <script setup lang="ts">
 import { Trash2, X } from 'lucide-vue-next'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
+
+const MARKETPLACE = false
 
 const route = useRoute()
 const farmCropId = route.query.farmCropId as string

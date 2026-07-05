@@ -5,8 +5,8 @@
     </NuxtLink>
 
     <!-- Скелетон картки товару -->
-    <div v-if="loading" class="grid gap-8 animate-pulse">
-      <div class="xl:col-span-2 space-y-6">
+    <div v-if="loading" class="animate-pulse" :class="MARKETPLACE ? 'grid xl:grid-cols-3 gap-8' : 'grid gap-8'">
+      <div :class="MARKETPLACE ? 'xl:col-span-2 space-y-6' : 'space-y-6'">
         <div class="card">
           <div class="flex items-start gap-4 mb-6">
             <div class="w-12 h-12 bg-agro-bg rounded-xl shrink-0"></div>
@@ -37,11 +37,25 @@
           </div>
         </div>
       </div>
+      <div v-if="MARKETPLACE" class="space-y-5">
+        <div class="card">
+          <div class="h-8 bg-agro-bg rounded w-28 mb-4"></div>
+          <div class="h-4 bg-agro-bg rounded w-full mb-2"></div>
+          <div class="h-4 bg-agro-bg rounded w-3/4 mb-5"></div>
+          <div class="h-12 bg-agro-bg rounded-xl w-full mb-3"></div>
+          <div class="h-10 bg-agro-bg rounded-xl w-full"></div>
+        </div>
+        <div class="card">
+          <div class="h-5 bg-agro-bg rounded w-32 mb-3"></div>
+          <div class="h-4 bg-agro-bg rounded w-full mb-2"></div>
+          <div class="h-4 bg-agro-bg rounded w-2/3"></div>
+        </div>
+      </div>
     </div>
 
-    <div v-else-if="product" class="grid gap-8">
+    <div v-else-if="product" :class="MARKETPLACE ? 'grid xl:grid-cols-3 gap-8' : 'grid gap-8'">
       <!-- Основна інфо -->
-      <div class="xl:col-span-2 space-y-6">
+      <div :class="MARKETPLACE ? 'xl:col-span-2 space-y-6' : 'space-y-6'">
         <div class="card">
           <div class="flex items-start gap-4 mb-6">
             <div class="text-5xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</div>
@@ -120,6 +134,41 @@
         </div>
       </div>
 
+      <!-- Пропозиції продавців (маркетплейс) -->
+      <div v-if="MARKETPLACE" class="space-y-4">
+        <div class="card sticky top-24">
+          <p class="font-bold text-agro-dark mb-4">🏪 Пропозиції продавців</p>
+
+          <div v-if="offers.length === 0" class="text-center py-6">
+            <p class="text-3xl mb-2">😔</p>
+            <p class="text-agro-light text-sm">Поки немає пропозицій</p>
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
+              v-for="offer in offers"
+              :key="offer.id"
+              class="border border-agro-border rounded-xl p-4 hover:border-agro transition-colors"
+            >
+              <div class="flex items-start justify-between mb-2">
+                <div>
+                  <p class="font-bold text-agro-dark">{{ offer.price }} грн</p>
+                  <p class="text-xs text-agro-light">{{ offer.seller_profiles?.company_name }}</p>
+                  <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light">📍 {{ offer.seller_profiles.region }}</p>
+                </div>
+                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">В наявності</span>
+              </div>
+              <button
+                @click="addToCart(offer.id)"
+                :disabled="addingId === offer.id"
+                class="btn-primary w-full text-sm py-2.5 mt-2"
+              >
+                {{ addingId === offer.id ? '...' : '🛒 Додати в кошик' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-else class="text-center py-20">
@@ -133,9 +182,12 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 
+const MARKETPLACE = false
+
 const route = useRoute()
 const slug = route.params.slug as string
 const api = useAgroApi()
+const supabase = useSupabaseClient()
 
 const TYPE_EMOJI: Record<string, string> = {
   herbicide: '🌿', fungicide: '🧴', insecticide: '🐛', fertilizer: '💊',
@@ -156,26 +208,43 @@ const TYPE_LABELS: Record<string, string> = {
 const loading = ref(true)
 const product = ref<any>(null)
 const analogs = ref<any[]>([])
+const offers = ref<any[]>([])
+const addingId = ref('')
 
 const { data } = await useAsyncData(`catalog-${slug}`, async () => {
-  const [productData, analogsData] = await Promise.all([
+  const [productData, analogsData, offersData] = await Promise.all([
     api.getProduct(slug).catch(() => null),
     api.getAnalogs(slug).catch(() => []),
+    MARKETPLACE
+      ? supabase.from('seller_offers')
+          .select('*, seller_profiles(company_name, region)')
+          .eq('product_slug', slug)
+          .eq('in_stock', true)
+          .order('price', { ascending: true })
+      : Promise.resolve({ data: [] }),
   ])
-  return { productData, analogsData }
+  return { productData, analogsData, offersData }
 })
 
 product.value = data.value?.productData?.product || data.value?.productData || null
 const analogsList = data.value?.analogsData?.analogs || data.value?.analogsData?.items || data.value?.analogsData
 analogs.value = Array.isArray(analogsList) ? analogsList : []
+offers.value = data.value?.offersData?.data || []
 loading.value = false
 
 if (product.value) {
   useSeoMeta({
     title: product.value.name,
-    description: `${product.value.name} — ${TYPE_LABELS[product.value.type] || ''}. ${product.value.description?.slice(0, 150) || ''}`,
+    description: `${product.value.name} — ${TYPE_LABELS[product.value.type] || ''}. ${product.value.description?.slice(0, 150) || 'Купити в АгроПорадник з доставкою.'}`,
     ogTitle: product.value.name,
   })
 }
 
+const addToCart = async (offerId: string) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) { navigateTo('/auth'); return }
+  addingId.value = offerId
+  await supabase.from('cart_items').upsert({ user_id: session.user.id, offer_id: offerId, quantity: 1 }, { onConflict: "user_id,offer_id" })
+  addingId.value = ''
+}
 </script>
