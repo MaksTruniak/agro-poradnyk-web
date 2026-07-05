@@ -24,6 +24,13 @@
       </div>
 
       <template v-else>
+        <!-- Розумний підбір -->
+        <div v-if="treatments.length > 0" class="mb-4">
+          <button @click="openSmartBuy" class="w-full flex items-center justify-center gap-2 bg-white border-2 border-agro text-agro font-bold py-3 rounded-xl hover:bg-agro-hover transition-colors text-sm">
+            🛒 Розумний підбір препаратів
+          </button>
+        </div>
+
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
           <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-hidden">
@@ -152,6 +159,88 @@
       </template>
     </div>
   </div>
+
+  <!-- Модал розумного підбору -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="showSmartModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4" @click.self="showSmartModal = false">
+        <div class="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl max-h-[90vh] flex flex-col">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-agro-border shrink-0">
+            <h2 class="font-bold text-agro-dark text-base">🛒 Розумний підбір</h2>
+            <button @click="showSmartModal = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-bg text-agro-light text-lg">×</button>
+          </div>
+
+          <div class="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+            <!-- Завантаження -->
+            <div v-if="smartBuyLoading" class="py-10 text-center">
+              <div class="animate-spin text-3xl mb-3">⏳</div>
+              <p class="text-agro-light text-sm">Шукаємо найкращі пропозиції...</p>
+            </div>
+
+            <template v-else-if="smartBuyResult">
+              <!-- Не знайдено -->
+              <div v-if="smartBuyResult.notFound.length" class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p class="font-semibold text-amber-700 text-sm mb-1">⚠️ Не знайдено в каталозі продавців:</p>
+                <p v-for="name in smartBuyResult.notFound" :key="name" class="text-sm text-amber-600">• {{ name }}</p>
+              </div>
+
+              <!-- Нічого не знайдено взагалі -->
+              <div v-if="!smartBuyResult.cheapestItems.length" class="text-center py-6">
+                <p class="text-4xl mb-2">🔍</p>
+                <p class="text-agro-dark font-semibold">Пропозицій не знайдено</p>
+                <p class="text-agro-light text-sm mt-1">Продавці не мають цих препаратів в наявності</p>
+              </div>
+
+              <!-- Найдешевший варіант -->
+              <div v-if="smartBuyResult.cheapestItems.length" class="card p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="font-bold text-agro-dark text-sm">💰 Найдешевший варіант</p>
+                  <span class="font-bold text-agro">{{ smartBuyResult.cheapestTotal }} грн</span>
+                </div>
+                <p class="text-xs text-agro-light mb-3">
+                  Від {{ new Set(smartBuyResult.cheapestItems.map((i: any) => i.offer.seller_profiles?.company_name)).size }} продавців
+                </p>
+                <div class="space-y-2 mb-3">
+                  <div v-for="item in smartBuyResult.cheapestItems" :key="item.treatment_name" class="flex items-center justify-between text-sm py-1.5 border-t border-agro-border first:border-0">
+                    <div>
+                      <p class="font-medium text-agro-dark">{{ item.treatment_name }}</p>
+                      <p class="text-xs text-agro-light">{{ item.offer.seller_profiles?.company_name }}</p>
+                    </div>
+                    <span class="font-semibold text-agro shrink-0 ml-2">{{ item.offer.price }} грн</span>
+                  </div>
+                </div>
+                <button @click="addToCart(smartBuyResult.cheapestItems)" :disabled="cartSaving" class="btn-primary w-full py-2.5 text-sm">
+                  {{ cartSaving ? '...' : '🛒 Додати до кошика' }}
+                </button>
+              </div>
+
+              <!-- Один продавець -->
+              <template v-if="smartBuyResult.fullSellers.length">
+                <p class="text-sm font-bold text-agro-dark">🏪 Один продавець ({{ smartBuyResult.fullSellers.length }})</p>
+                <div v-for="(seller, i) in smartBuyResult.fullSellers" :key="seller.seller.id" class="card p-4" :class="i === 0 ? 'border-agro border-2' : ''">
+                  <div v-if="i === 0" class="text-xs font-bold text-agro mb-1">✓ Найдешевший від одного продавця</div>
+                  <div class="flex items-center justify-between mb-1">
+                    <p class="font-bold text-agro-dark text-sm">{{ seller.seller.company_name }}</p>
+                    <span class="font-bold text-agro">{{ seller.total }} грн</span>
+                  </div>
+                  <p v-if="seller.seller.region" class="text-xs text-agro-light mb-3">📍 {{ seller.seller.region }}</p>
+                  <div class="space-y-1 mb-3">
+                    <div v-for="item in seller.items" :key="item.treatment_name" class="flex items-center justify-between text-sm py-1 border-t border-agro-border first:border-0">
+                      <p class="text-agro-dark">{{ item.treatment_name }}</p>
+                      <span class="font-semibold text-agro ml-2">{{ item.offer.price }} грн</span>
+                    </div>
+                  </div>
+                  <button @click="addToCart(seller.items)" :disabled="cartSaving" class="btn-primary w-full py-2.5 text-sm">
+                    {{ cartSaving ? '...' : '🛒 Додати до кошика' }}
+                  </button>
+                </div>
+              </template>
+            </template>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -351,4 +440,84 @@ const deleteTreatment = async (t: any) => {
   await supabase.from('program_treatments').delete().eq('id', t.id)
   treatments.value = treatments.value.filter(tr => tr.id !== t.id)
 }
+
+// Розумний підбір
+const showSmartModal = ref(false)
+const smartBuyLoading = ref(false)
+const smartBuyResult = ref<any>(null)
+const cartSaving = ref(false)
+const { success: showSuccess, error: showError } = useToast()
+
+const openSmartBuy = async () => {
+  showSmartModal.value = true
+  smartBuyLoading.value = true
+  smartBuyResult.value = null
+
+  const productNames = [...new Set(treatments.value.map(t => t.product_name))]
+  const { data: offers } = await supabase
+    .from('seller_offers')
+    .select('*, seller_profiles(id, company_name, region)')
+    .in('product_name', productNames)
+    .eq('in_stock', true)
+
+  const foundProducts: any[] = []
+  const notFound: string[] = []
+
+  for (const name of productNames) {
+    const productOffers = (offers || []).filter((o: any) => o.product_name === name)
+    if (productOffers.length > 0) {
+      foundProducts.push({ treatment_name: name, offers: productOffers })
+    } else {
+      notFound.push(name)
+    }
+  }
+
+  // Найдешевший варіант (по одному від кожного)
+  let cheapestTotal = 0
+  const cheapestItems: any[] = []
+  for (const fp of foundProducts) {
+    const cheapest = fp.offers.reduce((min: any, o: any) => o.price < min.price ? o : min)
+    cheapestItems.push({ treatment_name: fp.treatment_name, offer: cheapest })
+    cheapestTotal += cheapest.price
+  }
+
+  // Продавці з усіма товарами
+  const sellerMap: Record<string, any> = {}
+  for (const fp of foundProducts) {
+    for (const offer of fp.offers) {
+      const sellerId = offer.seller_profiles?.id
+      if (!sellerId) continue
+      if (!sellerMap[sellerId]) sellerMap[sellerId] = { seller: offer.seller_profiles, items: [], total: 0, seen: new Set() }
+      if (!sellerMap[sellerId].seen.has(fp.treatment_name)) {
+        sellerMap[sellerId].seen.add(fp.treatment_name)
+        sellerMap[sellerId].items.push({ treatment_name: fp.treatment_name, offer })
+        sellerMap[sellerId].total += offer.price
+      }
+    }
+  }
+
+  const fullSellers = Object.values(sellerMap)
+    .filter((s: any) => foundProducts.every(fp => s.seen.has(fp.treatment_name)))
+    .sort((a: any, b: any) => a.total - b.total)
+
+  smartBuyResult.value = { foundProducts, notFound, cheapestItems, cheapestTotal, fullSellers }
+  smartBuyLoading.value = false
+}
+
+const addToCart = async (items: any[]) => {
+  cartSaving.value = true
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) { showError('Необхідна авторизація'); cartSaving.value = false; return }
+  for (const item of items) {
+    await supabase.from('cart_items').upsert({ user_id: session.user.id, offer_id: item.offer.id, quantity: 1 }, { onConflict: 'user_id,offer_id' })
+  }
+  cartSaving.value = false
+  showSmartModal.value = false
+  showSuccess(`${items.length} товарів додано до кошика 🛒`)
+}
 </script>
+
+<style scoped>
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+</style>
