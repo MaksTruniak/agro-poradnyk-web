@@ -102,7 +102,6 @@ const AUTH_ERRORS: Record<string, string> = {
 
 const ROLES = [
   { value: 'farmer', label: 'Фермер', emoji: '🌾', desc: 'Веду поля, слідкую за культурами і програмами захисту' },
-  { value: 'dacha', label: 'Дачник', emoji: '🏡', desc: 'Доглядаю сад і город, підбираю схеми обробки' },
   { value: 'agronomist', label: 'Агроном', emoji: '🔬', desc: 'Консультую фермерів і веду власні поля та культури' },
   ...(MARKETPLACE ? [{ value: 'seller', label: 'Продавець', emoji: '🏪', desc: 'Продаю препарати і добрива фермерам' }] : []),
 ]
