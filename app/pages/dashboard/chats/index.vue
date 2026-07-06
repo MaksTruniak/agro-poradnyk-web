@@ -66,19 +66,21 @@ const formatDate = (d: string) => {
 }
 
 const load = async () => {
-  const field = isAgronomist ? 'agronomist_id' : 'farmer_id'
-  const { data: chatsData } = await supabase
-    .from('chats')
-    .select('*')
-    .eq(field, uid)
-    .eq('type', 'human')
-    .order('created_at', { ascending: false })
+  // Завантажуємо чати де юзер є або в farmer_id або в agronomist_id
+  const [res1, res2] = await Promise.all([
+    supabase.from('chats').select('*').eq('farmer_id', uid).eq('type', 'human'),
+    supabase.from('chats').select('*').eq('agronomist_id', uid).eq('type', 'human'),
+  ])
+  const merged = [...(res1.data || []), ...(res2.data || [])]
+  const seen = new Set<string>()
+  const chatsData = merged.filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
   if (!chatsData?.length) { loading.value = false; return }
 
   // Підтягуємо співрозмовника і останнє повідомлення
   const result = await Promise.all(chatsData.map(async (chat) => {
-    const interlocutorId = isAgronomist ? chat.farmer_id : chat.agronomist_id
+    const interlocutorId = chat.farmer_id === uid ? chat.agronomist_id : chat.farmer_id
 
     const [userRes, lastMsgRes, unreadRes] = await Promise.all([
       supabase.from('users').select('name').eq('id', interlocutorId).single(),
@@ -88,7 +90,7 @@ const load = async () => {
 
     return {
       ...chat,
-      interlocutorName: userRes.data?.name || (isAgronomist ? 'Фермер' : 'Агроном'),
+      interlocutorName: userRes.data?.name || 'Користувач',
       last_message: lastMsgRes.data?.content || null,
       last_message_at: lastMsgRes.data?.created_at || chat.created_at,
       unread: unreadRes.count || 0,

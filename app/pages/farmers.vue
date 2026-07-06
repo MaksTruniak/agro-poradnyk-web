@@ -18,7 +18,7 @@
     </div>
 
     <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <div v-for="i in 6" :key="i" class="card animate-pulse h-40"></div>
+      <div v-for="i in 6" :key="i" class="card animate-pulse h-32"></div>
     </div>
 
     <div v-else-if="filtered.length === 0" class="text-center py-20">
@@ -31,7 +31,7 @@
       <div v-for="farmer in filtered" :key="farmer.id" class="card hover:shadow-md transition-all">
         <!-- Шапка -->
         <div class="flex items-start gap-4 mb-4">
-          <div class="w-14 h-14 rounded-2xl bg-agro-hover flex items-center justify-center font-bold text-agro text-xl shrink-0">
+          <div class="w-12 h-12 rounded-2xl bg-agro-hover flex items-center justify-center font-bold text-agro text-xl shrink-0">
             {{ farmer.name?.[0]?.toUpperCase() || '?' }}
           </div>
           <div class="flex-1 min-w-0">
@@ -40,75 +40,110 @@
               📍 {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
             </p>
           </div>
-          <span class="text-xs bg-agro-hover text-agro px-2.5 py-1 rounded-full font-semibold shrink-0">
-            {{ ROLE_LABEL[farmer.role] || 'Фермер' }}
-          </span>
         </div>
 
         <!-- Культури -->
-        <div v-if="farmer.crops?.length" class="mb-4">
+        <div class="mb-4">
           <p class="text-xs text-agro-light uppercase tracking-wide mb-2">Вирощує</p>
           <div class="flex flex-wrap gap-1.5">
-            <span v-for="c in farmer.crops.slice(0, 6)" :key="c"
+            <span v-for="c in farmer.crops" :key="c"
               class="text-xs bg-agro-bg text-agro-dark px-2 py-0.5 rounded-full border border-agro-border">
               {{ c }}
             </span>
-            <span v-if="farmer.crops.length > 6" class="text-xs text-agro-light">+{{ farmer.crops.length - 6 }}</span>
           </div>
         </div>
-        <div v-else class="mb-4 text-xs text-agro-light italic">Культури не вказано</div>
 
-        <!-- Статистика -->
-        <div class="flex gap-4 text-xs text-agro-light border-t border-agro-border pt-3">
-          <span>🌾 {{ farmer.fields_count || 0 }} {{ pluralField(farmer.fields_count) }}</span>
-          <span>📐 {{ farmer.total_ha ? farmer.total_ha + ' га' : '—' }}</span>
-        </div>
+        <button
+          @click="startChat(farmer)"
+          :disabled="starting === farmer.id"
+          class="btn-primary w-full text-sm py-2.5"
+        >
+          {{ starting === farmer.id ? '...' : '💬 Написати' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: 'default', ssr: false })
 useSeoMeta({ title: 'Фермери' })
 
 const supabase = useSupabaseClient()
 const search = ref('')
 const regionFilter = ref('')
 
-const pluralField = (n: number) => {
-  if (!n) return 'полів'
-  if (n === 1) return 'поле'
-  if (n >= 2 && n <= 4) return 'поля'
-  return 'полів'
+const router = useRouter()
+const loading = ref(true)
+const starting = ref('')
+const farmers = ref<any[]>([])
+
+const startChat = async (farmer: any) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) { navigateTo('/auth'); return }
+  const uid = session.user.id
+  if (uid === farmer.id) return
+
+  starting.value = farmer.id
+
+  const { data: existing } = await supabase
+    .from('chats')
+    .select('id')
+    .eq('farmer_id', farmer.id)
+    .eq('agronomist_id', uid)
+    .eq('type', 'human')
+    .single()
+
+  if (existing) { router.push(`/dashboard/chats/${existing.id}`); return }
+
+  // Перевіряємо також зворотній напрямок
+  const { data: existing2 } = await supabase
+    .from('chats')
+    .select('id')
+    .eq('farmer_id', uid)
+    .eq('agronomist_id', farmer.id)
+    .eq('type', 'human')
+    .single()
+
+  if (existing2) { router.push(`/dashboard/chats/${existing2.id}`); return }
+
+  // Ініціатор йде в farmer_id, ціль — в agronomist_id
+  const { data: newChat } = await supabase
+    .from('chats')
+    .insert({ farmer_id: uid, agronomist_id: farmer.id, type: 'human', is_unlocked: true })
+    .select().single()
+
+  starting.value = ''
+  if (newChat) router.push(`/dashboard/chats/${newChat.id}`)
 }
 
-const { data: farmersData, pending: loading } = await useAsyncData('farmers', async () => {
+onMounted(async () => {
   const { data: usersData, error } = await supabase
     .from('users')
-    .select('id, name, region, city, role')
+    .select('id, name, region, city')
     .eq('role', 'farmer')
     .order('name')
 
-  if (error || !usersData?.length) return []
+  if (error || !usersData?.length) { loading.value = false; return }
 
   const ids = usersData.map((u: any) => u.id)
   const { data: farmsData } = await supabase
     .from('farms')
-    .select('user_id, hectares, farm_crops(crop_type)')
+    .select('user_id, farm_crops(crop_type)')
     .in('user_id', ids)
 
-  return usersData.map((u: any) => {
+  const result: any[] = []
+  for (const u of usersData) {
     const userFarms = (farmsData || []).filter((f: any) => f.user_id === u.id)
     const crops = [...new Set(userFarms.flatMap((f: any) => (f.farm_crops || []).map((c: any) => c.crop_type)))]
-    const total_ha = userFarms.reduce((sum: number, f: any) => sum + (f.hectares || 0), 0)
-    return { ...u, city: u.city || '', fields_count: userFarms.length, crops, total_ha: total_ha || null }
-  })
+    if (crops.length === 0) continue
+    result.push({ ...u, crops })
+  }
+  farmers.value = result
+  loading.value = false
 })
 
-const farmers = computed(() => farmersData.value || [])
-
-const regions = computed(() => [...new Set(farmers.value.map(f => f.region).filter(Boolean))].sort())
+const regions = computed(() => [...new Set(farmers.value.map((f: any) => f.region).filter(Boolean))].sort())
 
 const filtered = computed(() => farmers.value.filter(f => {
   const q = search.value.toLowerCase()

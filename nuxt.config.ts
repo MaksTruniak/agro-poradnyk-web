@@ -8,6 +8,9 @@ export default defineNuxtConfig({
         protocol: 'ws',
       },
     },
+    build: {
+      sourcemap: true,
+    },
   },
 
   devServer: {

@@ -276,11 +276,6 @@ let searchTimer: any = null
 
 const route = useRoute()
 
-// Завантаження типів
-const typesData = await api.getProductTypes().catch(() => [])
-const typeList = Array.isArray(typesData) ? typesData : (typesData.types || typesData.items || [])
-types.value = typeList.map((t: any) => ({ slug: t.slug, name: t.name }))
-
 // Читаємо search з URL якщо передано (наприклад з AI чату)
 if (route.query.search) {
   searchInput.value = route.query.search as string
@@ -381,11 +376,16 @@ const clearManufacturer = () => {
 
 const loadMore = () => loadProducts(page.value + 1, searchInput.value, selectedType.value, selectedIngredient.value, selectedManufacturer.value)
 
-// Підхоплення manufacturer з query (при переході зі сторінки товару)
-const initManufacturer = route.query.manufacturer as string
-if (initManufacturer) selectedManufacturer.value = initManufacturer
+onMounted(async () => {
+  const typesData = await api.getProductTypes().catch(() => [])
+  const typeList = Array.isArray(typesData) ? typesData : (typesData.types || typesData.items || [])
+  types.value = typeList.map((t: any) => ({ slug: t.slug, name: t.name }))
 
-await loadProducts(1, searchInput.value, '', '', initManufacturer || '')
+  const initManufacturer = route.query.manufacturer as string
+  if (initManufacturer) selectedManufacturer.value = initManufacturer
+
+  await loadProducts(1, searchInput.value, '', '', initManufacturer || '')
+})
 </script>
 
 

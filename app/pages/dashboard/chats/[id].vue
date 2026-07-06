@@ -214,7 +214,13 @@ const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
 const { data: profileData } = await supabase.from('users').select('role').eq('id', uid).single()
-const iAmAgronomist = profileData?.role === 'agronomist'
+
+// Завантаження чату — до визначення ролі в чаті
+const { data: chatData } = await supabase.from('chats').select('*, farmer_id, agronomist_id, is_unlocked').eq('id', chatId).single()
+isUnlocked.value = chatData?.is_unlocked || false
+
+// Визначаємо позицію в чаті за ID, а не за роллю профілю (підтримує farmer-to-farmer)
+const iAmAgronomist = chatData?.agronomist_id === uid
 
 const messageCount = computed(() => messages.value.filter(m => m.sender_id === uid).length)
 
@@ -237,14 +243,10 @@ const autoResize = () => {
   }
 }
 
-// Завантаження чату
-const { data: chatData } = await supabase.from('chats').select('*, farmer_id, agronomist_id, is_unlocked').eq('id', chatId).single()
-isUnlocked.value = chatData?.is_unlocked || false
-
 // Ім'я співрозмовника
 const interlocutorId = iAmAgronomist ? chatData?.farmer_id : chatData?.agronomist_id
-const { data: interlocutorData } = await supabase.from('users').select('name').eq('id', interlocutorId).single()
-interlocutorName.value = interlocutorData?.name || (iAmAgronomist ? 'Фермер' : 'Агроном')
+const { data: interlocutorData } = await supabase.from('users').select('name, role').eq('id', interlocutorId).single()
+interlocutorName.value = interlocutorData?.name || 'Користувач'
 
 // Повідомлення
 const { data: msgsData } = await supabase
