@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'default', ssr: false })
+definePageMeta({ layout: 'default' })
 useSeoMeta({ title: 'Фермери' })
 
 const supabase = useSupabaseClient()
