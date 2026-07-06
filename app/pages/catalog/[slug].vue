@@ -80,14 +80,16 @@
           <div v-if="product.active_ingredients?.length" class="mt-6">
             <p class="font-bold text-agro-dark mb-3 text-sm uppercase tracking-wide">Діючі речовини</p>
             <div class="flex flex-wrap gap-2">
-              <span
+              <NuxtLink
                 v-for="ai in product.active_ingredients"
                 :key="ai.name || ai"
+                :to="ai.slug ? `/ingredient/${ai.slug}` : ''"
+                :class="ai.slug ? 'hover:border-agro hover:text-agro transition-colors cursor-pointer' : ''"
                 class="bg-agro-bg border border-agro-border text-agro-dark text-sm px-3 py-1.5 rounded-lg"
               >
                 {{ ai.name || ai }}
                 <span v-if="ai.concentration" class="text-agro-light"> {{ ai.concentration }}</span>
-              </span>
+              </NuxtLink>
             </div>
           </div>
 

@@ -20,6 +20,7 @@ export const useAgroApi = () => {
     getAnalogs: (slug: string) => $fetch<any>(`${API_BASE}/v1/products/${slug}/analogs`, { headers }),
     getProductTypes: () => $fetch<any>(`${API_BASE}/v1/product-types`, { headers }),
     searchActiveIngredients: (q: string) => $fetch<any>(`${API_BASE}/v1/active-ingredients/search?q=${encodeURIComponent(q)}`, { headers }),
+    getActiveIngredient: (slug: string) => $fetch<any>(`${API_BASE}/v1/active-ingredients/${slug}`, { headers }),
     getManufacturers: () => $fetch<any>(`${API_BASE}/v1/manufacturers`, { headers }),
   }
 }
