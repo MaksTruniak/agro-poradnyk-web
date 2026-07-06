@@ -38,7 +38,7 @@
             @mousedown.prevent="selectIngredient(s)"
             class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0"
           >
-            🧪 {{ s.name }}
+            🧪 {{ s.name || s.active_ingredients?.name }}
           </button>
         </div>
       </div>
@@ -227,8 +227,9 @@ const onIngredientSearch = () => {
 }
 
 const selectIngredient = (s: any) => {
-  selectedIngredient.value = s.slug || s.name
-  ingredientInput.value = s.name
+  const item = s.active_ingredients || s
+  selectedIngredient.value = item.slug || item.name
+  ingredientInput.value = item.name
   showIngredientSuggestions.value = false
   loadProducts(1, '', '', selectedIngredient.value)
 }
