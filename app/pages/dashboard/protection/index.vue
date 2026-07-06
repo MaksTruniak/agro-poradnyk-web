@@ -253,6 +253,37 @@ const farmCropId = route.query.farmCropId as string
 const cropType = route.query.cropType as string
 const supabase = useSupabaseClient()
 
+const CROP_GROUPS: Record<string, string> = {
+  // Зернові
+  'пшениця': 'grain', 'ячмінь': 'grain', 'жито': 'grain', 'овес': 'grain', 'тритикале': 'grain',
+  // Кукурудза
+  'кукурудза': 'corn',
+  // Олійні
+  'соняшник': 'oilseed', 'ріпак': 'oilseed', 'соя': 'oilseed', 'льон': 'oilseed',
+  // Овочеві
+  'томат': 'vegetable', 'помідор': 'vegetable', 'огірок': 'vegetable', 'картопля': 'vegetable',
+  'перець': 'vegetable', 'капуста': 'vegetable', 'цибуля': 'vegetable', 'морква': 'vegetable',
+  'буряк': 'vegetable', 'гарбуз': 'vegetable', 'кабачок': 'vegetable', 'баклажан': 'vegetable',
+  'часник': 'vegetable', 'салат': 'vegetable',
+  // Ягідні
+  'суниця': 'berry', 'полуниця': 'berry', 'малина': 'berry', 'смородина': 'berry',
+  'ожина': 'berry', 'чорниця': 'berry', 'аґрус': 'berry', 'агрус': 'berry', 'журавлина': 'berry',
+  // Плодові
+  'яблуня': 'fruit', 'яблука': 'fruit', 'груша': 'fruit', 'вишня': 'fruit', 'черешня': 'fruit',
+  'слива': 'fruit', 'персик': 'fruit', 'абрикос': 'fruit', 'алича': 'fruit', 'айва': 'fruit',
+  // Виноград
+  'виноград': 'vine',
+}
+
+const getCropGroup = (crop: string): string | null => {
+  if (!crop) return null
+  const lower = crop.toLowerCase().trim()
+  for (const [key, group] of Object.entries(CROP_GROUPS)) {
+    if (lower.includes(key)) return group
+  }
+  return null
+}
+
 const loading = ref(true)
 const saving = ref(false)
 const savingPhase = ref<string | null>(null)
@@ -358,7 +389,10 @@ const hideSuggestions = () => {
 const load = async () => {
   loading.value = true
   const { data: phasesData } = await supabase.from('growth_phases').select('*').order('order_num', { ascending: true })
-  phases.value = (phasesData || []).map((p: any) => ({ key: p.key, emoji: p.emoji, order: p.order_num }))
+  const cropGroup = getCropGroup(cropType)
+  phases.value = (phasesData || [])
+    .filter((p: any) => !p.crop_groups || !cropGroup || p.crop_groups.includes(cropGroup))
+    .map((p: any) => ({ key: p.key, emoji: p.emoji, order: p.order_num }))
 
   if (farmCropId) {
     const { data: programData } = await supabase
