@@ -61,7 +61,7 @@
     </div>
 
     <!-- Контент -->
-    <div class="lg:ml-64 flex-1 flex flex-col min-h-screen">
+    <div class="lg:ml-64 flex-1 flex flex-col h-dvh overflow-hidden">
       <div class="flex-1 pt-14 lg:pt-0 pb-20 lg:pb-0 overflow-y-auto">
         <slot />
       </div>

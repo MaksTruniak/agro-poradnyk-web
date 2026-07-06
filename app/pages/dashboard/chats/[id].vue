@@ -256,7 +256,7 @@ const { data: msgsData } = await supabase
 
 messages.value = msgsData || []
 loading.value = false
-scrollToBottom()
+onMounted(scrollToBottom)
 
 // Позначити прочитаними
 await supabase.from('messages')
