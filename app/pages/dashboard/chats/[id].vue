@@ -58,12 +58,11 @@
           <!-- Чіпи препаратів + кнопка в схему біля кожного -->
           <div v-if="!isMyMessage(msg) && msg.content && extractProducts(msg.content).length" class="mt-1.5 flex flex-wrap gap-1.5 max-w-lg">
             <div v-for="p in extractProducts(msg.content)" :key="p" class="flex items-center gap-0.5">
-              <NuxtLink
-                :to="`/catalog?search=${encodeURIComponent(p)}`"
-                target="_blank"
+              <button
+                @click="openProduct(p)"
                 class="text-xs px-2.5 py-1 bg-agro-hover text-agro border border-agro/30 rounded-l-lg hover:bg-agro hover:text-white transition-colors font-medium">
-                🔍 {{ p }}
-              </NuxtLink>
+                🧪 {{ p }}
+              </button>
               <button
                 v-if="!iAmAgronomist"
                 @click="openSchemeModalForProduct(p)"
@@ -336,6 +335,23 @@ const unlock = async () => {
 }
 
 // Парсинг [[Препарат]] → посилання
+const api = useAgroApi()
+const router = useRouter()
+
+const openProduct = async (name: string) => {
+  try {
+    const data = await api.getProducts({ search: name, limit: 1 })
+    const product = data?.products?.[0] || data?.items?.[0]
+    if (product?.slug) {
+      router.push(`/catalog/${product.slug}`)
+    } else {
+      router.push(`/catalog?search=${encodeURIComponent(name)}`)
+    }
+  } catch {
+    router.push(`/catalog?search=${encodeURIComponent(name)}`)
+  }
+}
+
 const renderMessage = (text: string) => {
   return text.replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
     `<a href="/catalog?search=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${name}</a>`
