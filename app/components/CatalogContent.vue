@@ -194,13 +194,10 @@
 </template>
 
 <script setup lang="ts">
-// Типи які НЕ є пестицидами — виключаємо з каталогу пестицидів
-const PESTICIDE_EXCLUDE = ['fertilizer', 'seed', 'liquid_complex_fertilizer']
-
 useSeoMeta({
-  title: 'Пестициди — АгроПорадник',
-  description: 'Тисячі пестицидів: гербіциди, фунгіциди, інсектициди, протруйники від перевірених виробників.',
-  ogTitle: 'Пестициди — АгроПорадник',
+  title: 'Каталог препаратів і добрив',
+  description: 'Тисячі агрохімічних препаратів і добрив. Гербіциди, фунгіциди, інсектициди, добрива від перевірених продавців з доставкою.',
+  ogTitle: 'Каталог препаратів — АгроПорадник',
 })
 
 const MARKETPLACE = false
@@ -291,7 +288,7 @@ const loadProducts = async (p: number, q: string, type: string, ingredient = '',
   else loadingMore.value = true
 
   try {
-    const data = await api.getProducts({ search: q, type, ingredient, manufacturer, page: p, limit: 20, excludeTypes: PESTICIDE_EXCLUDE })
+    const data = await api.getProducts({ search: q, type, ingredient, manufacturer, page: p, limit: 20 })
     const items = Array.isArray(data) ? data : (data.items || data.data || [])
 
     if (p === 1) products.value = items
@@ -383,9 +380,7 @@ const loadMore = () => loadProducts(page.value + 1, searchInput.value, selectedT
 onMounted(async () => {
   const typesData = await api.getProductTypes().catch(() => [])
   const typeList = Array.isArray(typesData) ? typesData : (typesData.types || typesData.items || [])
-  types.value = typeList
-    .map((t: any) => ({ slug: t.slug, name: t.name }))
-    .filter((t: any) => !PESTICIDE_EXCLUDE.includes(t.slug))
+  types.value = typeList.map((t: any) => ({ slug: t.slug, name: t.name }))
 
   const initManufacturer = route.query.manufacturer as string
   if (initManufacturer) selectedManufacturer.value = initManufacturer
