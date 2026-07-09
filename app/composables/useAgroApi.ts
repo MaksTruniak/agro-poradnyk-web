@@ -6,7 +6,7 @@ export const useAgroApi = () => {
   const headers = { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }
 
   return {
-    getProducts: (params?: { search?: string; type?: string; ingredient?: string; manufacturer?: string; page?: number; limit?: number; excludeTypes?: string[] }) => {
+    getProducts: (params?: { search?: string; type?: string; ingredient?: string; manufacturer?: string; page?: number; limit?: number; excludeTypes?: string[]; includeTypes?: string[] }) => {
       const query = new URLSearchParams()
       if (params?.search) query.append('q', params.search)
       if (params?.type) query.append('type', params.type)
@@ -14,6 +14,7 @@ export const useAgroApi = () => {
       if (params?.manufacturer) query.append('manufacturer', params.manufacturer)
       if (params?.page) query.append('page', String(params.page))
       if (params?.excludeTypes?.length) query.append('exclude_types', params.excludeTypes.join(','))
+      if (params?.includeTypes?.length) query.append('include_types', params.includeTypes.join(','))
       query.append('limit', String(params?.limit || 20))
       return $fetch<any>(`${API_BASE}/v1/products?${query}`, { headers })
     },

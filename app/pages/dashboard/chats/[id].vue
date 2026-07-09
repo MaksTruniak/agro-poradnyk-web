@@ -14,8 +14,29 @@
 
     <!-- Повідомлення -->
     <div ref="messagesEl" class="flex-1 overflow-y-auto p-6 space-y-4 bg-agro-bg">
-      <div v-if="loading" class="flex justify-center py-8">
-        <div class="animate-spin text-2xl">🌿</div>
+      <div v-if="loading" class="space-y-4">
+        <div class="flex items-end gap-2">
+          <div class="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+          <div class="space-y-1.5">
+            <div class="h-10 w-52 bg-white rounded-2xl rounded-bl-sm animate-pulse border border-agro-border"></div>
+          </div>
+        </div>
+        <div class="flex items-end gap-2 justify-end">
+          <div class="h-10 w-40 bg-agro/20 rounded-2xl rounded-br-sm animate-pulse"></div>
+        </div>
+        <div class="flex items-end gap-2">
+          <div class="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+          <div class="space-y-1.5">
+            <div class="h-16 w-64 bg-white rounded-2xl rounded-bl-sm animate-pulse border border-agro-border"></div>
+          </div>
+        </div>
+        <div class="flex items-end gap-2 justify-end">
+          <div class="h-10 w-56 bg-agro/20 rounded-2xl rounded-br-sm animate-pulse"></div>
+        </div>
+        <div class="flex items-end gap-2">
+          <div class="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+          <div class="h-10 w-44 bg-white rounded-2xl rounded-bl-sm animate-pulse border border-agro-border"></div>
+        </div>
       </div>
 
       <template v-else>
@@ -231,7 +252,19 @@ const formatTime = (d: string) => new Date(d).toLocaleTimeString('uk-UA', { hour
 
 const scrollToBottom = () => {
   nextTick(() => {
-    if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+    requestAnimationFrame(() => {
+      if (!messagesEl.value) return
+      // Скролимо сам контейнер
+      messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+      // Також скролимо найближчий scrollable батько (layout wrapper)
+      let el: HTMLElement | null = messagesEl.value.parentElement
+      while (el) {
+        if (el.scrollHeight > el.clientHeight && getComputedStyle(el).overflowY !== 'hidden') {
+          el.scrollTop = el.scrollHeight
+        }
+        el = el.parentElement
+      }
+    })
   })
 }
 
@@ -256,14 +289,19 @@ const { data: msgsData } = await supabase
 
 messages.value = msgsData || []
 loading.value = false
-onMounted(scrollToBottom)
+onMounted(() => {
+  scrollToBottom()
+  setTimeout(scrollToBottom, 150)
+})
 
-// Позначити прочитаними
+// Позначити прочитаними і оновити лічильник в layout
 await supabase.from('messages')
   .update({ is_read: true })
   .eq('chat_id', chatId)
   .eq('role', iAmAgronomist ? 'user' : 'assistant')
   .eq('is_read', false)
+const unreadChats = useState<number>('unread-chats', () => 0)
+unreadChats.value = Math.max(0, unreadChats.value - 1)
 
 // Realtime
 const channel = supabase.channel(`chat-${chatId}`)

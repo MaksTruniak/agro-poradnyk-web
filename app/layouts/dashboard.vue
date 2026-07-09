@@ -102,7 +102,7 @@ const { data: profile } = await useAsyncData('dashboard-profile', async () => {
 })
 
 const cartCount = ref(0)
-const unreadChats = ref(0)
+const unreadChats = useState('unread-chats', () => 0)
 
 const loadUnread = async () => {
   const { data: { session } } = await supabase.auth.getSession()
@@ -176,6 +176,7 @@ const navItems = computed(() => {
   if (role.value !== 'dacha') base.push({ to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' })
   return [...base,
     { to: '/catalog', icon: '📖', label: 'Каталог' },
+    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI агроном' },
     ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }, { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' }] : []),
     { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
@@ -202,7 +203,7 @@ const bottomNavItems = computed(() => {
   return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
     { to: '/dashboard/fields', icon: '🌾', label: role.value === 'dacha' ? 'Культури' : 'Поля' },
-    { to: '/catalog', icon: '📖', label: 'Каталог' },
+    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
     { to: '/dashboard/settings', icon: '⚙️', label: 'Більше' },
   ]

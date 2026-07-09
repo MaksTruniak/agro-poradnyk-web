@@ -23,33 +23,6 @@
         </div>
       </div>
 
-      <!-- Статистика -->
-      <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="card text-center py-4">
-          <p class="text-2xl font-extrabold text-agro">{{ stats.clients }}</p>
-          <p class="text-xs text-agro-light mt-1">Клієнтів</p>
-        </div>
-        <div class="card text-center py-4">
-          <p class="text-2xl font-extrabold text-agro">{{ stats.fields }}</p>
-          <p class="text-xs text-agro-light mt-1">Полів</p>
-        </div>
-        <div class="card text-center py-4">
-          <p class="text-2xl font-extrabold text-agro">{{ stats.chats }}</p>
-          <p class="text-xs text-agro-light mt-1">Консультацій</p>
-        </div>
-      </div>
-
-      <!-- Швидкі дії -->
-      <div class="grid grid-cols-2 gap-3 mb-6">
-        <NuxtLink to="/dashboard/chats" class="card flex flex-col items-center py-5 hover:shadow-md transition-shadow text-center">
-          <span class="text-3xl mb-2">💬</span>
-          <span class="font-semibold text-agro text-sm">Консультації</span>
-        </NuxtLink>
-        <NuxtLink to="/dashboard/fields" class="card flex flex-col items-center py-5 hover:shadow-md transition-shadow text-center">
-          <span class="text-3xl mb-2">🌾</span>
-          <span class="font-semibold text-agro text-sm">Поля клієнтів</span>
-        </NuxtLink>
-      </div>
 
       <!-- Вкладки -->
       <div class="flex bg-agro-hover rounded-2xl p-1 mb-6">

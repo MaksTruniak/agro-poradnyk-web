@@ -288,10 +288,11 @@
                   <div v-if="showVarietySuggestions" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-10 overflow-hidden">
                     <button v-for="v in varietySuggestions" :key="v" @mousedown.prevent="newVariety = v; showVarietySuggestions = false"
                       class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover border-b border-agro-border last:border-0">{{ v }}</button>
-                    <div v-if="newVariety.trim() && !varietySuggestions.find(v => v.toLowerCase() === newVariety.trim().toLowerCase())"
-                      class="px-4 py-2.5 text-sm text-agro-light">
+                    <button v-if="newVariety.trim() && !varietySuggestions.find(v => v.toLowerCase() === newVariety.trim().toLowerCase())"
+                      @mousedown.prevent="showVarietySuggestions = false"
+                      class="w-full text-left px-4 py-2.5 text-sm text-agro-light hover:bg-agro-hover">
                       ➕ "{{ newVariety }}" — новий сорт, збережеться в базі
-                    </div>
+                    </button>
                     <div v-if="!varietySuggestions.length && !newVariety.trim()" class="px-4 py-3 text-sm text-agro-light text-center">
                       Немає сортів — введіть свій
                     </div>

@@ -65,11 +65,24 @@
     </div>
 
     <!-- Loading skeleton -->
-    <div v-if="loading" class="flex-1 px-6 py-8">
-      <div class="h-6 bg-agro-bg rounded w-48 mb-2 animate-pulse"></div>
-      <div class="h-4 bg-agro-bg rounded w-64 mb-6 animate-pulse"></div>
-      <div class="grid sm:grid-cols-2 gap-3">
-        <div v-for="i in 3" :key="i" class="card animate-pulse h-20"></div>
+    <div v-if="loading" class="flex-1 overflow-y-auto p-6 space-y-4 bg-agro-bg">
+      <div class="flex items-end gap-2">
+        <div class="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+        <div class="h-12 w-64 bg-white rounded-2xl rounded-bl-sm animate-pulse border border-agro-border"></div>
+      </div>
+      <div class="flex items-end gap-2 justify-end">
+        <div class="h-10 w-44 bg-agro/20 rounded-2xl rounded-br-sm animate-pulse"></div>
+      </div>
+      <div class="flex items-end gap-2">
+        <div class="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+        <div class="h-20 w-72 bg-white rounded-2xl rounded-bl-sm animate-pulse border border-agro-border"></div>
+      </div>
+      <div class="flex items-end gap-2 justify-end">
+        <div class="h-10 w-52 bg-agro/20 rounded-2xl rounded-br-sm animate-pulse"></div>
+      </div>
+      <div class="flex items-end gap-2">
+        <div class="w-8 h-8 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+        <div class="h-10 w-48 bg-white rounded-2xl rounded-bl-sm animate-pulse border border-agro-border"></div>
       </div>
     </div>
 
@@ -91,6 +104,16 @@
         </div>
 
         <template v-else>
+          <!-- Банер обмеження історії для free -->
+          <div v-if="!isPro && hasOlderHistory" class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+            <span class="text-lg shrink-0">🔒</span>
+            <div class="flex-1">
+              <p class="font-medium text-amber-800">Показано лише 7 днів історії</p>
+              <p class="text-amber-600 text-xs mt-0.5">Перейдіть на PRO щоб бачити повну історію</p>
+            </div>
+            <NuxtLink to="/dashboard/subscription" class="text-xs font-bold text-amber-700 hover:text-amber-900 shrink-0">PRO →</NuxtLink>
+          </div>
+
           <div v-for="(msg, i) in messages" :key="i" class="flex gap-3" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
             <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm"
               :class="msg.role === 'user' ? 'bg-agro text-white' : 'bg-agro-hover text-agro'">
@@ -245,6 +268,7 @@ const loading = ref(true)
 const isPro = ref(false)
 const dailyCount = ref(0)
 const DAILY_LIMIT = 5
+const hasOlderHistory = ref(false)
 const farmName = ref('')
 const farmHectares = ref<number | null>(null)
 const farmRegion = ref('')
@@ -377,7 +401,20 @@ const loadHistory = async (farmCropId: string | null) => {
 
   if (data) {
     currentChatId.value = data.id
-    messages.value = (data.ai_messages || []).map((m: any) => ({
+    let msgs = data.ai_messages || []
+
+    // Free: тільки останні 7 днів
+    if (!isPro.value) {
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - 7)
+      const filtered = msgs.filter((m: any) => new Date(m.created_at) >= cutoff)
+      hasOlderHistory.value = filtered.length < msgs.length
+      msgs = filtered
+    } else {
+      hasOlderHistory.value = false
+    }
+
+    messages.value = msgs.map((m: any) => ({
       role: m.role,
       content: m.content,
       products: extractProducts(m.content),

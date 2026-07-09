@@ -7,7 +7,10 @@
           <span class="font-bold text-agro-dark text-lg">АгроПорадник</span>
         </NuxtLink>
         <nav class="hidden md:flex items-center gap-6">
-          <NuxtLink to="/catalog" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Каталог</NuxtLink>
+          <NuxtLink to="/catalog" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Пестициди</NuxtLink>
+          <NuxtLink to="/fertilizers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Добрива</NuxtLink>
+          <NuxtLink to="/bio" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Біопрепарати</NuxtLink>
+          <NuxtLink to="/ingredients" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Діючі речовини</NuxtLink>
           <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
           <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
         </nav>
@@ -31,7 +34,10 @@
       <!-- Мобільне меню -->
       <Transition name="slide">
         <div v-if="mobileMenu" class="md:hidden bg-white border-t border-agro-border px-4 py-4 space-y-2">
-          <NuxtLink @click="mobileMenu = false" to="/catalog" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">📖 Каталог</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/catalog" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🛡️ Пестициди</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/fertilizers" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌱 Добрива</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/bio" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🍃 Біопрепарати</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌾 Фермери</NuxtLink>
           <div class="border-t border-agro-border pt-3 mt-3 flex gap-2">
@@ -58,7 +64,10 @@
           <div>
             <p class="font-semibold text-agro-dark text-sm mb-3">Платформа</p>
             <ul class="space-y-2 text-sm text-agro-light">
-              <li><NuxtLink to="/catalog" class="hover:text-agro transition-colors">Каталог препаратів</NuxtLink></li>
+              <li><NuxtLink to="/catalog" class="hover:text-agro transition-colors">Пестициди</NuxtLink></li>
+              <li><NuxtLink to="/fertilizers" class="hover:text-agro transition-colors">Добрива</NuxtLink></li>
+              <li><NuxtLink to="/bio" class="hover:text-agro transition-colors">Біопрепарати</NuxtLink></li>
+              <li><NuxtLink to="/ingredients" class="hover:text-agro transition-colors">Діючі речовини</NuxtLink></li>
               <li><NuxtLink to="/agronomists" class="hover:text-agro transition-colors">Агрономи</NuxtLink></li>
               <li><NuxtLink to="/farmers" class="hover:text-agro transition-colors">Фермери</NuxtLink></li>
               <li><NuxtLink to="/auth?mode=register" class="hover:text-agro transition-colors">Реєстрація</NuxtLink></li>
