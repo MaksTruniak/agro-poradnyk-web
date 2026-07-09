@@ -83,8 +83,9 @@ const uid = session?.user?.id
 // Завантажуємо агрономів
 const { data: profiles } = await supabase
   .from('agronomist_profiles')
-  .select('*, users(id, name)')
-  .order('promotion_plan', { ascending: false }) // top спочатку
+  .select('*, users!inner(id, name, role)')
+  .eq('users.role', 'agronomist')
+  .order('promotion_plan', { ascending: false })
 
 agronomists.value = (profiles || []).map((p: any) => ({
   id: p.id,
