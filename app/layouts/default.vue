@@ -37,6 +37,7 @@
           <NuxtLink @click="mobileMenu = false" to="/catalog" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🛡️ Пестициди</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/fertilizers" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌱 Добрива</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/bio" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🍃 Біопрепарати</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/seeds" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌾 Насіння</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌾 Фермери</NuxtLink>
@@ -67,6 +68,7 @@
               <li><NuxtLink to="/catalog" class="hover:text-agro transition-colors">Пестициди</NuxtLink></li>
               <li><NuxtLink to="/fertilizers" class="hover:text-agro transition-colors">Добрива</NuxtLink></li>
               <li><NuxtLink to="/bio" class="hover:text-agro transition-colors">Біопрепарати</NuxtLink></li>
+              <li><NuxtLink to="/seeds" class="hover:text-agro transition-colors">Насіння</NuxtLink></li>
               <li><NuxtLink to="/ingredients" class="hover:text-agro transition-colors">Діючі речовини</NuxtLink></li>
               <li><NuxtLink to="/agronomists" class="hover:text-agro transition-colors">Агрономи</NuxtLink></li>
               <li><NuxtLink to="/farmers" class="hover:text-agro transition-colors">Фермери</NuxtLink></li>
