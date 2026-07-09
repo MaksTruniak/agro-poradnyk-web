@@ -51,7 +51,7 @@
 
         <!-- Статистика -->
         <div class="flex gap-4 text-xs text-agro-light mb-5">
-          <span>👥 {{ agro.clients_count || 0 }} клієнтів</span>
+          <span v-if="agro.clients_count">👥 {{ agro.clients_count }} клієнтів</span>
           <span v-if="agro.region">📍 {{ agro.region }}</span>
         </div>
 
