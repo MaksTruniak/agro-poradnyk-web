@@ -7,9 +7,27 @@
           <span class="font-bold text-agro-dark text-lg">АгроПорадник</span>
         </NuxtLink>
         <nav class="hidden md:flex items-center gap-6">
-          <NuxtLink to="/catalog" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Пестициди</NuxtLink>
-          <NuxtLink to="/fertilizers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Добрива</NuxtLink>
-          <NuxtLink to="/bio" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Біопрепарати</NuxtLink>
+          <!-- Каталог з dropdown -->
+          <div class="relative" @mouseenter="catalogOpen = true" @mouseleave="catalogOpen = false">
+            <button class="flex items-center gap-1 text-agro-light hover:text-agro-dark font-medium transition-colors py-1">
+              Каталог
+              <svg class="w-4 h-4 transition-transform" :class="catalogOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="catalogOpen" class="absolute left-0 top-full pt-2 z-50">
+                <div class="bg-white rounded-2xl shadow-xl border border-agro-border py-2 w-56">
+                  <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" :to="item.to"
+                    class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">{{ item.emoji }}</span>
+                    <span>{{ item.label }}</span>
+                  </NuxtLink>
+                </div>
+              </div>
+            </Transition>
+          </div>
+
           <NuxtLink to="/ingredients" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Діючі речовини</NuxtLink>
           <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
           <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
@@ -19,10 +37,10 @@
             <NuxtLink v-if="!user" to="/auth" class="btn-outline text-sm py-2">Увійти</NuxtLink>
             <NuxtLink v-if="!user" to="/auth?mode=register" class="bg-agro-dark text-white font-semibold rounded-xl px-6 py-2 text-sm hover:bg-agro transition-colors">Реєстрація</NuxtLink>
             <NuxtLink v-if="MARKETPLACE && user" to="/cart" class="relative p-2 hover:bg-agro-bg rounded-xl transition-colors">
-            <span class="text-xl">🛒</span>
-            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
-          </NuxtLink>
-          <NuxtLink v-if="user" to="/dashboard" class="btn-primary text-sm py-2">Кабінет</NuxtLink>
+              <span class="text-xl">🛒</span>
+              <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="user" to="/dashboard" class="btn-primary text-sm py-2">Кабінет</NuxtLink>
           </div>
           <!-- Бургер для мобільного -->
           <button @click="mobileMenu = !mobileMenu" class="md:hidden p-2 rounded-xl hover:bg-agro-bg transition-colors">
@@ -33,15 +51,17 @@
 
       <!-- Мобільне меню -->
       <Transition name="slide">
-        <div v-if="mobileMenu" class="md:hidden bg-white border-t border-agro-border px-4 py-4 space-y-2">
-          <NuxtLink @click="mobileMenu = false" to="/catalog" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🛡️ Пестициди</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/fertilizers" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌱 Добрива</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/bio" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🍃 Біопрепарати</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/seeds" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌾 Насіння</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-3 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌾 Фермери</NuxtLink>
-          <div class="border-t border-agro-border pt-3 mt-3 flex gap-2">
+        <div v-if="mobileMenu" class="md:hidden bg-white border-t border-agro-border px-4 py-4 space-y-1">
+          <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Каталог</p>
+          <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" @click="mobileMenu = false" :to="item.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">
+            <span>{{ item.emoji }}</span> {{ item.label }}
+          </NuxtLink>
+          <div class="border-t border-agro-border my-2"></div>
+          <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">👨‍🌾 Фермери</NuxtLink>
+          <div class="border-t border-agro-border pt-3 mt-2 flex gap-2">
             <NuxtLink v-if="!user" @click="mobileMenu = false" to="/auth" class="btn-outline text-sm py-2 flex-1 text-center">Увійти</NuxtLink>
             <NuxtLink v-if="!user" @click="mobileMenu = false" to="/auth?mode=register" class="btn-primary text-sm py-2 flex-1 text-center">Реєстрація</NuxtLink>
             <NuxtLink v-if="user" @click="mobileMenu = false" to="/dashboard" class="btn-primary text-sm py-2 flex-1 text-center">Кабінет</NuxtLink>
@@ -63,16 +83,12 @@
             <p class="text-sm text-agro-light leading-relaxed">Цифровий помічник для фермерів, агрономів і продавців агрохімії.</p>
           </div>
           <div>
-            <p class="font-semibold text-agro-dark text-sm mb-3">Платформа</p>
+            <p class="font-semibold text-agro-dark text-sm mb-3">Каталог</p>
             <ul class="space-y-2 text-sm text-agro-light">
-              <li><NuxtLink to="/catalog" class="hover:text-agro transition-colors">Пестициди</NuxtLink></li>
-              <li><NuxtLink to="/fertilizers" class="hover:text-agro transition-colors">Добрива</NuxtLink></li>
-              <li><NuxtLink to="/bio" class="hover:text-agro transition-colors">Біопрепарати</NuxtLink></li>
-              <li><NuxtLink to="/seeds" class="hover:text-agro transition-colors">Насіння</NuxtLink></li>
-              <li><NuxtLink to="/ingredients" class="hover:text-agro transition-colors">Діючі речовини</NuxtLink></li>
-              <li><NuxtLink to="/agronomists" class="hover:text-agro transition-colors">Агрономи</NuxtLink></li>
-              <li><NuxtLink to="/farmers" class="hover:text-agro transition-colors">Фермери</NuxtLink></li>
-              <li><NuxtLink to="/auth?mode=register" class="hover:text-agro transition-colors">Реєстрація</NuxtLink></li>
+              <li v-for="item in CATALOG_MENU" :key="item.to">
+                <NuxtLink :to="item.to" class="hover:text-agro transition-colors">{{ item.emoji }} {{ item.label }}</NuxtLink>
+              </li>
+              <li><NuxtLink to="/ingredients" class="hover:text-agro transition-colors">🧪 Діючі речовини</NuxtLink></li>
             </ul>
           </div>
           <div>
@@ -108,9 +124,17 @@
 <script setup lang="ts">
 const MARKETPLACE = false
 
+const CATALOG_MENU = [
+  { to: '/catalog',     emoji: '🛡️', label: 'Пестициди' },
+  { to: '/fertilizers', emoji: '🌱', label: 'Добрива' },
+  { to: '/bio',         emoji: '🍃', label: 'Біопрепарати' },
+  { to: '/seeds',       emoji: '🌾', label: 'Насіння' },
+]
+
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const mobileMenu = ref(false)
+const catalogOpen = ref(false)
 const route = useRoute()
 
 const cartCount = ref(0)
@@ -124,11 +148,13 @@ const loadCartCount = async () => {
 }
 
 onMounted(loadCartCount)
-watch(() => route.path, () => { mobileMenu.value = false; loadCartCount() })
+watch(() => route.path, () => { mobileMenu.value = false; catalogOpen.value = false; loadCartCount() })
 useNuxtApp().hooks.hook('cart:updated' as any, loadCartCount)
 </script>
 
 <style scoped>
 .slide-enter-active, .slide-leave-active { transition: all 0.2s ease; }
 .slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(-8px); }
+.dropdown-enter-active, .dropdown-leave-active { transition: all 0.15s ease; }
+.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>
