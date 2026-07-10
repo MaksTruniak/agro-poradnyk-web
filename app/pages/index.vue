@@ -56,7 +56,7 @@
         <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-3">🌾 Що вирощують фермери</h2>
         <p class="text-center text-agro-light mb-12">Найпоширеніші культури серед учасників платформи</p>
         <div v-if="cropStats.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <NuxtLink v-for="c in cropStats" :key="c.crop_type" :to="`/farmers?crop=${encodeURIComponent(c.crop_type)}`"
+          <NuxtLink v-for="c in cropStats" :key="c.crop_type" :to="`/farmers?crop=${cropToSlug(c.crop_type)}`"
             class="card text-center hover:shadow-md transition-all hover:border-agro border-2 border-transparent">
             <div class="text-4xl mb-2">{{ c.emoji }}</div>
             <p class="font-semibold text-agro-dark text-sm">{{ c.crop_type }}</p>
@@ -139,6 +139,18 @@ const CROP_EMOJI: Record<string, string> = {
 }
 
 const pluralFarmer = (n: number) => n === 1 ? 'фермер' : n >= 2 && n <= 4 ? 'фермери' : 'фермерів'
+
+const CROP_SLUG: Record<string, string> = {
+  'Пшениця': 'pshenytsia', 'Кукурудза': 'kukurudza', 'Соняшник': 'soniashnyk',
+  'Ріпак': 'ripak', 'Соя': 'soia', 'Ячмінь': 'yachmin', 'Жито': 'zhyto',
+  'Буряк': 'buryak', 'Картопля': 'kartoplia', 'Томати': 'tomaty',
+  'Огірки': 'ohirky', 'Морква': 'morkva', 'Цибуля': 'tsybulya',
+  'Часник': 'chasnyk', 'Капуста': 'kapusta', 'Перець': 'perets',
+  'Полуниця': 'polunytsia', 'Смородина': 'smorodyna', 'Малина': 'malyna',
+  'Виноград': 'vynograd', 'Яблука': 'yabluka', 'Груші': 'hrushi',
+  'Черешня': 'chereshnia', 'Слива': 'slyva',
+}
+const cropToSlug = (crop: string) => CROP_SLUG[crop] || crop.toLowerCase().replace(/\s+/g, '-')
 
 const cropStats = ref<any[]>([])
 const brands = ref<any[]>([])

@@ -82,7 +82,19 @@ const supabase = useSupabaseClient()
 const route = useRoute()
 const search = ref('')
 const regionFilter = ref('')
-const cropFilter = ref((route.query.crop as string) || '')
+
+const SLUG_TO_CROP: Record<string, string> = {
+  'pshenytsia': 'Пшениця', 'kukurudza': 'Кукурудза', 'soniashnyk': 'Соняшник',
+  'ripak': 'Ріпак', 'soia': 'Соя', 'yachmin': 'Ячмінь', 'zhyto': 'Жито',
+  'buryak': 'Буряк', 'kartoplia': 'Картопля', 'tomaty': 'Томати',
+  'ohirky': 'Огірки', 'morkva': 'Морква', 'tsybulya': 'Цибуля',
+  'chasnyk': 'Часник', 'kapusta': 'Капуста', 'perets': 'Перець',
+  'polunytsia': 'Полуниця', 'smorodyna': 'Смородина', 'malyna': 'Малина',
+  'vynograd': 'Виноград', 'yabluka': 'Яблука', 'hrushi': 'Груші',
+  'chereshnia': 'Черешня', 'slyva': 'Слива',
+}
+const slugParam = (route.query.crop as string) || ''
+const cropFilter = ref(SLUG_TO_CROP[slugParam] || '')
 
 const router = useRouter()
 const loading = ref(true)
