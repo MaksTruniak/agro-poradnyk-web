@@ -47,10 +47,14 @@
             <Transition name="dropdown">
               <div v-if="infoOpen" class="absolute right-0 top-full pt-2 z-50">
                 <div class="bg-white rounded-2xl shadow-xl border border-agro-border py-2 w-56">
-                  <NuxtLink to="/ingredients"
-                    class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
-                    <span class="text-lg">🧪</span>
-                    <span>Діючі речовини</span>
+                  <NuxtLink to="/ingredients" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">🧪</span><span>Діючі речовини</span>
+                  </NuxtLink>
+                  <NuxtLink to="/weeds" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">🌿</span><span>Бур'яни</span>
+                  </NuxtLink>
+                  <NuxtLink to="/diseases" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">🦠</span><span>Хвороби рослин</span>
                   </NuxtLink>
                 </div>
               </div>
@@ -86,6 +90,8 @@
           <div class="border-t border-agro-border my-2"></div>
           <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Інформація</p>
           <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/weeds" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌿 Бур'яни</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/diseases" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🦠 Хвороби рослин</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">👨‍🌾 Фермери</NuxtLink>
           <div class="border-t border-agro-border pt-3 mt-2 flex gap-2">

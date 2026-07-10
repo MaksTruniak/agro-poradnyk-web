@@ -43,5 +43,25 @@ export const useAgroApi = () => {
     },
     getFertilizerCategories: () => $fetch<any>(`${API_BASE}/v1/fertilizers/categories`, { headers }),
     getFertilizer: (slug: string) => $fetch<any>(`${API_BASE}/v1/fertilizers/${slug}`, { headers }),
+    getWeeds: (params?: { q?: string; category?: string; bio_class?: string; limit?: number; offset?: number }) => {
+      const qs = new URLSearchParams()
+      if (params?.q) qs.set('q', params.q)
+      if (params?.category) qs.set('category', params.category)
+      if (params?.bio_class) qs.set('bio_class', params.bio_class)
+      if (params?.limit) qs.set('limit', String(params.limit))
+      if (params?.offset) qs.set('offset', String(params.offset))
+      return $fetch<any>(`${API_BASE}/v1/weeds?${qs}`, { headers })
+    },
+    getWeed: (slug: string) => $fetch<any>(`${API_BASE}/v1/weeds/${slug}`, { headers }),
+    getDiseases: (params?: { q?: string; category?: string; culture?: string; limit?: number; offset?: number }) => {
+      const qs = new URLSearchParams()
+      if (params?.q) qs.set('q', params.q)
+      if (params?.category) qs.set('category', params.category)
+      if (params?.culture) qs.set('culture', params.culture)
+      if (params?.limit) qs.set('limit', String(params.limit))
+      if (params?.offset) qs.set('offset', String(params.offset))
+      return $fetch<any>(`${API_BASE}/v1/diseases?${qs}`, { headers })
+    },
+    getDisease: (slug: string) => $fetch<any>(`${API_BASE}/v1/diseases/${slug}`, { headers }),
   }
 }
