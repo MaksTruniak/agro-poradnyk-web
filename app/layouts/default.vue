@@ -2,18 +2,18 @@
   <div class="min-h-screen bg-agro-bg">
     <header class="bg-white border-b border-agro-border sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center gap-6">
-        <!-- Ліва частина: Агрономи, Фермери, Лого -->
-        <nav class="hidden md:flex items-center gap-5">
-          <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
-          <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
-        </nav>
-
         <NuxtLink to="/" class="flex items-center gap-2 shrink-0">
           <span class="text-2xl">🌾</span>
           <span class="font-bold text-agro-dark text-lg">АгроПорадник</span>
         </NuxtLink>
 
-        <!-- Центр/права частина: Каталог, Діючі речовини, Кабінет -->
+        <!-- Ліва: Агрономи, Фермери -->
+        <nav class="hidden md:flex items-center gap-5">
+          <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
+          <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
+        </nav>
+
+        <!-- Права: Каталог, Діючі речовини -->
         <nav class="hidden md:flex items-center gap-5 flex-1 justify-end">
           <!-- Каталог з dropdown -->
           <div class="relative" @mouseenter="catalogOpen = true" @mouseleave="catalogOpen = false">
