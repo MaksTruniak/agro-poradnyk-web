@@ -36,7 +36,26 @@
             </Transition>
           </div>
 
-          <NuxtLink to="/ingredients" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Діючі речовини</NuxtLink>
+          <!-- Інформація з dropdown -->
+          <div class="relative" @mouseenter="infoOpen = true" @mouseleave="infoOpen = false">
+            <button class="flex items-center gap-1 text-agro-light hover:text-agro-dark font-medium transition-colors py-1">
+              Інформація
+              <svg class="w-4 h-4 transition-transform" :class="infoOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <Transition name="dropdown">
+              <div v-if="infoOpen" class="absolute right-0 top-full pt-2 z-50">
+                <div class="bg-white rounded-2xl shadow-xl border border-agro-border py-2 w-56">
+                  <NuxtLink to="/ingredients"
+                    class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">🧪</span>
+                    <span>Діючі речовини</span>
+                  </NuxtLink>
+                </div>
+              </div>
+            </Transition>
+          </div>
         </nav>
 
         <div class="flex items-center gap-2 shrink-0">
@@ -65,6 +84,7 @@
             <span>{{ item.emoji }}</span> {{ item.label }}
           </NuxtLink>
           <div class="border-t border-agro-border my-2"></div>
+          <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Інформація</p>
           <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">👨‍🌾 Фермери</NuxtLink>
@@ -142,6 +162,7 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const mobileMenu = ref(false)
 const catalogOpen = ref(false)
+const infoOpen = ref(false)
 const route = useRoute()
 
 const cartCount = ref(0)
@@ -155,7 +176,7 @@ const loadCartCount = async () => {
 }
 
 onMounted(loadCartCount)
-watch(() => route.path, () => { mobileMenu.value = false; catalogOpen.value = false; loadCartCount() })
+watch(() => route.path, () => { mobileMenu.value = false; catalogOpen.value = false; infoOpen.value = false; loadCartCount() })
 useNuxtApp().hooks.hook('cart:updated' as any, loadCartCount)
 </script>
 
