@@ -129,28 +129,9 @@ const features = [
   { icon: '🔔', title: 'Push-сповіщення', desc: 'Нагадування про обробки, нові повідомлення та замовлення' },
 ]
 
-const CROP_EMOJI: Record<string, string> = {
-  'Пшениця': '🌾', 'Кукурудза': '🌽', 'Соняшник': '🌻', 'Ріпак': '🌿',
-  'Соя': '🫘', 'Ячмінь': '🌾', 'Жито': '🌾', 'Буряк': '🫚',
-  'Картопля': '🥔', 'Томати': '🍅', 'Огірки': '🥒', 'Морква': '🥕',
-  'Цибуля': '🧅', 'Часник': '🧄', 'Капуста': '🥬', 'Перець': '🌶️',
-  'Полуниця': '🍓', 'Смородина': '🫐', 'Малина': '🍒', 'Виноград': '🍇',
-  'Яблука': '🍎', 'Груші': '🍐', 'Черешня': '🍒', 'Слива': '🍑',
-}
+const { cropToSlug, cropEmoji: getCropEmoji } = await import('~/utils/cropSlugs')
 
 const pluralFarmer = (n: number) => n === 1 ? 'фермер' : n >= 2 && n <= 4 ? 'фермери' : 'фермерів'
-
-const CROP_SLUG: Record<string, string> = {
-  'Пшениця': 'pshenytsia', 'Кукурудза': 'kukurudza', 'Соняшник': 'soniashnyk',
-  'Ріпак': 'ripak', 'Соя': 'soia', 'Ячмінь': 'yachmin', 'Жито': 'zhyto',
-  'Буряк': 'buryak', 'Картопля': 'kartoplia', 'Томати': 'tomaty',
-  'Огірки': 'ohirky', 'Морква': 'morkva', 'Цибуля': 'tsybulya',
-  'Часник': 'chasnyk', 'Капуста': 'kapusta', 'Перець': 'perets',
-  'Полуниця': 'polunytsia', 'Смородина': 'smorodyna', 'Малина': 'malyna',
-  'Виноград': 'vynograd', 'Яблука': 'yabluka', 'Груші': 'hrushi',
-  'Черешня': 'chereshnia', 'Слива': 'slyva',
-}
-const cropToSlug = (crop: string) => CROP_SLUG[crop] || crop.toLowerCase().replace(/\s+/g, '-')
 
 const cropStats = ref<any[]>([])
 const brands = ref<any[]>([])
@@ -167,7 +148,7 @@ onMounted(async () => {
     map[row.crop_type] = (map[row.crop_type] || 0) + 1
   }
   cropStats.value = Object.entries(map)
-    .map(([crop_type, count]) => ({ crop_type, count, emoji: CROP_EMOJI[crop_type] || '🌱' }))
+    .map(([crop_type, count]) => ({ crop_type, count, emoji: getCropEmoji(crop_type) }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 12)
 

@@ -70,28 +70,11 @@ const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
 
-const SLUG_TO_CROP: Record<string, string> = {
-  'pshenytsia': 'Пшениця', 'kukurudza': 'Кукурудза', 'soniashnyk': 'Соняшник',
-  'ripak': 'Ріпак', 'soia': 'Соя', 'yachmin': 'Ячмінь', 'zhyto': 'Жито',
-  'buryak': 'Буряк', 'kartoplia': 'Картопля', 'tomaty': 'Томати',
-  'ohirky': 'Огірки', 'morkva': 'Морква', 'tsybulya': 'Цибуля',
-  'chasnyk': 'Часник', 'kapusta': 'Капуста', 'perets': 'Перець',
-  'polunytsia': 'Полуниця', 'smorodyna': 'Смородина', 'malyna': 'Малина',
-  'vynograd': 'Виноград', 'yabluka': 'Яблука', 'hrushi': 'Груші',
-  'chereshnia': 'Черешня', 'slyva': 'Слива',
-}
-const CROP_EMOJI: Record<string, string> = {
-  'Пшениця': '🌾', 'Кукурудза': '🌽', 'Соняшник': '🌻', 'Ріпак': '🌿',
-  'Соя': '🫘', 'Ячмінь': '🌾', 'Жито': '🌾', 'Буряк': '🫚',
-  'Картопля': '🥔', 'Томати': '🍅', 'Огірки': '🥒', 'Морква': '🥕',
-  'Цибуля': '🧅', 'Часник': '🧄', 'Капуста': '🥬', 'Перець': '🌶️',
-  'Полуниця': '🍓', 'Смородина': '🫐', 'Малина': '🍒', 'Виноград': '🍇',
-  'Яблука': '🍎', 'Груші': '🍐', 'Черешня': '🍒', 'Слива': '🍑',
-}
+const { slugToCrop, cropEmoji: getCropEmoji } = await import('~/utils/cropSlugs')
 
 const cropSlug = route.params.crop as string
-const cropName = SLUG_TO_CROP[cropSlug] || cropSlug
-const cropEmoji = CROP_EMOJI[cropName] || '🌱'
+const cropName = slugToCrop(cropSlug)
+const cropEmoji = getCropEmoji(cropName)
 
 useHead({ title: `Фермери — ${cropName} | АгроПорадник` })
 
