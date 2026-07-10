@@ -5,15 +5,6 @@
       <p class="text-agro-light mt-1">Учасники спільноти АгроПорадник</p>
     </div>
 
-    <!-- Активний фільтр культури -->
-    <div v-if="cropFilter" class="flex items-center gap-2 mb-4">
-      <span class="text-sm text-agro-dark">Культура:</span>
-      <span class="bg-agro text-white text-sm px-3 py-1 rounded-full font-medium flex items-center gap-2">
-        {{ cropFilter }}
-        <button @click="cropFilter = ''" class="hover:opacity-70">✕</button>
-      </span>
-    </div>
-
     <!-- Пошук + фільтр -->
     <div class="flex flex-col sm:flex-row gap-3 mb-8">
       <div class="relative flex-1 max-w-xl">
@@ -79,22 +70,8 @@ definePageMeta({ layout: 'default' })
 useSeoMeta({ title: 'Фермери' })
 
 const supabase = useSupabaseClient()
-const route = useRoute()
 const search = ref('')
 const regionFilter = ref('')
-
-const SLUG_TO_CROP: Record<string, string> = {
-  'pshenytsia': 'Пшениця', 'kukurudza': 'Кукурудза', 'soniashnyk': 'Соняшник',
-  'ripak': 'Ріпак', 'soia': 'Соя', 'yachmin': 'Ячмінь', 'zhyto': 'Жито',
-  'buryak': 'Буряк', 'kartoplia': 'Картопля', 'tomaty': 'Томати',
-  'ohirky': 'Огірки', 'morkva': 'Морква', 'tsybulya': 'Цибуля',
-  'chasnyk': 'Часник', 'kapusta': 'Капуста', 'perets': 'Перець',
-  'polunytsia': 'Полуниця', 'smorodyna': 'Смородина', 'malyna': 'Малина',
-  'vynograd': 'Виноград', 'yabluka': 'Яблука', 'hrushi': 'Груші',
-  'chereshnia': 'Черешня', 'slyva': 'Слива',
-}
-const slugParam = (route.query.crop as string) || ''
-const cropFilter = ref(SLUG_TO_CROP[slugParam] || '')
 
 const router = useRouter()
 const loading = ref(true)
@@ -172,7 +149,6 @@ const filtered = computed(() => farmers.value.filter(f => {
   const q = search.value.toLowerCase()
   const matchSearch = !q || f.name?.toLowerCase().includes(q) || f.region?.toLowerCase().includes(q) || f.city?.toLowerCase().includes(q)
   const matchRegion = !regionFilter.value || f.region === regionFilter.value
-  const matchCrop = !cropFilter.value || f.crops?.some((c: string) => c === cropFilter.value)
-  return matchSearch && matchRegion && matchCrop
+  return matchSearch && matchRegion
 }))
 </script>

@@ -56,7 +56,7 @@
         <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-3">🌾 Що вирощують фермери</h2>
         <p class="text-center text-agro-light mb-12">Найпоширеніші культури серед учасників платформи</p>
         <div v-if="cropStats.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <NuxtLink v-for="c in cropStats" :key="c.crop_type" :to="`/farmers?crop=${cropToSlug(c.crop_type)}`"
+          <NuxtLink v-for="c in cropStats" :key="c.crop_type" :to="`/farmers/${cropToSlug(c.crop_type)}`"
             class="card text-center hover:shadow-md transition-all hover:border-agro border-2 border-transparent">
             <div class="text-4xl mb-2">{{ c.emoji }}</div>
             <p class="font-semibold text-agro-dark text-sm">{{ c.crop_type }}</p>
