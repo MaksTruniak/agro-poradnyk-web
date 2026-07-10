@@ -1,12 +1,20 @@
 <template>
   <div class="min-h-screen bg-agro-bg">
     <header class="bg-white border-b border-agro-border sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <NuxtLink to="/" class="flex items-center gap-2">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center gap-6">
+        <!-- Ліва частина: Агрономи, Фермери, Лого -->
+        <nav class="hidden md:flex items-center gap-5">
+          <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
+          <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
+        </nav>
+
+        <NuxtLink to="/" class="flex items-center gap-2 shrink-0">
           <span class="text-2xl">🌾</span>
           <span class="font-bold text-agro-dark text-lg">АгроПорадник</span>
         </NuxtLink>
-        <nav class="hidden md:flex items-center gap-6">
+
+        <!-- Центр/права частина: Каталог, Діючі речовини, Кабінет -->
+        <nav class="hidden md:flex items-center gap-5 flex-1 justify-end">
           <!-- Каталог з dropdown -->
           <div class="relative" @mouseenter="catalogOpen = true" @mouseleave="catalogOpen = false">
             <button class="flex items-center gap-1 text-agro-light hover:text-agro-dark font-medium transition-colors py-1">
@@ -16,7 +24,7 @@
               </svg>
             </button>
             <Transition name="dropdown">
-              <div v-if="catalogOpen" class="absolute left-0 top-full pt-2 z-50">
+              <div v-if="catalogOpen" class="absolute right-0 top-full pt-2 z-50">
                 <div class="bg-white rounded-2xl shadow-xl border border-agro-border py-2 w-56">
                   <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" :to="item.to"
                     class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
@@ -29,10 +37,9 @@
           </div>
 
           <NuxtLink to="/ingredients" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Діючі речовини</NuxtLink>
-          <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
-          <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
         </nav>
-        <div class="flex items-center gap-2">
+
+        <div class="flex items-center gap-2 shrink-0">
           <div class="hidden md:flex items-center gap-2">
             <NuxtLink v-if="!user" to="/auth" class="btn-outline text-sm py-2">Увійти</NuxtLink>
             <NuxtLink v-if="!user" to="/auth?mode=register" class="bg-agro-dark text-white font-semibold rounded-xl px-6 py-2 text-sm hover:bg-agro transition-colors">Реєстрація</NuxtLink>
