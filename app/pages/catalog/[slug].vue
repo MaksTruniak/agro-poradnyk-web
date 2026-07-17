@@ -63,7 +63,7 @@
                 v-if="product.source_image_url"
                 :src="product.source_image_url"
                 :alt="product.name"
-                class="w-20 h-20 object-contain rounded-xl bg-agro-bg"
+                class="w-32 h-32 object-contain rounded-xl bg-agro-bg"
               />
               <div v-else class="text-5xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</div>
             </div>
