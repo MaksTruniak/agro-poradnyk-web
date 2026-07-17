@@ -207,43 +207,30 @@ const TYPE_LABELS: Record<string, string> = {
   liquid_complex_fertilizer: 'РКД',
 }
 
-const loading = ref(true)
-const product = ref<any>(null)
-const analogs = ref<any[]>([])
-const offers = ref<any[]>([])
 const addingId = ref('')
 
-const fetchData = async () => {
-  loading.value = true
-  product.value = null
-  const currentSlug = route.params.slug as string
-  const [productData, analogsData, offersData] = await Promise.all([
-    api.getProduct(currentSlug).catch(() => null),
-    api.getAnalogs(currentSlug).catch(() => []),
-    MARKETPLACE
-      ? supabase.from('seller_offers')
-          .select('*, seller_profiles(company_name, region)')
-          .eq('product_slug', currentSlug)
-          .eq('in_stock', true)
-          .order('price', { ascending: true })
-      : Promise.resolve({ data: [] }),
+const { data: pageData, pending } = useLazyAsyncData(`catalog-${slug}`, async () => {
+  const [productData, analogsData] = await Promise.all([
+    $fetch('/api/agro', { query: { path: `/v1/products/${slug}` } }).catch(() => null),
+    $fetch('/api/agro', { query: { path: `/v1/products/${slug}/analogs` } }).catch(() => []),
   ])
-  product.value = productData?.product || productData || null
-  const analogsList = analogsData?.analogs || analogsData?.items || analogsData
-  analogs.value = Array.isArray(analogsList) ? analogsList : []
-  offers.value = (offersData as any)?.data || []
-  loading.value = false
-  if (product.value) {
-    useSeoMeta({
-      title: product.value.name,
-      description: `${product.value.name} — ${TYPE_LABELS[product.value.type] || ''}. ${product.value.description?.slice(0, 150) || ''}`,
-      ogTitle: product.value.name,
-    })
-  }
-}
+  const product = (productData as any)?.product || productData || null
+  const analogsList = (analogsData as any)?.analogs || (analogsData as any)?.items || analogsData
+  return { product, analogs: Array.isArray(analogsList) ? analogsList : [] }
+})
 
-onMounted(fetchData)
-watch(() => route.params.slug, fetchData)
+const product = computed(() => pageData.value?.product || null)
+const analogs = computed(() => pageData.value?.analogs || [])
+const offers = ref<any[]>([])
+const loading = computed(() => pending.value)
+
+useSeoMeta({
+  title: computed(() => product.value?.name || slug),
+  description: computed(() => product.value
+    ? `${product.value.name} — ${TYPE_LABELS[product.value.type] || ''}. ${product.value.description?.slice(0, 150) || ''}`
+    : ''
+  ),
+})
 
 const addToCart = async (offerId: string) => {
   const { data: { session } } = await supabase.auth.getSession()

@@ -90,12 +90,6 @@ const LIMIT = 40
 const search = ref('')
 const activeCategory = ref('')
 const offset = ref(0)
-const items = ref<any[]>([])
-const total = ref(0)
-const categories = ref<any[]>([])
-const loading = ref(true)
-let searchTimer: any = null
-
 const currentPage = computed(() => Math.floor(offset.value / LIMIT) + 1)
 const totalPages = computed(() => Math.ceil(total.value / LIMIT))
 
@@ -112,6 +106,27 @@ const load = async () => {
   loading.value = false
 }
 
+const { data: initData, pending } = useLazyAsyncData('fertilizers-index', async () => {
+  const [fertilizersData, catData] = await Promise.all([
+    $fetch('/api/agro', { query: { path: '/v1/fertilizers', limit: LIMIT, offset: 0 } }).catch(() => ({ items: [], total: 0 })),
+    $fetch('/api/agro', { query: { path: '/v1/fertilizers/categories' } }).catch(() => ({ items: [] })),
+  ])
+  return { fertilizers: fertilizersData as any, categories: (catData as any).items || [] }
+})
+
+const items = ref<any[]>([])
+const total = ref(0)
+const categories = ref<any[]>([])
+const loading = computed(() => pending.value && !items.value.length)
+
+watch(initData, (val) => {
+  if (!val || items.value.length) return
+  items.value = val.fertilizers?.items || []
+  total.value = val.fertilizers?.total || 0
+  categories.value = val.categories || []
+}, { immediate: true })
+let searchTimer: any = null
+
 const onSearch = () => {
   clearTimeout(searchTimer)
   offset.value = 0
@@ -120,10 +135,4 @@ const onSearch = () => {
 
 const nextPage = () => { offset.value += LIMIT; load() }
 const prevPage = () => { offset.value = Math.max(0, offset.value - LIMIT); load() }
-
-onMounted(async () => {
-  const catData = await api.getFertilizerCategories()
-  categories.value = catData.items || []
-  await load()
-})
 </script>

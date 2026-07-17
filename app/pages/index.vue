@@ -74,14 +74,15 @@
       <div class="max-w-7xl mx-auto">
         <h2 class="text-2xl font-extrabold text-center text-agro-dark mb-2">Провідні виробники</h2>
         <p class="text-center text-agro-light mb-10">Препарати і добрива від світових брендів</p>
-        <div v-if="brands.length" class="flex flex-wrap justify-center gap-3">
-          <NuxtLink v-for="b in brands.slice(0, 18)" :key="b.slug" :to="`/brand/${b.slug}`"
+        <div v-if="!brands.length" class="flex flex-wrap justify-center gap-3">
+          <div v-for="i in 18" :key="i" class="h-11 bg-agro-border rounded-2xl animate-pulse"
+            :style="{ width: (80 + (i * 17) % 60) + 'px' }"></div>
+        </div>
+        <div v-else class="flex flex-wrap justify-center gap-3">
+          <NuxtLink v-for="b in brands.slice(0, 18)" :key="b.slug" :to="`/brand/${brandToSlug(b)}`"
             class="px-5 py-3 bg-white border-2 border-agro-border rounded-2xl text-sm font-semibold text-agro-dark hover:border-agro hover:text-agro transition-colors">
             {{ b.name }}
           </NuxtLink>
-        </div>
-        <div v-else class="flex flex-wrap justify-center gap-3">
-          <div v-for="i in 12" :key="i" class="h-11 w-28 bg-agro-bg rounded-2xl animate-pulse"></div>
         </div>
         <div class="text-center mt-8">
           <NuxtLink to="/catalog" class="text-agro font-semibold hover:underline text-sm">Весь каталог препаратів →</NuxtLink>
@@ -129,29 +130,29 @@ const features = [
   { icon: '🔔', title: 'Push-сповіщення', desc: 'Нагадування про обробки, нові повідомлення та замовлення' },
 ]
 
-const { cropToSlug, cropEmoji: getCropEmoji } = await import('~/utils/cropSlugs')
+const { cropToSlug, cropEmoji: getCropEmoji, brandToSlug } = await import('~/utils/cropSlugs')
 
 const pluralFarmer = (n: number) => n === 1 ? 'фермер' : n >= 2 && n <= 4 ? 'фермери' : 'фермерів'
 
-const cropStats = ref<any[]>([])
 const brands = ref<any[]>([])
 
+// Завантажуємо crop stats на сервері (SSR)
+const { data: cropStatsData } = await useAsyncData('crop-stats', async () => {
+  const { data } = await supabase.rpc('get_crop_stats')
+  return (data || []).map((row: any) => ({
+    crop_type: row.crop_type,
+    count: Number(row.count),
+    emoji: getCropEmoji(row.crop_type),
+  }))
+})
+const cropStats = computed(() => cropStatsData.value || [])
+
+// Бренди — клієнтська сторона зі скелетоном (через кешований server route)
 onMounted(async () => {
-  const [cropsRes, brandsRes] = await Promise.all([
-    supabase.from('farm_crops').select('crop_type'),
-    api.getManufacturers().catch(() => ({ items: [] })),
-  ])
-
-  // Підраховуємо унікальних фермерів по культурі
-  const map: Record<string, number> = {}
-  for (const row of (cropsRes.data || [])) {
-    map[row.crop_type] = (map[row.crop_type] || 0) + 1
-  }
-  cropStats.value = Object.entries(map)
-    .map(([crop_type, count]) => ({ crop_type, count, emoji: getCropEmoji(crop_type) }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 12)
-
-  brands.value = (brandsRes.items || []).sort((a: any, b: any) => a.name.localeCompare(b.name, 'uk'))
+  brands.value = []
+  await nextTick()
+  $fetch('/api/brands').catch(() => ({ items: [] })).then((res: any) => {
+    brands.value = (res.items || []).sort((a: any, b: any) => a.name.localeCompare(b.name, 'uk'))
+  })
 })
 </script>

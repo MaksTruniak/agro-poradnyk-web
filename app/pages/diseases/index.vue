@@ -120,11 +120,6 @@ const search = ref('')
 const activeCategory = ref('')
 const activeCulture = ref('')
 const offset = ref(0)
-const items = ref<any[]>([])
-const total = ref(0)
-const loading = ref(true)
-let searchTimer: any = null
-
 const currentPage = computed(() => Math.floor(offset.value / LIMIT) + 1)
 const totalPages = computed(() => Math.ceil(total.value / LIMIT))
 
@@ -142,6 +137,22 @@ const load = async () => {
   loading.value = false
 }
 
+const { data: initData, pending } = useLazyAsyncData('diseases-index', () =>
+  $fetch('/api/agro', { query: { path: '/v1/diseases', limit: LIMIT, offset: 0 } })
+  .catch(() => ({ items: [], total: 0 }))
+)
+
+const items = ref<any[]>([])
+const total = ref(0)
+const loading = computed(() => pending.value && !items.value.length)
+
+watch(initData, (val) => {
+  if (!val || items.value.length) return
+  items.value = val.items || []
+  total.value = val.total || 0
+}, { immediate: true })
+let searchTimer: any = null
+
 const onSearch = () => {
   clearTimeout(searchTimer)
   offset.value = 0
@@ -150,6 +161,4 @@ const onSearch = () => {
 
 const nextPage = () => { offset.value += LIMIT; load() }
 const prevPage = () => { offset.value = Math.max(0, offset.value - LIMIT); load() }
-
-onMounted(load)
 </script>

@@ -116,6 +116,7 @@ const slug = route.params.slug as string
 const api = useAgroApi()
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const { brandToSlug } = await import('~/utils/cropSlugs')
 
 const TYPE_EMOJI: Record<string, string> = {
   herbicide: '🌿', fungicide: '🧴', insecticide: '🐛', fertilizer: '💊',
@@ -131,16 +132,31 @@ const TYPE_LABELS: Record<string, string> = {
   bio_product: 'Біопрепарат', biofungicide: 'Біофунгіцид', liquid_complex_fertilizer: 'РКД',
 }
 
-const loading = ref(true)
 const loadingMore = ref(false)
-const products = ref<any[]>([])
 const offersMap = ref<Record<string, any[]>>({})
-const hasMore = ref(true)
 const page = ref(1)
-const brand = ref<any>(null)
 
-const brandsData = await api.getManufacturers().catch(() => ({ items: [] }))
-brand.value = (brandsData.items || []).find((b: any) => b.slug === slug) || null
+// useLazyAsyncData — одразу переходить на сторінку, показує скелетон поки дані завантажуються
+const { data: brandData, pending } = useLazyAsyncData(`brand-${slug}`, async () => {
+  const [brandsRes, productsRes] = await Promise.all([
+    $fetch('/api/brands').catch(() => ({ items: [] })),
+    api.getProducts({ manufacturer: slug, page: 1, limit: 20 }).catch(() => ({ items: [] })),
+  ])
+  const brand = (brandsRes.items || []).find((b: any) => brandToSlug(b) === slug) || null
+  const items = Array.isArray(productsRes) ? productsRes : (productsRes.items || [])
+  return { brand, items }
+})
+
+const brand = computed(() => brandData.value?.brand || null)
+const products = ref<any[]>([])
+const hasMore = ref(false)
+const loading = computed(() => pending.value)
+
+watch(brandData, (val) => {
+  if (!val) return
+  products.value = val.items || []
+  hasMore.value = (val.items || []).length === 20
+}, { immediate: true })
 
 useSeoMeta({
   title: `${brand.value?.name || slug} — препарати виробника`,
@@ -148,15 +164,12 @@ useSeoMeta({
 })
 
 const loadProducts = async (p: number) => {
-  if (p === 1) loading.value = true
-  else loadingMore.value = true
+  loadingMore.value = true
 
-  const data = await api.getProducts({ manufacturer: slug, page: p, limit: 20 }).catch(() => ({ items: [] }))
+  const data = await api.getProducts({ manufacturer: brand.value?.slug || slug, page: p, limit: 20 }).catch(() => ({ items: [] }))
   const items = Array.isArray(data) ? data : (data.items || [])
 
-  if (p === 1) products.value = items
-  else products.value.push(...items)
-
+  products.value.push(...items)
   hasMore.value = items.length === 20
   page.value = p
 
@@ -205,7 +218,6 @@ const addToCart = async (offerId: string) => {
   buyModalOpen.value = false
 }
 
-await loadProducts(1)
 </script>
 
 <style scoped>

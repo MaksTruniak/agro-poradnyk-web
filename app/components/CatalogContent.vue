@@ -111,7 +111,7 @@
               </h3>
               <NuxtLink
                 v-if="product.manufacturer"
-                :to="`/brand/${product.manufacturer?.slug || product.manufacturer}`"
+                :to="`/brand/${brandToSlug(product.manufacturer)}`"
                 @click.stop
                 class="text-xs text-agro-light mb-4 hover:text-agro hover:underline transition-colors block"
               >{{ product.manufacturer?.name || product.manufacturer }}</NuxtLink>
@@ -194,6 +194,8 @@
 </template>
 
 <script setup lang="ts">
+const { brandToSlug } = await import('~/utils/cropSlugs')
+
 useSeoMeta({
   title: 'Каталог препаратів і добрив',
   description: 'Тисячі агрохімічних препаратів і добрив. Гербіциди, фунгіциди, інсектициди, добрива від перевірених продавців з доставкою.',

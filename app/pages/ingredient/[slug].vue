@@ -90,10 +90,6 @@ definePageMeta({ layout: 'default' })
 const route = useRoute()
 const api = useAgroApi()
 
-const loading = ref(true)
-const ingredient = ref<any>(null)
-const products = ref<any[]>([])
-
 const TYPE_EMOJI: Record<string, string> = {
   herbicide: '🌿', fungicide: '🍄', insecticide: '🐛',
   seed_treatment: '🌱', growth_regulator: '📏', rodenticide: '🐀',
@@ -136,19 +132,22 @@ const fields = computed(() => {
     .filter(Boolean)
 })
 
-useSeoMeta({
-  title: computed(() => ingredient.value ? `${ingredient.value.name} — діюча речовина` : 'Діюча речовина'),
+const slug = route.params.slug as string
+
+const { data: pageData, pending } = useLazyAsyncData(`ingredient-${slug}`, async () => {
+  try {
+    const data = await $fetch<any>('/api/agro', { query: { path: `/v1/active-ingredients/${slug}` } })
+    return { ingredient: data.ingredient || null, products: data.products || [] }
+  } catch {
+    return { ingredient: null, products: [] }
+  }
 })
 
-onMounted(async () => {
-  const slug = route.params.slug as string
-  try {
-    const data = await api.getActiveIngredient(slug)
-    ingredient.value = data.ingredient
-    products.value = data.products || []
-  } catch {
-    ingredient.value = null
-  }
-  loading.value = false
+const ingredient = computed(() => pageData.value?.ingredient || null)
+const products = computed(() => pageData.value?.products || [])
+const loading = computed(() => pending.value)
+
+useSeoMeta({
+  title: computed(() => ingredient.value ? `${ingredient.value.name} — діюча речовина` : 'Діюча речовина'),
 })
 </script>

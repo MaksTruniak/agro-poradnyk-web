@@ -6,15 +6,47 @@
     </div>
 
     <!-- Пошук + фільтр -->
-    <div class="flex flex-col sm:flex-row gap-3 mb-8">
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
       <div class="relative flex-1 max-w-xl">
         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
         <input v-model="search" class="input pl-11" placeholder="Пошук за ім'ям або регіоном..." />
       </div>
-      <select v-model="regionFilter" class="input max-w-xs">
-        <option value="">Всі регіони</option>
-        <option v-for="r in regions" :key="r" :value="r">{{ r }}</option>
-      </select>
+      <div class="relative" v-if="regions.length" @click.stop>
+        <button @click="regionOpen = !regionOpen"
+          class="flex items-center gap-2 w-48 shrink-0 border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
+          :class="regionFilter ? 'text-agro-dark' : 'text-agro-light'">
+          <span class="flex-1 truncate">{{ regionFilter || 'Всі регіони' }}</span>
+          <svg class="w-4 h-4 shrink-0 transition-transform" :class="regionOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div v-if="regionOpen" class="absolute right-0 top-full mt-1 z-20 bg-white border border-agro-border rounded-2xl shadow-xl py-1 w-56 max-h-64 overflow-y-auto">
+          <button @click="regionFilter = ''; regionOpen = false"
+            class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
+            :class="!regionFilter ? 'text-agro font-semibold' : 'text-agro-dark'">
+            Всі регіони
+          </button>
+          <button v-for="r in regions" :key="r" @click="regionFilter = r; regionOpen = false"
+            class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
+            :class="regionFilter === r ? 'text-agro font-semibold' : 'text-agro-dark'">
+            {{ r }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Фільтр по культурі -->
+    <div v-if="allCrops.length" class="flex flex-wrap gap-2 mb-8">
+      <button @click="cropFilter = ''"
+        class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors"
+        :class="cropFilter === '' ? 'bg-agro text-white border-agro' : 'bg-white text-agro-dark border-agro-border hover:border-agro'">
+        Всі культури
+      </button>
+      <button v-for="c in allCrops" :key="c" @click="cropFilter = c"
+        class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors"
+        :class="cropFilter === c ? 'bg-agro text-white border-agro' : 'bg-white text-agro-dark border-agro-border hover:border-agro'">
+        {{ cropEmoji(c) }} {{ c }}
+      </button>
     </div>
 
     <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -35,7 +67,7 @@
             {{ farmer.name?.[0]?.toUpperCase() || '?' }}
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-agro-dark">{{ farmer.name }}</h3>
+            <NuxtLink :to="`/farmer/${farmer.id}`" class="font-bold text-agro-dark hover:text-agro transition-colors">{{ farmer.name }}</NuxtLink>
             <p v-if="farmer.city || farmer.region" class="text-sm text-agro-light mt-0.5">
               📍 {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
             </p>
@@ -46,20 +78,19 @@
         <div class="mb-4">
           <p class="text-xs text-agro-light uppercase tracking-wide mb-2">Вирощує</p>
           <div class="flex flex-wrap gap-1.5">
-            <span v-for="c in farmer.crops" :key="c"
-              class="text-xs bg-agro-bg text-agro-dark px-2 py-0.5 rounded-full border border-agro-border">
+            <NuxtLink v-for="c in farmer.crops" :key="c"
+              :to="`/farmers/${cropToSlug(c)}`"
+              class="text-xs px-2 py-0.5 rounded-full border transition-colors"
+              :class="c === cropFilter ? 'bg-agro text-white border-agro' : 'bg-agro-bg text-agro-dark border-agro-border hover:border-agro'">
               {{ c }}
-            </span>
+            </NuxtLink>
           </div>
         </div>
 
-        <button
-          @click="startChat(farmer)"
-          :disabled="starting === farmer.id"
-          class="btn-primary w-full text-sm py-2.5"
-        >
-          {{ starting === farmer.id ? '...' : '💬 Написати' }}
-        </button>
+        <NuxtLink :to="`/farmer/${farmer.id}`" class="btn-primary w-full text-sm py-2.5 text-center block">
+          Детально →
+        </NuxtLink>
+
       </div>
     </div>
   </div>
@@ -70,13 +101,18 @@ definePageMeta({ layout: 'default' })
 useSeoMeta({ title: 'Фермери' })
 
 const supabase = useSupabaseClient()
+const { cropEmoji, cropToSlug } = await import('~/utils/cropSlugs')
+
+const closeRegion = () => { regionOpen.value = false }
+onMounted(() => document.addEventListener('click', closeRegion))
+onUnmounted(() => document.removeEventListener('click', closeRegion))
 const search = ref('')
 const regionFilter = ref('')
+const regionOpen = ref(false)
+const cropFilter = ref('')
 
 const router = useRouter()
-const loading = ref(true)
 const starting = ref('')
-const farmers = ref<any[]>([])
 
 const startChat = async (farmer: any) => {
   const { data: { session } } = await supabase.auth.getSession()
@@ -117,38 +153,30 @@ const startChat = async (farmer: any) => {
   if (newChat) router.push(`/dashboard/chats/${newChat.id}`)
 }
 
-onMounted(async () => {
-  const { data: usersData, error } = await supabase
-    .from('users')
-    .select('id, name, region, city')
-    .eq('role', 'farmer')
-    .order('name')
-
-  if (error || !usersData?.length) { loading.value = false; return }
-
-  const ids = usersData.map((u: any) => u.id)
-  const { data: farmsData } = await supabase
-    .from('farms')
-    .select('user_id, farm_crops(crop_type)')
-    .in('user_id', ids)
-
-  const result: any[] = []
-  for (const u of usersData) {
-    const userFarms = (farmsData || []).filter((f: any) => f.user_id === u.id)
-    const crops = [...new Set(userFarms.flatMap((f: any) => (f.farm_crops || []).map((c: any) => c.crop_type)))]
-    if (crops.length === 0) continue
-    result.push({ ...u, crops })
-  }
-  farmers.value = result
-  loading.value = false
+const { data: farmersData, pending } = useLazyAsyncData('farmers-index', async () => {
+  const { data } = await supabase.rpc('get_farmers_with_crops')
+  return (data || []).filter((f: any) => f.crops?.length)
 })
 
+const farmers = ref<any[]>([])
+const loading = computed(() => pending.value && !farmers.value.length)
+
+watch(farmersData, (val) => {
+  if (val && !farmers.value.length) farmers.value = val
+}, { immediate: true })
+
 const regions = computed(() => [...new Set(farmers.value.map((f: any) => f.region).filter(Boolean))].sort())
+const allCrops = computed(() => {
+  const set = new Set<string>()
+  farmers.value.forEach((f: any) => f.crops.forEach((c: string) => set.add(c)))
+  return [...set].sort((a, b) => a.localeCompare(b, 'uk'))
+})
 
 const filtered = computed(() => farmers.value.filter(f => {
   const q = search.value.toLowerCase()
   const matchSearch = !q || f.name?.toLowerCase().includes(q) || f.region?.toLowerCase().includes(q) || f.city?.toLowerCase().includes(q)
   const matchRegion = !regionFilter.value || f.region === regionFilter.value
-  return matchSearch && matchRegion
+  const matchCrop = !cropFilter.value || f.crops.includes(cropFilter.value)
+  return matchSearch && matchRegion && matchCrop
 }))
 </script>

@@ -9,24 +9,6 @@
           {{ selectedCrop ? `${farmName} · ${CROP_EMOJI[selectedCrop.crop_type] || '🌱'} ${selectedCrop.crop_type}${selectedCrop.variety ? ` · ${selectedCrop.variety}` : ''}` : (farmName || 'Загальна консультація') }}
         </p>
       </div>
-      <!-- Provider toggle -->
-      <div class="flex items-center gap-1 bg-agro-bg rounded-xl p-1 shrink-0">
-        <button @click="provider = 'groq'"
-          class="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors"
-          :class="provider === 'groq' ? 'bg-white text-agro shadow-sm' : 'text-agro-light hover:text-agro'">
-          Groq
-        </button>
-        <button @click="provider = 'gemini'"
-          class="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors"
-          :class="provider === 'gemini' ? 'bg-white text-agro shadow-sm' : 'text-agro-light hover:text-agro'">
-          Gemini
-        </button>
-        <button @click="provider = 'claude'"
-          class="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors"
-          :class="provider === 'claude' ? 'bg-white text-agro shadow-sm' : 'text-agro-light hover:text-agro'">
-          Claude
-        </button>
-      </div>
 
       <button v-if="selectedCrop !== undefined" @click="resetCrop"
         class="text-xs text-agro-light hover:text-agro px-3 py-1.5 rounded-lg border border-agro-border hover:border-agro transition-colors shrink-0">
@@ -249,6 +231,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'AI агроном' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const route = useRoute()
@@ -263,7 +246,6 @@ const CROP_EMOJI: Record<string, string> = {
 
 const farmId = computed(() => route.query.farmId as string | undefined)
 
-const provider = ref<'groq' | 'gemini' | 'claude'>('groq')
 const loading = ref(true)
 const isPro = ref(false)
 const dailyCount = ref(0)
@@ -558,7 +540,6 @@ const send = async () => {
       farm_id: farmId.value || null,
       farm_crop_id: selectedCrop.value?.id || null,
       crop_type: selectedCrop.value?.crop_type || null,
-      provider: provider.value,
     }).select('id').single()
     currentChatId.value = chat?.id || null
   }
@@ -576,7 +557,6 @@ const send = async () => {
       body: JSON.stringify({
         messages: messages.value.map(m => ({ role: m.role, content: m.content })),
         farmContext: farmContext.value,
-        provider: provider.value,
       }),
     })
 

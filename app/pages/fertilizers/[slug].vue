@@ -77,8 +77,15 @@ definePageMeta({ layout: 'default' })
 
 const api = useAgroApi()
 const route = useRoute()
-const item = ref<any>(null)
-const loading = ref(true)
+const slug = route.params.slug as string
+
+const { data: pageData, pending } = useLazyAsyncData(`fertilizer-${slug}`, async () => {
+  const data = await $fetch<any>('/api/agro', { query: { path: `/v1/fertilizers/${slug}` } }).catch(() => null)
+  return data?.fertilizer || null
+})
+
+const item = computed(() => pageData.value || null)
+const loading = computed(() => pending.value)
 
 const CATEGORY_NAMES: Record<string, string> = {
   azotni: 'Азотні',
@@ -90,10 +97,4 @@ const CATEGORY_NAMES: Record<string, string> = {
 const categoryName = computed(() => CATEGORY_NAMES[item.value?.category_slug] || item.value?.category_slug || '')
 
 useHead(() => ({ title: item.value ? `${item.value.name} — АгроПорадник` : 'Добриво — АгроПорадник' }))
-
-onMounted(async () => {
-  const data = await api.getFertilizer(route.params.slug as string).catch(() => null)
-  item.value = data?.fertilizer || null
-  loading.value = false
-})
 </script>
