@@ -58,7 +58,15 @@
       <div :class="MARKETPLACE ? 'xl:col-span-2 space-y-6' : 'space-y-6'">
         <div class="card">
           <div class="flex items-start gap-4 mb-6">
-            <div class="text-5xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</div>
+            <div class="shrink-0">
+              <img
+                v-if="product.source_image_url"
+                :src="product.source_image_url"
+                :alt="product.name"
+                class="w-20 h-20 object-contain rounded-xl bg-agro-bg"
+              />
+              <div v-else class="text-5xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</div>
+            </div>
             <div class="flex-1">
               <div class="flex flex-wrap gap-2 mb-2">
                 <span class="text-xs font-semibold bg-agro-hover text-agro px-3 py-1 rounded-full">
@@ -73,8 +81,6 @@
               >{{ product.manufacturer?.name || product.manufacturer }}</NuxtLink>
             </div>
           </div>
-
-          <p v-if="product.description" class="text-agro-light leading-relaxed">{{ product.description }}</p>
 
           <!-- Діючі речовини -->
           <div v-if="product.active_ingredients?.length" class="mt-6">
@@ -129,7 +135,7 @@
               <span class="text-xl">{{ TYPE_EMOJI[a.type] || '🌿' }}</span>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-sm text-agro-dark truncate">{{ a.name }}</p>
-                <p v-if="a.manufacturer" class="text-xs text-agro-light truncate">{{ a.manufacturer }}</p>
+                <p v-if="a.manufacturer" class="text-xs text-agro-light truncate">{{ a.manufacturer?.name || a.manufacturer }}</p>
               </div>
             </NuxtLink>
           </div>
