@@ -132,7 +132,9 @@
               :to="`/catalog/${a.slug}`"
               class="flex items-center gap-3 p-3 rounded-xl border border-agro-border hover:border-agro hover:bg-agro-hover transition-colors"
             >
-              <span class="text-xl">{{ TYPE_EMOJI[a.type] || '🌿' }}</span>
+              <img v-if="a.source_image_url" :src="a.source_image_url" :alt="a.name"
+                class="w-10 h-10 object-contain rounded-lg bg-agro-bg shrink-0" />
+              <span v-else class="text-xl shrink-0">{{ TYPE_EMOJI[a.type] || '🌿' }}</span>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-sm text-agro-dark truncate">{{ a.name }}</p>
                 <p v-if="a.manufacturer" class="text-xs text-agro-light truncate">{{ a.manufacturer?.name || a.manufacturer }}</p>
