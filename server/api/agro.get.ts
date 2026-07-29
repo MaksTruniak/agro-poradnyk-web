@@ -1,11 +1,11 @@
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineCachedEventHandler(async (event) => {
   const query = getQuery(event)
   const path = query.path as string
   if (!path) throw createError({ statusCode: 400, message: 'path required' })
 
-  const supabase = await serverSupabaseClient(event)
+  const supabase = serverSupabaseServiceRole(event)
 
   // Products list
   if (path === '/v1/products') {
@@ -154,7 +154,22 @@ export default defineCachedEventHandler(async (event) => {
   if (weedMatch) {
     const { data, error } = await supabase.from('agro_weeds').select('*').eq('slug', weedMatch[1]).single()
     if (error) throw createError({ statusCode: 404, message: 'Not found' })
-    return { weed: data }
+    const { data: weedHerbs, error: herbError } = await supabase
+      .from('agro_weed_herbicides')
+      .select('product_id')
+      .eq('weed_id', data.id)
+    console.log('[weed herbs]', data.id, 'count:', weedHerbs?.length, 'error:', herbError?.message)
+    let herbicides: any[] = []
+    if (weedHerbs?.length) {
+      const ids = weedHerbs.map((r: any) => r.product_id)
+      const { data: prods, error: prodsError } = await supabase
+        .from('agro_products')
+        .select('id, name, slug, source_image_url, manufacturers(name, slug)')
+        .in('id', ids)
+      console.log('[weed prods]', prods?.length, prodsError?.message)
+      herbicides = prods ?? []
+    }
+    return { weed: { ...data, herbicides } }
   }
 
   // Diseases list

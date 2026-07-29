@@ -94,6 +94,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Товари' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
@@ -163,8 +164,10 @@ const toggleStock = async (offer: any) => {
   offer.in_stock = !offer.in_stock
 }
 
+const { confirm: confirmDialog } = useConfirm()
+
 const deleteOffer = async (offer: any) => {
-  if (!confirm(`Видалити "${offer.product_name}"?`)) return
+  if (!await confirmDialog(`"${offer.product_name}" буде видалено з ваших товарів.`, { title: 'Видалити товар?' })) return
   await supabase.from('seller_offers').delete().eq('id', offer.id)
   offers.value = offers.value.filter(o => o.id !== offer.id)
 }

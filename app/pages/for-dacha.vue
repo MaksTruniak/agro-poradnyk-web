@@ -14,7 +14,7 @@
           <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro transition-colors">
             Спробувати безкоштовно →
           </NuxtLink>
-          <NuxtLink to="/catalog" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
+          <NuxtLink to="/pesticides" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
             Каталог препаратів
           </NuxtLink>
         </div>
@@ -92,7 +92,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 useSeoMeta({
-  title: 'АгроПорадник для дачників — схеми обробки саду і городу',
+  title: 'АгроПростір для дачників — схеми обробки саду і городу',
   description: 'Підберіть препарати для городу і саду, отримайте схему обробки і консультацію агронома онлайн.',
 })
 
@@ -106,7 +106,7 @@ const steps = [
   {
     icon: '🛡️',
     title: 'Отримайте схему обробки',
-    desc: 'Для кожної культури система підбере схему захисту від хвороб і шкідників по фазах розвитку — що коли застосовувати і в якій дозі.',
+    desc: 'Для кожної культури система підбере технологічну карту по фазах розвитку — що коли застосовувати і в якій дозі.',
     tags: ['Від хвороб', 'Від шкідників', 'Дози і терміни'],
   },
   {

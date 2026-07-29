@@ -12,8 +12,11 @@
 
       <div class="card mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
-          <div v-if="weed.source_image_url" class="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-agro-hover shrink-0">
-            <img :src="weed.source_image_url" :alt="weed.name" class="w-full h-full object-contain p-3" />
+          <div class="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-agro-hover shrink-0 flex items-center justify-center">
+            <ProductImage :src="weed.source_image_url" :alt="weed.name"
+              img-class="w-full h-full object-contain p-3"
+              fallback-class="text-5xl"
+              fallback-emoji="🌱" />
           </div>
           <div class="flex-1">
             <div class="flex flex-wrap gap-2 mb-3">
@@ -53,15 +56,16 @@
       <div v-if="weed.herbicides?.length">
         <h2 class="text-xl font-bold text-agro-dark mb-4">🛡️ Гербіциди для боротьби</h2>
         <div class="grid sm:grid-cols-2 gap-3">
-          <NuxtLink v-for="h in weed.herbicides" :key="h.id" :to="`/catalog/${h.slug}`"
+          <NuxtLink v-for="h in weed.herbicides" :key="h.id" :to="`/pesticides/${h.slug}`"
             class="card hover:shadow-md transition-shadow flex items-center gap-3 group">
-            <div v-if="h.source_image_url" class="w-10 h-10 rounded-xl overflow-hidden bg-agro-hover shrink-0">
-              <img :src="h.source_image_url" :alt="h.name" class="w-full h-full object-contain p-1" loading="lazy" />
+            <div class="w-10 h-10 rounded-xl overflow-hidden bg-agro-hover shrink-0 flex items-center justify-center">
+              <ProductImage :src="h.source_image_url" :alt="h.name"
+                img-class="w-full h-full object-contain p-1"
+                fallback-class="text-lg" fallback-emoji="🧴" />
             </div>
-            <div v-else class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center text-lg shrink-0">🧴</div>
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-agro-dark text-sm group-hover:text-agro transition-colors truncate">{{ h.name }}</p>
-              <p v-if="h.manufacturers?.name" class="text-xs text-agro-light truncate">{{ h.manufacturers.name }}</p>
+              <p v-if="h.agro_manufacturers?.name" class="text-xs text-agro-light truncate">{{ h.agro_manufacturers.name }}</p>
             </div>
           </NuxtLink>
         </div>
@@ -92,5 +96,5 @@ const { data } = await useAsyncData(`weed-${route.params.slug}`, () =>
 weed.value = data.value?.weed || null
 loading.value = false
 
-useHead({ title: weed.value ? `${weed.value.name} — АгроПорадник` : 'Бур\'ян' })
+useHead({ title: weed.value ? `${weed.value.name} — АгроПростір` : 'Бур\'ян' })
 </script>

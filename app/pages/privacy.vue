@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useSeoMeta({ title: 'Політика конфіденційності — АгроПорадник' })
+useSeoMeta({ title: 'Політика конфіденційності — АгроПростір' })
 
 const lastUpdated = new Date(2025, 0, 1).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -54,7 +54,7 @@ const sections = [
   {
     title: '6. Контакти',
     paragraphs: [
-      'Якщо у вас є питання щодо обробки персональних даних — напишіть нам на info@agroporadnyk.ua або скористайтесь формою на сторінці Контакти.',
+      'Якщо у вас є питання щодо обробки персональних даних — напишіть нам на info@agroprostir.ua або скористайтесь формою на сторінці Контакти.',
     ],
   },
 ]

@@ -5,7 +5,7 @@
         <h1 class="text-2xl font-extrabold text-agro-dark">
           {{ isDacha ? '🌱 Мої культури' : '🌾 Мої поля' }}
         </h1>
-        <p class="text-agro-light mt-1">{{ isDacha ? 'Культури та схеми обробки' : 'Поля, культури та програми захисту' }}</p>
+        <p class="text-agro-light mt-1">{{ isDacha ? 'Культури та схеми обробки' : 'Поля, культури та технологічні карти' }}</p>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
 
           <div class="flex flex-wrap gap-2 mb-4">
             <span v-for="crop in farm.farm_crops" :key="crop.id" class="text-xs bg-agro-hover text-agro px-2.5 py-1 rounded-full font-medium">
-              {{ CROP_EMOJI[crop.crop_type] || '🌱' }} {{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}
+              {{ emojiFor(crop.crop_type) }} {{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}
             </span>
           </div>
 
@@ -90,7 +90,7 @@
       <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         <div v-for="crop in dachaCrops" :key="crop.id" class="card">
           <div class="flex items-center gap-3 mb-4">
-            <span class="text-4xl">{{ CROP_EMOJI[crop.crop_type] || '🌱' }}</span>
+            <span class="text-4xl">{{ emojiFor(crop.crop_type) }}</span>
             <div>
               <h3 class="font-bold text-agro-dark">{{ crop.crop_type }}</h3>
               <p v-if="crop.variety" class="text-xs text-agro-light">Сорт: {{ crop.variety }}</p>
@@ -226,13 +226,13 @@
             <h2 class="font-bold text-agro-dark text-xl mb-5">➕ Нова культура</h2>
             <div class="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto mb-4">
               <button
-                v-for="c in DACHA_CROPS"
+                v-for="c in allCropNames"
                 :key="c"
                 @click="newCropType = c"
                 class="flex flex-col items-center p-3 rounded-xl border-2 transition-colors"
                 :class="newCropType === c ? 'border-agro bg-agro-hover' : 'border-agro-border hover:border-agro'"
               >
-                <span class="text-2xl mb-1">{{ CROP_EMOJI[c] || '🌱' }}</span>
+                <span class="text-2xl mb-1">{{ emojiFor(c) }}</span>
                 <span class="text-xs font-medium text-agro-dark text-center leading-tight">{{ c }}</span>
               </button>
             </div>
@@ -253,6 +253,7 @@
 
 <script setup lang="ts">
 import { Eye, Trash2, UserPlus } from 'lucide-vue-next'
+useHead({ title: 'Мої поля' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
@@ -351,21 +352,7 @@ const selectSettlement = (s: any) => {
   showSettlementList.value = false
 }
 
-const CROP_EMOJI: Record<string, string> = {
-  'Смородина': '🫐', 'Полуниця': '🍓', 'Томати': '🍅', 'Огірки': '🥒',
-  'Картопля': '🥔', 'Яблука': '🍎', 'Груші': '🍐', 'Виноград': '🍇',
-  'Малина': '🍒', 'Черешня': '🍒', 'Слива': '🍑', 'Абрикос': '🍑',
-  'Морква': '🥕', 'Цибуля': '🧅', 'Часник': '🧄', 'Капуста': '🥬',
-  'Перець': '🌶️', 'Баклажан': '🍆', 'Кабачок': '🥒', 'Кукурудза': '🌽',
-  'Пшениця': '🌾', 'Кукурудза': '🌽', 'Соняшник': '🌻', 'Ріпак': '🌿',
-  'Соя': '🫘', 'Ячмінь': '🌾', 'Жито': '🌾',
-}
-
-const DACHA_CROPS = [
-  'Томати', 'Огірки', 'Картопля', 'Морква', 'Цибуля', 'Часник', 'Капуста',
-  'Перець', 'Баклажан', 'Кабачок', 'Кукурудза', 'Полуниця', 'Смородина',
-  'Малина', 'Виноград', 'Яблука', 'Груші', 'Черешня', 'Слива', 'Абрикос',
-]
+const { load: loadCrops, allCropNames, emojiFor } = useCropCatalog()
 
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
@@ -394,7 +381,7 @@ const load = async () => {
   loading.value = false
 }
 
-await load()
+await Promise.all([load(), loadCrops()])
 
 const { error: showError } = useToast()
 
@@ -437,8 +424,10 @@ const addFarm = async () => {
   await load()
 }
 
+const { confirm: confirmDialog } = useConfirm()
+
 const deleteFarm = async (farm: any) => {
-  if (!confirm(`Видалити поле "${farm.name}"?`)) return
+  if (!await confirmDialog(`Поле "${farm.name}" та всі пов'язані культури будуть видалені.`, { title: `Видалити поле?` })) return
   await supabase.from('farms').delete().eq('id', farm.id)
   await load()
 }
@@ -459,7 +448,7 @@ const addDachaCrop = async () => {
 }
 
 const deleteDachaCrop = async (crop: any) => {
-  if (!confirm(`Видалити "${crop.crop_type}"?`)) return
+  if (!await confirmDialog(`"${crop.crop_type}" буде видалено з вашого списку.`, { title: 'Видалити культуру?' })) return
   await supabase.from('dacha_crops').delete().eq('id', crop.id)
   await load()
 }

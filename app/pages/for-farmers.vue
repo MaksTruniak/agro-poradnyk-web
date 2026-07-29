@@ -8,7 +8,7 @@
           Все господарство —<br>в одному місці
         </h1>
         <p class="text-xl text-agro-light mb-10 max-w-2xl mx-auto leading-relaxed">
-          Облік полів і культур, програми захисту, консультації агрономів і замовлення препаратів — без паперів і зайвих дзвінків
+          Облік полів і культур, технологічні карти, консультації агрономів і замовлення препаратів — без паперів і зайвих дзвінків
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro transition-colors">
@@ -63,6 +63,41 @@
       </div>
     </section>
 
+    <!-- Плани -->
+    <section class="py-20 px-4 border-t border-agro-border">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-3xl font-extrabold text-agro-dark mb-4">Тарифи</h2>
+        <p class="text-agro-light mb-12">Базовий план безкоштовний. Топ-просування виводить вас першими в пошуку фермерів.</p>
+        <div class="grid sm:grid-cols-2 gap-6">
+          <div class="card text-left">
+            <p class="font-bold text-agro-dark text-lg mb-1">Базовий</p>
+            <p class="text-3xl font-extrabold text-agro mb-4">Безкоштовно</p>
+            <ul class="space-y-2 text-sm text-agro-light">
+              <li>✅ Профіль фермера</li>
+              <li>✅ Облік полів і культур</li>
+              <li>✅ Чати з агрономами</li>
+              <li>✅ AI-агроном</li>
+              <li>✅ Каталог препаратів</li>
+            </ul>
+          </div>
+          <div class="card text-left border-2 border-agro">
+            <div class="flex items-center justify-between mb-1">
+              <p class="font-bold text-agro-dark text-lg">Топ</p>
+              <span class="text-xs bg-agro text-white px-2 py-0.5 rounded-full font-semibold">Популярний</span>
+            </div>
+            <p class="text-3xl font-extrabold text-agro mb-4">199 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
+            <ul class="space-y-2 text-sm text-agro-light">
+              <li>✅ Все з базового</li>
+              <li>⭐ Перші в пошуку фермерів</li>
+              <li>⭐ Значок "Топ фермер"</li>
+              <li>⭐ Більше показів профілю</li>
+              <li>⭐ Пріоритет у пропозиціях</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA -->
     <section class="py-20 px-4 bg-agro-hover border-t border-agro-border text-center">
       <p class="text-agro font-semibold mb-2">Безкоштовно для фермерів</p>
@@ -78,7 +113,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 useSeoMeta({
-  title: 'АгроПорадник для фермерів — облік полів і культур',
+  title: 'АгроПростір для фермерів — облік полів і культур',
   description: 'Ведіть облік полів, культур і сортів, отримуйте консультації агрономів і замовляйте препарати онлайн.',
 })
 
@@ -97,7 +132,7 @@ const steps = [
   },
   {
     icon: '🛡️',
-    title: 'Отримайте програму захисту',
+    title: 'Отримайте технологічну карту',
     desc: 'Для кожної культури сформуйте схему обробки — фунгіциди, інсектициди, гербіциди по фазах розвитку. Або запитайте агронома напряму в чаті.',
     tags: ['Схема обробки', 'Фази розвитку', 'Чат з агрономом'],
   },

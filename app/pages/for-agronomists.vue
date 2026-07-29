@@ -76,7 +76,7 @@
               <li>✅ Профіль агронома</li>
               <li>✅ Чати з фермерами</li>
               <li>✅ Доступ до полів клієнтів</li>
-              <li>✅ Необмежена кількість клієнтів</li>
+              <li>✅ До 3 активних клієнтів</li>
             </ul>
           </div>
           <div class="card text-left border-2 border-agro">
@@ -87,6 +87,7 @@
             <p class="text-3xl font-extrabold text-agro mb-4">299 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
             <ul class="space-y-2 text-sm text-agro-light">
               <li>✅ Все з базового</li>
+              <li>✅ Необмежена кількість клієнтів</li>
               <li>⭐ Перші в пошуку агрономів</li>
               <li>⭐ Значок "Топ агроном"</li>
               <li>⭐ Більше показів профілю</li>
@@ -111,7 +112,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 useSeoMeta({
-  title: 'АгроПорадник для агрономів — консультуйте фермерів онлайн',
+  title: 'АгроПростір для агрономів — консультуйте фермерів онлайн',
   description: 'Створіть профіль агронома, консультуйте фермерів у чаті і розвивайте клієнтську базу онлайн.',
 })
 

@@ -64,6 +64,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Замовлення' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const MARKETPLACE = false

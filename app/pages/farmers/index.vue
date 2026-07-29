@@ -2,7 +2,7 @@
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
       <h1 class="text-3xl font-extrabold text-agro-dark">🌾 Фермери</h1>
-      <p class="text-agro-light mt-1">Учасники спільноти АгроПорадник</p>
+      <p class="text-agro-light mt-1">Учасники спільноти АгроПростір</p>
     </div>
 
     <!-- Пошук + фільтр -->
@@ -37,16 +37,14 @@
 
     <!-- Фільтр по культурі -->
     <div v-if="allCrops.length" class="flex flex-wrap gap-2 mb-8">
-      <button @click="cropFilter = ''"
-        class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors"
-        :class="cropFilter === '' ? 'bg-agro text-white border-agro' : 'bg-white text-agro-dark border-agro-border hover:border-agro'">
+      <NuxtLink to="/farmers"
+        class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors bg-white text-agro-dark border-agro-border hover:border-agro">
         Всі культури
-      </button>
-      <button v-for="c in allCrops" :key="c" @click="cropFilter = c"
-        class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors"
-        :class="cropFilter === c ? 'bg-agro text-white border-agro' : 'bg-white text-agro-dark border-agro-border hover:border-agro'">
+      </NuxtLink>
+      <NuxtLink v-for="c in allCrops" :key="c" :to="`/farmers/${cropToSlug(c)}`"
+        class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors bg-white text-agro-dark border-agro-border hover:border-agro">
         {{ cropEmoji(c) }} {{ c }}
-      </button>
+      </NuxtLink>
     </div>
 
     <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -60,22 +58,23 @@
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <div v-for="farmer in filtered" :key="farmer.id" class="card hover:shadow-md transition-all">
-        <!-- Шапка -->
-        <div class="flex items-start gap-4 mb-4">
+      <div v-for="farmer in filtered" :key="farmer.id" class="card hover:shadow-md transition-all flex flex-col text-left">
+        <div class="flex items-center gap-3 mb-4">
           <div class="w-12 h-12 rounded-2xl bg-agro-hover flex items-center justify-center font-bold text-agro text-xl shrink-0">
             {{ farmer.name?.[0]?.toUpperCase() || '?' }}
           </div>
           <div class="flex-1 min-w-0">
-            <NuxtLink :to="`/farmer/${farmer.id}`" class="font-bold text-agro-dark hover:text-agro transition-colors">{{ farmer.name }}</NuxtLink>
-            <p v-if="farmer.city || farmer.region" class="text-sm text-agro-light mt-0.5">
-              📍 {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <NuxtLink :to="`/farmer/${farmer.id}`" class="font-bold text-agro-dark hover:text-agro transition-colors truncate">{{ farmer.name }}</NuxtLink>
+              <span v-if="farmer.is_verified_farmer" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-semibold shrink-0">✅ Перевірений</span>
+            </div>
+            <p class="text-sm text-agro-light truncate">
+              {{ farmer.city || farmer.region ? `📍 ${[farmer.city, farmer.region].filter(Boolean).join(', ')}` : '&nbsp;' }}
             </p>
           </div>
         </div>
 
-        <!-- Культури -->
-        <div class="mb-4">
+        <div class="flex-1 mb-4">
           <p class="text-xs text-agro-light uppercase tracking-wide mb-2">Вирощує</p>
           <div class="flex flex-wrap gap-1.5">
             <NuxtLink v-for="c in farmer.crops" :key="c"
@@ -87,10 +86,9 @@
           </div>
         </div>
 
-        <NuxtLink :to="`/farmer/${farmer.id}`" class="btn-primary w-full text-sm py-2.5 text-center block">
+        <NuxtLink :to="`/farmer/${farmer.id}`" class="btn-primary w-full text-sm py-2.5 text-center block mt-auto">
           Детально →
         </NuxtLink>
-
       </div>
     </div>
   </div>

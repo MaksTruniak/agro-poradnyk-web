@@ -3,14 +3,26 @@
     <header class="bg-white border-b border-agro-border sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center gap-6">
         <NuxtLink to="/" class="flex items-center gap-2 shrink-0">
-          <span class="text-2xl">🌾</span>
-          <span class="font-bold text-agro-dark text-lg">АгроПорадник</span>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+            <clipPath id="logo-clip"><rect width="32" height="32" rx="8"/></clipPath>
+            <g clip-path="url(#logo-clip)">
+              <rect width="32" height="32" fill="#B5D4F4"/>
+              <ellipse cx="8" cy="8" rx="5" ry="2.5" fill="white" opacity="0.8"/>
+              <ellipse cx="22" cy="6" rx="4" ry="2" fill="white" opacity="0.7"/>
+              <rect x="0" y="16" width="32" height="3" fill="#3B6D11"/>
+              <rect x="0" y="19" width="32" height="13" fill="#A0622A"/>
+              <rect x="0" y="25" width="32" height="7" fill="#7A4620"/>
+              <line x1="0" y1="19" x2="32" y2="19" stroke="#5C3310" stroke-width="0.5"/>
+            </g>
+          </svg>
+          <span class="font-bold text-agro-dark text-lg">АгроПростір</span>
         </NuxtLink>
 
         <!-- Ліва: Агрономи, Фермери -->
         <nav class="hidden md:flex items-center gap-5">
           <NuxtLink to="/agronomists" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Агрономи</NuxtLink>
           <NuxtLink to="/farmers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Фермери</NuxtLink>
+          <NuxtLink to="/buyers" class="text-agro-light hover:text-agro-dark font-medium transition-colors">Заготівельники</NuxtLink>
         </nav>
 
         <!-- Права: Каталог, Діючі речовини -->
@@ -56,6 +68,12 @@
                   <NuxtLink to="/diseases" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
                     <span class="text-lg">🦠</span><span>Хвороби рослин</span>
                   </NuxtLink>
+                  <NuxtLink to="/pests" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">🐛</span><span>Шкідники</span>
+                  </NuxtLink>
+                  <NuxtLink to="/brands" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-agro-dark hover:bg-agro-bg transition-colors">
+                    <span class="text-lg">🏭</span><span>Виробники</span>
+                  </NuxtLink>
                 </div>
               </div>
             </Transition>
@@ -92,8 +110,11 @@
           <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/weeds" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌿 Бур'яни</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/diseases" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🦠 Хвороби рослин</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/pests" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🐛 Шкідники</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/brands" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🏭 Виробники</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">👨‍🌾 Фермери</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/buyers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🏭 Заготівельники</NuxtLink>
           <div class="border-t border-agro-border pt-3 mt-2 flex gap-2">
             <NuxtLink v-if="!user" @click="mobileMenu = false" to="/auth" class="btn-outline text-sm py-2 flex-1 text-center">Увійти</NuxtLink>
             <NuxtLink v-if="!user" @click="mobileMenu = false" to="/auth?mode=register" class="btn-primary text-sm py-2 flex-1 text-center">Реєстрація</NuxtLink>
@@ -110,10 +131,21 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div class="col-span-2 md:col-span-1">
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-xl">🌾</span>
-              <span class="font-bold text-agro-dark">АгроПорадник</span>
+              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+                <clipPath id="logo-clip-footer"><rect width="32" height="32" rx="8"/></clipPath>
+                <g clip-path="url(#logo-clip-footer)">
+                  <rect width="32" height="32" fill="#B5D4F4"/>
+                  <ellipse cx="8" cy="8" rx="5" ry="2.5" fill="white" opacity="0.8"/>
+                  <ellipse cx="22" cy="6" rx="4" ry="2" fill="white" opacity="0.7"/>
+                  <rect x="0" y="16" width="32" height="3" fill="#3B6D11"/>
+                  <rect x="0" y="19" width="32" height="13" fill="#A0622A"/>
+                  <rect x="0" y="25" width="32" height="7" fill="#7A4620"/>
+                  <line x1="0" y1="19" x2="32" y2="19" stroke="#5C3310" stroke-width="0.5"/>
+                </g>
+              </svg>
+              <span class="font-bold text-agro-dark">АгроПростір</span>
             </div>
-            <p class="text-sm text-agro-light leading-relaxed">Цифровий помічник для фермерів, агрономів і продавців агрохімії.</p>
+            <p class="text-sm text-agro-light leading-relaxed">Цифровий помічник для фермерів, заготівельників, агрономів і продавців агрохімії.</p>
           </div>
           <div>
             <p class="font-semibold text-agro-dark text-sm mb-3">Каталог</p>
@@ -139,6 +171,7 @@
               <li><NuxtLink to="/for-farmers" class="hover:text-agro transition-colors">🌾 Фермерам</NuxtLink></li>
               <li><NuxtLink to="/for-dacha" class="hover:text-agro transition-colors">🏡 Дачникам</NuxtLink></li>
               <li><NuxtLink to="/for-agronomists" class="hover:text-agro transition-colors">🔬 Агрономам</NuxtLink></li>
+              <li><NuxtLink to="/for-buyers" class="hover:text-agro transition-colors">🏭 Заготівельникам</NuxtLink></li>
               <li><NuxtLink to="/for-sellers" class="hover:text-agro transition-colors">🏪 Продавцям</NuxtLink></li>
               <li><NuxtLink to="/about" class="hover:text-agro transition-colors">Про нас</NuxtLink></li>
               <li><NuxtLink to="/privacy" class="hover:text-agro transition-colors">Політика конфіденційності</NuxtLink></li>
@@ -147,7 +180,7 @@
           </div>
         </div>
         <div class="border-t border-agro-border pt-6 text-center text-sm text-agro-light">
-          © {{ new Date().getFullYear() }} АгроПорадник. Всі права захищені.
+          © {{ new Date().getFullYear() }} АгроПростір. Всі права захищені.
         </div>
       </div>
     </footer>
@@ -158,7 +191,7 @@
 const MARKETPLACE = false
 
 const CATALOG_MENU = [
-  { to: '/catalog',     emoji: '🛡️', label: 'Пестициди' },
+  { to: '/pesticides',     emoji: '🛡️', label: 'Пестициди' },
   { to: '/fertilizers', emoji: '🌱', label: 'Добрива' },
   { to: '/bio',         emoji: '🍃', label: 'Біопрепарати' },
   { to: '/seeds',       emoji: '🌾', label: 'Насіння' },

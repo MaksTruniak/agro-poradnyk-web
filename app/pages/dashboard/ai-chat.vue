@@ -6,44 +6,10 @@
       <div class="flex-1 min-w-0">
         <p class="font-bold text-agro-dark">AI Агроном</p>
         <p class="text-xs text-agro-light truncate">
-          {{ selectedCrop ? `${farmName} · ${CROP_EMOJI[selectedCrop.crop_type] || '🌱'} ${selectedCrop.crop_type}${selectedCrop.variety ? ` · ${selectedCrop.variety}` : ''}` : (farmName || 'Загальна консультація') }}
+          {{ selectedCrop ? `${farmName} · ${emojiFor(selectedCrop.crop_type)} ${selectedCrop.crop_type}${selectedCrop.variety ? ` · ${selectedCrop.variety}` : ''}` : (farmName || 'Загальна консультація') }}
         </p>
       </div>
 
-      <button v-if="selectedCrop !== undefined" @click="resetCrop"
-        class="text-xs text-agro-light hover:text-agro px-3 py-1.5 rounded-lg border border-agro-border hover:border-agro transition-colors shrink-0">
-        ← Змінити
-      </button>
-    </div>
-
-    <!-- Crop selection screen -->
-    <div v-if="!selectedCrop && !loading" class="flex-1 overflow-y-auto px-6 py-8">
-      <div v-if="crops.length > 0">
-        <p class="font-bold text-agro-dark text-lg mb-1">По якій культурі консультація?</p>
-        <p class="text-agro-light text-sm mb-6">Оберіть культуру з поля <span class="font-medium text-agro-dark">{{ farmName }}</span></p>
-        <div class="grid sm:grid-cols-2 gap-3 mb-6">
-          <button v-for="crop in crops" :key="crop.id" @click="selectCrop(crop)"
-            class="card flex items-center gap-4 text-left hover:border-agro hover:shadow-md transition-all border-2 border-transparent">
-            <span class="text-4xl shrink-0">{{ CROP_EMOJI[crop.crop_type] || '🌱' }}</span>
-            <div>
-              <p class="font-bold text-agro-dark">{{ crop.crop_type }}</p>
-              <p v-if="crop.variety" class="text-xs text-agro-light mt-0.5">Сорт: {{ crop.variety }}</p>
-            </div>
-          </button>
-        </div>
-        <button @click="selectGeneral"
-          class="w-full text-center text-sm text-agro-light hover:text-agro py-3 border-2 border-dashed border-agro-border hover:border-agro rounded-xl transition-colors">
-          🌾 Загальне питання без конкретної культури
-        </button>
-      </div>
-
-      <!-- No farm / no crops -->
-      <div v-else class="flex flex-col items-center justify-center h-full text-center py-12">
-        <p class="text-5xl mb-4">🌾</p>
-        <p class="font-bold text-agro-dark text-lg mb-2">Вітаю! Я ваш AI агроном</p>
-        <p class="text-agro-light mb-6 max-w-sm">Запитайте мене про захист рослин, добрива, хвороби культур або будь-що пов'язане з агрономією</p>
-        <button @click="selectGeneral" class="btn-primary">Почати консультацію →</button>
-      </div>
     </div>
 
     <!-- Loading skeleton -->
@@ -69,10 +35,10 @@
     </div>
 
     <!-- Chat -->
-    <template v-if="selectedCrop !== null && !loading">
+    <template v-if="!loading">
       <div ref="messagesEl" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center py-12">
-          <p class="text-5xl mb-4">{{ selectedCrop ? (CROP_EMOJI[selectedCrop.crop_type] || '🌱') : '🤖' }}</p>
+          <p class="text-5xl mb-4">{{ selectedCrop ? (emojiFor(selectedCrop.crop_type)) : '🤖' }}</p>
           <p class="font-bold text-agro-dark text-lg mb-2">
             {{ selectedCrop ? `Консультація по ${selectedCrop.crop_type}` : 'Загальна консультація' }}
           </p>
@@ -109,18 +75,11 @@
                 <!-- AI: з посиланнями на препарати -->
                 <span v-else class="whitespace-pre-wrap" v-html="renderMessage(msg.content)"></span>
               </div>
-              <!-- Кнопка "Додати до схеми" для AI повідомлень зі схемою -->
-              <div v-if="msg.role === 'assistant' && msg.hasScheme" class="mt-2 flex gap-2 flex-wrap">
-                <button @click="openSchemeModal(msg.content)"
-                  class="text-xs px-3 py-1.5 bg-agro text-white rounded-lg hover:bg-agro/90 transition-colors font-medium">
-                  🛡 Додати до схеми захисту
-                </button>
-              </div>
               <!-- Препарати: посилання на каталог + кнопка в схему -->
               <div v-if="msg.role === 'assistant' && msg.products?.length" class="mt-2 flex gap-2 flex-wrap">
                 <div v-for="p in msg.products" :key="p" class="flex items-center gap-0.5">
                   <NuxtLink
-                    :to="`/catalog?search=${encodeURIComponent(p)}`"
+                    :to="`/pesticides?search=${encodeURIComponent(p)}`"
                     target="_blank"
                     class="text-xs px-3 py-1.5 bg-agro-hover text-agro border border-agro/30 rounded-l-lg hover:bg-agro hover:text-white transition-colors font-medium">
                     🔍 {{ p }}
@@ -128,7 +87,7 @@
                   <button
                     @click="openSchemeModalForProduct(p)"
                     class="text-xs px-2 py-1.5 bg-agro-hover text-agro border border-l-0 border-agro/30 rounded-r-lg hover:bg-agro hover:text-white transition-colors"
-                    title="Додати до схеми захисту">
+                    title="Додати до технологічної карти">
                     🛡
                   </button>
                 </div>
@@ -178,13 +137,13 @@
       </div>
     </template>
 
-    <!-- Модалка схеми захисту -->
+    <!-- Модалка технологічної карти -->
     <Teleport to="body">
       <Transition name="fade">
         <div v-if="schemeModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="schemeModal.show = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-6">
-            <h2 class="font-bold text-agro-dark text-lg mb-4">🛡 Додати до схеми захисту</h2>
+            <h2 class="font-bold text-agro-dark text-lg mb-4">🛡 Додати до технологічної карти</h2>
             <div class="space-y-3 mb-5">
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1">Препарат</label>
@@ -237,12 +196,8 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const route = useRoute()
 const supabase = useSupabaseClient()
 
-const CROP_EMOJI: Record<string, string> = {
-  'Пшениця': '🌾', 'Кукурудза': '🌽', 'Соняшник': '🌻', 'Соя': '🫘',
-  'Ріпак': '🌼', 'Ячмінь': '🌾', 'Жито': '🌾', 'Овес': '🌾',
-  'Цукровий буряк': '🥕', 'Картопля': '🥔', 'Помідор': '🍅',
-  'Огірок': '🥒', 'Перець': '🌶', 'Капуста': '🥬',
-}
+const { load: loadCrops, emojiFor } = useCropCatalog()
+loadCrops()
 
 const farmId = computed(() => route.query.farmId as string | undefined)
 
@@ -255,7 +210,7 @@ const farmName = ref('')
 const farmHectares = ref<number | null>(null)
 const farmRegion = ref('')
 const crops = ref<any[]>([])
-const selectedCrop = ref<any | null | undefined>(undefined)
+const selectedCrop = ref<any | null>(null)
 const currentChatId = ref<string | null>(null)
 const uid = ref<string | null>(null)
 
@@ -343,30 +298,12 @@ onMounted(async () => {
       crops.value = data.farm_crops || []
     }
   }
+  if (uid.value) await loadHistory(null)
   } finally {
     loading.value = false
   }
 })
 
-const selectCrop = async (crop: any) => {
-  selectedCrop.value = crop
-  messages.value = []
-  currentChatId.value = null
-  if (uid.value) await loadHistory(crop.id)
-}
-
-const selectGeneral = async () => {
-  selectedCrop.value = null
-  messages.value = []
-  currentChatId.value = null
-  if (uid.value) await loadHistory(null)
-}
-
-const resetCrop = () => {
-  selectedCrop.value = undefined
-  messages.value = []
-  currentChatId.value = null
-}
 
 const loadHistory = async (farmCropId: string | null) => {
   const query = supabase
@@ -410,7 +347,7 @@ const loadHistory = async (farmCropId: string | null) => {
 const renderMessage = (text: string) => {
   const clean = text.replace(/SCHEME_DETECTED/g, '').trim()
   return clean.replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
-    `<a href="/catalog?search=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${name}</a>`
+    `<a href="/pesticides?search=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${name}</a>`
   )
 }
 
@@ -422,7 +359,7 @@ const extractProducts = (text: string): string[] => {
 // Фази росту для модалки
 const phases = ref<{ key: string; emoji: string; order: number }[]>([])
 
-// Модалка схеми захисту
+// Модалка технологічної карти
 const schemeModal = reactive({
   show: false,
   product_name: '',

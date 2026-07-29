@@ -14,7 +14,7 @@
           <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro transition-colors">
             Відкрити магазин →
           </NuxtLink>
-          <NuxtLink to="/catalog" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
+          <NuxtLink to="/pesticides" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
             Подивитись каталог
           </NuxtLink>
         </div>
@@ -100,7 +100,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
 useSeoMeta({
-  title: 'АгроПорадник для продавців — продавайте препарати і добрива онлайн',
+  title: 'АгроПростір для продавців — продавайте препарати і добрива онлайн',
   description: 'Розмістіть каталог агрохімії на платформі де тисячі фермерів шукають препарати. Замовлення, доставка НП, управління залишками.',
 })
 

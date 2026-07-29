@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
-    <NuxtLink to="/catalog" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium">
+    <NuxtLink to="/pesticides" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium">
       ← Назад до каталогу
     </NuxtLink>
 
@@ -31,7 +31,7 @@
       <p class="text-agro-light text-sm mb-5">Знайдено товарів: {{ products.length }}</p>
       <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         <div v-for="product in products" :key="product.slug" class="card hover:shadow-md transition-all group">
-          <NuxtLink :to="`/catalog/${product.slug}`" class="block">
+          <NuxtLink :to="`/pesticides/${product.slug}`" class="block">
             <div class="flex items-center justify-between mb-3">
               <span class="text-3xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</span>
               <span class="text-xs font-semibold bg-agro-hover text-agro px-2.5 py-1 rounded-full">
@@ -54,7 +54,7 @@
               <p v-else class="text-sm text-agro-light">Немає пропозицій</p>
             </template>
             <div class="flex gap-2 shrink-0" :class="MARKETPLACE ? '' : 'ml-auto'">
-              <NuxtLink :to="`/catalog/${product.slug}`" class="btn-outline text-sm py-2 px-3">Детально</NuxtLink>
+              <NuxtLink :to="`/pesticides/${product.slug}`" class="btn-outline text-sm py-2 px-3">Детально</NuxtLink>
               <button v-if="MARKETPLACE && offersMap[product.slug]?.length" @click="openBuyModal(product)" class="btn-primary text-sm py-2 px-3">🛒 Купити</button>
             </div>
           </div>
@@ -95,7 +95,7 @@
             </div>
           </div>
           <div class="px-6 py-4 border-t border-agro-border">
-            <NuxtLink :to="`/catalog/${buyModalProduct?.slug}`" @click="buyModalOpen = false" class="text-agro text-sm font-semibold hover:underline">
+            <NuxtLink :to="`/pesticides/${buyModalProduct?.slug}`" @click="buyModalOpen = false" class="text-agro text-sm font-semibold hover:underline">
               Детальніше про товар →
             </NuxtLink>
           </div>

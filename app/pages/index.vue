@@ -5,7 +5,7 @@
       <div class="max-w-4xl mx-auto text-center">
         <p class="text-agro font-semibold mb-4 text-sm uppercase tracking-widest">Цифровий помічник аграрія</p>
         <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight text-agro-dark">
-          АгроПорадник
+          АгроПростір
         </h1>
         <p class="text-xl text-agro-light mb-10 max-w-2xl mx-auto leading-relaxed">
           Керуйте полями, отримуйте консультації агрономів та замовляйте препарати — все в одному місці
@@ -14,7 +14,7 @@
           <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro transition-colors">
             Почати безкоштовно →
           </NuxtLink>
-          <NuxtLink to="/catalog" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
+          <NuxtLink to="/pesticides" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
             Каталог препаратів
           </NuxtLink>
         </div>
@@ -23,8 +23,8 @@
 
     <!-- Для кого -->
     <section class="py-20 px-4 max-w-7xl mx-auto">
-      <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Для кого АгроПорадник?</h2>
-      <div class="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+      <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Для кого АгроПростір?</h2>
+      <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <NuxtLink v-for="role in roles" :key="role.title" :to="role.link" class="card text-center hover:shadow-md transition-shadow group">
           <div class="text-5xl mb-4">{{ role.emoji }}</div>
           <h3 class="font-bold text-lg text-agro-dark mb-2">{{ role.title }}</h3>
@@ -37,7 +37,7 @@
     <!-- Функції -->
     <section class="py-20 px-4 bg-white">
       <div class="max-w-7xl mx-auto">
-        <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Що вміє АгроПорадник?</h2>
+        <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Що вміє АгроПростір?</h2>
         <div class="grid md:grid-cols-3 gap-8">
           <div v-for="feat in features" :key="feat.title" class="flex gap-4">
             <div class="text-3xl shrink-0">{{ feat.icon }}</div>
@@ -79,13 +79,13 @@
             :style="{ width: (80 + (i * 17) % 60) + 'px' }"></div>
         </div>
         <div v-else class="flex flex-wrap justify-center gap-3">
-          <NuxtLink v-for="b in brands.slice(0, 18)" :key="b.slug" :to="`/brand/${brandToSlug(b)}`"
+          <NuxtLink v-for="b in brands.slice(0, 18)" :key="b.slug" :to="`/brands/${brandToSlug(b)}`"
             class="px-5 py-3 bg-white border-2 border-agro-border rounded-2xl text-sm font-semibold text-agro-dark hover:border-agro hover:text-agro transition-colors">
             {{ b.name }}
           </NuxtLink>
         </div>
         <div class="text-center mt-8">
-          <NuxtLink to="/catalog" class="text-agro font-semibold hover:underline text-sm">Весь каталог препаратів →</NuxtLink>
+          <NuxtLink to="/pesticides" class="text-agro font-semibold hover:underline text-sm">Весь каталог препаратів →</NuxtLink>
         </div>
       </div>
     </section>
@@ -105,9 +105,9 @@
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: 'АгроПорадник — цифровий помічник агрария',
+  title: 'АгроПростір — цифровий помічник агрария',
   description: 'Керуйте полями, консультуйтесь з агрономами та замовляйте препарати онлайн.',
-  ogTitle: 'АгроПорадник',
+  ogTitle: 'АгроПростір',
   ogDescription: 'Цифровий помічник для фермерів, дачників, агрономів і продавців агрохімії.',
 })
 
@@ -117,8 +117,9 @@ const api = useAgroApi()
 const MARKETPLACE = false
 
 const roles = [
-  { emoji: '🌾', title: 'Фермер', desc: 'Облік полів і культур, програми захисту, консультації агрономів', link: '/for-farmers' },
+  { emoji: '🌾', title: 'Фермер', desc: 'Облік полів і культур, технологічні карти, консультації агрономів', link: '/for-farmers' },
   { emoji: '🔬', title: 'Агроном', desc: 'Кабінет консультанта, управління клієнтами, просування профілю', link: '/for-agronomists' },
+  { emoji: '🏭', title: 'Заготівельник', desc: 'Розміщуйте закупівлі, отримуйте пропозиції від фермерів напряму', link: '/for-buyers' },
 ]
 
 const features = [
@@ -126,7 +127,7 @@ const features = [
   { icon: '👨‍🌾', title: 'Живий агроном', desc: 'Знаходьте перевірених агрономів і спілкуйтесь у чаті напряму' },
   { icon: '🤖', title: 'AI агроном', desc: 'Отримуйте відповіді на агрономічні питання від AI-асистента 24/7' },
   { icon: '🛒', title: 'Каталог препаратів', desc: 'Тисячі препаратів і добрив — склад, аналоги, культури та норми витрати' },
-  { icon: '🛡️', title: 'Програма захисту', desc: 'Складайте календар обробок по фазах розвитку культури' },
+  { icon: '📋', title: 'Технологічна карта', desc: 'Складайте календар обробок по фазах розвитку культури' },
   { icon: '🔔', title: 'Push-сповіщення', desc: 'Нагадування про обробки, нові повідомлення та замовлення' },
 ]
 

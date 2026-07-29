@@ -9,12 +9,12 @@
       <div class="card text-center">
         <div class="text-3xl mb-3">📧</div>
         <h3 class="font-bold text-agro-dark mb-1">Email</h3>
-        <a href="mailto:info@agroporadnyk.ua" class="text-agro hover:underline">info@agroporadnyk.ua</a>
+        <a href="mailto:info@agroprostir.ua" class="text-agro hover:underline">info@agroprostir.ua</a>
       </div>
       <div class="card text-center">
         <div class="text-3xl mb-3">💬</div>
         <h3 class="font-bold text-agro-dark mb-1">Telegram</h3>
-        <a href="https://t.me/agroporadnyk" target="_blank" class="text-agro hover:underline">@agroporadnyk</a>
+        <a href="https://t.me/agroprostir" target="_blank" class="text-agro hover:underline">@agroprostir</a>
       </div>
     </div>
 
@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useSeoMeta({ title: 'Контакти — АгроПорадник' })
+useSeoMeta({ title: 'Контакти — АгроПростір' })
 
 const form = reactive({ name: '', email: '', message: '' })
 const sending = ref(false)

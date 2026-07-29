@@ -49,7 +49,7 @@ export const useAgroApi = () => {
         .select(`
           *,
           agro_manufacturers(id, name, slug, website_url, country),
-          agro_product_details(description, source_url, content_sections),
+          agro_product_details(description, source_url, content_sections, chem_class, dosage),
           agro_product_ingredients(concentration, agro_active_ingredients(id, name, slug))
         `)
         .eq('slug', slug)
@@ -64,6 +64,8 @@ export const useAgroApi = () => {
           description: p.agro_product_details?.description || null,
           source_url: p.agro_product_details?.source_url || null,
           content_sections: p.agro_product_details?.content_sections || null,
+          chem_class: p.agro_product_details?.chem_class || null,
+          dosage: p.agro_product_details?.dosage || null,
           active_ingredients: (p.agro_product_ingredients || []).map((pi: any) => ({
             ...pi.agro_active_ingredients,
             concentration: pi.concentration,
@@ -209,7 +211,20 @@ export const useAgroApi = () => {
     getWeed: async (slug: string) => {
       const { data, error } = await supabase.from('agro_weeds').select('*').eq('slug', slug).single()
       if (error) throw error
-      return { weed: data }
+      const { data: weedHerbs } = await supabase
+        .from('agro_weed_herbicides')
+        .select('product_id')
+        .eq('weed_id', data.id)
+      let herbicides: any[] = []
+      if (weedHerbs?.length) {
+        const ids = weedHerbs.map(r => r.product_id)
+        const { data: prods } = await supabase
+          .from('agro_products')
+          .select('id, name, slug, source_image_url, agro_manufacturers(name, slug)')
+          .in('id', ids)
+        herbicides = prods ?? []
+      }
+      return { weed: { ...data, herbicides } }
     },
 
     getDiseases: async (params?: { q?: string; category?: string; culture?: string; limit?: number; offset?: number }) => {
@@ -230,7 +245,54 @@ export const useAgroApi = () => {
     getDisease: async (slug: string) => {
       const { data, error } = await supabase.from('agro_diseases').select('*').eq('slug', slug).single()
       if (error) throw error
-      return { disease: data }
+      const { data: diseaseProds } = await supabase
+        .from('agro_disease_products')
+        .select('product_id')
+        .eq('disease_id', data.id)
+      let products: any[] = []
+      if (diseaseProds?.length) {
+        const ids = diseaseProds.map(r => r.product_id)
+        const { data: prods } = await supabase
+          .from('agro_products')
+          .select('id, name, slug, source_image_url, agro_manufacturers(name, slug)')
+          .in('id', ids)
+        products = prods ?? []
+      }
+      return { disease: { ...data, products } }
+    },
+
+    getPests: async (params?: { q?: string; category?: string; culture?: string; limit?: number; offset?: number }) => {
+      const limit = params?.limit || 50
+      const offset = params?.offset || 0
+
+      let query = supabase.from('agro_pests').select('*', { count: 'exact' })
+
+      if (params?.q) query = query.ilike('name', `%${params.q}%`)
+      if (params?.category) query = query.eq('category_slug', params.category)
+      if (params?.culture) query = query.ilike('culture', `%${params.culture}%`)
+
+      const { data, count, error } = await query.range(offset, offset + limit - 1).order('name')
+      if (error) throw error
+      return { items: data || [], total: count || 0 }
+    },
+
+    getPest: async (slug: string) => {
+      const { data, error } = await supabase.from('agro_pests').select('*').eq('slug', slug).single()
+      if (error) throw error
+      const { data: pestProds } = await supabase
+        .from('agro_pest_products')
+        .select('product_id')
+        .eq('pest_id', data.id)
+      let products: any[] = []
+      if (pestProds?.length) {
+        const ids = pestProds.map(r => r.product_id)
+        const { data: prods } = await supabase
+          .from('agro_products')
+          .select('id, name, slug, source_image_url, agro_manufacturers(name, slug)')
+          .in('id', ids)
+        products = prods ?? []
+      }
+      return { pest: { ...data, products } }
     },
   }
 }

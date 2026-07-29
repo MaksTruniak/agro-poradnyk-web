@@ -4,8 +4,19 @@
     <aside class="hidden lg:flex w-64 bg-white border-r border-agro-border flex-col fixed h-full z-40">
       <div class="p-5 border-b border-agro-border">
         <NuxtLink to="/" class="flex items-center gap-2">
-          <span class="text-xl">🌾</span>
-          <span class="font-bold text-agro-dark">АгроПорадник</span>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+            <clipPath id="logo-clip-dash"><rect width="32" height="32" rx="8"/></clipPath>
+            <g clip-path="url(#logo-clip-dash)">
+              <rect width="32" height="32" fill="#B5D4F4"/>
+              <ellipse cx="8" cy="8" rx="5" ry="2.5" fill="white" opacity="0.8"/>
+              <ellipse cx="22" cy="6" rx="4" ry="2" fill="white" opacity="0.7"/>
+              <rect x="0" y="16" width="32" height="3" fill="#3B6D11"/>
+              <rect x="0" y="19" width="32" height="13" fill="#A0622A"/>
+              <rect x="0" y="25" width="32" height="7" fill="#7A4620"/>
+              <line x1="0" y1="19" x2="32" y2="19" stroke="#5C3310" stroke-width="0.5"/>
+            </g>
+          </svg>
+          <span class="font-bold text-agro-dark">АгроПростір</span>
         </NuxtLink>
       </div>
 
@@ -15,14 +26,24 @@
             {{ userInitial }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-sm text-agro-dark truncate">{{ userName }}</p>
-            <p class="text-xs text-agro-light">{{ roleLabel }}</p>
+            <template v-if="profileReady">
+              <p class="font-semibold text-sm text-agro-dark truncate">{{ userName }}</p>
+              <p class="text-xs text-agro-light">{{ roleLabel }}</p>
+            </template>
+            <template v-else>
+              <div class="h-4 w-24 bg-agro-bg rounded animate-pulse mb-1.5" />
+              <div class="h-3 w-16 bg-agro-bg rounded animate-pulse" />
+            </template>
           </div>
         </div>
       </div>
 
       <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <template v-if="!role">
+          <div v-for="i in 5" :key="i" class="h-10 rounded-xl bg-agro-bg animate-pulse mb-1" />
+        </template>
         <NuxtLink
+          v-else
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
@@ -46,8 +67,19 @@
     <!-- Мобільний хедер -->
     <div class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-agro-border h-14 flex items-center justify-between px-4">
       <NuxtLink to="/" class="flex items-center gap-2">
-        <span class="text-lg">🌾</span>
-        <span class="font-bold text-agro-dark">АгроПорадник</span>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+            <clipPath id="logo-clip-mob"><rect width="32" height="32" rx="8"/></clipPath>
+            <g clip-path="url(#logo-clip-mob)">
+              <rect width="32" height="32" fill="#B5D4F4"/>
+              <ellipse cx="8" cy="8" rx="5" ry="2.5" fill="white" opacity="0.8"/>
+              <ellipse cx="22" cy="6" rx="4" ry="2" fill="white" opacity="0.7"/>
+              <rect x="0" y="16" width="32" height="3" fill="#3B6D11"/>
+              <rect x="0" y="19" width="32" height="13" fill="#A0622A"/>
+              <rect x="0" y="25" width="32" height="7" fill="#7A4620"/>
+              <line x1="0" y1="19" x2="32" y2="19" stroke="#5C3310" stroke-width="0.5"/>
+            </g>
+          </svg>
+        <span class="font-bold text-agro-dark">АгроПростір</span>
       </NuxtLink>
       <div class="flex items-center gap-2">
         <NuxtLink v-if="MARKETPLACE" to="/cart" class="relative p-2">
@@ -70,21 +102,30 @@
     <!-- Мобільний bottom nav -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-agro-border">
       <div class="grid grid-cols-5 h-16">
-        <NuxtLink
-          v-for="item in bottomNavItems"
-          :key="item.to"
-          :to="item.to"
-          class="flex flex-col items-center justify-center gap-0.5 transition-colors relative"
-          :class="(item.to === '/dashboard' ? $route.path === '/dashboard' : $route.path === item.to || $route.path.startsWith(item.to + '/')) ? 'text-agro' : 'text-agro-light'"
-        >
-          <span class="text-xl leading-none">{{ item.icon }}</span>
-          <span class="text-[10px] leading-none font-medium">{{ item.label }}</span>
-          <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="absolute top-1 right-3 w-4 h-4 bg-agro rounded-full text-white text-[9px] font-bold flex items-center justify-center">{{ unreadChats }}</span>
-          <span v-if="item.to === '/cart' && cartCount > 0" class="absolute top-1 right-3 w-4 h-4 bg-agro rounded-full text-white text-[9px] font-bold flex items-center justify-center">{{ cartCount }}</span>
-        </NuxtLink>
+        <template v-if="!role">
+          <div v-for="i in 5" :key="i" class="flex flex-col items-center justify-center gap-1.5">
+            <div class="w-6 h-6 rounded-lg bg-agro-bg animate-pulse" />
+            <div class="w-10 h-2 rounded bg-agro-bg animate-pulse" />
+          </div>
+        </template>
+        <template v-else>
+          <NuxtLink
+            v-for="item in bottomNavItems"
+            :key="item.to"
+            :to="item.to"
+            class="flex flex-col items-center justify-center gap-0.5 transition-colors relative"
+            :class="(item.to === '/dashboard' ? $route.path === '/dashboard' : $route.path === item.to || $route.path.startsWith(item.to + '/')) ? 'text-agro' : 'text-agro-light'"
+          >
+            <span class="text-xl leading-none">{{ item.icon }}</span>
+            <span class="text-[10px] leading-none font-medium">{{ item.label }}</span>
+            <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="absolute top-1 right-3 w-4 h-4 bg-agro rounded-full text-white text-[9px] font-bold flex items-center justify-center">{{ unreadChats }}</span>
+            <span v-if="item.to === '/cart' && cartCount > 0" class="absolute top-1 right-3 w-4 h-4 bg-agro rounded-full text-white text-[9px] font-bold flex items-center justify-center">{{ cartCount }}</span>
+          </NuxtLink>
+        </template>
       </div>
     </nav>
   </div>
+  <ConfirmModal />
 </template>
 
 <script setup lang="ts">
@@ -94,11 +135,30 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const router = useRouter()
 
-const { data: profile } = await useAsyncData('dashboard-profile', async () => {
+const profile = ref<any>(null)
+const profileReady = ref(false)
+
+// Одразу беремо роль і ім'я з кешу щоб не було мигання меню
+if (import.meta.client) {
+  const cachedRole = localStorage.getItem('agro_user_role')
+  const cachedName = localStorage.getItem('agro_user_name')
+  if (cachedRole && cachedName) {
+    profile.value = { role: cachedRole, name: cachedName }
+    profileReady.value = true
+  }
+}
+
+onMounted(async () => {
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return null
+  if (!session) return
   const { data } = await supabase.from('users').select('name, role').eq('id', session.user.id).single()
-  return data
+  if (data) {
+    profile.value = data
+    profileReady.value = true
+    localStorage.setItem('agro_user_role', data.role)
+    localStorage.setItem('agro_user_name', data.name || '')
+  }
+  loadUnread()
 })
 
 const cartCount = ref(0)
@@ -128,24 +188,30 @@ const loadCartCount = async () => {
   cartCount.value = count || 0
 }
 
-onMounted(() => { loadUnread(); loadCartCount() })
+onMounted(() => { loadCartCount() })
 
 const route = useRoute()
 watch(() => route.path, () => { if (route.path === '/cart' || route.path.includes('catalog')) loadCartCount() })
 
-const userName = computed(() => profile.value?.name || user.value?.email || '')
+const userName = computed(() => profile.value?.name || '')
 const userInitial = computed(() => userName.value.trim()[0]?.toUpperCase() || '?')
-const role = computed(() => profile.value?.role || 'farmer')
+const role = computed(() => profile.value?.role || '')
 
 const ROLE_LABELS: Record<string, string> = {
   farmer: '🌾 Фермер',
   dacha: '🏡 Дачник',
   agronomist: '🔬 Агроном',
   seller: '🏪 Продавець',
+  buyer: '🏭 Заготівельник',
+  admin: '🛡 Адміністратор',
 }
-const roleLabel = computed(() => ROLE_LABELS[role.value] || 'Фермер')
+const roleLabel = computed(() => ROLE_LABELS[role.value] || role.value)
 
 const navItems = computed(() => {
+  const adminItem = role.value === 'admin' ? [{ to: '/admin', icon: '🛡', label: 'Адмін' }] : []
+  if (role.value === 'admin') return [
+    { to: '/admin', icon: '🛡', label: 'Адмін-панель' },
+  ]
   if (role.value === 'seller') return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
     { to: '/dashboard/products', icon: '📦', label: 'Товари' },
@@ -154,6 +220,16 @@ const navItems = computed(() => {
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
     { to: '/dashboard/promotion', icon: '🚀', label: 'Просування' },
     { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
+    ...adminItem,
+  ]
+  if (role.value === 'buyer') return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/farmers', icon: '🌾', label: 'Фермери' },
+    { to: '/dashboard/buyer-crops', icon: '📋', label: 'Що закуповую' },
+    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/dashboard/deals', icon: '🤝', label: 'Угоди' },
+    { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
+    ...adminItem,
   ]
   if (role.value === 'agronomist') return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
@@ -162,12 +238,13 @@ const navItems = computed(() => {
     { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI агроном' },
     { to: '/dashboard/chats', icon: '💬', label: 'Консультації' },
     { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
-    { to: '/catalog', icon: '📖', label: 'Каталог' },
+    { to: '/pesticides', icon: '📖', label: 'Каталог' },
     ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }, { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' }] : []),
     { to: '/dashboard/agronomist-profile', icon: '🔬', label: 'Кабінет агронома' },
     { to: '/dashboard/promotion', icon: '🚀', label: 'Просування' },
     { to: '/dashboard/subscription', icon: '💎', label: 'Підписка' },
     { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
+    ...adminItem,
   ]
   const base = [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
@@ -175,13 +252,15 @@ const navItems = computed(() => {
   ]
   if (role.value !== 'dacha') base.push({ to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' })
   return [...base,
-    { to: '/catalog', icon: '📖', label: 'Каталог' },
+    { to: '/pesticides', icon: '📖', label: 'Каталог' },
     { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI агроном' },
     ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }, { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' }] : []),
     { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/dashboard/deals', icon: '🤝', label: 'Угоди' },
     { to: '/dashboard/subscription', icon: '💎', label: 'Підписка' },
     { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
+    ...adminItem,
   ]
 })
 
@@ -193,12 +272,18 @@ const bottomNavItems = computed(() => {
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
     { to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' },
   ]
+  if (role.value === 'buyer') return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/farmers', icon: '🌾', label: 'Фермери' },
+    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/dashboard/settings', icon: '⚙️', label: 'Більше' },
+  ]
   if (role.value === 'agronomist') return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
     { to: '/dashboard/fields', icon: '🌾', label: 'Поля' },
     { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
-    { to: '/catalog', icon: '📖', label: 'Каталог' },
+    { to: '/pesticides', icon: '📖', label: 'Каталог' },
   ]
   return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },

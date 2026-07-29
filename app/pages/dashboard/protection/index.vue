@@ -5,7 +5,7 @@
     </NuxtLink>
 
     <div class="mb-6">
-      <h1 class="text-2xl font-extrabold text-agro-dark">🛡 Програма захисту</h1>
+      <h1 class="text-2xl font-extrabold text-agro-dark">📋 Технологічна карта</h1>
       <p v-if="cropType" class="text-agro-light mt-1">{{ cropType }}</p>
     </div>
 
@@ -17,7 +17,7 @@
       <div v-if="!program" class="card text-center py-12">
         <p class="text-5xl mb-4">🛡</p>
         <p class="font-bold text-agro-dark text-lg">Програму ще не створено</p>
-        <p class="text-agro-light mt-1 mb-6">Створіть програму захисту для цієї культури</p>
+        <p class="text-agro-light mt-1 mb-6">Створіть технологічну карту для цієї культури</p>
         <button @click="createProgram" :disabled="saving" class="btn-primary inline-block">
           {{ saving ? '...' : '➕ Створити програму' }}
         </button>
@@ -60,6 +60,38 @@
                   <p class="font-semibold text-agro-dark mt-1 text-sm">{{ t.product_name }}</p>
                   <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5">📏 {{ t.dosage }}</p>
                   <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
+                </div>
+                <div class="relative shrink-0 reminder-info-wrap">
+                  <button @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors shrink-0"
+                    :class="treatmentReminders[t.product_name]?.length ? 'bg-agro/10 text-agro hover:bg-agro/20' : 'hover:bg-agro-hover text-agro-light hover:text-agro'"
+                    title="Нагадування">
+                    <Bell :size="14" />
+                    <span v-if="treatmentReminders[t.product_name]?.length"
+                      class="absolute -top-1 -right-1 w-4 h-4 bg-agro text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                      {{ treatmentReminders[t.product_name].length }}
+                    </span>
+                  </button>
+                  <!-- Тултіп з нагадуваннями -->
+                  <div v-if="activeReminderInfo === t.id"
+                    class="absolute right-0 top-9 z-30 w-64 bg-white rounded-2xl shadow-xl border border-agro-border p-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <p class="text-xs font-bold text-agro-dark">🔔 Нагадування</p>
+                      <button @click="openReminderFor(t); activeReminderInfo = null"
+                        class="text-xs text-agro font-medium hover:underline">+ Додати</button>
+                    </div>
+                    <div v-if="!treatmentReminders[t.product_name]?.length" class="text-xs text-agro-light py-2 text-center">
+                      Немає нагадувань
+                    </div>
+                    <div v-else class="space-y-1.5">
+                      <div v-for="r in treatmentReminders[t.product_name]" :key="r.id"
+                        class="flex items-center gap-2 text-xs py-1 px-2 rounded-lg"
+                        :class="new Date(r.scheduled_date) < new Date() ? 'bg-gray-50 text-gray-400' : 'bg-agro-hover text-agro-dark'">
+                        <span>📅</span>
+                        <span>{{ formatReminderDate(r.scheduled_date) }}</span>
+                        <span v-if="new Date(r.scheduled_date) < new Date()" class="ml-auto text-gray-300 text-[10px]">минуло</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <button @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
                   <Trash2 :size="14" />
@@ -159,6 +191,72 @@
     </div>
   </div>
 
+  <!-- Модал нагадування -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="reminderTreatment" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="reminderTreatment = null" />
+        <div class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md z-10 max-h-[90vh] overflow-y-auto">
+          <div class="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl px-6 pt-6 pb-4 border-b border-agro-border">
+            <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
+            <h2 class="font-bold text-agro-dark text-lg">🔔 Нагадування</h2>
+            <p class="text-sm text-agro-light mt-0.5 truncate">{{ reminderTreatment.product_name }}</p>
+          </div>
+          <div class="px-6 py-5 space-y-5">
+            <div>
+              <label class="block text-sm font-semibold text-agro-dark mb-3">Дата</label>
+              <div class="bg-agro-bg rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-4">
+                  <button @click="rPrevMonth" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors text-agro-dark font-bold">‹</button>
+                  <span class="font-semibold text-agro-dark text-sm">{{ rMonthLabel }}</span>
+                  <button @click="rNextMonth" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors text-agro-dark font-bold">›</button>
+                </div>
+                <div class="grid grid-cols-7 mb-1">
+                  <div v-for="d in ['Пн','Вт','Ср','Чт','Пт','Сб','Нд']" :key="d" class="text-center text-xs font-medium text-agro-light py-1">{{ d }}</div>
+                </div>
+                <div class="grid grid-cols-7 gap-0.5">
+                  <div v-for="blank in rFirstDayOffset" :key="'b'+blank" />
+                  <button v-for="day in rDaysInMonth" :key="day"
+                    @click="!rIsPastDay(day) && rSelectDay(day)" :disabled="rIsPastDay(day)"
+                    class="aspect-square flex items-center justify-center text-sm rounded-xl transition-colors font-medium"
+                    :class="[rIsPastDay(day) ? 'text-gray-300 cursor-not-allowed' : '', rIsSelectedDay(day) ? 'bg-agro text-white' : (!rIsPastDay(day) ? 'hover:bg-white text-agro-dark' : ''), rIsToday(day) && !rIsSelectedDay(day) ? 'text-agro font-bold' : '']">
+                    {{ day }}
+                  </button>
+                </div>
+              </div>
+              <p v-if="rDate" class="text-xs text-agro mt-2 font-medium text-center">📅 {{ rFormatDate }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-agro-dark mb-3">Час</label>
+              <div class="flex items-center gap-3 bg-agro-bg rounded-2xl px-5 py-4">
+                <div class="flex-1">
+                  <p class="text-xs text-agro-light text-center mb-2">Години</p>
+                  <select v-model="rHour" class="w-full bg-white border border-agro-border rounded-xl px-3 py-2.5 text-center text-agro-dark font-semibold text-lg appearance-none focus:outline-none focus:border-agro cursor-pointer">
+                    <option v-for="h in 24" :key="h-1" :value="h-1">{{ String(h-1).padStart(2,'0') }}</option>
+                  </select>
+                </div>
+                <span class="text-2xl font-bold text-agro-dark mt-5">:</span>
+                <div class="flex-1">
+                  <p class="text-xs text-agro-light text-center mb-2">Хвилини</p>
+                  <select v-model="rMinute" class="w-full bg-white border border-agro-border rounded-xl px-3 py-2.5 text-center text-agro-dark font-semibold text-lg appearance-none focus:outline-none focus:border-agro cursor-pointer">
+                    <option v-for="m in [0,5,10,15,20,25,30,35,40,45,50,55]" :key="m" :value="m">{{ String(m).padStart(2,'0') }}</option>
+                  </select>
+                </div>
+              </div>
+              <p class="text-center text-agro font-bold text-base mt-2">🕐 {{ String(rHour).padStart(2,'0') }}:{{ String(rMinute).padStart(2,'0') }}</p>
+            </div>
+          </div>
+          <div class="sticky bottom-0 bg-white border-t border-agro-border px-6 py-4 flex gap-3">
+            <button @click="reminderTreatment = null" class="btn-outline flex-1">Скасувати</button>
+            <button @click="saveReminder" :disabled="!rDate || rSaving" class="btn-primary flex-1">
+              {{ rSaving ? '...' : 'Додати нагадування' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
   <!-- Модал розумного підбору -->
   <Teleport to="body">
     <Transition name="modal">
@@ -243,7 +341,7 @@
 </template>
 
 <script setup lang="ts">
-import { Trash2, X } from 'lucide-vue-next'
+import { Trash2, X, Bell } from 'lucide-vue-next'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const MARKETPLACE = false
@@ -376,7 +474,7 @@ const ensureInlineT = (key: string) => {
 
 const removePhase = async (phase: any) => {
   const count = treatmentsByPhase.value[phase.key]?.length || 0
-  if (count > 0 && !confirm(`Видалити фазу "${phase.key}" і всі ${count} обробок у ній?`)) return
+  if (count > 0 && !await confirmDialog(`Фаза "${phase.key}" та ${count} обробок у ній будуть видалені.`, { title: 'Видалити фазу?' })) return
   if (count > 0 && program.value) {
     const ids = treatmentsByPhase.value[phase.key].map((t: any) => t.id)
     await supabase.from('program_treatments').delete().in('id', ids)
@@ -435,6 +533,7 @@ const load = async () => {
       const { data: treatmentsData } = await supabase
         .from('program_treatments').select('*').eq('program_id', programData.id).order('phase_order', { ascending: true })
       treatments.value = treatmentsData || []
+      await loadTreatmentReminders(treatmentsData || [])
       // Автоматично показуємо фази що вже мають обробки
       const usedPhaseKeys = [...new Set(treatmentsData?.map((t: any) => t.phase).filter(Boolean) || [])]
       const orderedKeys = phases.value.map(p => p.key).filter(k => usedPhaseKeys.includes(k))
@@ -445,7 +544,12 @@ const load = async () => {
   loading.value = false
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  document.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('.reminder-info-wrap')) activeReminderInfo.value = null
+  })
+})
 
 const saveTreatment = async (phase: any) => {
   const t = inlineT.value[phase.key]
@@ -503,8 +607,10 @@ const createProgram = async () => {
   saving.value = false
 }
 
+const { confirm: confirmDialog } = useConfirm()
+
 const deleteTreatment = async (t: any) => {
-  if (!confirm(`Видалити "${t.product_name}"?`)) return
+  if (!await confirmDialog(`"${t.product_name}" буде видалено з програми.`, { title: 'Видалити обробку?' })) return
   await supabase.from('program_treatments').delete().eq('id', t.id)
   treatments.value = treatments.value.filter(tr => tr.id !== t.id)
 }
@@ -570,6 +676,86 @@ const openSmartBuy = async () => {
 
   smartBuyResult.value = { foundProducts, notFound, cheapestItems, cheapestTotal, fullSellers }
   smartBuyLoading.value = false
+}
+
+// Reminder info tooltip
+const treatmentReminders = ref<Record<string, any[]>>({})
+const activeReminderInfo = ref<string | null>(null)
+
+const toggleReminderInfo = (t: any) => {
+  activeReminderInfo.value = activeReminderInfo.value === t.id ? null : t.id
+}
+
+const loadTreatmentReminders = async (ts: any[]) => {
+  if (!ts.length) return
+  const names = [...new Set(ts.map((t: any) => t.product_name).filter(Boolean))]
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const { data } = await supabase.from('reminders')
+    .select('id, description, scheduled_date')
+    .eq('user_id', session.user.id)
+    .in('description', names)
+    .order('scheduled_date', { ascending: true })
+  const map: Record<string, any[]> = {}
+  for (const r of data || []) {
+    if (!map[r.description]) map[r.description] = []
+    map[r.description].push(r)
+  }
+  treatmentReminders.value = map
+}
+
+const formatReminderDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+
+// Reminder from treatment
+const reminderTreatment = ref<any>(null)
+const rDate = ref('')
+const rHour = ref(9)
+const rMinute = ref(0)
+const rSaving = ref(false)
+const rCalMonth = ref(new Date().getMonth())
+const rCalYear = ref(new Date().getFullYear())
+
+const UK_MONTHS_R = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
+const UK_MONTHS_GEN_R = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня']
+const rMonthLabel = computed(() => `${UK_MONTHS_R[rCalMonth.value]} ${rCalYear.value}`)
+const rFirstDayOffset = computed(() => { const d = new Date(rCalYear.value, rCalMonth.value, 1).getDay(); return d === 0 ? 6 : d - 1 })
+const rDaysInMonth = computed(() => new Date(rCalYear.value, rCalMonth.value + 1, 0).getDate())
+const rPrevMonth = () => { if (rCalMonth.value === 0) { rCalMonth.value = 11; rCalYear.value-- } else rCalMonth.value-- }
+const rNextMonth = () => { if (rCalMonth.value === 11) { rCalMonth.value = 0; rCalYear.value++ } else rCalMonth.value++ }
+const rSelectDay = (day: number) => { const m = String(rCalMonth.value + 1).padStart(2,'0'); const d = String(day).padStart(2,'0'); rDate.value = `${rCalYear.value}-${m}-${d}` }
+const rIsSelectedDay = (day: number) => { if (!rDate.value) return false; const [y,m,d] = rDate.value.split('-').map(Number); return y === rCalYear.value && m === rCalMonth.value + 1 && d === day }
+const rIsToday = (day: number) => { const t = new Date(); return t.getFullYear() === rCalYear.value && t.getMonth() === rCalMonth.value && t.getDate() === day }
+const rIsPastDay = (day: number) => { const t = new Date(); t.setHours(0,0,0,0); return new Date(rCalYear.value, rCalMonth.value, day) < t }
+const rFormatDate = computed(() => { if (!rDate.value) return ''; const [y,m,d] = rDate.value.split('-').map(Number); return `${d} ${UK_MONTHS_GEN_R[m-1]} ${y}` })
+
+const openReminderFor = (t: any) => {
+  reminderTreatment.value = t
+  rDate.value = ''
+  rHour.value = 9
+  rMinute.value = 0
+  const now = new Date()
+  rCalMonth.value = now.getMonth()
+  rCalYear.value = now.getFullYear()
+}
+
+const saveReminder = async () => {
+  if (!rDate.value || !reminderTreatment.value) return
+  rSaving.value = true
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) { rSaving.value = false; return }
+  const [y,m,d] = rDate.value.split('-').map(Number)
+  const iso = new Date(y, m-1, d, Number(rHour.value), Number(rMinute.value), 0).toISOString()
+  await supabase.from('reminders').insert({
+    user_id: session.user.id,
+    description: reminderTreatment.value.product_name,
+    scheduled_date: iso,
+    type: 'обробка',
+    from_agronomist: false,
+  })
+  rSaving.value = false
+  reminderTreatment.value = null
+  await loadTreatmentReminders(treatments.value)
+  showSuccess('Нагадування додано 🔔')
 }
 
 const addToCart = async (items: any[]) => {

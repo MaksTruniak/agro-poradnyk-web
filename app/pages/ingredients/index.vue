@@ -79,7 +79,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useHead({ title: 'Діючі речовини — АгроПорадник' })
+useHead({ title: 'Діючі речовини — АгроПростір' })
 
 const api = useAgroApi()
 

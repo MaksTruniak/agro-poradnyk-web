@@ -14,7 +14,7 @@
       <div class="w-24 h-24 bg-agro-hover rounded-3xl flex items-center justify-center text-5xl mb-6">🛒</div>
       <h2 class="text-2xl font-bold text-agro-dark mb-2">Кошик порожній</h2>
       <p class="text-agro-light mb-8 max-w-xs">Перегляньте каталог і додайте потрібні препарати або добрива</p>
-      <NuxtLink to="/catalog" class="btn-primary px-8 py-3 text-base">Перейти до каталогу →</NuxtLink>
+      <NuxtLink to="/pesticides" class="btn-primary px-8 py-3 text-base">Перейти до каталогу →</NuxtLink>
     </div>
 
     <div v-else class="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
@@ -36,7 +36,7 @@
 
               <!-- Назва + ціна -->
               <div class="flex-1 min-w-0">
-                <NuxtLink :to="`/catalog/${item.seller_offers?.product_slug}`" class="font-semibold text-agro-dark hover:text-agro transition-colors text-base line-clamp-2 leading-snug">
+                <NuxtLink :to="`/pesticides/${item.seller_offers?.product_slug}`" class="font-semibold text-agro-dark hover:text-agro transition-colors text-base line-clamp-2 leading-snug">
                   {{ item.seller_offers?.product_name }}
                 </NuxtLink>
                 <p class="text-sm text-agro-light mt-1">{{ item.seller_offers?.price }} грн / шт</p>
@@ -87,7 +87,7 @@
         <NuxtLink to="/checkout" class="btn-primary w-full text-center block py-4 text-base font-bold rounded-xl">
           Оформити замовлення →
         </NuxtLink>
-        <NuxtLink to="/catalog" class="block text-center text-agro-light text-sm mt-4 hover:text-agro transition-colors">
+        <NuxtLink to="/pesticides" class="block text-center text-agro-light text-sm mt-4 hover:text-agro transition-colors">
           ← Продовжити покупки
         </NuxtLink>
       </div>

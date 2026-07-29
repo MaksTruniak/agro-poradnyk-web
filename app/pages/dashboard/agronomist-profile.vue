@@ -230,6 +230,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Кабінет агронома' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()

@@ -24,7 +24,7 @@
         <button v-if="!is404" @click="reload" class="btn-outline">
           Оновити сторінку
         </button>
-        <NuxtLink v-else to="/catalog" class="btn-outline">
+        <NuxtLink v-else to="/pesticides" class="btn-outline">
           До каталогу
         </NuxtLink>
       </div>

@@ -31,7 +31,9 @@
             <p class="font-bold text-agro-dark">{{ chat.interlocutorName }}</p>
             <p class="text-xs text-agro-light">{{ formatDate(chat.last_message_at || chat.created_at) }}</p>
           </div>
-          <p class="text-sm text-agro-light truncate">{{ chat.last_message || 'Немає повідомлень' }}</p>
+          <p v-if="chat.title" class="text-xs font-medium text-agro mb-0.5 truncate">{{ chat.title }}</p>
+          <p v-if="chat.has_confirmed_deal" class="text-sm font-semibold text-agro truncate">✅ Угода підтверджена</p>
+          <p v-else class="text-sm text-agro-light truncate">{{ chat.last_message || 'Немає повідомлень' }}</p>
         </div>
 
         <!-- Непрочитані -->
@@ -44,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Чати' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
@@ -82,18 +85,20 @@ const load = async () => {
   const result = await Promise.all(chatsData.map(async (chat) => {
     const interlocutorId = chat.farmer_id === uid ? chat.agronomist_id : chat.farmer_id
 
-    const [userRes, lastMsgRes, unreadRes] = await Promise.all([
+    const [userRes, lastMsgRes, unreadRes, dealRes] = await Promise.all([
       supabase.from('users').select('name').eq('id', interlocutorId).single(),
       supabase.from('messages').select('content, created_at').eq('chat_id', chat.id).order('created_at', { ascending: false }).limit(1).single(),
       supabase.from('messages').select('*', { count: 'exact', head: true }).eq('chat_id', chat.id).eq('role', isAgronomist ? 'user' : 'assistant').eq('is_read', false),
+      supabase.from('deals').select('id', { count: 'exact', head: true }).eq('chat_id', chat.id).eq('status', 'confirmed'),
     ])
 
     return {
       ...chat,
       interlocutorName: userRes.data?.name || 'Користувач',
-      last_message: lastMsgRes.data?.content || null,
+      last_message: lastMsgRes.data?.content?.startsWith('[deal:') ? '💰 Пропозиція угоди' : (lastMsgRes.data?.content || null),
       last_message_at: lastMsgRes.data?.created_at || chat.created_at,
       unread: unreadRes.count || 0,
+      has_confirmed_deal: (dealRes.count || 0) > 0,
     }
   }))
 

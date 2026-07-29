@@ -97,27 +97,31 @@
           <div
             v-for="product in products"
             :key="product.slug"
-            class="card hover:shadow-md transition-all group"
+            class="card hover:shadow-md transition-all group flex flex-col"
           >
-            <NuxtLink :to="`/catalog/${product.slug}`" class="block">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-3xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</span>
-                <span class="text-xs font-semibold bg-agro-hover text-agro px-2.5 py-1 rounded-full">
-                  {{ typeLabel(product.type) }}
-                </span>
+            <NuxtLink :to="`/pesticides/${product.slug}`" class="flex-1 flex flex-col">
+              <div class="flex items-start gap-3 mb-3">
+                <div class="w-14 h-14 rounded-xl bg-agro-bg flex items-center justify-center shrink-0 overflow-hidden">
+                  <ProductImage :src="product.source_image_url" :alt="product.name"
+                    img-class="w-full h-full object-contain p-1"
+                    fallback-class="text-2xl"
+                    :fallback-emoji="TYPE_EMOJI[product.type] || '🌿'" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <span class="text-xs font-semibold bg-agro-hover text-agro px-2.5 py-1 rounded-full mb-2 inline-block">
+                    {{ typeLabel(product.type) }}
+                  </span>
+                  <h3 class="font-bold text-agro-dark group-hover:text-agro transition-colors line-clamp-2 leading-snug">
+                    {{ product.name }}
+                  </h3>
+                </div>
               </div>
-              <h3 class="font-bold text-agro-dark group-hover:text-agro transition-colors mb-1 line-clamp-2 leading-snug">
-                {{ product.name }}
-              </h3>
-              <NuxtLink
-                v-if="product.manufacturer"
-                :to="`/brand/${brandToSlug(product.manufacturer)}`"
-                @click.stop
-                class="text-xs text-agro-light mb-4 hover:text-agro hover:underline transition-colors block"
-              >{{ product.manufacturer?.name || product.manufacturer }}</NuxtLink>
+              <p class="text-xs text-agro-light truncate mb-3 min-h-[1rem]">
+                {{ product.manufacturer?.name || product.manufacturer || '&nbsp;' }}
+              </p>
             </NuxtLink>
 
-            <div class="border-t border-agro-border pt-4 flex items-center justify-between gap-2 pr-1">
+            <div class="border-t border-agro-border pt-4 flex items-center justify-between gap-2 pr-1 mt-auto">
               <template v-if="MARKETPLACE">
                 <div v-if="offersMap[product.slug]?.length">
                   <p class="text-xs text-agro-light">від</p>
@@ -128,7 +132,7 @@
                 <p v-else class="text-sm text-agro-light">Немає пропозицій</p>
               </template>
               <div class="flex gap-2 shrink-0" :class="MARKETPLACE ? '' : 'ml-auto'">
-                <NuxtLink :to="`/catalog/${product.slug}`" class="btn-outline text-sm py-2 px-3">Детально</NuxtLink>
+                <NuxtLink :to="`/pesticides/${product.slug}`" class="btn-outline text-sm py-2 px-3">Детально</NuxtLink>
                 <button v-if="MARKETPLACE && offersMap[product.slug]?.length" @click="openBuyModal(product)" class="btn-primary text-sm py-2 px-3">🛒 Купити</button>
               </div>
             </div>
@@ -181,7 +185,7 @@
             </div>
           </div>
           <div class="px-6 py-4 border-t border-agro-border flex items-center justify-between">
-            <NuxtLink :to="`/catalog/${buyModalProduct?.slug}`" @click="buyModalOpen = false" class="text-agro text-sm font-semibold hover:underline">
+            <NuxtLink :to="`/pesticides/${buyModalProduct?.slug}`" @click="buyModalOpen = false" class="text-agro text-sm font-semibold hover:underline">
               Детальніше про товар →
             </NuxtLink>
             <button @click="buyModalOpen = false" class="text-agro-light text-sm hover:text-agro-dark">Закрити</button>
@@ -199,7 +203,7 @@ const { brandToSlug } = await import('~/utils/cropSlugs')
 useSeoMeta({
   title: 'Каталог препаратів і добрив',
   description: 'Тисячі агрохімічних препаратів і добрив. Гербіциди, фунгіциди, інсектициди, добрива від перевірених продавців з доставкою.',
-  ogTitle: 'Каталог препаратів — АгроПорадник',
+  ogTitle: 'Каталог препаратів — АгроПростір',
 })
 
 const MARKETPLACE = false

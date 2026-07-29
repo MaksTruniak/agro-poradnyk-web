@@ -10,7 +10,7 @@
     <div v-else-if="!ingredient" class="text-center py-20">
       <p class="text-5xl mb-4">🔬</p>
       <p class="font-bold text-agro-dark text-lg">Речовину не знайдено</p>
-      <NuxtLink to="/catalog" class="btn-primary inline-block mt-6">До каталогу</NuxtLink>
+      <NuxtLink to="/pesticides" class="btn-primary inline-block mt-6">До каталогу</NuxtLink>
     </div>
 
     <div v-else>
@@ -18,7 +18,7 @@
       <nav class="text-sm text-agro-light mb-6 flex items-center gap-2">
         <NuxtLink to="/" class="hover:text-agro transition-colors">Головна</NuxtLink>
         <span>/</span>
-        <NuxtLink to="/catalog" class="hover:text-agro transition-colors">Каталог</NuxtLink>
+        <NuxtLink to="/pesticides" class="hover:text-agro transition-colors">Каталог</NuxtLink>
         <span>/</span>
         <span class="text-agro-dark">{{ ingredient.name }}</span>
       </nav>
@@ -55,14 +55,15 @@
           <NuxtLink
             v-for="p in products"
             :key="p.id"
-            :to="`/catalog/${p.slug}`"
+            :to="`/pesticides/${p.slug}`"
             class="card hover:shadow-md transition-all group"
           >
             <div class="flex items-start gap-3 mb-3">
-              <img v-if="p.source_image_url" :src="p.source_image_url" :alt="p.name"
-                class="w-12 h-12 object-contain rounded-lg bg-agro-bg shrink-0" />
-              <div v-else class="w-12 h-12 rounded-lg bg-agro-hover flex items-center justify-center text-xl shrink-0">
-                {{ typeEmoji(p.type) }}
+              <div class="w-12 h-12 rounded-lg bg-agro-hover flex items-center justify-center shrink-0">
+                <ProductImage :src="p.source_image_url" :alt="p.name"
+                  img-class="w-full h-full object-contain rounded-lg"
+                  fallback-class="text-xl"
+                  :fallback-emoji="typeEmoji(p.type)" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-bold text-agro-dark group-hover:text-agro transition-colors">{{ p.name }}</p>

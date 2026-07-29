@@ -31,12 +31,9 @@
       </div>
 
       <div class="grid md:grid-cols-2 gap-6 mb-6">
-        <!-- Топ товари -->
         <div class="card">
           <h2 class="font-bold text-agro-dark mb-5 text-lg">📦 Топ товари по продажах</h2>
-          <div v-if="topProducts.length === 0" class="text-agro-light text-sm text-center py-8">
-            Ще немає продажів
-          </div>
+          <div v-if="topProducts.length === 0" class="text-agro-light text-sm text-center py-8">Ще немає продажів</div>
           <div v-else class="space-y-3">
             <div v-for="(p, i) in topProducts" :key="p.name" class="flex items-center gap-3">
               <span class="w-6 h-6 rounded-full bg-agro text-white text-xs font-bold flex items-center justify-center shrink-0">{{ i + 1 }}</span>
@@ -54,12 +51,9 @@
           </div>
         </div>
 
-        <!-- Статуси замовлень -->
         <div class="card">
           <h2 class="font-bold text-agro-dark mb-5 text-lg">📋 Замовлення по статусах</h2>
-          <div v-if="ordersByStatus.length === 0" class="text-agro-light text-sm text-center py-8">
-            Ще немає замовлень
-          </div>
+          <div v-if="ordersByStatus.length === 0" class="text-agro-light text-sm text-center py-8">Ще немає замовлень</div>
           <div v-else class="space-y-3">
             <div v-for="s in ordersByStatus" :key="s.status" class="flex items-center justify-between p-3 rounded-xl bg-agro-bg">
               <div class="flex items-center gap-2">
@@ -76,7 +70,6 @@
         </div>
       </div>
 
-      <!-- Останні замовлення -->
       <div class="card">
         <div class="flex items-center justify-between mb-5">
           <h2 class="font-bold text-agro-dark text-lg">🕐 Останні замовлення</h2>
@@ -128,7 +121,7 @@
           <div v-else class="space-y-3">
             <div v-for="c in cropStats" :key="c.crop_type">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-sm font-medium text-agro-dark">{{ CROP_EMOJI[c.crop_type] || '🌱' }} {{ c.crop_type }}</span>
+                <span class="text-sm font-medium text-agro-dark">{{ emojiFor(c.crop_type) }} {{ c.crop_type }}</span>
                 <span class="text-sm text-agro font-semibold">{{ c.ha }} га</span>
               </div>
               <div class="h-2 bg-agro-bg rounded-full overflow-hidden">
@@ -158,19 +151,75 @@
         </div>
       </div>
 
+      <!-- Продажі по роках -->
       <div class="card">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="font-bold text-agro-dark text-lg">🔔 Найближчі нагадування</h2>
-          <NuxtLink to="/dashboard/reminders" class="text-sm text-agro font-medium hover:underline">Всі →</NuxtLink>
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-bold text-agro-dark text-lg">📈 Продажі по культурах</h2>
+          <div class="flex gap-1">
+            <button v-for="y in availableYears" :key="y"
+              @click="selectedYear = y"
+              class="px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+              :class="selectedYear === y ? 'bg-agro text-white' : 'bg-agro-bg text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
+              {{ y }}
+            </button>
+          </div>
         </div>
-        <div v-if="upcoming.length === 0" class="text-agro-light text-sm text-center py-6">Немає запланованих нагадувань</div>
-        <div v-else class="space-y-3">
-          <div v-for="r in upcoming.slice(0, 5)" :key="r.id" class="flex items-center gap-3 p-3 rounded-xl bg-agro-bg">
-            <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center text-lg shrink-0">{{ TYPE_EMOJI[r.type] || '🔔' }}</div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-agro-dark text-sm truncate">{{ r.description }}</p>
+
+        <div v-if="!salesChartData.length" class="text-center py-12 text-agro-light">
+          <p class="text-4xl mb-3">📊</p>
+          <p class="text-sm">Немає даних за {{ selectedYear }} рік</p>
+          <NuxtLink to="/dashboard/deals" class="text-agro text-sm hover:underline mt-1 inline-block">Додати продаж →</NuxtLink>
+        </div>
+
+        <div v-else class="space-y-5">
+          <!-- Легенда -->
+          <div class="flex gap-4 text-xs">
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded-sm bg-agro"></div>
+              <span class="text-agro-light">Через платформу</span>
             </div>
-            <span class="text-xs text-agro font-medium shrink-0">{{ formatDate(r.scheduled_date) }}</span>
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded-sm bg-amber-400"></div>
+              <span class="text-agro-light">Вручну</span>
+            </div>
+          </div>
+
+          <!-- Горизонтальні бари -->
+          <div class="space-y-4">
+            <div v-for="row in salesChartData" :key="row.crop">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-agro-dark">{{ emojiFor(row.crop) }} {{ row.crop }}</span>
+                <span class="text-xs text-agro-light">{{ (row.system + row.manual).toFixed(2) }} т всього</span>
+              </div>
+              <div class="relative h-7 bg-agro-bg rounded-lg overflow-hidden">
+                <div class="absolute left-0 top-0 h-full bg-agro rounded-l-lg transition-all"
+                  :style="{ width: ((row.system / row.maxTotal) * 100).toFixed(1) + '%' }">
+                </div>
+                <div class="absolute top-0 h-full bg-amber-400 transition-all"
+                  :style="{ left: ((row.system / row.maxTotal) * 100).toFixed(1) + '%', width: ((row.manual / row.maxTotal) * 100).toFixed(1) + '%' }">
+                </div>
+                <div class="absolute inset-0 flex items-center px-2 gap-3">
+                  <span v-if="row.system > 0" class="text-white text-xs font-semibold drop-shadow">{{ row.system.toFixed(2) }} т</span>
+                  <span v-if="row.manual > 0" class="text-amber-900 text-xs font-semibold">{{ row.manual.toFixed(2) }} т</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Підсумок -->
+          <div class="grid grid-cols-3 gap-3 pt-4 border-t border-agro-border">
+            <div class="text-center">
+              <p class="text-xl font-extrabold text-agro">{{ totalSystemTons.toFixed(2) }} т</p>
+              <p class="text-xs text-agro-light mt-0.5">Через платформу</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xl font-extrabold text-amber-500">{{ totalManualTons.toFixed(2) }} т</p>
+              <p class="text-xs text-agro-light mt-0.5">Вручну</p>
+            </div>
+            <div class="text-center">
+              <p class="text-xl font-extrabold text-agro-dark">{{ (totalSystemTons + totalManualTons).toFixed(2) }} т</p>
+              <p class="text-xs text-agro-light mt-0.5">Всього</p>
+            </div>
           </div>
         </div>
       </div>
@@ -179,34 +228,32 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Аналітика' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useSeoMeta({ title: 'Аналітика' })
 
 const supabase = useSupabaseClient()
 const loading = ref(true)
 
-// Фермер
 const farms = ref<any[]>([])
 const reminders = ref<any[]>([])
+const systemDeals = ref<any[]>([])
+const manualSalesList = ref<any[]>([])
 
-// Продавець
 const sellerStats = ref({ totalOrders: 0, completedOrders: 0, revenue: 0, products: 0 })
 const topProducts = ref<any[]>([])
 const ordersByStatus = ref<any[]>([])
 const recentOrders = ref<any[]>([])
 
-const CROP_EMOJI: Record<string, string> = {
-  'Смородина': '🫐', 'Полуниця': '🍓', 'Томати': '🍅', 'Огірки': '🥒',
-  'Картопля': '🥔', 'Яблука': '🍎', 'Груші': '🍐', 'Виноград': '🍇',
-  'Пшениця': '🌾', 'Соняшник': '🌻', 'Ріпак': '🌿', 'Соя': '🫘',
-  'Ячмінь': '🌾', 'Жито': '🌾', 'Буряк': '🫚',
-}
+const selectedYear = ref(new Date().getFullYear())
+
+const { load: loadCrops, emojiFor } = useCropCatalog()
+loadCrops()
 const STATUS_LABEL: Record<string, string> = { pending: 'Очікує', processing: 'Обробляється', shipped: 'Відправлено', completed: 'Виконано', cancelled: 'Скасовано' }
 const STATUS_ICON: Record<string, string> = { pending: '⏳', processing: '⚙️', shipped: '🚚', completed: '✅', cancelled: '❌' }
 const STATUS_BG: Record<string, string> = { pending: 'text-yellow-700 bg-yellow-50', processing: 'text-blue-700 bg-blue-50', shipped: 'text-agro bg-agro-hover', completed: 'text-green-700 bg-green-50', cancelled: 'text-red-600 bg-red-50' }
-const TYPE_EMOJI: Record<string, string> = { 'обробка': '🛡', 'підживлення': '🌿', 'полив': '💧', 'посів': '🌱', 'збір': '🌾', 'інше': '🔔' }
-const pluralFarm = (n: number) => n === 1 ? 'поле' : n >= 2 && n <= 4 ? 'поля' : 'полів'
-const pluralField = (n: number) => n === 1 ? 'поле' : n >= 2 && n <= 4 ? 'поля' : 'полів'
+const { pluralFarm } = await import('~/utils/plural')
+const pluralField = pluralFarm
 const formatDate = (dt: string) => new Date(dt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 const { data: { session } } = await supabase.auth.getSession()
@@ -214,6 +261,68 @@ const uid = session?.user?.id
 
 const { data: userData } = await supabase.from('users').select('role').eq('id', uid).single()
 const isSeller = userData?.role === 'seller'
+
+// Фермер computed
+const totalHa = computed(() => farms.value.reduce((s, f) => s + (f.hectares || 0), 0).toFixed(1).replace(/\.0$/, ''))
+const allCrops = computed(() => farms.value.flatMap((f: any) => f.farm_crops || []))
+const totalCropsCount = computed(() => new Set(allCrops.value.map((c: any) => c.crop_type)).size)
+const cropStats = computed(() => {
+  const total = parseFloat(totalHa.value) || 0
+  const map: Record<string, { ha: number; count: number }> = {}
+  for (const f of farms.value) {
+    for (const c of f.farm_crops || []) {
+      if (!map[c.crop_type]) map[c.crop_type] = { ha: 0, count: 0 }
+      map[c.crop_type].ha += c.area_ha || 0
+      map[c.crop_type].count++
+    }
+  }
+  return Object.entries(map)
+    .map(([crop_type, v]) => ({ crop_type, ha: +v.ha.toFixed(2), count: v.count, pct: total > 0 ? Math.round((v.ha / total) * 100) : 0 }))
+    .sort((a, b) => b.ha - a.ha)
+})
+const upcomingCount = computed(() => reminders.value.length)
+
+// Роки з наявних даних
+const availableYears = computed(() => {
+  const years = new Set<number>()
+  years.add(new Date().getFullYear())
+  for (const d of systemDeals.value) {
+    if (d.confirmed_at) years.add(new Date(d.confirmed_at).getFullYear())
+  }
+  for (const s of manualSalesList.value) {
+    if (s.sold_at) years.add(new Date(s.sold_at).getFullYear())
+  }
+  return [...years].sort((a, b) => b - a)
+})
+
+// Дані для діаграми по вибраному року
+const salesChartData = computed(() => {
+  const map: Record<string, { system: number; manual: number }> = {}
+
+  for (const d of systemDeals.value) {
+    if (!d.confirmed_at) continue
+    if (new Date(d.confirmed_at).getFullYear() !== selectedYear.value) continue
+    const c = d.crop_type || 'Невідомо'
+    if (!map[c]) map[c] = { system: 0, manual: 0 }
+    map[c].system += d.quantity_tons || 0
+  }
+
+  for (const s of manualSalesList.value) {
+    if (!s.sold_at) continue
+    if (new Date(s.sold_at).getFullYear() !== selectedYear.value) continue
+    const c = s.crop_type || 'Невідомо'
+    if (!map[c]) map[c] = { system: 0, manual: 0 }
+    map[c].manual += s.quantity_tons || 0
+  }
+
+  const maxTotal = Math.max(...Object.values(map).map(v => v.system + v.manual), 0.01)
+  return Object.entries(map)
+    .map(([crop, v]) => ({ crop, system: v.system, manual: v.manual, maxTotal }))
+    .sort((a, b) => (b.system + b.manual) - (a.system + a.manual))
+})
+
+const totalSystemTons = computed(() => salesChartData.value.reduce((s, r) => s + r.system, 0))
+const totalManualTons = computed(() => salesChartData.value.reduce((s, r) => s + r.manual, 0))
 
 onMounted(async () => {
   if (!uid) return
@@ -238,7 +347,6 @@ onMounted(async () => {
       products: offers.filter(o => o.in_stock).length,
     }
 
-    // Топ товари
     const productMap: Record<string, { qty: number; revenue: number }> = {}
     for (const o of orders) {
       if (o.status === 'cancelled') continue
@@ -252,45 +360,25 @@ onMounted(async () => {
     const maxQty = Math.max(...Object.values(productMap).map(p => p.qty), 1)
     topProducts.value = Object.entries(productMap)
       .map(([name, v]) => ({ name, ...v, pct: Math.round((v.qty / maxQty) * 100) }))
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5)
+      .sort((a, b) => b.qty - a.qty).slice(0, 5)
 
-    // По статусах
     const statusMap: Record<string, number> = {}
     for (const o of orders) statusMap[o.status] = (statusMap[o.status] || 0) + 1
     ordersByStatus.value = Object.entries(statusMap).map(([status, count]) => ({ status, count }))
-
     recentOrders.value = orders.slice(0, 5)
   } else {
-    const [farmsRes, remRes] = await Promise.all([
+    const [farmsRes, remRes, dealsRes, manualRes] = await Promise.all([
       supabase.from('farms').select('id, name, region, hectares, farm_crops(crop_type, area_ha)').eq('user_id', uid).order('created_at'),
-      supabase.from('reminders').select('id, description, type, scheduled_date').eq('user_id', uid).gte('scheduled_date', new Date().toISOString()).order('scheduled_date').limit(10),
+      supabase.from('reminders').select('id').eq('user_id', uid).gte('scheduled_date', new Date().toISOString()),
+      supabase.from('deals').select('crop_type, quantity_tons, confirmed_at').eq('farmer_id', uid).eq('status', 'confirmed'),
+      supabase.from('manual_sales').select('crop_type, quantity_tons, sold_at').eq('user_id', uid),
     ])
     farms.value = farmsRes.data || []
     reminders.value = remRes.data || []
+    systemDeals.value = dealsRes.data || []
+    manualSalesList.value = manualRes.data || []
   }
 
   loading.value = false
 })
-
-// Фермер computed
-const totalHa = computed(() => farms.value.reduce((s, f) => s + (f.hectares || 0), 0).toFixed(1).replace(/\.0$/, ''))
-const allCrops = computed(() => farms.value.flatMap((f: any) => f.farm_crops || []))
-const totalCropsCount = computed(() => new Set(allCrops.value.map((c: any) => c.crop_type)).size)
-const cropStats = computed(() => {
-  const total = parseFloat(totalHa.value) || 0
-  const map: Record<string, { ha: number; count: number }> = {}
-  for (const f of farms.value) {
-    for (const c of f.farm_crops || []) {
-      if (!map[c.crop_type]) map[c.crop_type] = { ha: 0, count: 0 }
-      map[c.crop_type].ha += c.area_ha || 0
-      map[c.crop_type].count++
-    }
-  }
-  return Object.entries(map)
-    .map(([crop_type, v]) => ({ crop_type, ha: +v.ha.toFixed(2), count: v.count, pct: total > 0 ? Math.round((v.ha / total) * 100) : 0 }))
-    .sort((a, b) => b.ha - a.ha)
-})
-const upcoming = computed(() => reminders.value)
-const upcomingCount = computed(() => reminders.value.length)
 </script>

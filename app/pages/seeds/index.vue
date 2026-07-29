@@ -43,15 +43,12 @@
           <NuxtLink
             v-for="item in items"
             :key="item.id"
-            :to="`/catalog/${item.slug}`"
+            :to="`/pesticides/${item.slug}`"
             class="card hover:shadow-md transition-shadow group flex flex-col gap-2"
           >
             <div class="flex items-start gap-3">
-              <div v-if="item.source_image_url" class="w-10 h-10 rounded-xl overflow-hidden bg-agro-hover shrink-0">
-                <img :src="item.source_image_url" :alt="item.name" class="w-full h-full object-contain p-1" loading="lazy" />
-              </div>
-              <div v-else class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center text-xl shrink-0">
-                {{ cropEmoji(item.seed_crop) }}
+              <div class="w-10 h-10 rounded-xl overflow-hidden bg-agro-hover shrink-0 flex items-center justify-center">
+                <ProductImage :src="item.source_image_url" :alt="item.name" img-class="w-full h-full object-contain p-1" fallback-class="text-lg" fallback-emoji="🌿" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-agro-dark text-sm group-hover:text-agro transition-colors leading-snug">{{ item.name }}</p>
@@ -86,7 +83,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useHead({ title: 'Насіння — АгроПорадник' })
+useHead({ title: 'Насіння — АгроПростір' })
 
 const CROPS = [
   { name: 'Кукурудза',       emoji: '🌽' },

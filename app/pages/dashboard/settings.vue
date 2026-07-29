@@ -12,9 +12,19 @@
       <div class="card">
         <h2 class="font-bold text-agro-dark mb-5 text-lg">👤 Профіль</h2>
         <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Ім'я</label>
-            <input v-model="form.name" class="input" placeholder="Ваше ім'я" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1.5">Ім'я</label>
+              <input v-model="form.first_name" class="input" placeholder="Іван" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1.5">Прізвище</label>
+              <input v-model="form.last_name" class="input" placeholder="Петренко" />
+            </div>
+          </div>
+          <div v-if="companyLabel">
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">{{ companyLabel }}</label>
+            <input v-model="form.company_name" class="input" :placeholder="companyPlaceholder" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Email</label>
@@ -118,6 +128,14 @@
         <p v-if="savedDelivery" class="text-agro text-sm mt-2">✅ Збережено!</p>
       </div>
 
+      <!-- Що закуповую (тільки для заготівельника) -->
+      <div v-if="role === 'buyer'" class="card">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-agro-dark text-lg">🌾 Що закуповую</h2>
+          <NuxtLink to="/dashboard/buyer-crops" class="text-sm text-agro font-medium hover:underline">Керувати →</NuxtLink>
+        </div>
+      </div>
+
       <!-- Вихід -->
       <div class="card">
         <h2 class="font-bold text-agro-dark mb-3 text-lg">🚪 Сесія</h2>
@@ -130,6 +148,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Налаштування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
@@ -146,7 +165,7 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const email = ref('')
 
-const form = reactive({ name: '', phone: '', region: '', city: '' })
+const form = reactive({ name: '', first_name: '', last_name: '', company_name: '', phone: '', region: '', city: '' })
 const areas = ref<any[]>([])
 const citySearch = ref('')
 const citySuggestions = ref<any[]>([])
@@ -173,16 +192,63 @@ const np = useNovaPost()
 const areasData = await np.getAreas().catch(() => [])
 areas.value = areasData.sort((a: any, b: any) => a.Description.localeCompare(b.Description, 'uk'))
 
-const { data: profile } = await supabase.from('users').select('name, phone, region, city, role').eq('id', uid).single()
+const { data: profile } = await supabase.from('users').select('name, first_name, last_name, company_name, phone, region, city, role').eq('id', uid).single()
 if (profile) {
   form.name = profile.name || ''
+  form.first_name = profile.first_name || ''
+  form.last_name = profile.last_name || ''
+  form.company_name = profile.company_name || ''
   form.phone = profile.phone || ''
   form.region = profile.region || ''
   form.city = profile.city || ''
   citySearch.value = profile.city || ''
 }
 
-const isSeller = computed(() => profile?.role === 'seller')
+const role = computed(() => profile?.role || '')
+const isSeller = computed(() => role.value === 'seller')
+const companyLabel = computed(() => {
+  if (role.value === 'farmer') return 'Назва фермерського господарства'
+  if (role.value === 'buyer') return 'Назва підприємства або ФОП'
+  return ''
+})
+const companyPlaceholder = computed(() => {
+  if (role.value === 'farmer') return 'Наприклад: Фермерське господарство "Колос"'
+  if (role.value === 'buyer') return 'Наприклад: ФОП Петренко або ТОВ "Агро"'
+  return ''
+})
+
+// Buyer crops
+const buyerCrops = ref<any[]>([])
+const savingCrop = ref(false)
+const cropForm = reactive({ crop_type: '', min_qty: null as number | null, max_qty: null as number | null, unit: 'т' })
+
+if (profile?.role === 'buyer') {
+  const { data: bc } = await supabase.from('buyer_crops').select('*').eq('user_id', uid).order('created_at')
+  buyerCrops.value = bc || []
+}
+
+const addBuyerCrop = async () => {
+  if (!cropForm.crop_type.trim() || savingCrop.value) return
+  savingCrop.value = true
+  const { data } = await supabase.from('buyer_crops').insert({
+    user_id: uid,
+    crop_type: cropForm.crop_type.trim(),
+    min_qty: cropForm.min_qty || null,
+    max_qty: cropForm.max_qty || null,
+    unit: cropForm.unit,
+  }).select().single()
+  if (data) buyerCrops.value.push(data)
+  cropForm.crop_type = ''
+  cropForm.min_qty = null
+  cropForm.max_qty = null
+  cropForm.unit = 'т'
+  savingCrop.value = false
+}
+
+const deleteBuyerCrop = async (id: string) => {
+  await supabase.from('buyer_crops').delete().eq('id', id)
+  buyerCrops.value = buyerCrops.value.filter((c: any) => c.id !== id)
+}
 
 let sellerProfileId: string | null = null
 if (isSeller.value) {
@@ -201,7 +267,15 @@ loading.value = false
 
 const saveProfile = async () => {
   saving.value = true
-  await supabase.from('users').update({ name: form.name, phone: form.phone, region: form.region, city: form.city }).eq('id', uid)
+  await supabase.from('users').update({
+    name: `${form.first_name} ${form.last_name}`.trim() || form.name,
+    first_name: form.first_name,
+    last_name: form.last_name,
+    company_name: form.company_name || null,
+    phone: form.phone,
+    region: form.region,
+    city: form.city,
+  }).eq('id', uid)
   saving.value = false
   saved.value = true
   setTimeout(() => saved.value = false, 3000)

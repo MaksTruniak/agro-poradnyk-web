@@ -11,13 +11,13 @@
         <!-- Тип збудника -->
         <div class="card p-3">
           <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-2 mb-2">Тип збудника</p>
-          <button @click="activeCategory = ''; offset = 0; load()"
+          <button @click="activeCategory = ''; offset = 0; syncUrl()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5"
             :class="!activeCategory ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
             Всі
           </button>
           <button v-for="c in CATEGORIES" :key="c.slug"
-            @click="activeCategory = c.slug; offset = 0; load()"
+            @click="activeCategory = c.slug; offset = 0; syncUrl()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 flex items-center gap-2"
             :class="activeCategory === c.slug ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
             <span>{{ c.emoji }}</span><span>{{ c.name }}</span>
@@ -26,13 +26,13 @@
         <!-- Культура -->
         <div class="card p-3">
           <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-2 mb-2">Культура</p>
-          <button @click="activeCulture = ''; offset = 0; load()"
+          <button @click="activeCulture = ''; offset = 0; syncUrl()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5"
             :class="!activeCulture ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
             Всі
           </button>
           <button v-for="c in CULTURES" :key="c"
-            @click="activeCulture = c; offset = 0; load()"
+            @click="activeCulture = c; offset = 0; syncUrl()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5"
             :class="activeCulture === c ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
             {{ c }}
@@ -45,7 +45,7 @@
         <div class="relative mb-5">
           <input v-model="search" @input="onSearch" class="input pl-10" placeholder="Пошук хвороби..." />
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
-          <button v-if="search" @click="search = ''; load()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
+          <button v-if="search" @click="search = ''; offset = 0; syncUrl()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
         </div>
 
         <div v-if="loading" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -56,11 +56,8 @@
           <NuxtLink v-for="item in items" :key="item.id" :to="`/diseases/${item.slug}`"
             class="card hover:shadow-md transition-shadow group flex flex-col gap-2">
             <div class="flex items-start gap-3">
-              <div v-if="item.source_image_url" class="w-10 h-10 rounded-xl overflow-hidden bg-agro-hover shrink-0">
-                <img :src="item.source_image_url" :alt="item.name" class="w-full h-full object-contain p-1" loading="lazy" />
-              </div>
-              <div v-else class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center text-xl shrink-0">
-                {{ categoryEmoji(item.disease_categories?.slug) }}
+              <div class="w-10 h-10 rounded-xl overflow-hidden bg-agro-hover shrink-0 flex items-center justify-center">
+                <ProductImage :src="item.source_image_url" :alt="item.name" img-class="w-full h-full object-contain p-1" fallback-class="text-lg" fallback-emoji="🌿" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-agro-dark text-sm group-hover:text-agro transition-colors leading-snug">{{ item.name }}</p>
@@ -93,7 +90,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
-useHead({ title: 'Хвороби рослин — АгроПорадник' })
+useHead({ title: 'Хвороби рослин — АгроПростір' })
 
 const CATEGORIES = [
   { slug: 'grib',      name: 'Гриб',     emoji: '🍄' },
@@ -114,51 +111,55 @@ const categoryEmoji = (slug?: string) => {
 }
 
 const api = useAgroApi()
+const route = useRoute()
+const router = useRouter()
 const LIMIT = 40
 
-const search = ref('')
-const activeCategory = ref('')
-const activeCulture = ref('')
-const offset = ref(0)
+const search = ref(String(route.query.q || ''))
+const activeCategory = ref(String(route.query.category || ''))
+const activeCulture = ref(String(route.query.culture || ''))
+const offset = ref(Number(route.query.offset) || 0)
 const currentPage = computed(() => Math.floor(offset.value / LIMIT) + 1)
 const totalPages = computed(() => Math.ceil(total.value / LIMIT))
 
-const load = async () => {
-  loading.value = true
-  const data = await api.getDiseases({
+const syncUrl = () => {
+  router.replace({
+    query: {
+      ...(search.value ? { q: search.value } : {}),
+      ...(activeCategory.value ? { category: activeCategory.value } : {}),
+      ...(activeCulture.value ? { culture: activeCulture.value } : {}),
+      ...(offset.value ? { offset: offset.value } : {}),
+    },
+  })
+}
+
+const cacheKey = computed(() =>
+  `diseases-${search.value}-${activeCategory.value}-${activeCulture.value}-${offset.value}`
+)
+
+const { data: asyncData, pending } = useAsyncData(
+  cacheKey,
+  () => api.getDiseases({
     q: search.value || undefined,
     category: activeCategory.value || undefined,
     culture: activeCulture.value || undefined,
     limit: LIMIT,
     offset: offset.value,
-  })
-  items.value = data.items || []
-  total.value = data.total || 0
-  loading.value = false
-}
-
-const { data: initData, pending } = useLazyAsyncData('diseases-index', () =>
-  $fetch('/api/agro', { query: { path: '/v1/diseases', limit: LIMIT, offset: 0 } })
-  .catch(() => ({ items: [], total: 0 }))
+  }).catch(() => ({ items: [], total: 0 })),
+  { watch: [cacheKey] }
 )
 
-const items = ref<any[]>([])
-const total = ref(0)
-const loading = computed(() => pending.value && !items.value.length)
-
-watch(initData, (val) => {
-  if (!val || items.value.length) return
-  items.value = val.items || []
-  total.value = val.total || 0
-}, { immediate: true })
+const items = computed(() => asyncData.value?.items ?? [])
+const total = computed(() => asyncData.value?.total ?? 0)
+const loading = computed(() => pending.value)
 let searchTimer: any = null
 
 const onSearch = () => {
   clearTimeout(searchTimer)
   offset.value = 0
-  searchTimer = setTimeout(load, 300)
+  searchTimer = setTimeout(syncUrl, 300)
 }
 
-const nextPage = () => { offset.value += LIMIT; load() }
-const prevPage = () => { offset.value = Math.max(0, offset.value - LIMIT); load() }
+const nextPage = () => { offset.value += LIMIT; syncUrl() }
+const prevPage = () => { offset.value = Math.max(0, offset.value - LIMIT); syncUrl() }
 </script>

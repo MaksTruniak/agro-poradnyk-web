@@ -1,8 +1,8 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
-    <NuxtLink to="/catalog" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium">
-      ← Назад до каталогу
-    </NuxtLink>
+    <button @click="goBack" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium">
+      ← {{ backLabel }}
+    </button>
 
     <!-- Скелетон картки товару -->
     <div v-if="loading" class="animate-pulse" :class="MARKETPLACE ? 'grid xl:grid-cols-3 gap-8' : 'grid gap-8'">
@@ -59,13 +59,10 @@
         <div class="card">
           <div class="flex items-start gap-4 mb-6">
             <div class="shrink-0">
-              <img
-                v-if="product.source_image_url"
-                :src="product.source_image_url"
-                :alt="product.name"
-                class="w-32 h-32 object-contain rounded-xl bg-agro-bg"
-              />
-              <div v-else class="text-5xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</div>
+              <ProductImage :src="product.source_image_url" :alt="product.name"
+                img-class="w-32 h-32 object-contain rounded-xl bg-agro-bg"
+                fallback-class="text-5xl"
+                :fallback-emoji="TYPE_EMOJI[product.type] || '🌿'" />
             </div>
             <div class="flex-1">
               <div class="flex flex-wrap gap-2 mb-2">
@@ -76,7 +73,7 @@
               <h1 class="text-2xl font-extrabold text-agro-dark">{{ product.name }}</h1>
               <NuxtLink
                 v-if="product.manufacturer"
-                :to="`/brand/${product.manufacturer?.slug || product.manufacturer}`"
+                :to="`/brands/${product.manufacturer?.slug || product.manufacturer}`"
                 class="text-agro-light mt-1 hover:text-agro hover:underline inline-block transition-colors"
               >{{ product.manufacturer?.name || product.manufacturer }}</NuxtLink>
             </div>
@@ -129,12 +126,13 @@
             <NuxtLink
               v-for="a in analogs.slice(0, 6)"
               :key="a.slug"
-              :to="`/catalog/${a.slug}`"
+              :to="`/pesticides/${a.slug}`"
               class="flex items-center gap-3 p-3 rounded-xl border border-agro-border hover:border-agro hover:bg-agro-hover transition-colors"
             >
-              <img v-if="a.source_image_url" :src="a.source_image_url" :alt="a.name"
-                class="w-10 h-10 object-contain rounded-lg bg-agro-bg shrink-0" />
-              <span v-else class="text-xl shrink-0">{{ TYPE_EMOJI[a.type] || '🌿' }}</span>
+              <ProductImage :src="a.source_image_url" :alt="a.name"
+                img-class="w-10 h-10 object-contain rounded-lg bg-agro-bg shrink-0"
+                fallback-class="text-xl shrink-0"
+                :fallback-emoji="TYPE_EMOJI[a.type] || '🌿'" />
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-sm text-agro-dark truncate">{{ a.name }}</p>
                 <p v-if="a.manufacturer" class="text-xs text-agro-light truncate">{{ a.manufacturer?.name || a.manufacturer }}</p>
@@ -184,7 +182,7 @@
     <div v-else class="text-center py-20">
       <p class="text-5xl mb-4">😔</p>
       <p class="font-bold text-agro-dark text-lg">Товар не знайдено</p>
-      <NuxtLink to="/catalog" class="btn-primary inline-block mt-4">До каталогу</NuxtLink>
+      <NuxtLink to="/pesticides" class="btn-primary inline-block mt-4">До каталогу</NuxtLink>
     </div>
   </div>
 </template>
@@ -194,7 +192,34 @@ definePageMeta({ layout: 'default' })
 
 const MARKETPLACE = false
 
+const router = useRouter()
 const route = useRoute()
+
+const BACK_LABELS: Record<string, string> = {
+  '/pesticides': 'Назад до пестицидів',
+  '/bio': 'Назад до біопрепаратів',
+  '/fertilizers': 'Назад до добрив',
+  '/seeds': 'Назад до насіння',
+}
+
+const backTo = ref('/pesticides')
+const backLabel = computed(() => BACK_LABELS[backTo.value] || 'Назад до каталогу')
+
+onMounted(() => {
+  const referrer = document.referrer
+  if (referrer) {
+    try {
+      const path = new URL(referrer).pathname.replace(/\/$/, '')
+      const match = Object.keys(BACK_LABELS).find(k => path === k || path.startsWith(k + '/'))
+      if (match) backTo.value = match
+    } catch {}
+  }
+})
+
+const goBack = () => {
+  if (window.history.length > 1) router.back()
+  else router.push(backTo.value)
+}
 const slug = route.params.slug as string
 const api = useAgroApi()
 const supabase = useSupabaseClient()

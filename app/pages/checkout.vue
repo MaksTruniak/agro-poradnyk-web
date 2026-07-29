@@ -11,7 +11,7 @@
       <p class="font-bold text-agro-dark text-2xl mb-2">Замовлення оформлено!</p>
       <p class="text-agro-light mb-2">Номер: <span class="font-bold text-agro">#{{ orderId }}</span></p>
       <p class="text-agro-light mb-8">Продавці отримали повідомлення про ваше замовлення.</p>
-      <NuxtLink to="/catalog" class="btn-primary inline-block">До каталогу →</NuxtLink>
+      <NuxtLink to="/pesticides" class="btn-primary inline-block">До каталогу →</NuxtLink>
     </div>
 
     <div v-else class="grid lg:grid-cols-3 gap-8">

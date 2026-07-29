@@ -112,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Підписка' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
@@ -132,7 +133,7 @@ const PRO_FEATURES = [
   'Необмежена кількість полів',
   'Необмежена кількість культур',
   'AI агроном (необмежено)',
-  'Програма захисту рослин',
+  'Технологічна карта',
   'Нагадування про обробки',
   'Пріоритетна підтримка',
 ]

@@ -134,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: 'Просування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()

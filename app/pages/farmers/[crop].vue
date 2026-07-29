@@ -51,7 +51,7 @@
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <div v-for="farmer in filtered" :key="farmer.id" class="card hover:shadow-md transition-all">
+      <div v-for="farmer in filtered" :key="farmer.id" class="card hover:shadow-md transition-all flex flex-col text-left">
         <div class="flex items-start gap-4 mb-4">
           <div class="w-12 h-12 rounded-2xl bg-agro-hover flex items-center justify-center font-bold text-agro text-xl shrink-0">
             {{ farmer.name?.[0]?.toUpperCase() || '?' }}
@@ -74,6 +74,10 @@
             </NuxtLink>
           </div>
         </div>
+
+        <NuxtLink :to="`/farmer/${farmer.id}`" class="btn-primary w-full text-sm py-2.5 text-center block">
+          Детально →
+        </NuxtLink>
       </div>
     </div>
   </div>
@@ -96,7 +100,7 @@ const cropEmoji = getCropEmoji(cropName)
 const matchesCrop = (crop: string) => cropToSlug(crop) === cropSlug
 const { pluralFarmer } = await import('~/utils/plural')
 
-useHead({ title: `Фермери — ${cropName} | АгроПорадник` })
+useHead({ title: `Фермери — ${cropName} | АгроПростір` })
 
 const search = ref('')
 const regionFilter = ref('')

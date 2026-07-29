@@ -1,5 +1,6 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  ssr: false,
   devtools: { enabled: true },
 
   vite: {
@@ -21,7 +22,6 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/supabase',
     '@nuxtjs/tailwindcss',
-    '@pinia/nuxt',
     '@vueuse/nuxt',
   ],
 
@@ -49,11 +49,16 @@ export default defineNuxtConfig({
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       htmlAttrs: { lang: 'uk' },
-      titleTemplate: '%s — АгроПорадник',
+      titleTemplate: '%s — АгроПростір',
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
     },
+  },
+
+  routeRules: {
+    '/catalog': { redirect: { to: '/pesticides', statusCode: 301 } },
+    '/catalog/**': { redirect: { to: '/pesticides/**', statusCode: 301 } },
   },
 
   runtimeConfig: {
