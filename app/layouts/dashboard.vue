@@ -54,6 +54,7 @@
           <span class="flex-1">{{ item.label }}</span>
           <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="w-5 h-5 bg-agro rounded-full text-white text-xs font-bold flex items-center justify-center">{{ unreadChats }}</span>
           <span v-if="item.to === '/cart' && cartCount > 0" class="w-5 h-5 bg-agro rounded-full text-white text-xs font-bold flex items-center justify-center">{{ cartCount }}</span>
+          <span v-if="item.to === '/dashboard/inventory' && unreadNotifications > 0" class="w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center">{{ unreadNotifications }}</span>
         </NuxtLink>
       </nav>
 
@@ -85,6 +86,10 @@
         <NuxtLink v-if="MARKETPLACE" to="/cart" class="relative p-2">
           <span class="text-xl">🛒</span>
           <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-agro text-white text-xs font-bold rounded-full flex items-center justify-center">{{ cartCount }}</span>
+        </NuxtLink>
+        <NuxtLink to="/dashboard/notifications" class="relative p-2">
+          <span class="text-xl">🔔</span>
+          <span v-if="unreadNotifications > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">{{ unreadNotifications }}</span>
         </NuxtLink>
         <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center text-agro font-bold text-sm">
           {{ userInitial }}
@@ -163,6 +168,18 @@ onMounted(async () => {
 
 const cartCount = ref(0)
 const unreadChats = useState('unread-chats', () => 0)
+const unreadNotifications = ref(0)
+
+const loadNotifications = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const { count } = await supabase
+    .from('farm_notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', session.user.id)
+    .eq('is_read', false)
+  unreadNotifications.value = count || 0
+}
 
 const loadUnread = async () => {
   const { data: { session } } = await supabase.auth.getSession()
@@ -188,7 +205,7 @@ const loadCartCount = async () => {
   cartCount.value = count || 0
 }
 
-onMounted(() => { loadCartCount() })
+onMounted(() => { loadCartCount(); loadNotifications() })
 
 const route = useRoute()
 watch(() => route.path, () => { if (route.path === '/cart' || route.path.includes('catalog')) loadCartCount() })
@@ -255,6 +272,7 @@ const navItems = computed(() => {
     { to: '/pesticides', icon: '📖', label: 'Каталог' },
     { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI агроном' },
     ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }, { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' }] : []),
+    { to: '/dashboard/inventory', icon: '🧪', label: 'Склад' },
     { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
     { to: '/dashboard/deals', icon: '🤝', label: 'Угоди' },
