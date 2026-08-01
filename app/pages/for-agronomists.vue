@@ -1,20 +1,25 @@
 <template>
   <div>
     <!-- Hero -->
-    <section class="bg-white py-24 px-4 border-b border-agro-border">
-      <div class="max-w-4xl mx-auto text-center">
-        <span class="inline-block bg-agro-hover text-agro font-semibold text-sm px-4 py-1.5 rounded-full mb-6">🔬 Для агрономів</span>
-        <h1 class="text-5xl md:text-6xl font-extrabold text-agro-dark mb-6 leading-tight">
+    <section class="hero-agronomist relative flex items-center justify-center text-center">
+      <div class="hero-overlay absolute inset-0"></div>
+      <div class="relative z-10 px-4 py-32 md:py-40 max-w-3xl mx-auto">
+        <p class="hero-eyebrow text-sm font-semibold uppercase tracking-[0.18em] mb-5">
+          Для агрономів
+        </p>
+        <h1 class="hero-title text-6xl md:text-7xl font-black leading-none mb-6">
           Ваші знання —<br>ваш бізнес
         </h1>
-        <p class="text-xl text-agro-light mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p class="text-white/80 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
           Консультуйте фермерів онлайн, ведіть базу клієнтів і заробляйте на своїх знаннях — без поїздок і паперової роботи
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro transition-colors">
+          <NuxtLink to="/auth?mode=register"
+            class="inline-flex items-center justify-center gap-2 bg-[#2F5233] text-white font-bold rounded-full px-8 py-3.5 text-base hover:bg-[#3d6b42] transition-colors shadow-lg shadow-black/30">
             Створити профіль →
           </NuxtLink>
-          <NuxtLink to="/agronomists" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
+          <NuxtLink to="/agronomists"
+            class="inline-flex items-center justify-center border-2 border-white/70 text-white font-bold rounded-full px-8 py-3.5 text-base bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
             Подивитись агрономів
           </NuxtLink>
         </div>
@@ -22,29 +27,71 @@
     </section>
 
     <!-- Кроки -->
-    <section class="py-24 px-4 max-w-5xl mx-auto">
-      <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-4">Як це працює</h2>
-      <p class="text-center text-agro-light mb-16">Від реєстрації до першого клієнта — 4 кроки</p>
+    <section class="px-14 py-[110px] bg-[rgb(238,241,227)]">
+      <div class="max-w-[920px] mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Як це працює</h2>
+          <p class="text-base text-[rgb(91,107,83)]">Від реєстрації до першого клієнта — 4 кроки</p>
+        </div>
 
-      <div class="space-y-8">
-        <div v-for="(step, i) in steps" :key="i" class="flex gap-6 md:gap-10 items-start">
-          <div class="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-extrabold"
-            :class="i % 2 === 0 ? 'bg-agro text-white' : 'bg-agro-hover text-agro'">
-            {{ i + 1 }}
-          </div>
-          <div class="flex-1 pt-1">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">{{ step.icon }}</span>
-              <h3 class="text-xl font-bold text-agro-dark">{{ step.title }}</h3>
-            </div>
-            <p class="text-agro-light leading-relaxed">{{ step.desc }}</p>
-            <div class="flex flex-wrap gap-2 mt-3">
-              <span v-for="tag in step.tags" :key="tag"
-                class="text-xs bg-agro-bg text-agro-dark px-3 py-1 rounded-full border border-agro-border font-medium">
-                {{ tag }}
-              </span>
+        <div class="flex flex-col gap-11">
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">1</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="9" r="4.5" stroke="#2F5233" stroke-width="1.6"/><path d="M20 20c0-3.3-4-5-6-5M4 20c0-3.9 2.7-6 6-6" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Створіть профіль агронома</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Вкажіть спеціалізацію, досвід, регіон роботи і культури з якими працюєте. Завантажте фото — профілі з фото отримують вдвічі більше звернень.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Спеціалізація', 'Досвід', 'Культури', 'Регіон']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
             </div>
           </div>
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">2</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#2F5233" stroke-width="1.6"/><path d="M16.2 16.2L21 21" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Фермери знаходять вас</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Ваш профіль відображається в каталозі агрономів. Фермери шукають за регіоном і культурами і пишуть напряму в чат.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Каталог агрономів', 'Пошук за регіоном', 'Пошук за культурою']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">3</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#2F5233" stroke-width="1.6"/><path d="M3 14l5-4 4 3 4-5 5 4" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Отримайте доступ до полів клієнта</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Фермер може поділитись полями з вами. Ви бачите всі культури, сорти і площі — і можете давати точніші рекомендації без зайвих запитань.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Поля клієнта', 'Культури і сорти', 'Площі']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">4</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Консультуйте в чаті</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Спілкуйтесь з фермерами у вбудованому чаті. Рекомендуйте препарати, схеми обробки, терміни проведення робіт — все в одному місці.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Чат', 'Рекомендації препаратів', 'Схеми обробки']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -108,6 +155,38 @@
     </section>
   </div>
 </template>
+
+<style scoped>
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.step-tag {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgb(225, 219, 198);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(62, 79, 59);
+}
+.hero-agronomist {
+  min-height: 100svh;
+  background:
+    linear-gradient(to bottom, rgba(8, 18, 8, 0.55) 0%, rgba(12, 24, 8, 0.45) 60%, rgba(8, 18, 8, 0.7) 100%),
+    url('/role-agronomist.jpg') center/cover no-repeat;
+  background-color: #0d1a08;
+}
+.hero-overlay {
+  background: linear-gradient(160deg, rgba(6,14,4,0.3) 0%, rgba(20,38,10,0.1) 50%, rgba(6,14,4,0.4) 100%);
+}
+.hero-eyebrow {
+  color: #c9a84c;
+  letter-spacing: 0.18em;
+}
+.hero-title {
+  font-family: 'Bitter', Georgia, serif;
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.35);
+}
+</style>
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })

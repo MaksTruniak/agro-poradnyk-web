@@ -1,60 +1,75 @@
 <template>
-  <div class="p-8">
-    <NuxtLink to="/dashboard/fields" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium transition-colors">
-      ← Назад до полів
+  <div class="farm-page">
+    <NuxtLink to="/dashboard/fields" class="farm-back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 6H2M8 1L2 6l6 5"/>
+      </svg>
+      Назад до полів
     </NuxtLink>
 
-    <div v-if="loading" class="space-y-5">
-      <div class="card animate-pulse h-40"></div>
-      <div class="card animate-pulse h-32"></div>
+    <div v-if="loading" class="space-y-5 mt-6">
+      <div class="farm-card animate-pulse" style="height:160px"></div>
+      <div class="farm-card animate-pulse" style="height:120px"></div>
     </div>
 
-    <div v-else-if="farm" class="space-y-6">
+    <div v-else-if="farm" class="farm-stack">
       <!-- Основна інформація -->
-      <div class="card">
-        <div class="flex items-start justify-between mb-6">
-          <div>
-            <h1 class="text-2xl font-extrabold text-agro-dark">🌾 {{ farm.name }}</h1>
-            <p v-if="farm.region" class="text-agro-light mt-1">📍 {{ farm.region }}</p>
+      <div class="farm-card">
+        <div class="farm-card-header">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="farm-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z"/>
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h1 class="farm-title bitter">{{ farm.name }}</h1>
+              <div v-if="farm.region" class="farm-region">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                {{ farm.region }}{{ farm.city ? `, ${farm.city}` : '' }}
+              </div>
+            </div>
           </div>
-          <span class="font-bold text-agro text-2xl">{{ farm.hectares }} га</span>
+          <div class="farm-hectares bitter">{{ farm.hectares }} га</div>
         </div>
 
-        <div v-if="!editing" class="grid sm:grid-cols-2 gap-4 mb-5">
-          <div>
-            <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Назва</p>
-            <p class="font-semibold text-agro-dark">{{ farm.name }}</p>
+        <div v-if="!editing" class="farm-detail-grid">
+          <div class="farm-detail-item">
+            <span class="farm-detail-label">Назва</span>
+            <span class="farm-detail-value">{{ farm.name }}</span>
           </div>
-          <div>
-            <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Регіон</p>
-            <p class="font-semibold text-agro-dark">{{ farm.region || '—' }}</p>
+          <div class="farm-detail-item">
+            <span class="farm-detail-label">Регіон</span>
+            <span class="farm-detail-value">{{ farm.region || '—' }}</span>
           </div>
-          <div v-if="farm.city">
-            <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Населений пункт</p>
-            <p class="font-semibold text-agro-dark">{{ farm.city }}</p>
+          <div v-if="farm.city" class="farm-detail-item">
+            <span class="farm-detail-label">Населений пункт</span>
+            <span class="farm-detail-value">{{ farm.city }}</span>
           </div>
-          <div>
-            <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Площа</p>
-            <p class="font-semibold text-agro-dark">{{ farm.hectares }} га</p>
+          <div class="farm-detail-item">
+            <span class="farm-detail-label">Площа</span>
+            <span class="farm-detail-value">{{ farm.hectares }} га</span>
           </div>
-          <div v-if="farm.cadastral_number">
-            <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Кадастровий номер</p>
-            <p class="font-semibold text-agro-dark">{{ farm.cadastral_number }}</p>
+          <div v-if="farm.cadastral_number" class="farm-detail-item">
+            <span class="farm-detail-label">Кадастровий номер</span>
+            <span class="farm-detail-value">{{ farm.cadastral_number }}</span>
           </div>
         </div>
 
         <!-- Форма редагування -->
-        <div v-else class="grid sm:grid-cols-2 gap-4 mb-5">
+        <div v-else class="farm-edit-grid">
           <div>
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Назва</label>
+            <label class="farm-edit-label">Назва</label>
             <input v-model="editForm.name" class="input" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Площа (га)</label>
+            <label class="farm-edit-label">Площа (га)</label>
             <input v-model="editForm.hectares" type="number" class="input" />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Область</label>
+            <label class="farm-edit-label">Область</label>
             <div class="relative">
               <input
                 v-model="editRegionQuery"
@@ -77,7 +92,7 @@
             </div>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Населений пункт</label>
+            <label class="farm-edit-label">Населений пункт</label>
             <div class="relative">
               <input
                 v-model="editSettlementQuery"
@@ -102,25 +117,40 @@
             </div>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-agro-dark mb-1.5">Кадастровий номер</label>
+            <label class="farm-edit-label">Кадастровий номер</label>
             <input v-model="editForm.cadastral_number" class="input" placeholder="Необов'язково" />
           </div>
         </div>
 
-        <div class="flex gap-3">
-          <button v-if="!editing" @click="startEdit" class="btn-outline text-sm py-2">✏️ Редагувати</button>
+        <div class="flex gap-3 mt-5">
+          <button v-if="!editing" @click="startEdit" class="farm-edit-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Редагувати
+          </button>
           <template v-else>
             <button @click="saveFarm" :disabled="saving" class="btn-primary text-sm py-2">{{ saving ? '...' : 'Зберегти' }}</button>
-            <button @click="editing = false" class="btn-outline text-sm py-2">Скасувати</button>
+            <button @click="editing = false" class="farm-edit-btn">Скасувати</button>
           </template>
         </div>
       </div>
 
       <!-- Культури -->
-      <div class="card">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="font-bold text-agro-dark text-lg">🌱 Культури</h2>
-          <button @click="isPro || crops.length === 0 ? showAddCrop = true : showPaywall = true" class="btn-primary text-sm py-2">➕ Додати</button>
+      <div class="farm-card">
+        <div class="farm-section-header">
+          <div class="flex items-center gap-2.5">
+            <div class="farm-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z"/><path d="M12 22v-8"/>
+              </svg>
+            </div>
+            <h2 class="farm-section-title bitter">Культури</h2>
+          </div>
+          <button @click="isPro || crops.length === 0 ? showAddCrop = true : showPaywall = true" class="farm-add-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Додати
+          </button>
         </div>
 
         <div v-if="crops.length === 0" class="text-center py-8 text-agro-light">
@@ -212,13 +242,26 @@
       </div>
 
       <!-- Доступ агрономів (тільки для власника) -->
-      <div v-if="!readOnly" class="card">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="font-bold text-agro-dark text-lg">👨‍🌾 Доступ агрономів</h2>
-          <button @click="openShareModal" class="btn-outline text-sm py-2">🤝 Поділитись</button>
+      <div v-if="!readOnly" class="farm-card">
+        <div class="farm-section-header">
+          <div class="flex items-center gap-2.5">
+            <div class="farm-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/>
+              </svg>
+            </div>
+            <h2 class="farm-section-title bitter">Доступ агрономів</h2>
+          </div>
+          <button @click="openShareModal" class="farm-outline-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+            </svg>
+            Поділитись
+          </button>
         </div>
 
-        <div v-if="shares.length === 0 && pendingShares.length === 0" class="text-center py-6 text-agro-light text-sm">
+        <div v-if="shares.length === 0 && pendingShares.length === 0" class="farm-empty-text">
           Жоден агроном ще не має доступу
         </div>
 
@@ -506,6 +549,7 @@
 
 <script setup lang="ts">
 import { Trash2, ShieldCheck } from 'lucide-vue-next'
+
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const route = useRoute()
@@ -885,4 +929,189 @@ const deleteRotation = async (id: string) => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.bitter { font-family: 'Bitter', Georgia, serif; }
+
+.farm-page {
+  padding: 44px 56px;
+  font-family: Manrope, sans-serif;
+  max-width: 1196px;
+}
+
+.farm-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(47, 82, 51);
+  font-weight: 700;
+  font-size: 14.5px;
+  text-decoration: none;
+  margin-bottom: 28px;
+  transition: opacity 0.15s;
+}
+.farm-back:hover { opacity: 0.75; }
+
+.farm-stack { display: flex; flex-direction: column; gap: 20px; }
+
+.farm-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 30px 32px;
+  box-shadow: 0 8px 28px -18px rgba(30, 45, 25, 0.22);
+}
+
+.farm-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.farm-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgb(238, 241, 227);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.farm-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgb(27, 46, 27);
+  line-height: 1.2;
+}
+
+.farm-region {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13.5px;
+  color: rgb(107, 122, 100);
+  margin-top: 4px;
+}
+
+.farm-hectares {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgb(47, 82, 51);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.farm-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 32px;
+  margin-bottom: 4px;
+}
+
+.farm-detail-item { display: flex; flex-direction: column; gap: 4px; }
+
+.farm-detail-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgb(138, 150, 130);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.farm-detail-value {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: rgb(27, 46, 27);
+}
+
+.farm-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.farm-edit-label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgb(27, 46, 27);
+  margin-bottom: 6px;
+}
+
+.farm-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1.5px solid rgb(47, 82, 51);
+  background: transparent;
+  color: rgb(47, 82, 51);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.farm-edit-btn:hover { background: rgb(238, 241, 227); }
+
+.farm-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.farm-section-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: rgb(27, 46, 27);
+}
+
+.farm-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: rgb(47, 82, 51);
+  color: rgb(250, 246, 236);
+  font-weight: 700;
+  font-size: 13.5px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.farm-add-btn:hover { opacity: 0.88; }
+
+.farm-outline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1.5px solid rgb(47, 82, 51);
+  background: transparent;
+  color: rgb(47, 82, 51);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.farm-outline-btn:hover { background: rgb(238, 241, 227); }
+
+.farm-empty-text {
+  text-align: center;
+  padding: 32px 0;
+  font-size: 14.5px;
+  color: rgb(107, 122, 100);
+}
+
+@media (max-width: 768px) {
+  .farm-page { padding: 24px 20px; }
+  .farm-detail-grid { grid-template-columns: 1fr; }
+  .farm-edit-grid { grid-template-columns: 1fr; }
+}
 </style>

@@ -1,79 +1,112 @@
 <template>
-  <div class="p-8">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-2xl font-extrabold text-agro-dark">
-          {{ isDacha ? '🌱 Мої культури' : '🌾 Мої поля' }}
-        </h1>
-        <p class="text-agro-light mt-1">{{ isDacha ? 'Культури та схеми обробки' : 'Поля, культури та технологічні карти' }}</p>
+  <div class="fields-page">
+    <div class="flex items-center justify-between mb-[6px]">
+      <div class="flex items-center gap-2.5">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.7" stroke-linejoin="round"/>
+        </svg>
+        <h1 class="fields-title">{{ isDacha ? 'Мої культури' : 'Мої поля' }}</h1>
       </div>
     </div>
+    <p class="fields-subtitle">{{ isDacha ? 'Культури та схеми обробки' : 'Поля, культури та технологічні карти' }}</p>
 
-    <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <div v-for="i in 3" :key="i" class="card animate-pulse">
-        <div class="h-5 bg-agro-bg rounded w-1/2 mb-3"></div>
-        <div class="h-3 bg-agro-bg rounded w-full mb-2"></div>
-        <div class="h-3 bg-agro-bg rounded w-3/4"></div>
+    <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mt-7">
+      <div v-for="i in 3" :key="i" class="fields-card animate-pulse">
+        <div class="h-5 rounded w-1/2 mb-3" style="background:rgb(238,241,227);"></div>
+        <div class="h-3 rounded w-full mb-2" style="background:rgb(238,241,227);"></div>
+        <div class="h-3 rounded w-3/4" style="background:rgb(238,241,227);"></div>
       </div>
     </div>
 
     <!-- Фермер / Агроном -->
     <template v-if="!isDacha">
-      <div v-if="farms.length === 0" class="card text-center py-12">
-        <p class="text-5xl mb-4">🌾</p>
-        <p class="font-bold text-agro-dark text-lg mb-2">Поки немає полів</p>
-        <p class="text-agro-light mb-6">Додайте своє перше поле щоб почати</p>
-        <button @click="showAddFarm = true" class="btn-primary inline-block">➕ Додати поле</button>
+      <div v-if="farms.length === 0" class="fields-empty mt-7">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style="margin-bottom:18px;">
+          <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+        <h2 style="font-size:20px; font-weight:700; color:rgb(27,46,27); margin:0 0 10px;">Поки немає полів</h2>
+        <p style="font-size:15px; color:rgb(107,122,100); margin:0 0 24px;">Додайте своє перше поле щоб почати</p>
+        <button @click="showAddFarm = true" class="fields-add-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="#FAF6EC" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Додати поле
+        </button>
       </div>
 
-      <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-        <div v-for="(farm, index) in farms" :key="farm.id"
-          :class="['card relative', !isPro && index < farms.length - 1 ? 'opacity-60 select-none' : '']">
+      <div v-else class="fld-grid">
+        <div v-for="(farm, index) in farms" :key="farm.id" class="fld-card relative" :class="{ 'opacity-60 select-none': !isPro && index < farms.length - 1 }">
           <!-- Замок для заблокованих -->
-          <div v-if="!isPro && index < farms.length - 1" class="absolute inset-0 rounded-2xl flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm z-10 gap-2">
-            <span class="text-3xl">🔒</span>
-            <p class="text-sm font-semibold text-agro-dark">Доступно в PRO</p>
-            <NuxtLink to="/dashboard/subscription" class="text-xs text-agro underline">Оновити план</NuxtLink>
+          <div v-if="!isPro && index < farms.length - 1" class="absolute inset-0 rounded-[18px] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm z-10 gap-2">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(76,90,70)" stroke-width="1.7"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+            <p class="text-sm font-semibold" style="color:rgb(27,46,27)">Доступно в PRO</p>
+            <NuxtLink to="/dashboard/subscription" class="text-xs underline" style="color:rgb(47,82,51)">Оновити план</NuxtLink>
           </div>
 
-          <div class="flex items-start justify-between mb-3">
-            <div>
-              <h3 class="font-bold text-agro-dark text-lg">{{ farm.name }}</h3>
-              <p v-if="farm.region" class="text-xs text-agro-light">📍 {{ [farm.city, farm.region].filter(Boolean).join(', ') }}</p>
-            </div>
-            <span class="font-bold text-agro">{{ farm.hectares }} га</span>
+          <!-- Заголовок -->
+          <div class="fld-card-head">
+            <h3 class="fld-name">{{ farm.name }}</h3>
+            <span class="fld-ha">{{ farm.hectares }} га</span>
           </div>
 
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span v-for="crop in farm.farm_crops" :key="crop.id" class="text-xs bg-agro-hover text-agro px-2.5 py-1 rounded-full font-medium">
-              {{ emojiFor(crop.crop_type) }} {{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}
-            </span>
+          <!-- Локація -->
+          <div v-if="farm.region || farm.city" class="fld-location">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z" stroke="#B3452F" stroke-width="1.7" stroke-linejoin="round"/>
+              <circle cx="12" cy="9.5" r="2.3" stroke="#B3452F" stroke-width="1.5"/>
+            </svg>
+            {{ [farm.city, farm.region].filter(Boolean).join(', ') }}
           </div>
 
-          <div class="flex gap-2 mb-2">
-            <NuxtLink :to="`/dashboard/ai-chat?farmId=${farm.id}`" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 border-agro-border text-sm font-medium text-agro-light hover:border-agro hover:text-agro transition-colors">
-              🤖 AI агроном
+          <!-- Кнопки AI / Агроном -->
+          <div class="fld-actions-top">
+            <NuxtLink :to="`/dashboard/ai-chat?farmId=${farm.id}`" class="fld-soft-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2.5l2.4 6.3 6.7.5-5.1 4.4 1.6 6.5L12 16.8 6.4 20.2 8 13.7 2.9 9.3l6.7-.5L12 2.5z" stroke="#2F5233" stroke-width="1.4" stroke-linejoin="round"/>
+              </svg>
+              AI агроном
             </NuxtLink>
-            <NuxtLink to="/agronomists" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 border-agro-border text-sm font-medium text-agro-light hover:border-agro hover:text-agro transition-colors">
-              👨‍🌾 Агроном
+            <NuxtLink to="/agronomists" class="fld-soft-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <circle cx="10" cy="8.5" r="3.5" stroke="#2F5233" stroke-width="1.5"/>
+                <path d="M17 18c0-2.8-3.1-4-6.5-4S4 15.2 4 18" stroke="#2F5233" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Агроном
             </NuxtLink>
           </div>
-          <div class="flex gap-2">
-            <button @click="openFarm(farm)" class="btn-outline text-sm py-2 flex-1 flex items-center justify-center gap-1.5">
-              <Eye :size="15" /> Переглянути
+
+          <!-- Кнопки дій -->
+          <div class="fld-actions-bottom">
+            <button @click="openFarm(farm)" class="fld-view-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="#2F5233" stroke-width="1.6"/>
+              </svg>
+              Переглянути
             </button>
-            <NuxtLink :to="`/dashboard/farm/${farm.id}?share=1`" class="w-10 h-10 border-2 border-agro-border rounded-xl flex items-center justify-center hover:bg-agro-hover hover:border-agro transition-colors text-agro hover:text-agro">
-              <UserPlus :size="16" />
+            <NuxtLink :to="`/dashboard/farm/${farm.id}?share=1`" class="fld-icon-btn" style="border-color:rgb(221,230,204)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="8" r="3" stroke="#2F5233" stroke-width="1.6"/>
+                <path d="M3 19c0-3 2.7-5 6-5" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/>
+                <path d="M17 8v5M14.5 10.5H19.5" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
             </NuxtLink>
-            <button @click="deleteFarm(farm)" class="w-10 h-10 border-2 border-red-200 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors text-red-400">
-              <Trash2 :size="16" />
+            <button @click="deleteFarm(farm)" class="fld-icon-btn" style="border-color:rgb(243,207,196)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M4 7h16l-1.5 12.5a1 1 0 01-1 .9H6.5a1 1 0 01-1-.9L4 7z" stroke="#B3452F" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M8 7a4 4 0 018 0" stroke="#B3452F" stroke-width="1.6"/>
+              </svg>
             </button>
           </div>
         </div>
 
-        <button @click="isPro ? showAddFarm = true : showPaywall = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group">
-          <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">{{ isPro ? '➕' : '🔒' }}</span>
-          <span class="font-semibold text-agro-light group-hover:text-agro transition-colors">Додати поле</span>
+        <!-- Додати поле -->
+        <button @click="isPro ? showAddFarm = true : showPaywall = true" class="fld-add-card">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="10" width="14" height="10" rx="2" stroke="#7A8A72" stroke-width="1.7"/>
+            <path d="M8 10V7a4 4 0 018 0v3" stroke="#7A8A72" stroke-width="1.7"/>
+          </svg>
+          <span class="fld-add-label">{{ isPro ? 'Додати поле' : 'Додати поле' }}</span>
         </button>
       </div>
     </template>
@@ -252,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { Eye, Trash2, UserPlus } from 'lucide-vue-next'
+import { Trash2 } from 'lucide-vue-next'
 useHead({ title: 'Мої поля' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
@@ -457,4 +490,166 @@ const deleteDachaCrop = async (crop: any) => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.fields-page { padding: 48px 56px; font-family: Manrope, sans-serif; }
+.fields-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.fields-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 0 0 28px; }
+.fields-empty {
+  background: #fff;
+  border-radius: 18px;
+  padding: 80px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 900px;
+  box-shadow: 0 8px 24px -16px rgba(30,45,25,0.2);
+}
+.fields-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  background: rgb(47,82,51);
+  color: rgb(250,246,236);
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.fields-add-btn:hover { background: rgb(61,107,66); }
+
+/* ---- Field grid cards ---- */
+.fld-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  max-width: 900px;
+}
+
+.fld-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: 0 8px 24px -16px rgba(30,45,25,0.2);
+}
+
+.fld-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.fld-name {
+  font-size: 19px;
+  font-weight: 700;
+  color: rgb(27,46,27);
+  margin: 0;
+}
+
+.fld-ha {
+  font-weight: 700;
+  font-size: 16px;
+  color: rgb(27,46,27);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fld-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: rgb(107,122,100);
+  margin-bottom: 20px;
+}
+
+.fld-actions-top {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.fld-soft-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgb(221,230,204);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: rgb(47,82,51);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.fld-soft-btn:hover { background: rgb(238,241,227); }
+
+.fld-actions-bottom {
+  display: flex;
+  gap: 10px;
+}
+
+.fld-view-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1.5px solid rgb(47,82,51);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(47,82,51);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.fld-view-btn:hover { background: rgb(238,241,227); }
+
+.fld-icon-btn {
+  flex: 0 0 auto;
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.fld-icon-btn:hover { background: rgb(248,245,240); }
+
+.fld-add-card {
+  border: 2px dashed rgb(199,210,179);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  gap: 14px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.fld-add-card:hover { border-color: rgb(47,82,51); }
+
+.fld-add-label {
+  font-weight: 700;
+  font-size: 16px;
+  color: rgb(76,90,70);
+}
+
+@media (max-width: 640px) {
+  .fields-page { padding: 24px 20px; }
+  .fld-grid { grid-template-columns: 1fr; }
+}
 </style>

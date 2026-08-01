@@ -1,20 +1,27 @@
 <template>
   <div>
     <!-- Hero -->
-    <section class="bg-white py-24 px-4 border-b border-agro-border">
-      <div class="max-w-4xl mx-auto text-center">
-        <span class="inline-block bg-agro-hover text-agro font-semibold text-sm px-4 py-1.5 rounded-full mb-6">🏭 Для заготівельників</span>
-        <h1 class="text-5xl md:text-6xl font-extrabold text-agro-dark mb-6 leading-tight">
-          Знаходьте продукцію —<br>напряму від фермерів
+    <section class="hero-buyer relative flex flex-col items-center justify-center text-center px-14 py-[88px] overflow-hidden">
+      <div class="absolute inset-0" style="background: linear-gradient(rgba(20,32,17,0.55) 0%, rgba(20,32,17,0.62) 55%, rgba(20,32,17,0.78) 100%);"></div>
+      <div class="relative z-10 flex flex-col items-center">
+        <span class="inline-flex items-center gap-2 px-[18px] py-2 rounded-full bg-white/14 backdrop-blur-sm text-[13px] font-extrabold tracking-[0.06em] text-[#E5C48C] uppercase mb-[22px]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20h16M6 20V10l-2-4h16l-2 4v10M9 10V6M15 10V6" stroke="#E5C48C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Для заготівельників
+        </span>
+        <h1 class="hero-title text-[60px] leading-[1.08] tracking-[-0.02em] font-extrabold text-white max-w-[820px] mb-[22px]">
+          Знаходьте продукцію — напряму від фермерів
         </h1>
-        <p class="text-xl text-agro-light mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p class="text-[19px] leading-relaxed text-[rgb(237,239,230)] max-w-[640px] mb-9">
           Розміщуйте закупівельні оголошення, отримуйте пропозиції від фермерів і укладайте угоди без посередників
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro transition-colors">
-            Почати безкоштовно →
+        <div class="flex gap-4 flex-wrap justify-center">
+          <NuxtLink to="/auth?mode=register"
+            class="flex items-center gap-2 px-[30px] py-4 rounded-full bg-[#2F5233] text-[#FAF6EC] font-bold text-base shadow-[0_12px_28px_-10px_rgba(0,0,0,0.5)] hover:bg-[#3d6b42] transition-colors">
+            Почати безкоштовно
+            <svg width="16" height="12" viewBox="0 0 18 12" fill="none"><path d="M1 6h15M11 1l6 5-6 5" stroke="#FAF6EC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </NuxtLink>
-          <NuxtLink to="/farmers" class="border-2 border-agro-border text-agro-dark font-bold rounded-2xl px-8 py-4 text-lg hover:bg-agro-hover transition-colors">
+          <NuxtLink to="/farmers"
+            class="px-[30px] py-4 rounded-full border-[1.5px] border-white/70 text-white font-bold text-base bg-white/8 backdrop-blur-sm hover:bg-white/20 transition-colors">
             Переглянути фермерів
           </NuxtLink>
         </div>
@@ -22,110 +29,245 @@
     </section>
 
     <!-- Кроки -->
-    <section class="py-24 px-4 max-w-5xl mx-auto">
-      <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-4">Як це працює</h2>
-      <p class="text-center text-agro-light mb-16">Від реєстрації до першої угоди — кілька простих кроків</p>
+    <section class="px-14 py-[110px] bg-[rgb(238,241,227)]">
+      <div class="max-w-[920px] mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Як це працює</h2>
+          <p class="text-base text-[rgb(91,107,83)]">Від реєстрації до першої угоди — кілька простих кроків</p>
+        </div>
 
-      <div class="space-y-8">
-        <div v-for="(step, i) in steps" :key="i" class="flex gap-6 md:gap-10 items-start">
-          <div class="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-extrabold"
-            :class="i % 2 === 0 ? 'bg-agro text-white' : 'bg-agro-hover text-agro'">
-            {{ i + 1 }}
-          </div>
-          <div class="flex-1 pt-1">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">{{ step.icon }}</span>
-              <h3 class="text-xl font-bold text-agro-dark">{{ step.title }}</h3>
-            </div>
-            <p class="text-agro-light leading-relaxed">{{ step.desc }}</p>
-            <div class="flex flex-wrap gap-2 mt-3">
-              <span v-for="tag in step.tags" :key="tag"
-                class="text-xs bg-agro-bg text-agro-dark px-3 py-1 rounded-full border border-agro-border font-medium">
-                {{ tag }}
-              </span>
+        <div class="flex flex-col gap-11">
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">1</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="14" rx="2" stroke="#2F5233" stroke-width="1.6"/><path d="M8 6V4h8v2" stroke="#2F5233" stroke-width="1.6"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Заповніть профіль заготівельника</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Вкажіть назву підприємства, регіон роботи і контактні дані. Це допоможе фермерам знайти вас в каталозі.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Назва підприємства', 'Регіон', 'Контакти']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
             </div>
           </div>
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">2</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Вкажіть що закуповуєте</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Додайте культури які вас цікавлять, бажані обсяги і умови закупівлі. Фермери побачать ваш профіль і зможуть надіслати пропозицію.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Культури', 'Обсяги', 'Умови']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">3</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Отримайте пропозиції в чаті</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Фермери надсилають пропозиції з кількістю і ціною прямо в чат. Обговорюйте деталі і домовляйтесь на вигідних умовах.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Чат з фермером', 'Картка угоди', 'Переговори']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">4</div>
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12l4-8h8l4 8-4 8H8l-4-8z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Підтверджуйте угоди</h3>
+              </div>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Підтверджена угода зберігається в системі — ви бачите всю історію закупівель, обсяги і суми в одному місці.</p>
+              <div class="flex flex-wrap gap-2.5">
+                <span v-for="tag in ['Підтвердження', 'Архів угод', 'Статистика']" :key="tag" class="step-tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
 
     <!-- Фічі -->
-    <section class="py-20 px-4 bg-white border-t border-agro-border">
-      <div class="max-w-7xl mx-auto">
-        <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Що ви отримуєте</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="f in features" :key="f.title" class="card hover:shadow-md transition-shadow">
-            <div class="text-3xl mb-3">{{ f.icon }}</div>
-            <h3 class="font-bold text-agro-dark mb-2">{{ f.title }}</h3>
-            <p class="text-agro-light text-sm leading-relaxed">{{ f.desc }}</p>
+    <section class="px-14 py-[110px]">
+      <div class="max-w-[1180px] mx-auto">
+        <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] text-center mb-16">Що ви отримуєте</h2>
+        <div class="grid grid-cols-3 gap-x-14 gap-y-12">
+
+          <div class="flex gap-[18px]">
+            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 8l2-3h14l2 3M3 8v10a1 1 0 001 1h16a1 1 0 001-1V8M3 8h18" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Каталог культур</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Вказуйте декілька культур з різними обсягами — фермери бачать точно що вам потрібно</p>
+            </div>
           </div>
+
+          <div class="flex gap-[18px]">
+            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 20V13a6 6 0 0112 0v7" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 20h16" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Пропозиції в реальному часі</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Фермери надсилають пропозиції напряму у ваш чат — жодних пропущених зв'язків</p>
+            </div>
+          </div>
+
+          <div class="flex gap-[18px]">
+            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 20V10M12 20V4M18 20v-7" stroke="#2F5233" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Статистика закупівель</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Кількість угод і загальний обсяг закуплених тонн відображаються у вашому профілі</p>
+            </div>
+          </div>
+
+          <div class="flex gap-[18px]">
+            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#2F5233" stroke-width="1.6"/><path d="M3 12h18M12 3c2.5 2.5 3.5 6 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-6-3.5-9s1-6.5 3.5-9z" stroke="#2F5233" stroke-width="1.4"/></svg>
+            </div>
+            <div>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Фермери з усієї України</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Знаходьте постачальників у потрібному регіоні — фільтруйте за культурою і областю</p>
+            </div>
+          </div>
+
+          <div class="flex gap-[18px]">
+            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2.5l2.4 6.3 6.7.5-5.1 4.4 1.6 6.5L12 16.8 6.4 20.2 8 13.7 2.9 9.3l6.7-.5L12 2.5z" stroke="#2F5233" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Рейтинг і відгуки</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Репутація формується на основі завершених угод — чесно і прозоро для обох сторін</p>
+            </div>
+          </div>
+
+          <div class="flex gap-[18px]">
+            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Без посередників</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Пряма комунікація з фермером — ніяких зайвих ланок і прихованих комісій</p>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
 
     <!-- Плани -->
-    <section class="py-20 px-4 border-t border-agro-border">
-      <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-3xl font-extrabold text-agro-dark mb-4">Тарифи</h2>
-        <p class="text-agro-light mb-12">Базовий план безкоштовний. Топ виводить вас першими серед заготівельників.</p>
-        <div class="grid sm:grid-cols-2 gap-6 mb-10">
-          <div class="card text-left">
-            <p class="font-bold text-agro-dark text-lg mb-1">Базовий</p>
-            <p class="text-3xl font-extrabold text-agro mb-4">Безкоштовно</p>
-            <ul class="space-y-2 text-sm text-agro-light">
-              <li>✅ Профіль заготівельника</li>
-              <li>✅ До 3 культур в закупівлях</li>
-              <li>✅ Чат з фермерами</li>
-              <li>✅ До 5 угод на місяць</li>
-            </ul>
-          </div>
-          <div class="card text-left border-2 border-agro">
-            <div class="flex items-center justify-between mb-1">
-              <p class="font-bold text-agro-dark text-lg">Топ</p>
-              <span class="text-xs bg-agro text-white px-2 py-0.5 rounded-full font-semibold">Популярний</span>
+    <section class="px-14 py-[100px] bg-[rgb(238,241,227)]">
+      <div class="max-w-[900px] mx-auto text-center">
+        <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Тарифи</h2>
+        <p class="text-base text-[rgb(91,107,83)] mb-12">Базовий план безкоштовний. Топ виводить вас першими серед заготівельників.</p>
+
+        <div class="grid grid-cols-2 gap-6 text-left mb-6">
+
+          <!-- Базовий -->
+          <div class="bg-white rounded-[20px] px-8 py-[34px] border border-[rgb(225,219,198)]">
+            <div class="text-[14px] font-bold text-[rgb(91,107,83)] mb-2.5">Базовий</div>
+            <div class="bitter text-[30px] font-extrabold text-[rgb(27,46,27)] mb-6">Безкоштовно</div>
+            <div class="flex flex-col gap-3.5">
+              <div v-for="item in ['Профіль заготівельника', 'До 3 культур в закупівлях', 'Чат з фермерами', 'До 5 угод на місяць']" :key="item"
+                class="flex gap-2.5 items-start text-[14.5px] text-[rgb(62,79,59)]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {{ item }}
+              </div>
             </div>
-            <p class="text-3xl font-extrabold text-agro mb-4">299 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
-            <ul class="space-y-2 text-sm text-agro-light">
-              <li>✅ Все з базового</li>
-              <li>✅ Необмежена кількість культур</li>
-              <li>✅ Необмежена кількість угод</li>
-              <li>⭐ Перші в пошуку заготівельників</li>
-              <li>⭐ Більше показів профілю</li>
-            </ul>
           </div>
+
+          <!-- Топ -->
+          <div class="bg-[rgb(27,46,27)] rounded-[20px] px-8 py-[34px] shadow-[0_24px_50px_-20px_rgba(27,46,27,0.5)]">
+            <div class="flex items-center justify-between gap-3 mb-2.5">
+              <div class="text-[14px] font-bold text-[rgb(183,196,172)]">Топ</div>
+              <span class="px-3 py-[5px] rounded-full bg-[#C98A3C] text-[rgb(27,46,27)] text-[12px] font-extrabold whitespace-nowrap">Популярний</span>
+            </div>
+            <div class="flex items-baseline gap-2 mb-6">
+              <span class="bitter text-[30px] font-extrabold text-white">299</span>
+              <span class="text-[15px] text-[rgb(183,196,172)]">грн/міс</span>
+            </div>
+            <div class="flex flex-col gap-3.5">
+              <div v-for="item in ['Все з базового', 'Необмежена кількість культур', 'Необмежена кількість угод']" :key="item"
+                class="flex gap-2.5 items-start text-[14.5px] text-[rgb(228,233,218)]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#1B2E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {{ item }}
+              </div>
+              <div v-for="item in ['Перші в пошуку заготівельників', 'Більше показів профілю']" :key="item"
+                class="flex gap-2.5 items-start text-[14.5px] text-[rgb(228,233,218)]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><path d="M12 2.5l2.4 6.3 6.7.5-5.1 4.4 1.6 6.5L12 16.8 6.4 20.2 8 13.7 2.9 9.3l6.7-.5L12 2.5z" fill="#C98A3C"/></svg>
+                {{ item }}
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- Верифікація -->
-        <div class="card text-left border-2 border-amber-200 bg-amber-50">
-          <div class="flex items-center gap-3 mb-3">
-            <span class="text-2xl">✅</span>
-            <div>
-              <p class="font-bold text-agro-dark">Значок "Перевірений заготівельник"</p>
-              <p class="text-xs text-agro-light">Безкоштовно — видається за репутацію, не за гроші</p>
-            </div>
+        <div class="bg-[rgb(251,243,221)] border border-[rgb(234,217,170)] rounded-[18px] px-[30px] py-[26px] text-left">
+          <div class="flex items-center gap-2.5 mb-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="shrink-0"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#FBF3DD" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h3 class="text-[17px] font-bold text-[rgb(27,46,27)]">Значок «Перевірений заготівельник»</h3>
           </div>
-          <ul class="space-y-2 text-sm text-agro-light">
-            <li>📄 Верифікація підприємства (ЄДРПОУ / документи)</li>
-            <li>🤝 Мінімум 10 підтверджених угод на платформі</li>
-            <li>⭐ Рейтинг не нижче 4.5</li>
-            <li>🚫 Жодної скасованої угоди</li>
-          </ul>
-          <p class="text-xs text-agro-light mt-3">Фермери бачать цей значок у профілі і можуть довіряти перевіреному закупівельнику</p>
+          <p class="text-[13.5px] text-[rgb(138,115,70)] pl-[30px] mb-4">Безкоштовно — видається за репутацію, не за гроші</p>
+          <div class="flex flex-wrap gap-x-5 gap-y-2 pl-[30px] mb-3.5">
+            <span v-for="c in ['Верифікація підприємства (ЄДРПОУ / документи)', 'Мінімум 10 підтверджених угод на платформі', 'Рейтинг не нижче 4.5', 'Жодної скасованої угоди']" :key="c"
+              class="text-[14px] text-[rgb(91,107,83)]">{{ c }}</span>
+          </div>
+          <p class="text-[13.5px] text-[rgb(138,115,70)] pl-[30px]">Фермери бачать цей значок у профілі і можуть довіряти перевіреному заготівельнику</p>
         </div>
+
       </div>
     </section>
 
     <!-- CTA -->
-    <section class="py-20 px-4 bg-agro-hover border-t border-agro-border text-center">
-      <p class="text-agro font-semibold mb-2">Безкоштовна реєстрація</p>
-      <h2 class="text-3xl font-extrabold mb-4 text-agro-dark">Почніть закуповувати напряму</h2>
-      <p class="text-agro-light mb-8">Без посередників і зайвих переплат</p>
-      <NuxtLink to="/auth?mode=register" class="bg-agro-dark text-white font-bold rounded-2xl px-10 py-4 text-lg hover:bg-agro transition-colors inline-block">
-        Зареєструватись →
+    <section class="px-14 py-[100px] text-center" style="background: linear-gradient(rgb(238,241,227), rgb(220,230,203));">
+      <span class="text-[13px] font-extrabold tracking-[0.1em] text-[#C98A3C] uppercase">Безкоштовна реєстрація</span>
+      <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mt-4 mb-3.5">Почніть закуповувати напряму</h2>
+      <p class="text-[17px] text-[rgb(76,90,70)] mb-8">Без посередників і зайвих переплат</p>
+      <NuxtLink to="/auth?mode=register"
+        class="inline-flex items-center gap-2 px-[34px] py-[17px] rounded-full bg-[#2F5233] text-[#FAF6EC] font-bold text-base shadow-[0_14px_30px_-10px_rgba(47,82,51,0.5)] hover:bg-[#3d6b42] transition-colors">
+        Зареєструватись
+        <svg width="16" height="12" viewBox="0 0 18 12" fill="none"><path d="M1 6h15M11 1l6 5-6 5" stroke="#FAF6EC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </NuxtLink>
     </section>
   </div>
 </template>
+
+<style scoped>
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.hero-buyer {
+  min-height: 600px;
+  background:
+    linear-gradient(rgba(20,32,17,0.55) 0%, rgba(20,32,17,0.62) 55%, rgba(20,32,17,0.78) 100%),
+    url('/role-buyer.jpg') center/cover no-repeat;
+  background-color: #0d1a08;
+}
+.hero-title {
+  font-family: 'Bitter', Georgia, serif;
+}
+.step-tag {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgb(225, 219, 198);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(62, 79, 59);
+}
+</style>
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
