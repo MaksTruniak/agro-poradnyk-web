@@ -1,11 +1,23 @@
 <template>
-  <div class="p-8">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-2xl font-extrabold text-agro-dark mb-1">🌾 Що закуповую</h1>
-        <p class="text-agro-light text-sm">Фермери бачитимуть це у вашому профілі</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <div class="dash-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
+              </svg>
+            </div>
+            <h1 class="dash-title bitter">Що закуповую</h1>
+          </div>
+          <p class="dash-subtitle">Культури які ви шукаєте</p>
+        </div>
+        <button @click="showModal = true" class="dash-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати культуру
+        </button>
       </div>
-      <button @click="showModal = true" class="btn-primary text-sm">➕ Додати культуру</button>
     </div>
 
     <!-- Список -->
@@ -174,3 +186,14 @@ const deleteCrop = async (id: string) => {
   crops.value = crops.value.filter((c: any) => c.id !== id)
 }
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>

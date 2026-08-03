@@ -2,9 +2,14 @@
   <div class="flex flex-col h-full">
     <!-- Header -->
     <div class="flex items-center gap-3 px-6 py-4 border-b border-agro-border bg-white shrink-0">
-      <div class="w-10 h-10 rounded-full bg-agro flex items-center justify-center text-white text-xl shrink-0">🤖</div>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
+          <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
+        </svg>
+      </div>
       <div class="flex-1 min-w-0">
-        <p class="font-bold text-agro-dark">AI Агроном</p>
+        <p class="font-bold text-agro-dark bitter">AI Агроном</p>
         <p class="text-xs text-agro-light truncate">
           {{ selectedCrop ? `${farmName} · ${emojiFor(selectedCrop.crop_type)} ${selectedCrop.crop_type}${selectedCrop.variety ? ` · ${selectedCrop.variety}` : ''}` : (farmName || 'Загальна консультація') }}
         </p>
@@ -38,7 +43,12 @@
     <template v-if="!loading">
       <div ref="messagesEl" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center py-12">
-          <p class="text-5xl mb-4">{{ selectedCrop ? (emojiFor(selectedCrop.crop_type)) : '🤖' }}</p>
+          <div class="dash-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
+              <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
+            </svg>
+          </div>
           <p class="font-bold text-agro-dark text-lg mb-2">
             {{ selectedCrop ? `Консультація по ${selectedCrop.crop_type}` : 'Загальна консультація' }}
           </p>
@@ -143,7 +153,7 @@
         <div v-if="schemeModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="schemeModal.show = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-6">
-            <h2 class="font-bold text-agro-dark text-lg mb-4">🛡 Додати до технологічної карти</h2>
+            <h2 class="font-bold text-agro-dark text-lg mb-4">Додати до технологічної карти</h2>
             <div class="space-y-3 mb-5">
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1">Препарат</label>
@@ -543,4 +553,7 @@ const send = async () => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
 </style>

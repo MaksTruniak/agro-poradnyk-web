@@ -1,11 +1,21 @@
 <template>
-  <div class="p-4 sm:p-8">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-2xl font-extrabold text-agro-dark">🔔 Нагадування</h1>
-        <p class="text-agro-light mt-1">Заплановані обробки та події</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Нагадування</h1>
       </div>
-      <button @click="openAdd" class="btn-primary">➕ Додати</button>
+      <p class="dash-subtitle">Заплановані обробки та події</p>
+      <div class="mt-3">
+        <button @click="openAdd" class="dash-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати
+        </button>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -79,10 +89,14 @@
       <!-- Фермер: звичайний список -->
       <template v-else>
         <div v-if="reminders.length === 0" class="card text-center py-16">
-          <p class="text-5xl mb-4">🔔</p>
+          <div class="dash-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>
+            </svg>
+          </div>
           <p class="font-bold text-agro-dark text-lg mb-2">Нагадувань поки немає</p>
           <p class="text-agro-light mb-6">Додайте нагадування про обробку або будь-яку подію</p>
-          <button @click="openAdd" class="btn-primary inline-block">➕ Додати нагадування</button>
+          <button @click="openAdd" class="btn-primary inline-block">Додати нагадування</button>
         </div>
         <div v-else class="space-y-3">
           <div v-for="r in reminders" :key="r.id"
@@ -119,7 +133,7 @@
           <div class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md z-10 max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl px-6 pt-6 pb-4 border-b border-agro-border">
               <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
-              <h2 class="font-bold text-agro-dark text-lg">🔔 Нове нагадування</h2>
+              <h2 class="dash-card-title bitter">Нове нагадування</h2>
             </div>
 
             <div class="px-6 py-5 space-y-5">
@@ -316,4 +330,13 @@ const deleteReminder = async (id: string) => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

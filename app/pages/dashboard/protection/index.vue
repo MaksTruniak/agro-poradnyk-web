@@ -1,12 +1,19 @@
 <template>
-  <div class="p-4 sm:p-8">
+  <div class="dash-page">
     <NuxtLink to="/dashboard/fields" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium transition-colors">
       ← Назад до полів
     </NuxtLink>
 
-    <div class="mb-6">
-      <h1 class="text-2xl font-extrabold text-agro-dark">📋 Технологічна карта</h1>
-      <p v-if="cropType" class="text-agro-light mt-1">{{ cropType }}</p>
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Схема захисту</h1>
+      </div>
+      <p class="dash-subtitle">{{ cropType || 'Програми захисту культур' }}</p>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -15,7 +22,11 @@
 
     <div v-else>
       <div v-if="!program" class="card text-center py-12">
-        <p class="text-5xl mb-4">🛡</p>
+        <div class="dash-empty-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/>
+          </svg>
+        </div>
         <p class="font-bold text-agro-dark text-lg">Програму ще не створено</p>
         <p class="text-agro-light mt-1 mb-6">Створіть технологічну карту для цієї культури</p>
         <button @click="createProgram" :disabled="saving" class="btn-primary inline-block">
@@ -75,7 +86,7 @@
                   <div v-if="activeReminderInfo === t.id"
                     class="absolute right-0 top-9 z-30 w-64 bg-white rounded-2xl shadow-xl border border-agro-border p-3">
                     <div class="flex items-center justify-between mb-2">
-                      <p class="text-xs font-bold text-agro-dark">🔔 Нагадування</p>
+                      <p class="text-xs font-bold text-agro-dark">Нагадування</p>
                       <button @click="openReminderFor(t); activeReminderInfo = null"
                         class="text-xs text-agro font-medium hover:underline">+ Додати</button>
                     </div>
@@ -199,7 +210,7 @@
         <div class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md z-10 max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl px-6 pt-6 pb-4 border-b border-agro-border">
             <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
-            <h2 class="font-bold text-agro-dark text-lg">🔔 Нагадування</h2>
+            <h2 class="font-bold text-agro-dark text-lg">Нагадування</h2>
             <p class="text-sm text-agro-light mt-0.5 truncate">{{ reminderTreatment.product_name }}</p>
           </div>
           <div class="px-6 py-5 space-y-5">
@@ -774,4 +785,12 @@ const addToCart = async (items: any[]) => {
 <style scoped>
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

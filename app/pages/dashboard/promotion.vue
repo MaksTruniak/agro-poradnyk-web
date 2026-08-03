@@ -1,8 +1,15 @@
 <template>
-  <div class="p-8">
-    <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">🚀 Просування</h1>
-      <p class="text-agro-light mt-1">{{ isSeller ? 'Більше покупців — більше продажів' : 'Більше клієнтів — більше замовлень' }}</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5l2.4 6.3 6.7.5-5.1 4.4 1.6 6.5L12 16.8 6.4 20.2 8 13.7 2.9 9.3l6.7-.5L12 2.5z"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Просування</h1>
+      </div>
+      <p class="dash-subtitle">Рекламні можливості</p>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -16,7 +23,7 @@
       <div class="card mb-6 flex items-center justify-between">
         <div>
           <p class="text-xs text-agro-light uppercase tracking-wide mb-1">Ваш поточний план</p>
-          <p class="font-bold text-agro-dark text-lg">{{ currentPlan === 'top' ? '⭐ Топ' : '🌱 Базовий' }}</p>
+          <p class="font-bold text-agro-dark text-lg">{{ currentPlan === 'top' ? 'Топ' : 'Базовий' }}</p>
         </div>
         <span class="px-4 py-1.5 rounded-full text-sm font-bold" :class="currentPlan === 'top' ? 'bg-agro text-white' : 'bg-agro-hover text-agro'">Активний</span>
       </div>
@@ -162,4 +169,11 @@ loading.value = false
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

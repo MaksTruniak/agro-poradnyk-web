@@ -1,8 +1,15 @@
 <template>
-  <div class="p-8">
-    <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">📊 Аналітика</h1>
-      <p class="text-agro-light mt-1">{{ isSeller ? 'Статистика продажів і товарів' : 'Зведена статистика по полях і культурах' }}</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 20V10M12 20V4M18 20v-7"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Аналітика</h1>
+      </div>
+      <p class="dash-subtitle">Статистика ваших полів та культур</p>
     </div>
 
     <div v-if="loading" class="grid md:grid-cols-3 gap-5 mb-8">
@@ -32,7 +39,7 @@
 
       <div class="grid md:grid-cols-2 gap-6 mb-6">
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">📦 Топ товари по продажах</h2>
+          <h2 class="dash-card-title bitter mb-5">Топ товари по продажах</h2>
           <div v-if="topProducts.length === 0" class="text-agro-light text-sm text-center py-8">Ще немає продажів</div>
           <div v-else class="space-y-3">
             <div v-for="(p, i) in topProducts" :key="p.name" class="flex items-center gap-3">
@@ -52,7 +59,7 @@
         </div>
 
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">📋 Замовлення по статусах</h2>
+          <h2 class="dash-card-title bitter mb-5">Замовлення по статусах</h2>
           <div v-if="ordersByStatus.length === 0" class="text-agro-light text-sm text-center py-8">Ще немає замовлень</div>
           <div v-else class="space-y-3">
             <div v-for="s in ordersByStatus" :key="s.status" class="flex items-center justify-between p-3 rounded-xl bg-agro-bg">
@@ -72,7 +79,7 @@
 
       <div class="card">
         <div class="flex items-center justify-between mb-5">
-          <h2 class="font-bold text-agro-dark text-lg">🕐 Останні замовлення</h2>
+          <h2 class="dash-card-title bitter">Останні замовлення</h2>
           <NuxtLink to="/dashboard/orders" class="text-sm text-agro font-medium hover:underline">Всі →</NuxtLink>
         </div>
         <div v-if="recentOrders.length === 0" class="text-agro-light text-sm text-center py-6">Немає замовлень</div>
@@ -114,7 +121,7 @@
 
       <div class="grid md:grid-cols-2 gap-6 mb-8">
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">🌱 Культури по площі</h2>
+          <h2 class="dash-card-title bitter mb-5">Культури по площі</h2>
           <div v-if="cropStats.length === 0" class="text-agro-light text-sm text-center py-8">
             Немає даних — додайте культури до полів
           </div>
@@ -133,7 +140,7 @@
         </div>
 
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">🗺️ Поля</h2>
+          <h2 class="dash-card-title bitter mb-5">Поля</h2>
           <div v-if="farms.length === 0" class="text-agro-light text-sm text-center py-8">Немає полів</div>
           <div v-else class="space-y-3">
             <div v-for="farm in farms" :key="farm.id"
@@ -154,7 +161,7 @@
       <!-- Продажі по роках -->
       <div class="card">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="font-bold text-agro-dark text-lg">📈 Продажі по культурах</h2>
+          <h2 class="dash-card-title bitter">Продажі по культурах</h2>
           <div class="flex gap-1">
             <button v-for="y in availableYears" :key="y"
               @click="selectedYear = y"
@@ -382,3 +389,15 @@ onMounted(async () => {
   loading.value = false
 })
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+.dash-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>

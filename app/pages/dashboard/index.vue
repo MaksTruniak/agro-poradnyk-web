@@ -1,8 +1,15 @@
 <template>
-  <div class="p-8">
-    <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">Привіт, {{ profile?.name || 'друже' }} 👋</h1>
-      <p class="text-agro-light mt-1">{{ roleLabel }}</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 11l8-7 8 7M6 10v10h12V10"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Привіт, {{ profile?.name || 'друже' }}</h1>
+      </div>
+      <p class="dash-subtitle">{{ roleLabel }}</p>
     </div>
 
     <!-- Завантаження профілю -->
@@ -29,16 +36,16 @@
         <!-- Зведення -->
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <NuxtLink to="/dashboard/fields" class="card text-center hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-agro">{{ farmerStats.fields }}</p>
-            <p class="text-sm text-agro-light mt-1">{{ role === 'dacha' ? 'культур' : 'полів' }}</p>
+            <p class="dash-stat-num">{{ farmerStats.fields }}</p>
+            <p class="dash-stat-label">{{ role === 'dacha' ? 'культур' : 'полів' }}</p>
           </NuxtLink>
           <NuxtLink v-if="role !== 'dacha'" to="/dashboard/fields" class="card text-center hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-agro">{{ farmerStats.totalHa }}</p>
-            <p class="text-sm text-agro-light mt-1">га загальна площа</p>
+            <p class="dash-stat-num">{{ farmerStats.totalHa }}</p>
+            <p class="dash-stat-label">га загальна площа</p>
           </NuxtLink>
           <NuxtLink v-if="role !== 'dacha'" to="/dashboard/analytics" class="card text-center hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-agro">{{ farmerStats.crops }}</p>
-            <p class="text-sm text-agro-light mt-1">культур вирощується</p>
+            <p class="dash-stat-num">{{ farmerStats.crops }}</p>
+            <p class="dash-stat-label">культур вирощується</p>
           </NuxtLink>
         </div>
 
@@ -46,12 +53,12 @@
           <!-- Найближчі нагадування -->
           <div class="card">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-agro-dark">🔔 Найближчі нагадування</h2>
+              <h2 class="dash-card-title bitter">Найближчі нагадування</h2>
               <NuxtLink to="/dashboard/reminders" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
             </div>
             <div v-if="nextReminders.length === 0" class="text-agro-light text-sm text-center py-6">
               Немає запланованих нагадувань
-              <div class="mt-3"><NuxtLink to="/dashboard/reminders" class="btn-primary text-sm inline-block">➕ Додати</NuxtLink></div>
+              <div class="mt-3"><NuxtLink to="/dashboard/reminders" class="btn-primary text-sm inline-block">Додати</NuxtLink></div>
             </div>
             <div v-else class="space-y-3">
               <div v-for="r in nextReminders" :key="r.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
@@ -67,7 +74,7 @@
           <!-- Продано -->
           <div v-if="farmerDeals.length" class="card mt-6">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-agro-dark">🤝 Продано</h2>
+              <h2 class="dash-card-title bitter">Продано</h2>
               <NuxtLink to="/dashboard/deals" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -82,12 +89,12 @@
           <!-- Активні замовлення (маркетплейс) -->
           <div v-if="MARKETPLACE" class="card mt-6">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-agro-dark">📋 Активні замовлення</h2>
+              <h2 class="dash-card-title bitter">Активні замовлення</h2>
               <NuxtLink to="/dashboard/orders" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
             </div>
             <div v-if="activeOrders.length === 0" class="text-agro-light text-sm text-center py-6">
               Немає активних замовлень
-              <div class="mt-3"><NuxtLink to="/pesticides" class="btn-primary text-sm inline-block">📖 До каталогу</NuxtLink></div>
+              <div class="mt-3"><NuxtLink to="/pesticides" class="btn-primary text-sm inline-block">До каталогу</NuxtLink></div>
             </div>
             <div v-else class="space-y-3">
               <div v-for="o in activeOrders" :key="o.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
@@ -115,16 +122,16 @@
       <template v-else>
         <div class="grid md:grid-cols-3 gap-5 mb-8">
           <div class="card">
-            <p class="text-3xl font-bold text-agro">{{ stats.products }}</p>
-            <p class="text-agro-light text-sm mt-1">Товарів</p>
+            <p class="dash-stat-num">{{ stats.products }}</p>
+            <p class="dash-stat-label">Товарів</p>
           </div>
           <div class="card">
-            <p class="text-3xl font-bold text-agro">{{ stats.orders }}</p>
-            <p class="text-agro-light text-sm mt-1">Замовлень</p>
+            <p class="dash-stat-num">{{ stats.orders }}</p>
+            <p class="dash-stat-label">Замовлень</p>
           </div>
           <div class="card">
-            <p class="text-3xl font-bold text-agro">{{ stats.revenue }} грн</p>
-            <p class="text-agro-light text-sm mt-1">Виручки</p>
+            <p class="dash-stat-num">{{ stats.revenue }} грн</p>
+            <p class="dash-stat-label">Виручки</p>
           </div>
         </div>
         <NuxtLink to="/dashboard/products" class="btn-primary inline-block">Мої товари →</NuxtLink>
@@ -141,10 +148,10 @@
       <template v-else>
         <!-- Підтверджені угоди по культурах -->
         <div v-if="buyerCrops.length" class="mb-6">
-          <h2 class="font-bold text-agro-dark mb-3">📦 Куплено</h2>
+          <h2 class="dash-card-title bitter mb-3">Куплено</h2>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div v-for="c in buyerCrops" :key="c.crop" class="card text-center">
-              <p class="text-2xl font-extrabold text-agro">{{ c.quantity }} т</p>
+              <p class="dash-stat-num">{{ c.quantity }} т</p>
               <p class="font-semibold text-agro-dark text-sm mt-0.5">{{ c.crop }}</p>
               <p class="text-xs text-agro-light mt-0.5">{{ c.total.toLocaleString('uk-UA') }} грн</p>
             </div>
@@ -154,12 +161,12 @@
         <!-- Переговори -->
         <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="font-bold text-agro-dark">💬 Переговори з фермерами</h2>
+            <h2 class="dash-card-title bitter">Переговори з фермерами</h2>
             <NuxtLink to="/dashboard/chats" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
           </div>
           <div v-if="buyerChats.length === 0" class="text-agro-light text-sm text-center py-6">
             Ще немає переговорів
-            <div class="mt-3"><NuxtLink to="/farmers" class="btn-primary text-sm inline-block">🌾 Знайти фермера</NuxtLink></div>
+            <div class="mt-3"><NuxtLink to="/farmers" class="btn-primary text-sm inline-block">Знайти фермера</NuxtLink></div>
           </div>
           <div v-else class="space-y-3">
             <NuxtLink v-for="c in buyerChats" :key="c.id" :to="`/dashboard/chats/${c.id}`"
@@ -194,16 +201,16 @@
         <!-- Зведення -->
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <NuxtLink to="/dashboard/fields" class="card text-center hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-agro">{{ agroStats.myFields }}</p>
-            <p class="text-sm text-agro-light mt-1">моїх полів</p>
+            <p class="dash-stat-num">{{ agroStats.myFields }}</p>
+            <p class="dash-stat-label">моїх полів</p>
           </NuxtLink>
           <NuxtLink to="/dashboard/agronomist-fields" class="card text-center hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-agro">{{ agroStats.clientFields }}</p>
-            <p class="text-sm text-agro-light mt-1">полів клієнтів</p>
+            <p class="dash-stat-num">{{ agroStats.clientFields }}</p>
+            <p class="dash-stat-label">полів клієнтів</p>
           </NuxtLink>
           <NuxtLink to="/dashboard/chats" class="card text-center hover:shadow-md transition-shadow">
-            <p class="text-3xl font-extrabold text-agro">{{ agroStats.chats }}</p>
-            <p class="text-sm text-agro-light mt-1">консультацій</p>
+            <p class="dash-stat-num">{{ agroStats.chats }}</p>
+            <p class="dash-stat-label">консультацій</p>
           </NuxtLink>
         </div>
 
@@ -211,12 +218,12 @@
           <!-- Найближчі нагадування -->
           <div class="card">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-agro-dark">🔔 Найближчі нагадування</h2>
+              <h2 class="dash-card-title bitter">Найближчі нагадування</h2>
               <NuxtLink to="/dashboard/reminders" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
             </div>
             <div v-if="nextReminders.length === 0" class="text-agro-light text-sm text-center py-6">
               Немає запланованих нагадувань
-              <div class="mt-3"><NuxtLink to="/dashboard/reminders" class="btn-primary text-sm inline-block">➕ Додати</NuxtLink></div>
+              <div class="mt-3"><NuxtLink to="/dashboard/reminders" class="btn-primary text-sm inline-block">Додати</NuxtLink></div>
             </div>
             <div v-else class="space-y-3">
               <div v-for="r in nextReminders" :key="r.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
@@ -232,7 +239,7 @@
           <!-- Останні чати -->
           <div class="card">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-agro-dark">💬 Консультації</h2>
+              <h2 class="dash-card-title bitter">Консультації</h2>
               <NuxtLink to="/dashboard/chats" class="text-sm text-agro hover:underline">Всі →</NuxtLink>
             </div>
             <div v-if="recentChats.length === 0" class="text-agro-light text-sm text-center py-6">
@@ -455,3 +462,20 @@ onMounted(async () => {
   loading.value = false
 })
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-icon-box-sm { width: 34px; height: 34px; border-radius: 9px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+.dash-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+.dash-stat-num { font-family: 'Bitter', Georgia, serif; font-size: 32px; font-weight: 800; color: rgb(47,82,51); margin: 0; }
+.dash-stat-label { font-size: 13px; color: rgb(107,122,100); margin: 4px 0 0; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>

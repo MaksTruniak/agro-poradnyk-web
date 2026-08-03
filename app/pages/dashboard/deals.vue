@@ -1,8 +1,23 @@
 <template>
-  <div class="p-8">
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">🤝 Угоди</h1>
-      <button v-if="isFarmer" @click="openManualModal" class="btn-primary text-sm">➕ Додати продаж</button>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <div class="dash-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>
+              </svg>
+            </div>
+            <h1 class="dash-title bitter">Угоди</h1>
+          </div>
+          <p class="dash-subtitle">Продаж та купівля врожаю</p>
+        </div>
+        <button v-if="isFarmer" @click="openManualModal" class="dash-btn-primary text-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати продаж
+        </button>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-3">
@@ -11,12 +26,16 @@
 
     <template v-else>
       <div v-if="!deals.length && !manualSales.length" class="text-center py-20">
-        <p class="text-5xl mb-4">🤝</p>
+        <div class="dash-empty-icon" style="margin: 0 auto 18px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
         <p class="font-bold text-agro-dark text-lg">Поки немає підтверджених угод</p>
         <p class="text-agro-light text-sm mt-2">
           {{ isFarmer ? "Угоди з'являться коли заготівельник зробить запит і ви погодитесь" : 'Знайдіть фермера і запропонуйте ціну' }}
         </p>
-        <NuxtLink v-if="!isFarmer" to="/farmers" class="btn-primary inline-block mt-5">🌾 Знайти фермера</NuxtLink>
+        <NuxtLink v-if="!isFarmer" to="/farmers" class="btn-primary inline-block mt-5">Знайти фермера</NuxtLink>
       </div>
 
       <div v-else class="space-y-6">
@@ -103,7 +122,7 @@
       <div v-if="reviewModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="reviewModal.show = false">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-agro-dark text-lg">⭐ Оцінити угоду</h3>
+            <h3 class="dash-card-title bitter">Оцінити угоду</h3>
             <button @click="reviewModal.show = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-agro-hover text-agro-light">✕</button>
           </div>
           <p class="text-sm text-agro-light mb-4">
@@ -129,7 +148,7 @@
       <div v-if="manualModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="manualModal.show = false" />
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
-          <h2 class="font-bold text-agro-dark text-lg mb-4">📝 Додати продаж вручну</h2>
+          <h2 class="dash-card-title bitter mb-4">Додати продаж вручну</h2>
           <div class="space-y-3 mb-5">
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Культура</label>
@@ -419,3 +438,16 @@ onMounted(async () => {
   loading.value = false
 })
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; }
+.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>

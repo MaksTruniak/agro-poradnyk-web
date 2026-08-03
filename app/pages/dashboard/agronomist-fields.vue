@@ -1,13 +1,20 @@
 <template>
-  <div class="p-8">
-    <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">🗺 Поля клієнтів</h1>
-      <p class="text-agro-light mt-1">Поля фермерів які поділились з вами</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Поля клієнтів</h1>
+      </div>
+      <p class="dash-subtitle">Поля фермерів які поділились з вами</p>
     </div>
 
     <!-- Запити на доступ -->
     <div v-if="pendingRequests.length" class="mb-8">
-      <h2 class="font-bold text-agro-dark text-lg mb-4">📬 Запити на доступ</h2>
+      <h2 class="dash-card-title bitter mb-4">Запити на доступ</h2>
       <div class="space-y-3">
         <div v-for="req in pendingRequests" :key="req.id"
           class="card flex items-center gap-4 border-l-4 border-yellow-400">
@@ -41,7 +48,11 @@
     </div>
 
     <div v-else-if="groups.length === 0" class="card text-center py-12">
-      <p class="text-5xl mb-4">🌾</p>
+      <div class="dash-empty-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/>
+        </svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Поки немає полів клієнтів</p>
       <p class="text-agro-light">Фермери можуть поділитись полями з вами через мобільний додаток</p>
     </div>
@@ -94,7 +105,7 @@
         <div class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md z-10 max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl px-6 pt-6 pb-4 border-b border-agro-border">
             <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
-            <h2 class="font-bold text-agro-dark text-lg">🔔 Нагадування для фермера</h2>
+            <h2 class="font-bold text-agro-dark text-lg">Нагадування для фермера</h2>
             <p class="text-sm text-agro-light mt-0.5">{{ reminderTarget.farmerName }} · {{ reminderTarget.farmName }}</p>
           </div>
 
@@ -352,4 +363,13 @@ const saveReminder = async () => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

@@ -1,8 +1,15 @@
 <template>
-  <div class="p-8">
-    <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">💎 Підписка</h1>
-      <p class="text-agro-light mt-1">Оберіть план що підходить вам</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 3h12l3 6-9 12L3 9l3-6z"/><path d="M3 9h18M9 3l3 18M15 3l-3 18"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Підписка</h1>
+      </div>
+      <p class="dash-subtitle">Управління планом та платежами</p>
     </div>
 
     <!-- Скелетон -->
@@ -164,4 +171,11 @@ const formatDate = (d: string) => d
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

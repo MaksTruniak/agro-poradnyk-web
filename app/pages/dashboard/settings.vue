@@ -1,6 +1,16 @@
 <template>
-  <div class="p-8">
-    <h1 class="text-2xl font-extrabold text-agro-dark mb-8">⚙️ Налаштування</h1>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Налаштування</h1>
+      </div>
+      <p class="dash-subtitle">Профіль та параметри акаунту</p>
+    </div>
 
     <div v-if="loading" class="space-y-6">
       <div class="card animate-pulse h-64"></div>
@@ -10,7 +20,7 @@
     <div v-else class="space-y-6">
       <!-- Профіль -->
       <div class="card">
-        <h2 class="font-bold text-agro-dark mb-5 text-lg">👤 Профіль</h2>
+        <h2 class="dash-card-title bitter mb-5">Профіль</h2>
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -61,7 +71,7 @@
 
       <!-- Зміна пароля -->
       <div class="card">
-        <h2 class="font-bold text-agro-dark mb-5 text-lg">🔒 Зміна пароля</h2>
+        <h2 class="dash-card-title bitter mb-5">Зміна пароля</h2>
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Новий пароль</label>
@@ -80,7 +90,7 @@
 
       <!-- Налаштування магазину (тільки для продавця) -->
       <div v-if="isSeller" class="card">
-        <h2 class="font-bold text-agro-dark mb-5 text-lg">🏪 Налаштування магазину</h2>
+        <h2 class="dash-card-title bitter mb-5">Налаштування магазину</h2>
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Назва компанії</label>
@@ -107,7 +117,7 @@
 
       <!-- Доставка (тільки для продавця) -->
       <div v-if="isSeller" class="card">
-        <h2 class="font-bold text-agro-dark mb-5 text-lg">🚚 Способи доставки</h2>
+        <h2 class="dash-card-title bitter mb-5">Способи доставки</h2>
         <div class="space-y-3 mb-5">
           <label v-for="opt in DELIVERY_OPTIONS" :key="opt.key"
             class="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors"
@@ -131,14 +141,14 @@
       <!-- Що закуповую (тільки для заготівельника) -->
       <div v-if="role === 'buyer'" class="card">
         <div class="flex items-center justify-between">
-          <h2 class="font-bold text-agro-dark text-lg">🌾 Що закуповую</h2>
+          <h2 class="dash-card-title bitter">Що закуповую</h2>
           <NuxtLink to="/dashboard/buyer-crops" class="text-sm text-agro font-medium hover:underline">Керувати →</NuxtLink>
         </div>
       </div>
 
       <!-- Вихід -->
       <div class="card">
-        <h2 class="font-bold text-agro-dark mb-3 text-lg">🚪 Сесія</h2>
+        <h2 class="dash-card-title bitter mb-3">Сесія</h2>
         <button @click="logout" class="px-5 py-2.5 border-2 border-red-200 text-red-500 rounded-xl hover:bg-red-50 transition-colors font-semibold text-sm">
           Вийти з акаунту
         </button>
@@ -350,3 +360,14 @@ const logout = async () => {
   router.push('/auth')
 }
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>

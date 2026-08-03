@@ -1,7 +1,16 @@
 <template>
-  <div class="p-8">
-    <h1 class="text-2xl font-extrabold text-agro-dark mb-1">👨‍🌾 Кабінет агронома</h1>
-    <p class="text-agro-light mb-6">Привіт, {{ userName }}!</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 3l1.5 2 3-1.5"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">Кабінет агронома</h1>
+      </div>
+      <p class="dash-subtitle">Привіт, {{ userName }}!</p>
+    </div>
 
     <div v-if="loading" class="space-y-4">
       <div class="card animate-pulse h-20"></div>
@@ -25,13 +34,13 @@
 
 
       <!-- Вкладки -->
-      <div class="flex bg-agro-hover rounded-2xl p-1 mb-6">
+      <div class="flex rounded-[14px] p-[5px] mb-6" style="background:rgb(241,239,227)">
         <button
           v-for="tab in tabs"
           :key="tab.key"
           @click="activeTab = tab.key"
           class="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors"
-          :class="activeTab === tab.key ? 'bg-agro text-white shadow-sm' : 'text-agro-light hover:text-agro'"
+          :class="activeTab === tab.key ? 'bg-white shadow-sm text-agro-dark' : 'text-agro-light hover:text-agro-dark'"
         >
           {{ tab.label }}
         </button>
@@ -373,3 +382,14 @@ const saveProfile = async () => {
   setTimeout(() => saved.value = false, 3000)
 }
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>

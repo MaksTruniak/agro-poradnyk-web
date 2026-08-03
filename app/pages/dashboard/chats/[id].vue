@@ -196,7 +196,7 @@
         <div v-if="schemeModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="schemeModal.show = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-6">
-            <h2 class="font-bold text-agro-dark text-lg mb-4">🛡 Додати до технологічної карти</h2>
+            <h2 class="font-bold text-agro-dark text-lg mb-4">Додати до технологічної карти</h2>
             <div class="space-y-3 mb-5">
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1">Препарат</label>

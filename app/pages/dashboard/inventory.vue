@@ -1,13 +1,22 @@
 <template>
-  <div class="p-4 sm:p-8">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-2xl font-extrabold text-agro-dark">🧪 Склад препаратів</h1>
-        <p class="text-agro-light mt-1">Облік наявності добрив і засобів захисту</p>
+  <div class="dash-page">
+    <div class="dash-head">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2.5 mb-1.5">
+            <div class="dash-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/>
+              </svg>
+            </div>
+            <h1 class="dash-title bitter">Склад</h1>
+          </div>
+          <p class="dash-subtitle">Залишки та облік продукції</p>
+        </div>
+        <button @click="showAdd = true" class="dash-btn-primary">
+          <Plus :size="16" /> Додати
+        </button>
       </div>
-      <button @click="showAdd = true" class="btn-primary flex items-center gap-2">
-        <Plus :size="16" /> Додати
-      </button>
     </div>
 
     <!-- Сповіщення про нестачу -->
@@ -28,10 +37,14 @@
 
     <!-- Порожньо -->
     <div v-else-if="!items.length" class="card text-center py-16">
-      <p class="text-5xl mb-4">🧪</p>
+      <div class="dash-empty-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/>
+        </svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Склад порожній</p>
       <p class="text-agro-light mb-6">Додайте препарати і добрива які є у вас в наявності</p>
-      <button @click="showAdd = true" class="btn-primary inline-block">➕ Додати препарат</button>
+      <button @click="showAdd = true" class="btn-primary inline-block">Додати препарат</button>
     </div>
 
     <!-- Список -->
@@ -84,7 +97,7 @@
     <div v-if="showAdd" class="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAdd = false; resetForm()">
       <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
         <div class="flex items-center justify-between mb-5">
-          <h3 class="font-bold text-agro-dark text-lg">➕ Додати препарат</h3>
+          <h3 class="font-bold text-agro-dark text-lg">Додати препарат</h3>
           <button @click="showAdd = false; resetForm()" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-agro-bg text-agro-light hover:text-agro-dark transition-colors">✕</button>
         </div>
 
@@ -362,3 +375,16 @@ async function deleteItem(item: any) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
+</style>
