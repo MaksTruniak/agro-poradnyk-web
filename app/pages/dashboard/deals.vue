@@ -1,19 +1,17 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2.5 mb-1.5">
-            <div class="dash-icon-box">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>
-              </svg>
-            </div>
-            <h1 class="dash-title bitter">Угоди</h1>
-          </div>
-          <p class="dash-subtitle">Продаж та купівля врожаю</p>
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>
+          </svg>
         </div>
-        <button v-if="isFarmer" @click="openManualModal" class="dash-btn-primary text-sm">
+        <h1 class="dash-title bitter">Угоди</h1>
+      </div>
+      <p class="dash-subtitle">Продаж та купівля врожаю</p>
+      <div v-if="isFarmer" class="mt-3">
+        <button @click="openManualModal" class="dash-btn-primary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Додати продаж
         </button>

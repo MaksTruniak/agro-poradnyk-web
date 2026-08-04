@@ -1,18 +1,16 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2.5 mb-1.5">
-            <div class="dash-icon-box">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/>
-              </svg>
-            </div>
-            <h1 class="dash-title bitter">Товари</h1>
-          </div>
-          <p class="dash-subtitle">Управління каталогом товарів</p>
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/>
+          </svg>
         </div>
+        <h1 class="dash-title bitter">Товари</h1>
+      </div>
+      <p class="dash-subtitle">Управління каталогом товарів</p>
+      <div class="mt-3">
         <button @click="showAdd = true" class="dash-btn-primary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Додати товар

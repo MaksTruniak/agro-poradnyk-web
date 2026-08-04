@@ -1,18 +1,16 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2.5 mb-1.5">
-            <div class="dash-icon-box">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
-              </svg>
-            </div>
-            <h1 class="dash-title bitter">Що закуповую</h1>
-          </div>
-          <p class="dash-subtitle">Культури які ви шукаєте</p>
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
+          </svg>
         </div>
+        <h1 class="dash-title bitter">Що закуповую</h1>
+      </div>
+      <p class="dash-subtitle">Культури які ви шукаєте</p>
+      <div class="mt-3">
         <button @click="showModal = true" class="dash-btn-primary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Додати культуру

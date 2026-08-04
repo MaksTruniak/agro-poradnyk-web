@@ -1,20 +1,19 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2.5 mb-1.5">
-            <div class="dash-icon-box">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M9 22V12h6v10"/>
-              </svg>
-            </div>
-            <h1 class="dash-title bitter">Склад</h1>
-          </div>
-          <p class="dash-subtitle">Залишки та облік продукції</p>
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="17"/><line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
+          </svg>
         </div>
+        <h1 class="dash-title bitter">Склад</h1>
+      </div>
+      <p class="dash-subtitle">Залишки та облік продукції</p>
+      <div class="mt-3">
         <button @click="showAdd = true" class="dash-btn-primary">
-          <Plus :size="16" /> Додати
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати
         </button>
       </div>
     </div>

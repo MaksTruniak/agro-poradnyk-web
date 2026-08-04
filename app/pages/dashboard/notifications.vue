@@ -1,21 +1,20 @@
 <template>
   <div class="dash-page">
-    <div class="dash-head flex items-center justify-between">
-      <div>
-        <div class="flex items-center gap-2.5 mb-1.5">
-          <div class="dash-icon-box">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
-            </svg>
-          </div>
-          <h1 class="dash-title bitter">Сповіщення</h1>
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
+          </svg>
         </div>
-        <p class="dash-subtitle">Системні повідомлення</p>
+        <h1 class="dash-title bitter">Сповіщення</h1>
       </div>
-      <button v-if="items.length" @click="markAllRead"
-        class="text-sm text-agro hover:underline font-medium">
-        Позначити всі прочитаними
-      </button>
+      <p class="dash-subtitle">Системні повідомлення</p>
+      <div v-if="items.length" class="mt-3">
+        <button @click="markAllRead" class="text-sm text-agro hover:underline font-medium">
+          Позначити всі прочитаними
+        </button>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-3">
