@@ -1,14 +1,24 @@
 <template>
   <div class="fields-page">
-    <div class="flex items-center justify-between mb-[6px]">
-      <div class="flex items-center gap-2.5">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-          <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.7" stroke-linejoin="round"/>
-        </svg>
-        <h1 class="fields-title">{{ isDacha ? 'Мої культури' : 'Мої поля' }}</h1>
+    <div class="dash-head">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="dash-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="dash-title bitter">{{ isDacha ? 'Мої культури' : 'Мої поля' }}</h1>
+        <button v-if="!isDacha" @click="isPro ? showAddFarm = true : showPaywall = true" class="dash-btn-primary ml-auto">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати поле
+        </button>
+        <button v-else @click="showAddCrop = true" class="dash-btn-primary ml-auto">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати культуру
+        </button>
       </div>
+      <p class="dash-subtitle">{{ isDacha ? 'Культури та схеми обробки' : 'Поля, культури та технологічні карти' }}</p>
     </div>
-    <p class="fields-subtitle">{{ isDacha ? 'Культури та схеми обробки' : 'Поля, культури та технологічні карти' }}</p>
 
     <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mt-7">
       <div v-for="i in 3" :key="i" class="fields-card animate-pulse">
@@ -491,9 +501,14 @@ const deleteDachaCrop = async (crop: any) => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-.fields-page { padding: 48px 56px; font-family: Manrope, sans-serif; }
-.fields-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
-.fields-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 0 0 28px; }
+.fields-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
+.dash-head { margin-bottom: 28px; }
+.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
+.bitter { font-family: 'Bitter', Georgia, serif; }
+.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
+.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: background 0.15s; }
+.dash-btn-primary:hover { background: rgb(61,107,66); }
 .fields-empty {
   background: #fff;
   border-radius: 18px;
