@@ -31,11 +31,7 @@
         <p class="text-agro-light text-sm mb-6">
           {{ isFarmer ? "Угоди з'являться коли заготівельник зробить запит і ви погодитесь" : 'Знайдіть фермера і запропонуйте ціну' }}
         </p>
-        <button v-if="isFarmer" @click="openManualModal" class="dash-btn-primary">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Додати продаж
-        </button>
-        <NuxtLink v-else to="/farmers" class="dash-btn-primary">
+        <NuxtLink v-if="!isFarmer" to="/farmers" class="dash-btn-primary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           Знайти фермера
         </NuxtLink>
