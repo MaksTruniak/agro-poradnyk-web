@@ -7,8 +7,9 @@
       <!-- Лого -->
       <div style="padding: 26px 24px; border-bottom: 1px solid rgb(231,224,206);">
         <NuxtLink to="/" class="flex items-center gap-2.5">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#2F5233"/>
+            <path d="M12 22V10" stroke="#FAF6EC" stroke-width="1.4"/>
           </svg>
           <span class="dash-brand">АгроПростір</span>
         </NuxtLink>
@@ -80,8 +81,9 @@
     <!-- Мобільний хедер -->
     <div class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white h-14 flex items-center justify-between px-4" style="border-bottom: 1px solid rgb(231,224,206);">
       <NuxtLink to="/" class="flex items-center gap-2">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
           <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#2F5233"/>
+          <path d="M12 22V10" stroke="#FAF6EC" stroke-width="1.4"/>
         </svg>
         <span class="dash-brand" style="font-size:16px;">АгроПростір</span>
       </NuxtLink>
