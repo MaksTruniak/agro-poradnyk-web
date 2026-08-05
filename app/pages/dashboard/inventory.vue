@@ -41,7 +41,7 @@
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Склад порожній</p>
       <p class="text-agro-light mb-6">Додайте препарати і добрива які є у вас в наявності</p>
-      <button @click="showAdd = true" class="btn-primary inline-block">Додати препарат</button>
+      <button @click="showAdd = true" class="dash-btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Додати препарат</button>
     </div>
 
     <!-- Список -->

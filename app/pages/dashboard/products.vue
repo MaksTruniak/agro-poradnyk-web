@@ -28,7 +28,7 @@
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Товарів поки немає</p>
       <p class="text-agro-light mb-6">Додайте свої пропозиції щоб клієнти могли замовити</p>
-      <button @click="showAdd = true" class="btn-primary inline-block">Додати перший товар</button>
+      <button @click="showAdd = true" class="dash-btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Додати перший товар</button>
     </div>
 
     <div v-else class="card overflow-hidden p-0">

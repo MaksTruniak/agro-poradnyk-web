@@ -31,7 +31,7 @@
         <p class="text-agro-light text-sm">
           {{ isFarmer ? "Угоди з'являться коли заготівельник зробить запит і ви погодитесь" : 'Знайдіть фермера і запропонуйте ціну' }}
         </p>
-        <NuxtLink v-if="!isFarmer" to="/farmers" class="btn-primary inline-block mt-6">Знайти фермера</NuxtLink>
+        <NuxtLink v-if="!isFarmer" to="/farmers" class="dash-btn-primary mt-6">Знайти фермера</NuxtLink>
       </div>
 
       <div v-else class="space-y-6">
