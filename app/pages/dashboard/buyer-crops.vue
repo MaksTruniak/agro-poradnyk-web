@@ -40,10 +40,14 @@
           <button @click="deleteCrop(c.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">✕</button>
         </div>
       </div>
-      <div v-else-if="!crops.length" class="text-center py-20 text-agro-light">
-        <p class="text-5xl mb-3">🌾</p>
-        <p class="font-semibold text-agro-dark">Поки нічого не додано</p>
-        <p class="text-sm mt-1">Натисніть "Додати культуру" щоб почати</p>
+      <div v-else-if="!crops.length" class="text-center py-16">
+        <div class="dash-empty-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
+          </svg>
+        </div>
+        <p class="font-bold text-agro-dark text-lg mb-2">Поки нічого не додано</p>
+        <p class="text-agro-light text-sm">Натисніть "Додати культуру" щоб почати</p>
       </div>
     </div>
   </div>
@@ -191,5 +195,6 @@ const deleteCrop = async (id: string) => {
 .dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
 .dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
 @media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>
