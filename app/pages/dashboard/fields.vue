@@ -30,16 +30,16 @@
 
     <!-- Фермер / Агроном -->
     <template v-if="!isDacha">
-      <div v-if="farms.length === 0" class="fields-empty mt-7">
-        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" style="margin-bottom:18px;">
-          <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.4" stroke-linejoin="round"/>
-        </svg>
-        <h2 style="font-size:20px; font-weight:700; color:rgb(27,46,27); margin:0 0 10px;">Поки немає полів</h2>
-        <p style="font-size:15px; color:rgb(107,122,100); margin:0 0 24px;">Додайте своє перше поле щоб почати</p>
-        <button @click="showAddFarm = true" class="fields-add-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="#FAF6EC" stroke-width="2" stroke-linecap="round"/>
+      <div v-if="farms.length === 0" class="card text-center py-16">
+        <div class="dash-empty-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linejoin="round"/>
           </svg>
+        </div>
+        <p class="font-bold text-agro-dark text-lg mb-2">Поки немає полів</p>
+        <p class="text-agro-light mb-6">Додайте своє перше поле щоб почати</p>
+        <button @click="showAddFarm = true" class="dash-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Додати поле
         </button>
       </div>
@@ -123,11 +123,18 @@
 
     <!-- Дачник -->
     <template v-else>
-      <div v-if="dachaCrops.length === 0" class="card text-center py-12">
-        <p class="text-5xl mb-4">🌱</p>
+      <div v-if="dachaCrops.length === 0" class="card text-center py-16">
+        <div class="dash-empty-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <p class="font-bold text-agro-dark text-lg mb-2">Поки немає культур</p>
         <p class="text-agro-light mb-6">Додайте що вирощуєте щоб отримувати схеми обробки</p>
-        <button @click="showAddCrop = true" class="btn-primary inline-block">➕ Додати культуру</button>
+        <button @click="showAddCrop = true" class="dash-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати культуру
+        </button>
       </div>
 
       <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -509,6 +516,7 @@ const deleteDachaCrop = async (crop: any) => {
 .dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: background 0.15s; }
 .dash-btn-primary:hover { background: rgb(61,107,66); }
+.dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
 .fields-empty {
   background: #fff;
   border-radius: 18px;

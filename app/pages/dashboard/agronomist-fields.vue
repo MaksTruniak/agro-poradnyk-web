@@ -47,7 +47,7 @@
       </div>
     </div>
 
-    <div v-else-if="groups.length === 0" class="card text-center py-12">
+    <div v-else-if="groups.length === 0" class="card text-center py-16">
       <div class="dash-empty-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/>

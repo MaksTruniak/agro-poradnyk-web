@@ -40,7 +40,7 @@
           <button @click="deleteCrop(c.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">✕</button>
         </div>
       </div>
-      <div v-else-if="!crops.length" class="text-center py-16">
+      <div v-else-if="!crops.length" class="card text-center py-16">
         <div class="dash-empty-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
