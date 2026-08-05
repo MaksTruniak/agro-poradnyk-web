@@ -50,7 +50,7 @@
               v-if="isSeller && order.status === 'pending'"
               @click="updateStatus(order.id, 'cancelled')"
               class="text-xs border-2 border-red-200 text-red-400 rounded-lg px-3 py-1.5 font-semibold hover:bg-red-50 transition-colors"
-            >❌ Скасувати</button>
+            ><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M18 6L6 18M6 6l12 12"/></svg> Скасувати</button>
           </div>
         </div>
 
@@ -62,14 +62,14 @@
         </div>
 
         <div class="border-t border-agro-border pt-3 flex flex-wrap gap-4 text-xs text-agro-light">
-          <span v-if="order.delivery_method === 'nova_poshta'">📦 НП: {{ order.delivery_address }}</span>
-          <span v-else-if="order.delivery_method === 'ukrposhta'">✉️ Укрпошта: {{ order.delivery_address }}</span>
-          <span v-else>🏪 Самовивіз</span>
-          <span>💳 {{ order.payment_method === 'cash' ? 'Готівка' : 'Картою' }}</span>
+          <span v-if="order.delivery_method === 'nova_poshta'" class="inline-flex items-center gap-1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg> НП: {{ order.delivery_address }}</span>
+          <span v-else-if="order.delivery_method === 'ukrposhta'" class="inline-flex items-center gap-1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Укрпошта: {{ order.delivery_address }}</span>
+          <span v-else>Самовивіз</span>
+          <span class="inline-flex items-center gap-1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> {{ order.payment_method === 'cash' ? 'Готівка' : 'Картою' }}</span>
           <span v-if="order.comment">💬 {{ order.comment }}</span>
         </div>
         <div v-if="isSeller && order.users" class="mt-2 text-xs text-agro-light flex gap-4">
-          <span>👤 {{ order.users.name || 'Покупець' }}</span>
+          <span class="inline-flex items-center gap-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> {{ order.users.name || 'Покупець' }}</span>
           <span v-if="order.users.phone">📞 {{ order.users.phone }}</span>
         </div>
       </div>
@@ -93,8 +93,8 @@ const profileRole = ref<string>('farmer')
 const isSeller = computed(() => profileRole.value === 'seller')
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: '⏳ Нове', confirmed: '✅ Підтверджено', shipped: '🚚 Відправлено',
-  delivered: '📦 Доставлено', cancelled: '❌ Скасовано', completed: '✔️ Виконано',
+  pending: 'Нове', confirmed: 'Підтверджено', shipped: 'Відправлено',
+  delivered: 'Доставлено', cancelled: 'Скасовано', completed: 'Виконано',
 }
 const STATUS_CLASS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -108,16 +108,16 @@ const NEXT_STATUS: Record<string, string> = {
   pending: 'confirmed', confirmed: 'shipped', shipped: 'delivered',
 }
 const NEXT_STATUS_LABEL: Record<string, string> = {
-  pending: '✅ Підтвердити', confirmed: '🚚 Відправлено', shipped: '📦 Доставлено',
+  pending: 'Підтвердити', confirmed: 'Відправлено', shipped: 'Доставлено',
 }
 
 const STATUSES = [
-  { value: 'pending', label: '⏳ Нове' },
-  { value: 'confirmed', label: '✅ Підтверджено' },
-  { value: 'shipped', label: '🚚 Відправлено' },
-  { value: 'delivered', label: '📦 Доставлено' },
-  { value: 'completed', label: '✔️ Виконано' },
-  { value: 'cancelled', label: '❌ Скасовано' },
+  { value: 'pending', label: 'Нове' },
+  { value: 'confirmed', label: 'Підтверджено' },
+  { value: 'shipped', label: 'Відправлено' },
+  { value: 'delivered', label: 'Доставлено' },
+  { value: 'completed', label: 'Виконано' },
+  { value: 'cancelled', label: 'Скасовано' },
 ]
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : ''

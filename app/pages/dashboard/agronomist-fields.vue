@@ -71,7 +71,7 @@
             <div class="flex items-start justify-between mb-3">
               <div>
                 <h3 class="font-bold text-agro-dark">{{ farm.name }}</h3>
-                <p v-if="farm.region" class="text-xs text-agro-light">📍 {{ farm.region }}</p>
+                <p v-if="farm.region" class="text-xs text-agro-light flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ farm.region }}</p>
               </div>
               <span class="font-bold text-agro text-sm">{{ farm.hectares }} га</span>
             </div>
@@ -85,7 +85,7 @@
                 👁 Переглянути
               </NuxtLink>
               <NuxtLink :to="`/dashboard/protection/${farm.id}`" class="btn-primary text-sm py-2 flex-1 text-center block">
-                🛡 Програма
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Програма
               </NuxtLink>
             </div>
             <button @click="openReminderModal(farm, group)" class="w-full mt-2 flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-agro-border text-sm font-medium text-agro-light hover:border-agro hover:text-agro transition-colors">
@@ -212,7 +212,7 @@ const respondingId = ref<string | null>(null)
 const showReminder = ref(false)
 
 const TYPES = [
-  { value: 'обробка', label: 'Обробка', emoji: '🛡' },
+  { value: 'обробка', label: 'Обробка', emoji: '' },
   { value: 'підживлення', label: 'Підживлення', emoji: '🌿' },
   { value: 'полив', label: 'Полив', emoji: '💧' },
   { value: 'посів', label: 'Посів', emoji: '🌱' },

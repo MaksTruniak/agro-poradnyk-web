@@ -18,7 +18,7 @@
 
     <!-- Сповіщення про нестачу -->
     <div v-if="lowStock.length" class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-      <p class="font-bold text-amber-800 mb-2">⚠️ Закінчується запас</p>
+      <p class="font-bold text-amber-800 mb-2 flex items-center gap-1.5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Закінчується запас</p>
       <div class="flex flex-wrap gap-2">
         <span v-for="item in lowStock" :key="item.id"
           class="text-xs bg-amber-100 text-amber-800 px-3 py-1.5 rounded-full font-medium">
@@ -50,7 +50,7 @@
         <div class="flex items-start justify-between">
           <div class="flex-1 min-w-0">
             <p class="font-bold text-agro-dark truncate">{{ item.name }}</p>
-            <p v-if="item.farm" class="text-xs text-agro-light mt-0.5">📍 {{ item.farm.name }}</p>
+            <p v-if="item.farm" class="text-xs text-agro-light mt-0.5 flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ item.farm.name }}</p>
           </div>
           <div class="text-right shrink-0 ml-3">
             <p class="text-xl font-extrabold" :class="item.quantity <= 0 ? 'text-red-500' : (item.min_quantity && item.quantity <= item.min_quantity) ? 'text-amber-500' : 'text-agro'">
@@ -77,7 +77,7 @@
 
         <!-- Остання операція -->
         <p v-if="item.last_log" class="text-xs text-agro-light">
-          Останнє: {{ item.last_log.type === 'in' ? '📥' : '📤' }}
+          Останнє: <span v-if="item.last_log.type === 'in'" class="inline-flex items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M3 19h18"/></svg></span><span v-else class="inline-flex items-center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M8 13l4-4 4 4"/><path d="M3 19h18"/></svg></span>
           {{ item.last_log.quantity }} {{ item.unit }} — {{ formatDate(item.last_log.created_at) }}
         </p>
       </div>
@@ -85,7 +85,7 @@
       <!-- Кнопка додати -->
       <button @click="showAdd = true"
         class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-32">
-        <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">➕</span>
+        <span class="mb-2 group-hover:scale-110 transition-transform"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(122,138,114)" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
         <span class="font-semibold text-agro-light group-hover:text-agro transition-colors">Додати препарат</span>
       </button>
     </div>
@@ -162,7 +162,7 @@
       <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
         <div class="flex items-center justify-between mb-1">
         <h3 class="font-bold text-agro-dark text-lg">
-          {{ logForm.type === 'in' ? '📥 Надійшло' : '📤 Витрачено' }}
+          <template v-if="logForm.type === 'in'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M3 19h18"/></svg> Надійшло</template><template v-else><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M8 13l4-4 4 4"/><path d="M3 19h18"/></svg> Витрачено</template>
         </h3>
           <button @click="showLog = false" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-agro-bg text-agro-light hover:text-agro-dark transition-colors">✕</button>
         </div>

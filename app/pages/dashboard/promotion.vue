@@ -50,7 +50,7 @@
           </div>
 
           <div class="card border-2 relative overflow-hidden" :class="currentPlan === 'top' ? 'border-agro' : 'border-agro-border'">
-            <div class="absolute top-4 right-4 bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full">⭐ Найпопулярніший</div>
+            <div class="absolute top-4 right-4 bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Найпопулярніший</div>
             <div class="flex items-center gap-4 mb-4">
               <span class="text-4xl">🚀</span>
               <div class="flex-1">
@@ -63,7 +63,7 @@
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Профіль у маркетплейсі</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Необмежена кількість клієнтів</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Завжди вгорі списку</li>
-              <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Бейдж "⭐ Рекомендований"</li>
+              <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Бейдж "Рекомендований"</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Виділена картка</li>
             </ul>
             <button v-if="currentPlan !== 'top'" @click="showPayment = true" class="btn-primary w-full py-3">Підключити Топ →</button>
@@ -95,7 +95,7 @@
           </div>
 
           <div class="card border-2 relative overflow-hidden" :class="currentPlan === 'top' ? 'border-agro' : 'border-agro-border'">
-            <div class="absolute top-4 right-4 bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full">⭐ Найпопулярніший</div>
+            <div class="absolute top-4 right-4 bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Найпопулярніший</div>
             <div class="flex items-center gap-4 mb-4">
               <span class="text-4xl">🚀</span>
               <div class="flex-1">
@@ -107,7 +107,7 @@
             <ul class="space-y-2 mb-5">
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Необмежена кількість товарів</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Завжди вгорі каталогу</li>
-              <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Бейдж "✅ Перевірений продавець"</li>
+              <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Бейдж "Перевірений продавець"</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Виділена картка магазину</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Пріоритетна підтримка</li>
               <li class="flex items-center gap-2 text-sm text-agro-dark"><span class="text-agro font-bold">✓</span> Аналітика переглядів товарів</li>
@@ -125,7 +125,7 @@
         <div v-if="showPayment" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showPayment = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-8 text-center">
-            <p class="text-5xl mb-4">💳</p>
+            <p class="mb-4 flex justify-center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></p>
             <h2 class="font-bold text-agro-dark text-xl mb-2">{{ isSeller ? 'Підключити Топ продавця' : 'Підключити Топ' }}</h2>
             <p class="text-agro-light text-sm mb-4">{{ isSeller ? '499 грн / місяць' : '299 грн / місяць' }} — ваш профіль завжди вгорі</p>
             <p class="text-xs text-agro-light mb-6">Онлайн оплата через WayForPay — буде доступна найближчим часом</p>

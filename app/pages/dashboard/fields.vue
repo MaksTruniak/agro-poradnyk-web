@@ -147,17 +147,17 @@
             </div>
           </div>
           <div class="flex gap-2 mb-2">
-            <NuxtLink to="/dashboard/ai-chat" class="btn-primary text-sm py-2 flex-1 text-center">🤖 AI агроном</NuxtLink>
-            <NuxtLink to="/dashboard/chats?type=human" class="btn-outline text-sm py-2 flex-1 text-center">👨‍🌾 Агроном</NuxtLink>
+            <NuxtLink to="/dashboard/ai-chat" class="btn-primary text-sm py-2 flex-1 text-center inline-flex items-center justify-center gap-1.5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg> AI агроном</NuxtLink>
+            <NuxtLink to="/dashboard/chats?type=human" class="btn-outline text-sm py-2 flex-1 text-center inline-flex items-center justify-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M9 4c1.5-1.5 5.5-1.5 6 1"/></svg> Агроном</NuxtLink>
           </div>
           <div class="flex gap-2">
-            <NuxtLink :to="`/dashboard/protection?farmCropId=${crop.id}&cropType=${crop.crop_type}`" class="btn-outline text-sm py-2 flex-1 text-center">🛡 Схема обробки</NuxtLink>
-            <button @click="deleteDachaCrop(crop)" class="w-10 h-10 border-2 border-red-200 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors text-red-400">🗑</button>
+            <NuxtLink :to="`/dashboard/protection?farmCropId=${crop.id}&cropType=${crop.crop_type}`" class="btn-outline text-sm py-2 flex-1 text-center inline-flex items-center justify-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Схема обробки</NuxtLink>
+            <button @click="deleteDachaCrop(crop)" class="w-10 h-10 border-2 border-red-200 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors text-red-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 12.5a1 1 0 01-1 .9H6.5a1 1 0 01-1-.9L4 7z"/><path d="M8 7a4 4 0 018 0"/></svg></button>
           </div>
         </div>
 
         <button @click="showAddCrop = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group">
-          <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">➕</span>
+          <span class="mb-2 group-hover:scale-110 transition-transform"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(122,138,114)" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
           <span class="font-semibold text-agro-light group-hover:text-agro transition-colors">Додати культуру</span>
         </button>
       </div>
@@ -169,7 +169,7 @@
         <div v-if="showPaywall" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showPaywall = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-8 text-center">
-            <div class="text-5xl mb-4">💎</div>
+            <div class="mb-4 flex justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l3 6-9 12L3 9l3-6z"/><path d="M3 9h18M9 3l3 18M15 3l-3 18"/></svg></div>
             <h2 class="font-extrabold text-agro-dark text-xl mb-2">Потрібен PRO план</h2>
             <p class="text-agro-light text-sm mb-6">На безкоштовному плані доступне лише <strong>1 поле</strong> з <strong>1 культурою</strong>. Оновіть до PRO для необмеженого доступу.</p>
             <div class="space-y-3">
@@ -187,7 +187,7 @@
         <div v-if="showAddFarm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAddFarm = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-8">
-            <h2 class="font-bold text-agro-dark text-xl mb-5">➕ Нове поле</h2>
+            <h2 class="font-bold text-agro-dark text-xl mb-5">Нове поле</h2>
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Назва поля</label>
@@ -273,7 +273,7 @@
         <div v-if="showAddCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAddCrop = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-8">
-            <h2 class="font-bold text-agro-dark text-xl mb-5">➕ Нова культура</h2>
+            <h2 class="font-bold text-agro-dark text-xl mb-5">Нова культура</h2>
             <div class="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto mb-4">
               <button
                 v-for="c in allCropNames"

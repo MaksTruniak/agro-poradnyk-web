@@ -46,7 +46,7 @@
         <!-- Угоди через систему -->
         <div v-if="deals.length" class="card overflow-hidden p-0">
           <div class="px-5 py-3 border-b border-agro-border bg-agro-bg">
-            <p class="font-semibold text-agro-dark text-sm">✅ Угоди через платформу</p>
+            <p class="font-semibold text-agro-dark text-sm flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Угоди через платформу</p>
           </div>
           <div class="divide-y divide-agro-border">
             <div v-for="deal in deals" :key="deal.id" class="flex items-center gap-4 px-5 py-4">
@@ -58,7 +58,7 @@
                 <NuxtLink
                   :to="isFarmer ? `/buyers/${deal.buyer_id}` : `/farmer/${deal.farmer_id}`"
                   class="text-sm font-medium text-agro hover:underline transition-colors block mt-0.5">
-                  {{ isFarmer ? '🏭 ' + deal.buyer_name : '👨‍🌾 ' + deal.farmer_name }}
+                  <template v-if="isFarmer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/><path d="M6 20v-4h3v4M11 20v-4h3v4M16 20v-4h3v4"/></svg>{{ deal.buyer_name }}</template><template v-else><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M9 4c1.5-1.5 5.5-1.5 6 1"/></svg>{{ deal.farmer_name }}</template>
                 </NuxtLink>
                 <p class="text-xs text-agro-light mt-0.5">{{ formatDate(deal.confirmed_at) }}</p>
               </div>
@@ -71,9 +71,9 @@
               </div>
               <button v-if="!myReviews.has(deal.id)" @click="openReview(deal)"
                 class="shrink-0 text-xs bg-amber-50 border border-amber-200 text-amber-600 rounded-xl px-3 py-1.5 hover:bg-amber-100 transition-colors font-medium">
-                ⭐ Оцінити
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінити
               </button>
-              <span v-else class="shrink-0 text-xs text-agro-light">⭐ Оцінено</span>
+              <span v-else class="shrink-0 text-xs text-agro-light flex items-center gap-1"><svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінено</span>
               <NuxtLink :to="`/dashboard/chats/${deal.chat_id}`"
                 class="shrink-0 text-xs border border-agro-border text-agro-light rounded-xl px-3 py-1.5 hover:border-agro hover:text-agro transition-colors">
                 Чат →
@@ -126,7 +126,7 @@
           <div class="flex justify-center gap-2 mb-5">
             <button v-for="s in 5" :key="s" @click="reviewModal.rating = s"
               class="text-3xl transition-transform hover:scale-110"
-              :class="s <= reviewModal.rating ? 'opacity-100' : 'opacity-30'">⭐</button>
+              :class="s <= reviewModal.rating ? 'opacity-100' : 'opacity-30'"><svg width="24" height="24" viewBox="0 0 24 24" :fill="s <= reviewModal.rating ? 'rgb(180,130,40)' : 'none'" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
           </div>
           <button @click="submitReview" :disabled="!reviewModal.rating || reviewModal.saving"
             class="btn-primary w-full" :class="(!reviewModal.rating || reviewModal.saving) ? 'opacity-50 cursor-not-allowed' : ''">

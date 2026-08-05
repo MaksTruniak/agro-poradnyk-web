@@ -23,7 +23,10 @@
         class="rounded-2xl px-5 py-4 mb-6 flex items-start gap-3"
         :class="profile?.is_verified ? 'bg-agro-hover border border-agro/30' : 'bg-yellow-50 border border-yellow-200'"
       >
-        <span class="text-xl">{{ profile?.is_verified ? '✅' : '⏳' }}</span>
+        <span class="flex items-center justify-center w-6 h-6">
+          <svg v-if="profile?.is_verified" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
         <div>
           <p class="font-bold text-agro-dark text-sm">{{ profile?.is_verified ? 'Профіль верифіковано' : 'Очікує верифікації' }}</p>
           <p class="text-xs mt-0.5" :class="profile?.is_verified ? 'text-agro' : 'text-yellow-700'">
@@ -87,7 +90,7 @@
           <!-- Рейтинг та відгуки -->
           <div v-if="profile?.rating || profile?.reviews_count" class="flex gap-6 mt-5 pt-5 border-t border-agro-border">
             <div>
-              <p class="text-xl font-extrabold text-agro-dark">⭐ {{ profile.rating?.toFixed(1) || '0.0' }}</p>
+              <p class="text-xl font-extrabold text-agro-dark flex items-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> {{ profile.rating?.toFixed(1) || '0.0' }}</p>
               <p class="text-xs text-agro-light mt-0.5">Рейтинг</p>
             </div>
             <div>
@@ -212,7 +215,7 @@
 
           <!-- Обрані -->
           <div v-if="selectedCrops.length" class="border-t border-agro-border pt-4">
-            <p class="text-sm font-semibold text-agro mb-2">✅ Обрано: {{ selectedCrops.length }}</p>
+            <p class="text-sm font-semibold text-agro mb-2 flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Обрано: {{ selectedCrops.length }}</p>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="crop in selectedCrops"
@@ -232,7 +235,7 @@
         <button @click="saveProfile" :disabled="saving" class="btn-primary w-full py-3.5 text-base">
           {{ saving ? 'Збереження...' : 'Зберегти профіль' }}
         </button>
-        <p v-if="saved" class="text-agro text-sm text-center mt-3">✅ Профіль збережено!</p>
+        <p v-if="saved" class="text-agro text-sm text-center mt-3 flex items-center justify-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Профіль збережено!</p>
       </div>
     </template>
   </div>

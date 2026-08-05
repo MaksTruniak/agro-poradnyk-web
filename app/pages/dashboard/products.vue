@@ -51,10 +51,13 @@
             <td class="px-5 py-4 text-right font-bold text-agro">{{ offer.price }} грн</td>
             <td class="px-5 py-4 text-right text-agro-dark">{{ offer.quantity }}</td>
             <td class="px-5 py-4 text-center">
-              <button @click="toggleStock(offer)" class="text-lg">{{ offer.in_stock ? '✅' : '❌' }}</button>
+              <button @click="toggleStock(offer)" class="flex items-center justify-center">
+                <svg v-if="offer.in_stock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
             </td>
             <td class="px-5 py-4 text-right">
-              <button @click="deleteOffer(offer)" class="text-red-400 hover:text-red-600 transition-colors">🗑</button>
+              <button @click="deleteOffer(offer)" class="text-red-400 hover:text-red-600 transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 12.5a1 1 0 01-1 .9H6.5a1 1 0 01-1-.9L4 7z"/><path d="M8 7a4 4 0 018 0"/></svg></button>
             </td>
           </tr>
         </tbody>
@@ -67,7 +70,7 @@
         <div v-if="showAdd" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAdd = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-6">
-            <h2 class="font-bold text-agro-dark text-xl mb-5">➕ Нова пропозиція</h2>
+            <h2 class="font-bold text-agro-dark text-xl mb-5">Нова пропозиція</h2>
 
             <!-- Пошук товару -->
             <div class="mb-4">
@@ -83,7 +86,7 @@
                   >{{ p.name }}</button>
                 </div>
               </div>
-              <p v-if="selectedProduct" class="text-xs text-agro mt-1 font-medium">✅ {{ selectedProduct.name }}</p>
+              <p v-if="selectedProduct" class="text-xs text-agro mt-1 font-medium flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {{ selectedProduct.name }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">

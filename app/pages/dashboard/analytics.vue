@@ -64,7 +64,7 @@
           <div v-else class="space-y-3">
             <div v-for="s in ordersByStatus" :key="s.status" class="flex items-center justify-between p-3 rounded-xl bg-agro-bg">
               <div class="flex items-center gap-2">
-                <span>{{ STATUS_ICON[s.status] || '📋' }}</span>
+                <span v-html="STATUS_ICON[s.status] || ''"></span>
                 <span class="text-sm font-medium text-agro-dark">{{ STATUS_LABEL[s.status] || s.status }}</span>
               </div>
               <div class="text-right">
@@ -146,10 +146,10 @@
             <div v-for="farm in farms" :key="farm.id"
               class="flex items-center gap-3 p-3 rounded-xl bg-agro-bg hover:bg-agro-hover transition-colors cursor-pointer"
               @click="navigateTo(`/dashboard/farm/${farm.id}`)">
-              <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-lg shrink-0 border border-agro-border">🌾</div>
+              <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-agro-border"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg></div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-agro-dark text-sm truncate">{{ farm.name }}</p>
-                <p class="text-xs text-agro-light">{{ farm.farm_crops?.length || 0 }} культур<span v-if="farm.region"> · 📍 {{ farm.region }}</span></p>
+                <p class="text-xs text-agro-light">{{ farm.farm_crops?.length || 0 }} культур<span v-if="farm.region" class="inline-flex items-center gap-0.5"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ farm.region }}</span></p>
               </div>
               <span class="font-bold text-agro text-sm shrink-0">{{ farm.hectares }} га</span>
             </div>
@@ -257,7 +257,13 @@ const selectedYear = ref(new Date().getFullYear())
 const { load: loadCrops, emojiFor } = useCropCatalog()
 loadCrops()
 const STATUS_LABEL: Record<string, string> = { pending: 'Очікує', processing: 'Обробляється', shipped: 'Відправлено', completed: 'Виконано', cancelled: 'Скасовано' }
-const STATUS_ICON: Record<string, string> = { pending: '⏳', processing: '⚙️', shipped: '🚚', completed: '✅', cancelled: '❌' }
+const STATUS_ICON: Record<string, string> = {
+  pending: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  processing: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
+  shipped: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+  completed: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  cancelled: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+}
 const STATUS_BG: Record<string, string> = { pending: 'text-yellow-700 bg-yellow-50', processing: 'text-blue-700 bg-blue-50', shipped: 'text-agro bg-agro-hover', completed: 'text-green-700 bg-green-50', cancelled: 'text-red-600 bg-red-50' }
 const { pluralFarm } = await import('~/utils/plural')
 const pluralField = pluralFarm

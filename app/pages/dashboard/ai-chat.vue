@@ -75,7 +75,8 @@
           <div v-for="(msg, i) in messages" :key="i" class="flex gap-3" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
             <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm"
               :class="msg.role === 'user' ? 'bg-agro text-white' : 'bg-agro-hover text-agro'">
-              {{ msg.role === 'user' ? '👤' : '🤖' }}
+              <svg v-if="msg.role === 'user'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg>
             </div>
             <div class="max-w-[75%]">
               <div class="rounded-2xl px-4 py-3 text-sm leading-relaxed"
@@ -98,7 +99,7 @@
                     @click="openSchemeModalForProduct(p)"
                     class="text-xs px-2 py-1.5 bg-agro-hover text-agro border border-l-0 border-agro/30 rounded-r-lg hover:bg-agro hover:text-white transition-colors"
                     title="Додати до технологічної карти">
-                    🛡
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   </button>
                 </div>
               </div>
@@ -106,7 +107,7 @@
           </div>
 
           <div v-if="streaming" class="flex gap-3">
-            <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center text-sm shrink-0">🤖</div>
+            <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center text-sm shrink-0 text-agro"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg></div>
             <div class="bg-white border border-agro-border rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-agro-dark leading-relaxed whitespace-pre-wrap max-w-[75%]">
               {{ streamingText }}<span class="animate-pulse">▋</span>
             </div>
@@ -118,7 +119,7 @@
       <div v-if="!isPro && dailyCount >= DAILY_LIMIT" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center">
         <p class="font-semibold text-agro-dark mb-1">🔒 Ліміт на сьогодні вичерпано</p>
         <p class="text-sm text-agro-light mb-3">Базовий план — 5 запитів/день. Оновіть до PRO для необмеженого доступу та збереження історії.</p>
-        <NuxtLink to="/dashboard/subscription" class="btn-primary inline-block">⭐ Перейти на PRO</NuxtLink>
+        <NuxtLink to="/dashboard/subscription" class="btn-primary inline-flex items-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Перейти на PRO</NuxtLink>
       </div>
 
       <!-- Input -->
@@ -170,7 +171,7 @@
                 <label class="block text-sm font-medium text-agro-dark mb-1">Тип</label>
                 <select v-model="schemeModal.type" class="input">
                   <option value="підживлення">🌿 Підживлення</option>
-                  <option value="захист">🛡 Захист</option>
+                  <option value="захист">Захист</option>
                   <option value="обробка">💊 Обробка</option>
                   <option value="полив">💧 Полив</option>
                   <option value="інше">📌 Інше</option>
@@ -191,7 +192,7 @@
                 {{ schemeModal.saving ? '...' : 'Додати' }}
               </button>
             </div>
-            <p v-if="schemeModal.success" class="text-agro text-sm text-center mt-3">✅ Додано до схеми!</p>
+            <p v-if="schemeModal.success" class="text-agro text-sm text-center mt-3 flex items-center justify-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Додано до схеми!</p>
           </div>
         </div>
       </Transition>

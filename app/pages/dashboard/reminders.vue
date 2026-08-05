@@ -71,7 +71,7 @@
                 <div class="flex items-center gap-2 flex-wrap">
                   <p class="font-semibold text-agro-dark">{{ r.description }}</p>
                   <span class="text-xs bg-amber-50 border border-amber-200 text-amber-700 px-2 py-0.5 rounded-full font-medium shrink-0">
-                    👨‍🌾 для фермера
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M9 4c1.5-1.5 5.5-1.5 6 1"/></svg> для фермера
                   </span>
                 </div>
                 <p class="text-xs mt-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-amber-600'">
@@ -108,7 +108,7 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <p class="font-semibold text-agro-dark">{{ r.description }}</p>
                 <span v-if="r.from_agronomist" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full font-medium shrink-0">
-                  👨‍🌾 від агронома
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M9 4c1.5-1.5 5.5-1.5 6 1"/></svg> від агронома
                 </span>
               </div>
               <p class="text-xs mt-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-agro'">
@@ -231,7 +231,7 @@ const sentReminders = ref<any[]>([])
 const isAgronomist = ref(false)
 
 const TYPES = [
-  { value: 'обробка', label: 'Обробка', emoji: '🛡' },
+  { value: 'обробка', label: 'Обробка', emoji: '' },
   { value: 'підживлення', label: 'Підживлення', emoji: '🌿' },
   { value: 'полив', label: 'Полив', emoji: '💧' },
   { value: 'посів', label: 'Посів', emoji: '🌱' },

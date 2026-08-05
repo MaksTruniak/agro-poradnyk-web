@@ -58,7 +58,7 @@
       <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showModal = false">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
           <div class="flex items-center justify-between mb-5">
-            <h2 class="font-bold text-agro-dark text-lg">➕ Додати культуру</h2>
+            <h2 class="font-bold text-agro-dark text-lg">Додати культуру</h2>
             <button @click="showModal = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-agro-hover text-agro-light">✕</button>
           </div>
           <div class="space-y-4">
