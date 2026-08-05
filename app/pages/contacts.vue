@@ -33,7 +33,7 @@
           <label class="block text-sm font-medium text-agro-dark mb-1.5">Повідомлення</label>
           <textarea v-model="form.message" class="input resize-none" rows="4" placeholder="Ваше питання або пропозиція..." />
         </div>
-        <p v-if="sent" class="text-agro text-sm font-medium">✅ Повідомлення відправлено! Ми відповімо протягом 24 годин.</p>
+        <p v-if="sent" class="text-agro text-sm font-medium flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Повідомлення відправлено! Ми відповімо протягом 24 годин.</p>
         <button @click="send" :disabled="sending || !form.name || !form.email || !form.message" class="btn-primary">
           {{ sending ? 'Відправляємо...' : 'Відправити' }}
         </button>

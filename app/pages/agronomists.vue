@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark">👨‍🌾 Агрономи</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> Агрономи</h1>
       <p class="text-agro-light mt-1">Знайдіть фахового агронома для консультації</p>
     </div>
 
@@ -54,15 +54,15 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <h3 class="font-bold text-agro-dark">{{ agro.name }}</h3>
-              <span v-if="agro.promotion_plan === 'top'" class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">⭐ Топ</span>
-              <span v-if="agro.is_verified_agronomist" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">✅ Перевірений</span>
+              <span v-if="agro.promotion_plan === 'top'" class="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold"><svg width="12" height="12" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Топ</span>
+              <span v-if="agro.is_verified_agronomist" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений</span>
             </div>
             <p v-if="agro.specialization" class="text-sm text-agro-light mt-0.5">{{ agro.specialization }}</p>
           </div>
           <!-- Рейтинг -->
           <div v-if="agro.rating" class="text-right shrink-0">
             <p class="font-bold text-agro">{{ agro.rating.toFixed(1) }}</p>
-            <p class="text-xs text-agro-light">⭐ рейтинг</p>
+            <p class="text-xs text-agro-light flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> рейтинг</p>
           </div>
         </div>
 
@@ -76,7 +76,7 @@
 
         <!-- Статистика -->
         <div class="flex gap-4 text-xs text-agro-light mb-5">
-          <span v-if="agro.region">📍 {{ agro.region }}</span>
+          <span v-if="agro.region" class="inline-flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ agro.region }}</span>
         </div>
 
         <!-- Кнопки -->

@@ -7,7 +7,7 @@
     <h1 class="text-2xl font-extrabold text-agro-dark mb-8">📋 Оформлення замовлення</h1>
 
     <div v-if="success" class="text-center py-20">
-      <p class="text-6xl mb-4">✅</p>
+      <div class="mb-4 flex justify-center"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <p class="font-bold text-agro-dark text-2xl mb-2">Замовлення оформлено!</p>
       <p class="text-agro-light mb-2">Номер: <span class="font-bold text-agro">#{{ orderId }}</span></p>
       <p class="text-agro-light mb-8">Продавці отримали повідомлення про ваше замовлення.</p>
@@ -19,7 +19,7 @@
       <div class="lg:col-span-2 space-y-6">
         <!-- Контактні дані -->
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">👤 Контактні дані</h2>
+          <h2 class="font-bold text-agro-dark mb-5 text-lg flex items-center gap-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Контактні дані</h2>
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1.5">Ім'я</label>
@@ -34,7 +34,7 @@
 
         <!-- Доставка -->
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">🚚 Доставка</h2>
+          <h2 class="font-bold text-agro-dark mb-5 text-lg flex items-center gap-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Доставка</h2>
 
           <div v-if="availableDelivery.length === 0" class="text-agro-light text-sm mb-4">
             Продавець не вказав способи доставки
@@ -47,7 +47,7 @@
               class="flex-1 min-w-[140px] border-2 rounded-xl p-4 text-left transition-colors"
               :class="form.delivery === opt.key ? 'border-agro bg-agro-hover' : 'border-agro-border'"
             >
-              <p class="font-semibold text-agro-dark">{{ opt.icon }} {{ opt.label }}</p>
+              <p class="font-semibold text-agro-dark flex items-center gap-2"><span v-html="opt.icon"></span> {{ opt.label }}</p>
               <p v-if="opt.key === 'pickup' && sellerPickupAddress" class="text-xs text-agro-light mt-1">{{ sellerPickupAddress }}</p>
               <p v-else-if="opt.key === 'nova_poshta'" class="text-xs text-agro-light mt-1">Доставка у відділення або поштомат</p>
               <p v-else-if="opt.key === 'ukrposhta'" class="text-xs text-agro-light mt-1">Доставка Укрпоштою</p>
@@ -106,7 +106,7 @@
 
         <!-- Оплата -->
         <div class="card">
-          <h2 class="font-bold text-agro-dark mb-5 text-lg">💳 Оплата</h2>
+          <h2 class="font-bold text-agro-dark mb-5 text-lg flex items-center gap-2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Оплата</h2>
           <div class="flex gap-3">
             <button
               @click="form.payment = 'cash'"
@@ -120,7 +120,7 @@
               class="flex-1 border-2 rounded-xl p-4 text-left transition-colors"
               :class="form.payment === 'card' ? 'border-agro bg-agro-hover' : 'border-agro-border'"
             >
-              <p class="font-semibold text-agro-dark">💳 Картою онлайн</p>
+              <p class="font-semibold text-agro-dark flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Картою онлайн</p>
               <p class="text-xs text-agro-light mt-1">LiqPay (скоро)</p>
             </button>
           </div>
@@ -194,8 +194,8 @@ const uid = ref<string | null>(null)
 const sellerPickupAddress = ref('')
 
 const ALL_DELIVERY_OPTIONS = [
-  { key: 'nova_poshta', label: 'Нова Пошта', icon: '📦' },
-  { key: 'ukrposhta', label: 'Укрпошта', icon: '✉️' },
+  { key: 'nova_poshta', label: 'Нова Пошта', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg>' },
+  { key: 'ukrposhta', label: 'Укрпошта', icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>' },
   { key: 'pickup', label: 'Самовивіз', icon: '🏪' },
 ]
 const availableDelivery = ref(ALL_DELIVERY_OPTIONS)

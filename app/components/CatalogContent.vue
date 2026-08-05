@@ -46,7 +46,7 @@
 
       <!-- Активний фільтр бренду -->
       <div v-if="selectedManufacturer" class="flex items-center gap-2 mb-4 bg-agro-hover border border-agro rounded-xl px-4 py-2.5 w-fit">
-        <span class="text-sm font-semibold text-agro">🏭 {{ selectedManufacturer }}</span>
+        <span class="text-sm font-semibold text-agro flex items-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg> {{ selectedManufacturer }}</span>
         <button @click="clearManufacturer" class="text-agro hover:text-agro-dark ml-1">✕</button>
       </div>
 
@@ -177,7 +177,7 @@
               <div>
                 <p class="font-bold text-agro text-xl leading-none mb-1">{{ offer.price }} грн</p>
                 <p class="text-sm font-semibold text-agro-dark">{{ offer.seller_profiles?.company_name }}</p>
-                <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light mt-0.5">📍 {{ offer.seller_profiles.region }}</p>
+                <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light mt-0.5 flex items-center gap-1"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ offer.seller_profiles.region }}</p>
               </div>
               <button @click="addToCart(offer.id)" :disabled="addingId === offer.id" class="btn-primary text-sm py-2.5 px-5 shrink-0 ml-4">
                 {{ addingId === offer.id ? '...' : 'В кошик' }}

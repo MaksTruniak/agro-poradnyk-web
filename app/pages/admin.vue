@@ -1,7 +1,7 @@
 <template>
   <div class="p-8">
     <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-agro-dark">🛡 Адмін-панель</h1>
+      <h1 class="text-2xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Адмін-панель</h1>
       <p class="text-agro-light mt-1">Верифікація агрономів</p>
     </div>
 
@@ -22,7 +22,7 @@
     <!-- Очікують верифікації -->
     <div v-else-if="activeTab === 'pending'">
       <div v-if="!pending.length" class="card text-center py-16">
-        <p class="text-4xl mb-3">✅</p>
+        <div class="mb-3 flex justify-center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
         <p class="font-bold text-agro-dark">Немає агрономів на перевірку</p>
         <p class="text-agro-light text-sm mt-1">Всі заявки опрацьовано</p>
       </div>
@@ -41,7 +41,7 @@
                 <p class="text-xs text-agro-light mt-0.5">Зареєстрований {{ formatDate(a.user?.created_at) }}</p>
               </div>
             </div>
-            <span class="shrink-0 text-xs px-2.5 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full font-medium">⏳ Очікує</span>
+            <span class="shrink-0 inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-full font-medium"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Очікує</span>
           </div>
 
           <!-- Основні дані -->
@@ -61,7 +61,8 @@
             <div class="bg-agro-bg rounded-xl px-3 py-2.5">
               <p class="text-xs text-agro-light">Доступний</p>
               <p class="text-sm font-semibold mt-0.5" :class="a.is_available ? 'text-agro' : 'text-agro-light'">
-                {{ a.is_available ? '✅ Так' : '❌ Ні' }}
+                <span class="inline-flex items-center gap-1" v-if="a.is_available"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Так</span>
+                <span class="inline-flex items-center gap-1" v-else><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg> Ні</span>
               </p>
             </div>
           </div>
@@ -121,11 +122,13 @@
           <div class="flex gap-3 pt-2 border-t border-agro-border">
             <button @click="verify(a, true)" :disabled="a.saving"
               class="btn-primary text-sm flex-1 md:flex-none md:px-8">
-              {{ a.saving === 'approve' ? '...' : '✅ Верифікувати' }}
+              <span v-if="a.saving === 'approve'">...</span>
+              <span v-else class="inline-flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Верифікувати</span>
             </button>
             <button @click="verify(a, false)" :disabled="a.saving"
               class="btn-outline text-sm text-red-500 border-red-200 hover:bg-red-50 flex-1 md:flex-none md:px-8">
-              {{ a.saving === 'reject' ? '...' : '❌ Відхилити' }}
+              <span v-if="a.saving === 'reject'">...</span>
+              <span v-else class="inline-flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg> Відхилити</span>
             </button>
           </div>
         </div>
@@ -148,7 +151,7 @@
               <p class="font-semibold text-agro-dark">{{ a.user?.name }}</p>
               <p class="text-xs text-agro-light">{{ a.region || 'Регіон не вказано' }}{{ a.experience_years ? ` · ${a.experience_years} р. досвіду` : '' }}</p>
             </div>
-            <span class="text-xs px-2.5 py-1 bg-agro-hover text-agro rounded-full font-medium shrink-0">✅ Верифікований</span>
+            <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-agro-hover text-agro rounded-full font-medium shrink-0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Верифікований</span>
             <button @click="verify(a, false)" :disabled="a.saving"
               class="shrink-0 text-xs text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 rounded-xl px-3 py-1.5 transition-colors">
               Скасувати

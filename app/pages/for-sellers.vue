@@ -56,7 +56,7 @@
           </div>
           <div class="flex-1 pt-1">
             <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">{{ step.icon }}</span>
+              <span v-html="step.icon"></span>
               <h3 class="text-xl font-bold text-agro-dark">{{ step.title }}</h3>
             </div>
             <p class="text-agro-light leading-relaxed">{{ step.desc }}</p>
@@ -77,7 +77,7 @@
         <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Що ви отримуєте</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="f in features" :key="f.title" class="card hover:shadow-md transition-shadow">
-            <div class="text-3xl mb-3">{{ f.icon }}</div>
+            <div class="mb-3"><span v-html="f.icon"></span></div>
             <h3 class="font-bold text-agro-dark mb-2">{{ f.title }}</h3>
             <p class="text-agro-light text-sm leading-relaxed">{{ f.desc }}</p>
           </div>
@@ -112,13 +112,13 @@ const steps = [
     tags: ['Назва магазину', 'Контакти', 'Регіон'],
   },
   {
-    icon: '📦',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg>',
     title: 'Додайте товари',
     desc: 'Знайдіть препарат в базі каталогу і додайте свою пропозицію — ціна, кількість на складі, фото. Один препарат може мати пропозиції від кількох продавців — покупці порівнюють.',
     tags: ['База препаратів', 'Ціна і наявність', 'Фото товару'],
   },
   {
-    icon: '🚚',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
     title: 'Налаштуйте доставку',
     desc: 'Оберіть способи доставки — Нова Пошта, Укрпошта або самовивіз. Для самовивозу вкажіть адресу. Покупець бачить тільки доступні для вас варіанти.',
     tags: ['Нова Пошта', 'Укрпошта', 'Самовивіз'],
@@ -134,8 +134,8 @@ const steps = [
 const features = [
   { icon: '📊', title: 'Статистика продажів', desc: 'Кількість товарів, замовлень і загальна виручка — на головній сторінці кабінету' },
   { icon: '🛒', title: 'Управління замовленнями', desc: 'Всі замовлення в одному місці з контактами покупців. Змінюйте статус одним кліком — підтверджено, відправлено, виконано' },
-  { icon: '📦', title: 'Облік залишків', desc: 'Система автоматично зменшує залишок коли оформляється замовлення. Товар зникає з каталогу коли залишок = 0' },
-  { icon: '🚚', title: 'Гнучка доставка', desc: 'Оберіть зручні способи доставки — НП, Укрпошта або самовивіз. Вкажіть адресу самовивозу для покупців' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg>', title: 'Облік залишків', desc: 'Система автоматично зменшує залишок коли оформляється замовлення. Товар зникає з каталогу коли залишок = 0' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', title: 'Гнучка доставка', desc: 'Оберіть зручні способи доставки — НП, Укрпошта або самовивіз. Вкажіть адресу самовивозу для покупців' },
   { icon: '🔍', title: 'Видимість в каталозі', desc: 'Ваші товари відображаються в загальному каталозі препаратів який переглядають тисячі фермерів і дачників' },
   { icon: '💬', title: 'Чат з покупцями', desc: 'Покупці можуть написати вам напряму щоб уточнити наявність, ціну або домовитись про доставку' },
 ]

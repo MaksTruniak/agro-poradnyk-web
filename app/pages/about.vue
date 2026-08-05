@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16">
     <div class="text-center mb-16">
-      <span class="text-5xl mb-4 block">🌾</span>
+      <span class="mb-4 flex justify-center"><svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg></span>
       <h1 class="text-4xl font-extrabold text-agro-dark mb-4">Про АгроПростір</h1>
       <p class="text-xl text-agro-light max-w-2xl mx-auto leading-relaxed">
         Цифрова платформа що об'єднує фермерів, агрономів і продавців агрохімії в одній екосистемі
@@ -18,7 +18,7 @@
 
       <div class="grid md:grid-cols-3 gap-6">
         <div class="card text-center">
-          <div class="text-4xl mb-3">🌾</div>
+          <div class="mb-3 flex justify-center"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg></div>
           <h3 class="font-bold text-agro-dark mb-2">Фермерам</h3>
           <p class="text-sm text-agro-light">Облік полів і культур, технологічні карти, консультації агрономів</p>
         </div>

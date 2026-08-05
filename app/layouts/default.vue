@@ -43,7 +43,7 @@
                 <div class="bg-[#FAF6EC] rounded-2xl shadow-xl border border-[#e2ddd0] py-2 w-52">
                   <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" :to="item.to"
                     class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <span>{{ item.emoji }}</span>
+                    <span v-html="item.icon"></span>
                     <span>{{ item.label }}</span>
                   </NuxtLink>
                 </div>
@@ -66,16 +66,16 @@
                     <span>🧪</span><span>Діючі речовини</span>
                   </NuxtLink>
                   <NuxtLink to="/weeds" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <span>🌿</span><span>Бур'яни</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg><span>Бур'яни</span>
                   </NuxtLink>
                   <NuxtLink to="/diseases" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
                     <span>🦠</span><span>Хвороби рослин</span>
                   </NuxtLink>
                   <NuxtLink to="/pests" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <span>🐛</span><span>Шкідники</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg><span>Шкідники</span>
                   </NuxtLink>
                   <NuxtLink to="/brands" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <span>🏭</span><span>Виробники</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg><span>Виробники</span>
                   </NuxtLink>
                 </div>
               </div>
@@ -114,18 +114,18 @@
           <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Каталог</p>
           <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" @click="mobileMenu = false" :to="item.to"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">
-            <span>{{ item.emoji }}</span> {{ item.label }}
+            <span v-html="item.icon"></span> {{ item.label }}
           </NuxtLink>
           <div class="border-t border-agro-border my-2"></div>
           <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Інформація</p>
           <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🧪 Діючі речовини</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/weeds" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🌿 Бур'яни</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/weeds" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg> Бур'яни</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/diseases" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🦠 Хвороби рослин</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/pests" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🐛 Шкідники</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/brands" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🏭 Виробники</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/pests" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg> Шкідники</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/brands" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg> Виробники</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🔬 Агрономи</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">👨‍🌾 Фермери</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/buyers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">🏭 Заготівельники</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> Фермери</NuxtLink>
+          <NuxtLink @click="mobileMenu = false" to="/buyers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg> Заготівельники</NuxtLink>
           <div class="border-t border-agro-border pt-3 mt-2 flex gap-2">
             <NuxtLink v-if="!user" @click="mobileMenu = false" to="/auth" class="btn-outline text-sm py-2 flex-1 text-center">Увійти</NuxtLink>
             <NuxtLink v-if="!user" @click="mobileMenu = false" to="/auth?mode=register" class="btn-primary text-sm py-2 flex-1 text-center">Реєстрація</NuxtLink>
@@ -194,10 +194,10 @@
 const MARKETPLACE = false
 
 const CATALOG_MENU = [
-  { to: '/pesticides',     emoji: '🛡️', label: 'Пестициди' },
-  { to: '/fertilizers', emoji: '🌱', label: 'Добрива' },
-  { to: '/bio',         emoji: '🍃', label: 'Біопрепарати' },
-  { to: '/seeds',       emoji: '🌾', label: 'Насіння' },
+  { to: '/pesticides', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', label: 'Пестициди' },
+  { to: '/fertilizers', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 8 10 6 7c3 0 5 1 6 5z"/><path d="M12 12c0 0 4-2 6-5-3 0-5 1-6 5z"/></svg>', label: 'Добрива' },
+  { to: '/bio', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C8 12 5 9 5 5c0 0 4 0 7 7z"/><path d="M12 12c4 0 7-3 7-7 0 0-4 0-7 7z"/></svg>', label: 'Біопрепарати' },
+  { to: '/seeds', icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>', label: 'Насіння' },
 ]
 
 const supabase = useSupabaseClient()

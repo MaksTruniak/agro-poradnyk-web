@@ -34,7 +34,7 @@
           </div>
           <div class="flex-1 pt-1">
             <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">{{ step.icon }}</span>
+              <span v-html="step.icon"></span>
               <h3 class="text-xl font-bold text-agro-dark">{{ step.title }}</h3>
             </div>
             <p class="text-agro-light leading-relaxed">{{ step.desc }}</p>
@@ -69,7 +69,7 @@
         <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Що ви отримуєте</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="f in features" :key="f.title" class="card hover:shadow-md transition-shadow">
-            <div class="text-3xl mb-3">{{ f.icon }}</div>
+            <div class="mb-3"><span v-html="f.icon"></span></div>
             <h3 class="font-bold text-agro-dark mb-2">{{ f.title }}</h3>
             <p class="text-agro-light text-sm leading-relaxed">{{ f.desc }}</p>
           </div>
@@ -98,19 +98,19 @@ useSeoMeta({
 
 const steps = [
   {
-    icon: '🌱',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 8 10 6 7c3 0 5 1 6 5z"/><path d="M12 12c0 0 4-2 6-5-3 0-5 1-6 5z"/></svg>',
     title: 'Додайте свої культури',
     desc: 'Оберіть що вирощуєте — томати, огірки, картоплю, полуницю, яблука або інші культури. Вкажіть сорт якщо знаєте — рекомендації будуть точнішими.',
     tags: ['Овочі', 'Фрукти', 'Ягоди', 'Зелень'],
   },
   {
-    icon: '🛡️',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     title: 'Отримайте схему обробки',
     desc: 'Для кожної культури система підбере технологічну карту по фазах розвитку — що коли застосовувати і в якій дозі.',
     tags: ['Від хвороб', 'Від шкідників', 'Дози і терміни'],
   },
   {
-    icon: '🤖',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg>',
     title: 'Запитайте AI агронома',
     desc: 'Побачили хворобу або шкідника? Опишіть симптоми AI агроному і отримайте діагноз і рекомендацію препарату — відповідь за секунди в будь-який час.',
     tags: ['Діагностика хвороб', 'Визначення шкідників', 'Відповідь за секунди'],
@@ -124,9 +124,9 @@ const steps = [
 ]
 
 const features = [
-  { icon: '🤖', title: 'AI агроном 24/7', desc: 'Опишіть проблему — AI визначить хворобу або шкідника і порекомендує що застосувати' },
-  { icon: '🛡️', title: 'Схема обробки', desc: 'Готовий календар обробок по фазах розвитку культури — коли що і в якій дозі застосовувати' },
-  { icon: '🔔', title: 'Нагадування', desc: 'Встановіть нагадування про обробку і не пропустіть потрібний момент сезону' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg>', title: 'AI агроном 24/7', desc: 'Опишіть проблему — AI визначить хворобу або шкідника і порекомендує що застосувати' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'Схема обробки', desc: 'Готовий календар обробок по фазах розвитку культури — коли що і в якій дозі застосовувати' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/></svg>', title: 'Нагадування', desc: 'Встановіть нагадування про обробку і не пропустіть потрібний момент сезону' },
   { icon: '💬', title: 'Живий агроном', desc: 'Якщо AI не дає відповіді — зверніться до живого агронома в чаті за мінімальну оплату' },
   { icon: '🛒', title: 'Каталог препаратів', desc: 'Тисячі препаратів і добрив з пропозиціями продавців, описами і відгуками' },
   { icon: '📖', title: 'База знань', desc: 'Інструкції по застосуванню, поради по догляду і відповіді на часті питання' },

@@ -102,7 +102,7 @@
         <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Ваші інструменти</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="f in features" :key="f.title" class="card hover:shadow-md transition-shadow">
-            <div class="text-3xl mb-3">{{ f.icon }}</div>
+            <div class="mb-3"><span v-html="f.icon"></span></div>
             <h3 class="font-bold text-agro-dark mb-2">{{ f.title }}</h3>
             <p class="text-agro-light text-sm leading-relaxed">{{ f.desc }}</p>
           </div>
@@ -120,10 +120,10 @@
             <p class="font-bold text-agro-dark text-lg mb-1">Базовий</p>
             <p class="text-3xl font-extrabold text-agro mb-4">Безкоштовно</p>
             <ul class="space-y-2 text-sm text-agro-light">
-              <li>✅ Профіль агронома</li>
-              <li>✅ Чати з фермерами</li>
-              <li>✅ Доступ до полів клієнтів</li>
-              <li>✅ До 3 активних клієнтів</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Профіль агронома</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Чати з фермерами</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Доступ до полів клієнтів</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> До 3 активних клієнтів</li>
             </ul>
           </div>
           <div class="card text-left border-2 border-agro">
@@ -133,11 +133,11 @@
             </div>
             <p class="text-3xl font-extrabold text-agro mb-4">299 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
             <ul class="space-y-2 text-sm text-agro-light">
-              <li>✅ Все з базового</li>
-              <li>✅ Необмежена кількість клієнтів</li>
-              <li>⭐ Перші в пошуку агрономів</li>
-              <li>⭐ Значок "Топ агроном"</li>
-              <li>⭐ Більше показів профілю</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Все з базового</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Необмежена кількість клієнтів</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Перші в пошуку агрономів</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Значок "Топ агроном"</li>
+              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Більше показів профілю</li>
             </ul>
           </div>
         </div>
@@ -224,10 +224,10 @@ const steps = [
 
 const features = [
   { icon: '💬', title: 'Чат з клієнтами', desc: 'Вбудований месенджер для консультацій — без сторонніх програм і передачі номерів телефонів' },
-  { icon: '🗺️', title: 'Поля клієнтів', desc: 'Фермери діляться полями і ви бачите всі дані — культури, сорти, площі по кожному полю' },
-  { icon: '🛡️', title: 'Програми захисту', desc: 'Складайте схеми обробки для клієнтів прямо в системі — по фазах розвитку культури' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>', title: 'Поля клієнтів', desc: 'Фермери діляться полями і ви бачите всі дані — культури, сорти, площі по кожному полю' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'Програми захисту', desc: 'Складайте схеми обробки для клієнтів прямо в системі — по фазах розвитку культури' },
   { icon: '🚀', title: 'Топ-просування', desc: 'Виходьте першими в результатах пошуку і отримуйте більше звернень від фермерів' },
   { icon: '📊', title: 'Статистика профілю', desc: 'Бачте скільки фермерів переглянули ваш профіль і написали в чат' },
-  { icon: '🌾', title: 'Власні поля', desc: 'Ведіть облік власного господарства паралельно з консультаційною діяльністю' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>', title: 'Власні поля', desc: 'Ведіть облік власного господарства паралельно з консультаційною діяльністю' },
 ]
 </script>

@@ -7,7 +7,7 @@
     </div>
 
     <div v-if="loading" class="flex justify-center py-24">
-      <div class="animate-spin text-5xl">🌿</div>
+      <div class="animate-spin"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg></div>
     </div>
 
     <div v-else-if="items.length === 0" class="flex flex-col items-center justify-center py-32 text-center">
@@ -32,7 +32,7 @@
           <div class="divide-y divide-agro-border">
             <div v-for="item in group.items" :key="item.id" class="flex items-center gap-5 px-6 py-5">
               <!-- Іконка -->
-              <div class="w-14 h-14 rounded-2xl bg-agro-hover flex items-center justify-center text-3xl shrink-0">🌿</div>
+              <div class="w-14 h-14 rounded-2xl bg-agro-hover flex items-center justify-center shrink-0"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg></div>
 
               <!-- Назва + ціна -->
               <div class="flex-1 min-w-0">
@@ -56,7 +56,7 @@
 
               <!-- Видалити -->
               <button @click="removeItem(item.id)" class="w-9 h-9 rounded-xl flex items-center justify-center text-agro-light hover:bg-red-50 hover:text-red-500 transition-colors shrink-0">
-                🗑
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 12.5a1 1 0 01-1 .9H6.5a1 1 0 01-1-.9L4 7z"/><path d="M8 7a4 4 0 018 0"/></svg>
               </button>
             </div>
           </div>
