@@ -143,7 +143,7 @@
           <div class="col-span-2 md:col-span-1">
             <div class="flex items-center gap-2.5 mb-3">
               <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#2F5233"/>
+                <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#C98A3C"/>
                 <path d="M12 22V10" stroke="#FAF6EC" stroke-width="1.4"/>
               </svg>
               <span class="logo-text font-bold text-white">АгроПростір</span>
