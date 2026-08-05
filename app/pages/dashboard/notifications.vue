@@ -8,13 +8,11 @@
           </svg>
         </div>
         <h1 class="dash-title bitter">Сповіщення</h1>
-      </div>
-      <p class="dash-subtitle">Системні повідомлення</p>
-      <div v-if="items.length" class="mt-3">
-        <button @click="markAllRead" class="text-sm text-agro hover:underline font-medium">
+        <button v-if="items.length" @click="markAllRead" class="ml-auto text-sm text-agro hover:underline font-medium">
           Позначити всі прочитаними
         </button>
       </div>
+      <p class="dash-subtitle">Системні повідомлення</p>
     </div>
 
     <div v-if="loading" class="space-y-3">
