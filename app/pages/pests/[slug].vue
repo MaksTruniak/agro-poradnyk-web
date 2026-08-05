@@ -20,8 +20,8 @@
           </div>
           <div class="flex-1">
             <div class="flex flex-wrap gap-2 mb-3">
-              <span v-if="pest.category_name" class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
-                🐞 {{ pest.category_name }}
+              <span v-if="pest.category_name" class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium inline-flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/></svg> {{ pest.category_name }}
               </span>
               <span v-if="pest.culture" class="text-xs bg-agro-bg text-agro-light px-2 py-1 rounded-full">{{ pest.culture }}</span>
             </div>
@@ -63,7 +63,9 @@
     </div>
 
     <div v-else class="card text-center py-20">
-      <p class="text-4xl mb-3">🐛</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg>
+      </div>
       <p class="font-bold text-agro-dark">Шкідника не знайдено</p>
       <NuxtLink to="/pests" class="btn-primary mt-4 inline-block text-sm py-2 px-6">← До списку</NuxtLink>
     </div>

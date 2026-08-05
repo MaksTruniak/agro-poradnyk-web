@@ -8,7 +8,7 @@
     <!-- Пошук + фільтр -->
     <div class="flex flex-col sm:flex-row gap-3 mb-4">
       <div class="relative flex-1 max-w-xl">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         <input v-model="search" class="input pl-11" placeholder="Пошук за ім'ям або регіоном..." />
       </div>
       <div class="relative" v-if="regions.length" @click.stop>
@@ -52,7 +52,9 @@
     </div>
 
     <div v-else-if="filtered.length === 0" class="text-center py-20">
-      <p class="text-5xl mb-4">🌾</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
       <p class="text-agro-light mt-2">Спробуйте інший пошук або регіон</p>
     </div>
@@ -69,7 +71,7 @@
               <span v-if="farmer.is_verified_farmer" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-semibold shrink-0">✅ Перевірений</span>
             </div>
             <p class="text-sm text-agro-light truncate">
-              {{ farmer.city || farmer.region ? `📍 ${[farmer.city, farmer.region].filter(Boolean).join(', ')}` : '&nbsp;' }}
+              <template v-if="farmer.city || farmer.region"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}</template><template v-else>&nbsp;</template>
             </p>
           </div>
         </div>

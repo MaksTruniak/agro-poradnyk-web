@@ -278,25 +278,25 @@ useSeoMeta({
 
 const steps = [
   {
-    icon: '📋',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/></svg>',
     title: 'Заповніть профіль заготівельника',
     desc: 'Вкажіть назву підприємства, регіон роботи і контактні дані. Це допоможе фермерам знайти вас в каталозі.',
     tags: ['Назва підприємства', 'Регіон', 'Контакти'],
   },
   {
-    icon: '🌾',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>',
     title: 'Вкажіть що закуповуєте',
     desc: 'Додайте культури які вас цікавлять, бажані обсяги і умови закупівлі. Фермери побачать ваш профіль і зможуть надіслати пропозицію.',
     tags: ['Культури', 'Обсяги', 'Умови'],
   },
   {
-    icon: '💬',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
     title: 'Отримуйте пропозиції в чаті',
     desc: 'Фермери надсилають пропозиції з кількістю і ціною прямо в чат. Обговорюйте деталі і домовляйтесь на вигідних умовах.',
     tags: ['Чат з фермером', 'Картка угоди', 'Переговори'],
   },
   {
-    icon: '🤝',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
     title: 'Підтверджуйте угоди',
     desc: 'Підтверджена угода зберігається в системі — ви бачите всю історію закупівель, обсяги і суми в одному місці.',
     tags: ['Підтвердження', 'Архів угод', 'Статистика'],
@@ -304,11 +304,11 @@ const steps = [
 ]
 
 const features = [
-  { icon: '🗂️', title: 'Каталог культур', desc: 'Вказуйте декілька культур з різними обсягами — фермери бачать точно що вам потрібно' },
-  { icon: '🔔', title: 'Пропозиції в реальному часі', desc: 'Фермери надсилають пропозиції напряму у ваш чат — жодних пропущених зв\'язків' },
-  { icon: '📊', title: 'Статистика закупівель', desc: 'Кількість угод і загальний обсяг закуплених тонн відображаються у вашому профілі' },
-  { icon: '🌍', title: 'Фермери з усієї України', desc: 'Знаходьте постачальників у потрібному регіоні — фільтруйте за культурою і областю' },
-  { icon: '⭐', title: 'Рейтинг і відгуки', desc: 'Репутація формується на основі завершених угод — чесно і прозоро для обох сторін' },
-  { icon: '🚀', title: 'Без посередників', desc: 'Пряма комунікація з фермером — ніяких зайвих ланок і прихованих комісій' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/></svg>', title: 'Каталог культур', desc: 'Вказуйте декілька культур з різними обсягами — фермери бачать точно що вам потрібно' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>', title: 'Пропозиції в реальному часі', desc: 'Фермери надсилають пропозиції напряму у ваш чат — жодних пропущених зв\'язків' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>', title: 'Статистика закупівель', desc: 'Кількість угод і загальний обсяг закуплених тонн відображаються у вашому профілі' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>', title: 'Фермери з усієї України', desc: 'Знаходьте постачальників у потрібному регіоні — фільтруйте за культурою і областю' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', title: 'Рейтинг і відгуки', desc: 'Репутація формується на основі завершених угод — чесно і прозоро для обох сторін' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>', title: 'Без посередників', desc: 'Пряма комунікація з фермером — ніяких зайвих ланок і прихованих комісій' },
 ]
 </script>

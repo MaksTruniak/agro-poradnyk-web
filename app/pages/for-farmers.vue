@@ -267,25 +267,25 @@ useSeoMeta({
 
 const steps = [
   {
-    icon: '🗺️',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>',
     title: 'Додайте свої поля',
     desc: 'Введіть назву поля, площу в гектарах і регіон. Вкажіть кадастровий номер якщо є. Можна додати скільки завгодно полів.',
     tags: ['Назва і площа', 'Кадастровий номер', 'Регіон'],
   },
   {
-    icon: '🌱',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 8 10 6 7c3 0 5 1 6 5z"/><path d="M12 12c0 0 4-2 6-5-3 0-5 1-6 5z"/></svg>',
     title: 'Вкажіть культури і сорти',
     desc: 'Для кожного поля додайте що вирощуєте — пшеницю, кукурудзу, соняшник тощо. Обирайте сорти з бази або додавайте свої. Система перевірить щоб сума площ не перевищувала площу поля.',
     tags: ['База культур', 'Сорти', 'Площа культури'],
   },
   {
-    icon: '🛡️',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
     title: 'Отримайте технологічну карту',
     desc: 'Для кожної культури сформуйте схему обробки — фунгіциди, інсектициди, гербіциди по фазах розвитку. Або запитайте агронома напряму в чаті.',
     tags: ['Схема обробки', 'Фази розвитку', 'Чат з агрономом'],
   },
   {
-    icon: '🛒',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg>',
     title: 'Замовляйте препарати онлайн',
     desc: 'Знайдіть потрібний препарат в каталозі, порівняйте пропозиції продавців і замовте з доставкою Новою Поштою або Укрпоштою.',
     tags: ['Тисячі препаратів', 'Порівняння цін', 'Доставка НП'],
@@ -293,11 +293,11 @@ const steps = [
 ]
 
 const features = [
-  { icon: '📊', title: 'Аналітика господарства', desc: 'Загальна площа, розбивка по культурах, порівняння по роках — все на одному екрані' },
-  { icon: '🔔', title: 'Нагадування про обробки', desc: 'Встановіть дату і отримайте нагадування — більше ніяких пропущених обробок' },
-  { icon: '🤖', title: 'AI агроном 24/7', desc: 'Задайте питання AI-асистенту і отримайте відповідь одразу — в будь-який час доби' },
-  { icon: '👨‍🌾', title: 'Живий агроном', desc: 'Знайдіть перевіреного агронома у вашому регіоні і консультуйтесь у чаті' },
-  { icon: '🤝', title: 'Поділіться полями з агрономом', desc: 'Надайте агроному доступ до ваших полів щоб він бачив культури і міг давати точніші рекомендації' },
-  { icon: '🔄', title: 'Журнал сівозміни', desc: 'Ведіть облік культур по роках на кожному полі і відстежуйте врожайність т/га' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>', title: 'Аналітика господарства', desc: 'Загальна площа, розбивка по культурах, порівняння по роках — все на одному екрані' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>', title: 'Нагадування про обробки', desc: 'Встановіть дату і отримайте нагадування — більше ніяких пропущених обробок' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg>', title: 'AI агроном 24/7', desc: 'Задайте питання AI-асистенту і отримайте відповідь одразу — в будь-який час доби' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>', title: 'Живий агроном', desc: 'Знайдіть перевіреного агронома у вашому регіоні і консультуйтесь у чаті' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>', title: 'Поділіться полями з агрономом', desc: 'Надайте агроному доступ до ваших полів щоб він бачив культури і міг давати точніші рекомендації' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10"/></svg>', title: 'Журнал сівозміни', desc: 'Ведіть облік культур по роках на кожному полі і відстежуйте врожайність т/га' },
 ]
 </script>

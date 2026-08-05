@@ -106,7 +106,7 @@ useSeoMeta({
 
 const steps = [
   {
-    icon: '🏪',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
     title: 'Зареєструйтесь як продавець',
     desc: 'Оберіть роль "Продавець" при реєстрації. Заповніть профіль магазину — назва компанії, регіон, телефон і короткий опис. Це займе 2 хвилини.',
     tags: ['Назва магазину', 'Контакти', 'Регіон'],
@@ -124,7 +124,7 @@ const steps = [
     tags: ['Нова Пошта', 'Укрпошта', 'Самовивіз'],
   },
   {
-    icon: '🛒',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg>',
     title: 'Отримуйте замовлення',
     desc: 'Покупець оформлює замовлення і ви отримуєте повідомлення. В кабінеті бачите контакти покупця, адресу доставки і всі деталі. Підтвердіть або скасуйте одним кліком.',
     tags: ['Контакти покупця', 'Адреса доставки', 'Зміна статусу'],
@@ -132,11 +132,11 @@ const steps = [
 ]
 
 const features = [
-  { icon: '📊', title: 'Статистика продажів', desc: 'Кількість товарів, замовлень і загальна виручка — на головній сторінці кабінету' },
-  { icon: '🛒', title: 'Управління замовленнями', desc: 'Всі замовлення в одному місці з контактами покупців. Змінюйте статус одним кліком — підтверджено, відправлено, виконано' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>', title: 'Статистика продажів', desc: 'Кількість товарів, замовлень і загальна виручка — на головній сторінці кабінету' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg>', title: 'Управління замовленнями', desc: 'Всі замовлення в одному місці з контактами покупців. Змінюйте статус одним кліком — підтверджено, відправлено, виконано' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.27 6.96L12 12l8.73-5.04M12 22V12"/></svg>', title: 'Облік залишків', desc: 'Система автоматично зменшує залишок коли оформляється замовлення. Товар зникає з каталогу коли залишок = 0' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', title: 'Гнучка доставка', desc: 'Оберіть зручні способи доставки — НП, Укрпошта або самовивіз. Вкажіть адресу самовивозу для покупців' },
-  { icon: '🔍', title: 'Видимість в каталозі', desc: 'Ваші товари відображаються в загальному каталозі препаратів який переглядають тисячі фермерів і дачників' },
-  { icon: '💬', title: 'Чат з покупцями', desc: 'Покупці можуть написати вам напряму щоб уточнити наявність, ціну або домовитись про доставку' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>', title: 'Видимість в каталозі', desc: 'Ваші товари відображаються в загальному каталозі препаратів який переглядають тисячі фермерів і дачників' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>', title: 'Чат з покупцями', desc: 'Покупці можуть написати вам напряму щоб уточнити наявність, ціну або домовитись про доставку' },
 ]
 </script>

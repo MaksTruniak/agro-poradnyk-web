@@ -13,7 +13,9 @@
     </div>
 
     <div v-else-if="!farmer" class="text-center py-20">
-      <p class="text-5xl mb-4">🌾</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg">Фермера не знайдено</p>
       <NuxtLink to="/farmers" class="text-agro text-sm mt-2 inline-block hover:underline">← До списку фермерів</NuxtLink>
     </div>
@@ -30,14 +32,14 @@
               <h1 class="text-2xl font-extrabold text-agro-dark">{{ farmer.name }}</h1>
               <span v-if="farmer.is_verified_farmer" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">✅ Перевірений фермер</span>
             </div>
-            <p v-if="farmer.city || farmer.region" class="text-agro-light mt-1">
-              📍 {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
+            <p v-if="farmer.city || farmer.region" class="text-agro-light mt-1 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
             </p>
             <p v-if="farmer.created_at" class="text-xs text-agro-light mt-2">
               На платформі з {{ formatDate(farmer.created_at) }}
             </p>
             <div class="flex items-center gap-1.5 mt-2">
-              <span class="text-amber-400">⭐</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               <template v-if="farmer.farmer_rating > 0">
                 <span class="font-bold text-agro-dark">{{ farmer.farmer_rating }}</span>
                 <span class="text-xs text-agro-light">({{ farmer.farmer_reviews_count }} {{ farmer.farmer_reviews_count === 1 ? 'оцінка' : farmer.farmer_reviews_count < 5 ? 'оцінки' : 'оцінок' }})</span>
@@ -87,7 +89,7 @@
             </div>
             <button v-if="uid !== farmerId" @click="openRequestModal(crop)"
               class="shrink-0 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap">
-              📩 Зробити запит
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Зробити запит
             </button>
           </div>
         </div>
@@ -102,7 +104,7 @@
       <div v-if="requestModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="requestModal.show = false" />
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
-          <h2 class="font-bold text-agro-dark text-lg mb-1">📩 Зробити запит</h2>
+          <h2 class="font-bold text-agro-dark text-lg mb-1 flex items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Зробити запит</h2>
           <p class="text-sm text-agro-light mb-4">{{ requestModal.crop?.crop_type }}{{ requestModal.crop?.variety ? ` · ${requestModal.crop.variety}` : '' }}</p>
           <div class="space-y-3 mb-5">
             <div>

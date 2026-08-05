@@ -29,7 +29,7 @@
       <div class="flex-1 min-w-0">
         <div class="relative mb-5">
           <input v-model="search" @input="onSearch" class="input pl-10" placeholder="Пошук шкідника..." />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
           <button v-if="search" @click="search = ''; offset = 0; syncUrl()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
         </div>
 
@@ -57,7 +57,9 @@
         </div>
 
         <div v-else class="card text-center py-16">
-          <p class="text-4xl mb-3">🐛</p>
+          <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg>
+          </div>
           <p class="font-bold text-agro-dark">Нічого не знайдено</p>
         </div>
 

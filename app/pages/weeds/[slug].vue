@@ -73,7 +73,9 @@
     </div>
 
     <div v-else class="card text-center py-20">
-      <p class="text-4xl mb-3">🌿</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>
+      </div>
       <p class="font-bold text-agro-dark">Бур'ян не знайдено</p>
       <NuxtLink to="/weeds" class="btn-primary mt-4 inline-block text-sm py-2 px-6">← До списку</NuxtLink>
     </div>

@@ -7,12 +7,16 @@
 
     <div class="grid md:grid-cols-2 gap-6 mb-12">
       <div class="card text-center">
-        <div class="text-3xl mb-3">📧</div>
+        <div class="w-12 h-12 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-3">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
         <h3 class="font-bold text-agro-dark mb-1">Email</h3>
         <a href="mailto:info@agroprostir.ua" class="text-agro hover:underline">info@agroprostir.ua</a>
       </div>
       <div class="card text-center">
-        <div class="text-3xl mb-3">💬</div>
+        <div class="w-12 h-12 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-3">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
         <h3 class="font-bold text-agro-dark mb-1">Telegram</h3>
         <a href="https://t.me/agroprostir" target="_blank" class="text-agro hover:underline">@agroprostir</a>
       </div>

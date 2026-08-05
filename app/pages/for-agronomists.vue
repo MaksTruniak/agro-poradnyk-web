@@ -197,25 +197,25 @@ useSeoMeta({
 
 const steps = [
   {
-    icon: '🔬',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>',
     title: 'Створіть профіль агронома',
     desc: 'Вкажіть спеціалізацію, досвід, регіон роботи і культури з якими працюєте. Завантажте фото — профілі з фото отримують вдвічі більше звернень.',
     tags: ['Спеціалізація', 'Досвід', 'Культури', 'Регіон'],
   },
   {
-    icon: '👨‍🌾',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>',
     title: 'Фермери знаходять вас',
     desc: 'Ваш профіль відображається в каталозі агрономів. Фермери шукають за регіоном і культурами і пишуть напряму в чат.',
     tags: ['Каталог агрономів', 'Пошук за регіоном', 'Пошук за культурою'],
   },
   {
-    icon: '🗺️',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>',
     title: 'Отримайте доступ до полів клієнта',
     desc: 'Фермер може поділитись полями з вами. Ви бачите всі культури, сорти і площі — і можете давати точніші рекомендації без зайвих запитань.',
     tags: ['Поля клієнта', 'Культури і сорти', 'Площі'],
   },
   {
-    icon: '💬',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
     title: 'Консультуйте в чаті',
     desc: 'Спілкуйтесь з фермерами у вбудованому чаті. Рекомендуйте препарати, схеми обробки, терміни проведення робіт — все в одному місці.',
     tags: ['Чат', 'Рекомендації препаратів', 'Схеми обробки'],
@@ -223,11 +223,11 @@ const steps = [
 ]
 
 const features = [
-  { icon: '💬', title: 'Чат з клієнтами', desc: 'Вбудований месенджер для консультацій — без сторонніх програм і передачі номерів телефонів' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>', title: 'Чат з клієнтами', desc: 'Вбудований месенджер для консультацій — без сторонніх програм і передачі номерів телефонів' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>', title: 'Поля клієнтів', desc: 'Фермери діляться полями і ви бачите всі дані — культури, сорти, площі по кожному полю' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'Програми захисту', desc: 'Складайте схеми обробки для клієнтів прямо в системі — по фазах розвитку культури' },
-  { icon: '🚀', title: 'Топ-просування', desc: 'Виходьте першими в результатах пошуку і отримуйте більше звернень від фермерів' },
-  { icon: '📊', title: 'Статистика профілю', desc: 'Бачте скільки фермерів переглянули ваш профіль і написали в чат' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>', title: 'Топ-просування', desc: 'Виходьте першими в результатах пошуку і отримуйте більше звернень від фермерів' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>', title: 'Статистика профілю', desc: 'Бачте скільки фермерів переглянули ваш профіль і написали в чат' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>', title: 'Власні поля', desc: 'Ведіть облік власного господарства паралельно з консультаційною діяльністю' },
 ]
 </script>

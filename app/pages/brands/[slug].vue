@@ -6,11 +6,11 @@
 
     <!-- Заголовок бренду -->
     <div class="card mb-8 flex items-center gap-6">
-      <div class="w-16 h-16 rounded-2xl bg-agro-hover flex items-center justify-center text-3xl shrink-0">🏭</div>
+      <div class="w-16 h-16 rounded-2xl bg-agro-hover flex items-center justify-center shrink-0"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg></div>
       <div>
         <p class="text-xs text-agro-light uppercase tracking-wider mb-1">Виробник</p>
         <h1 class="text-2xl font-extrabold text-agro-dark">{{ brand?.name || slug }}</h1>
-        <p v-if="brand?.country" class="text-agro-light text-sm mt-1">📍 {{ brand.country }}</p>
+        <p v-if="brand?.country" class="text-agro-light text-sm mt-1 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ brand.country }}</p>
       </div>
       <div v-if="brand?.website_url" class="ml-auto">
         <a :href="brand.website_url" target="_blank" class="btn-outline text-sm py-2">Сайт →</a>
@@ -33,7 +33,7 @@
         <div v-for="product in products" :key="product.slug" class="card hover:shadow-md transition-all group">
           <NuxtLink :to="`/pesticides/${product.slug}`" class="block">
             <div class="flex items-center justify-between mb-3">
-              <span class="text-3xl">{{ TYPE_EMOJI[product.type] || '🌿' }}</span>
+              <span class="w-8 h-8 flex items-center justify-center" v-html="typeIcon(product.type)"></span>
               <span class="text-xs font-semibold bg-agro-hover text-agro px-2.5 py-1 rounded-full">
                 {{ TYPE_LABELS[product.type] || product.type }}
               </span>
@@ -87,7 +87,7 @@
               <div>
                 <p class="font-bold text-agro text-xl leading-none mb-1">{{ offer.price }} грн</p>
                 <p class="text-sm font-semibold text-agro-dark">{{ offer.seller_profiles?.company_name }}</p>
-                <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light mt-0.5">📍 {{ offer.seller_profiles.region }}</p>
+                <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light mt-0.5 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ offer.seller_profiles.region }}</p>
               </div>
               <button @click="addToCart(offer.id)" :disabled="addingId === offer.id" class="btn-primary text-sm py-2.5 px-5 shrink-0 ml-4">
                 {{ addingId === offer.id ? '...' : 'В кошик' }}
@@ -118,11 +118,26 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const { brandToSlug } = await import('~/utils/cropSlugs')
 
-const TYPE_EMOJI: Record<string, string> = {
-  herbicide: '🌿', fungicide: '🧴', insecticide: '🐛', fertilizer: '💊',
-  seed: '🌱', growth_regulator: '📈', rodenticide: '🐀', biostimulator: '⚡',
-  adjuvant: '🔬', seed_treatment: '🛡️', desiccant: '☀️', inoculant: '🦠',
-  bio_product: '🍃', biofungicide: '🍄', liquid_complex_fertilizer: '💧',
+const LEAF_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>'
+const typeIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    herbicide: LEAF_SVG,
+    fungicide: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    insecticide: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg>',
+    fertilizer: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0c0-5-7-13-7-13z"/></svg>',
+    liquid_complex_fertilizer: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0c0-5-7-13-7-13z"/></svg>',
+    seed: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="5"/><path d="M12 8V4M9 6l3-3 3 3"/></svg>',
+    growth_regulator: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    rodenticide: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    adjuvant: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>',
+    seed_treatment: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>',
+    desiccant: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41"/></svg>',
+    biostimulator: LEAF_SVG,
+    bio_product: LEAF_SVG,
+    biofungicide: LEAF_SVG,
+    inoculant: LEAF_SVG,
+  }
+  return icons[type] || LEAF_SVG
 }
 
 const TYPE_LABELS: Record<string, string> = {

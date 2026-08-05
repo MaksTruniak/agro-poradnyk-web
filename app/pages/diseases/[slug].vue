@@ -20,8 +20,8 @@
           </div>
           <div class="flex-1">
             <div class="flex flex-wrap gap-2 mb-3">
-              <span v-if="disease.category?.name" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
-                {{ categoryEmoji(disease.category.slug) }} {{ disease.category.name }}
+              <span v-if="disease.category?.name" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium inline-flex items-center gap-1">
+                <span v-html="categoryIcon(disease.category.slug)"></span> {{ disease.category.name }}
               </span>
               <span v-if="disease.culture" class="text-xs bg-agro-bg text-agro-light px-2 py-1 rounded-full">{{ disease.culture }}</span>
             </div>
@@ -67,7 +67,9 @@
     </div>
 
     <div v-else class="card text-center py-20">
-      <p class="text-4xl mb-3">🦠</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </div>
       <p class="font-bold text-agro-dark">Хворобу не знайдено</p>
       <NuxtLink to="/diseases" class="btn-primary mt-4 inline-block text-sm py-2 px-6">← До списку</NuxtLink>
     </div>
@@ -83,11 +85,11 @@ const api = useAgroApi()
 const loading = ref(true)
 const disease = ref<any>(null)
 
-const categoryEmoji = (slug?: string) => {
-  if (slug === 'grib') return '🍄'
-  if (slug === 'virus') return '🦠'
-  if (slug === 'bakteriya') return '🔬'
-  return '🌱'
+const categoryIcon = (slug?: string): string => {
+  if (slug === 'grib') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+  if (slug === 'virus') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>'
+  if (slug === 'bakteriya') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2"/></svg>'
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>'
 }
 
 const { data } = await useAsyncData(`disease-${route.params.slug}`, () =>

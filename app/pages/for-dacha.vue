@@ -116,7 +116,7 @@ const steps = [
     tags: ['Діагностика хвороб', 'Визначення шкідників', 'Відповідь за секунди'],
   },
   {
-    icon: '🛒',
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg>',
     title: 'Замовте препарати з доставкою',
     desc: 'Знайдіть рекомендований препарат в каталозі і замовте з доставкою Новою Поштою прямо до вашого відділення — без поїздок в магазин.',
     tags: ['Тисячі препаратів', 'Порівняння цін', 'Доставка додому'],
@@ -127,9 +127,9 @@ const features = [
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg>', title: 'AI агроном 24/7', desc: 'Опишіть проблему — AI визначить хворобу або шкідника і порекомендує що застосувати' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'Схема обробки', desc: 'Готовий календар обробок по фазах розвитку культури — коли що і в якій дозі застосовувати' },
   { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/></svg>', title: 'Нагадування', desc: 'Встановіть нагадування про обробку і не пропустіть потрібний момент сезону' },
-  { icon: '💬', title: 'Живий агроном', desc: 'Якщо AI не дає відповіді — зверніться до живого агронома в чаті за мінімальну оплату' },
-  { icon: '🛒', title: 'Каталог препаратів', desc: 'Тисячі препаратів і добрив з пропозиціями продавців, описами і відгуками' },
-  { icon: '📖', title: 'База знань', desc: 'Інструкції по застосуванню, поради по догляду і відповіді на часті питання' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>', title: 'Живий агроном', desc: 'Якщо AI не дає відповіді — зверніться до живого агронома в чаті за мінімальну оплату' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg>', title: 'Каталог препаратів', desc: 'Тисячі препаратів і добрив з пропозиціями продавців, описами і відгуками' },
+  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>', title: 'База знань', desc: 'Інструкції по застосуванню, поради по догляду і відповіді на часті питання' },
 ]
 
 const crops = [

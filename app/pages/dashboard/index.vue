@@ -62,7 +62,7 @@
             </div>
             <div v-else class="space-y-3">
               <div v-for="r in nextReminders" :key="r.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
-                <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center text-lg shrink-0">{{ TYPE_EMOJI[r.type] || '🔔' }}</div>
+                <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0" v-html="reminderIcon(r.type)"></div>
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-agro-dark text-sm truncate">{{ r.description }}</p>
                   <p class="text-xs text-agro mt-0.5">{{ formatDate(r.scheduled_date) }}</p>
@@ -227,7 +227,7 @@
             </div>
             <div v-else class="space-y-3">
               <div v-for="r in nextReminders" :key="r.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
-                <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center text-lg shrink-0">{{ TYPE_EMOJI[r.type] || '🔔' }}</div>
+                <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0" v-html="reminderIcon(r.type)"></div>
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-agro-dark text-sm truncate">{{ r.description }}</p>
                   <p class="text-xs text-agro mt-0.5">{{ formatDate(r.scheduled_date) }}</p>
@@ -299,7 +299,16 @@ const nextReminders = ref<any[]>([])
 const recentChats = ref<any[]>([])
 const activeOrders = ref<any[]>([])
 
-const TYPE_EMOJI: Record<string, string> = { 'обробка': '', 'підживлення': '🌿', 'полив': '💧', 'посів': '🌱', 'збір': '🌾', 'інше': '🔔' }
+const reminderIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    'обробка': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    'підживлення': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>',
+    'полив': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0c0-5-7-13-7-13z"/></svg>',
+    'посів': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 8 10 6 7c3 0 5 1 6 5z"/><path d="M12 12c0 0 4-2 6-5-3 0-5 1-6 5z"/></svg>',
+    'збір': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>',
+  }
+  return icons[type] || '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>'
+}
 const STATUS_LABEL: Record<string, string> = { pending: 'Очікує', processing: 'Обробляється', shipped: 'Відправлено', completed: 'Виконано', cancelled: 'Скасовано' }
 const STATUS_ICON: Record<string, string> = {
   pending: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',

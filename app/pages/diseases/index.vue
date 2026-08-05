@@ -20,7 +20,7 @@
             @click="activeCategory = c.slug; offset = 0; syncUrl()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 flex items-center gap-2"
             :class="activeCategory === c.slug ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
-            <span>{{ c.emoji }}</span><span>{{ c.name }}</span>
+            <span v-html="categoryIcon(c.slug)"></span><span>{{ c.name }}</span>
           </button>
         </div>
         <!-- Культура -->
@@ -44,7 +44,7 @@
       <div class="flex-1 min-w-0">
         <div class="relative mb-5">
           <input v-model="search" @input="onSearch" class="input pl-10" placeholder="Пошук хвороби..." />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
           <button v-if="search" @click="search = ''; offset = 0; syncUrl()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
         </div>
 
@@ -72,7 +72,9 @@
         </div>
 
         <div v-else class="card text-center py-16">
-          <p class="text-4xl mb-3">🦠</p>
+          <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </div>
           <p class="font-bold text-agro-dark">Нічого не знайдено</p>
         </div>
 
@@ -93,9 +95,9 @@ definePageMeta({ layout: 'default' })
 useHead({ title: 'Хвороби рослин — АгроПростір' })
 
 const CATEGORIES = [
-  { slug: 'grib',      name: 'Гриб',     emoji: '🍄' },
-  { slug: 'virus',     name: 'Вірус',    emoji: '🦠' },
-  { slug: 'bakteriya', name: 'Бактерія', emoji: '🔬' },
+  { slug: 'grib',      name: 'Гриб'     },
+  { slug: 'virus',     name: 'Вірус'    },
+  { slug: 'bakteriya', name: 'Бактерія' },
 ]
 
 const CULTURES = [
@@ -103,11 +105,11 @@ const CULTURES = [
   'буряки', 'картопля', 'горох', 'жито', 'томати', 'огірки',
 ]
 
-const categoryEmoji = (slug?: string) => {
-  if (slug === 'grib') return '🍄'
-  if (slug === 'virus') return '🦠'
-  if (slug === 'bakteriya') return '🔬'
-  return '🌱'
+const categoryIcon = (slug?: string): string => {
+  if (slug === 'grib') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+  if (slug === 'virus') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>'
+  if (slug === 'bakteriya') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 5V3M12 21v-2M5 12H3M21 12h-2"/></svg>'
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>'
 }
 
 const api = useAgroApi()

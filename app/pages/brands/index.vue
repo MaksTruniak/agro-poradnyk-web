@@ -39,11 +39,11 @@
       >
         <div class="w-12 h-12 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 overflow-hidden">
           <img v-if="brand.logo_url" :src="brand.logo_url" :alt="brand.name" class="w-full h-full object-contain p-1" />
-          <span v-else class="text-2xl">🏭</span>
+          <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg>
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-agro-dark group-hover:text-agro transition-colors truncate">{{ brand.name }}</p>
-          <p v-if="brand.country" class="text-xs text-agro-light mt-0.5">📍 {{ brand.country }}</p>
+          <p v-if="brand.country" class="text-xs text-agro-light mt-0.5 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ brand.country }}</p>
           <p v-else class="text-xs text-agro-light mt-0.5">Виробник</p>
         </div>
       </NuxtLink>
@@ -51,7 +51,9 @@
 
     <!-- Порожньо -->
     <div v-else class="text-center py-16">
-      <p class="text-4xl mb-3">🔍</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
       <p class="text-agro-dark font-semibold">Нічого не знайдено</p>
       <p class="text-agro-light text-sm mt-1">Спробуйте інший запит</p>
     </div>

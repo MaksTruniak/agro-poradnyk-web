@@ -8,7 +8,7 @@
     <!-- Пошук + регіон -->
     <div class="flex flex-col sm:flex-row gap-3 mb-8">
       <div class="relative flex-1 max-w-xl">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         <input v-model="search" class="input pl-11" placeholder="Пошук за ім'ям або спеціалізацією..." />
       </div>
       <div class="relative" v-if="regions.length" @click.stop>
@@ -40,7 +40,9 @@
     </div>
 
     <div v-else-if="filtered.length === 0" class="text-center py-20">
-      <p class="text-5xl mb-4">🔍</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
     </div>
 

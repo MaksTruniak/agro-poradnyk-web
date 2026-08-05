@@ -13,7 +13,7 @@
         class="input pl-10 text-base"
         placeholder="Пошук за назвою..."
       />
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light text-lg">🔍</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
       <button v-if="search" @click="search = ''; load()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
     </div>
 
@@ -46,7 +46,9 @@
         :to="`/ingredient/${item.slug}`"
         class="card flex items-center gap-3 hover:shadow-md transition-shadow group"
       >
-        <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center text-lg shrink-0">🧪</div>
+        <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
         <div class="flex-1 min-w-0">
           <p class="font-semibold text-agro-dark text-sm group-hover:text-agro transition-colors truncate">{{ item.name }}</p>
         </div>
@@ -55,7 +57,9 @@
     </div>
 
     <div v-else class="card text-center py-16">
-      <p class="text-4xl mb-3">🔬</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
       <p class="font-bold text-agro-dark">Нічого не знайдено</p>
       <p class="text-agro-light text-sm mt-1">Спробуйте інший запит</p>
     </div>

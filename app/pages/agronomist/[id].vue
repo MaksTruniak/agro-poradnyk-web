@@ -13,7 +13,9 @@
     </div>
 
     <div v-else-if="!user" class="text-center py-20">
-      <p class="text-5xl mb-4">🌱</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 8 10 6 7c3 0 5 1 6 5z"/><path d="M12 12c0 0 4-2 6-5-3 0-5 1-6 5z"/></svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg">Агронома не знайдено</p>
       <NuxtLink to="/agronomists" class="text-agro text-sm mt-2 inline-block hover:underline">← До списку агрономів</NuxtLink>
     </div>
@@ -32,8 +34,8 @@
               <span v-if="user.is_verified_agronomist" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">✅ Перевірений агроном</span>
             </div>
             <p v-if="profile?.specialization" class="text-agro-light mt-1">{{ profile.specialization }}</p>
-            <p v-if="profile?.region || user.city" class="text-sm text-agro-light mt-0.5">
-              📍 {{ [user.city, profile?.region || user.region].filter(Boolean).join(', ') }}
+            <p v-if="profile?.region || user.city" class="text-sm text-agro-light mt-0.5 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ [user.city, profile?.region || user.region].filter(Boolean).join(', ') }}
             </p>
             <div v-if="profile?.rating > 0" class="flex items-center gap-1 mt-1.5">
               <span class="text-yellow-500 text-sm">★</span>
