@@ -10,10 +10,10 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-[#3B6D11] text-white font-semibold rounded-xl px-6 py-3 hover:bg-[#2E5A0A] transition-colors;
+    @apply bg-[#2F5233] text-[#FAF6EC] font-bold rounded-[10px] px-5 py-2.5 hover:bg-[#3D6B42] transition-colors inline-flex items-center gap-1.5;
   }
   .btn-outline {
-    @apply border-2 border-[#3B6D11] text-[#3B6D11] font-semibold rounded-xl px-6 py-3 hover:bg-[#EAF4DD] transition-colors box-border;
+    @apply border-2 border-[#2F5233] text-[#2F5233] font-bold rounded-[10px] px-5 py-2.5 hover:bg-[#EEF1E3] transition-colors box-border;
   }
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-[#E0EDCC] p-5;
