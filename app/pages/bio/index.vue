@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark">🍃 Біопрепарати</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l10-10"/><path d="M16 8c0-4-3-6-7-6C5 2 2 7 2 12c0 0 4-1 7-4 1.5 3 5 6 9 6 0-2-1-5-2-6z"/></svg> Біопрепарати</h1>
       <p class="text-agro-light mt-1">{{ total }} препаратів у базі</p>
     </div>
 
@@ -21,7 +21,7 @@
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 flex items-center gap-2"
             :class="activeType === t.slug ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'"
           >
-            <span>{{ t.emoji }}</span><span>{{ t.name }}</span>
+            <span v-html="t.emoji"></span><span>{{ t.name }}</span>
           </button>
         </div>
       </aside>
@@ -85,11 +85,11 @@ definePageMeta({ layout: 'default' })
 useHead({ title: 'Біопрепарати — АгроПростір' })
 
 const BIO_TYPES = [
-  { slug: 'bio_product',          name: 'Мікробні та гумінові', emoji: '🍃' },
-  { slug: 'biostimulator',        name: 'Біостимулятори',       emoji: '⚡' },
-  { slug: 'biofungicide',         name: 'Біофунгіциди',         emoji: '🍄' },
-  { slug: 'biological_fungicide', name: 'Біофунгіциди біол.',   emoji: '🌿' },
-  { slug: 'inoculant',            name: 'Інокулянти',           emoji: '🦠' },
+  { slug: 'bio_product',          name: 'Мікробні та гумінові', emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l10-10"/><path d="M16 8c0-4-3-6-7-6C5 2 2 7 2 12c0 0 4-1 7-4 1.5 3 5 6 9 6 0-2-1-5-2-6z"/></svg>' },
+  { slug: 'biostimulator',        name: 'Біостимулятори',       emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>' },
+  { slug: 'biofungicide',         name: 'Біофунгіциди',         emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+  { slug: 'biological_fungicide', name: 'Біофунгіциди біол.',   emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+  { slug: 'inoculant',            name: 'Інокулянти',           emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41"/></svg>' },
 ]
 
 const BIO_SLUGS = BIO_TYPES.map(t => t.slug)
