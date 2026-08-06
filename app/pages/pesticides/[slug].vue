@@ -133,7 +133,7 @@
 
         <!-- Аналоги -->
         <div v-if="analogs.length" class="card">
-          <p class="font-bold text-agro-dark mb-4">🔄 Аналоги</p>
+          <p class="font-bold text-agro-dark mb-4 flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10"/></svg> Аналоги</p>
           <div class="grid sm:grid-cols-2 gap-3">
             <NuxtLink
               v-for="a in analogs.slice(0, 6)"
@@ -239,7 +239,7 @@ const supabase = useSupabaseClient()
 const TYPE_EMOJI: Record<string, string> = {
   herbicide: '🌿', fungicide: '🧴', insecticide: '🐛', fertilizer: '💊',
   seed: '🌱', growth_regulator: '📈', rodenticide: '🐀', biostimulator: '⚡',
-  adjuvant: '🔬', seed_treatment: '🛡️', desiccant: '☀️', inoculant: '🦠',
+  adjuvant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6m-3 0v6l4 8H8l4-8V3"/></svg>', seed_treatment: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', desiccant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>', inoculant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41"/></svg>',
   bio_product: '🍃', biofungicide: '🍄', liquid_complex_fertilizer: '💧',
 }
 

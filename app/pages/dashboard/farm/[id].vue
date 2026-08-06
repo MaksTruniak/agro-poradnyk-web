@@ -193,7 +193,7 @@
       <div v-if="false" class="card">
         <div class="flex items-center justify-between mb-5">
           <div>
-            <h2 class="font-bold text-agro-dark text-lg">🔄 Сівозміна та врожайність</h2>
+            <h2 class="font-bold text-agro-dark text-lg flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10"/></svg> Сівозміна та врожайність</h2>
             <p class="text-agro-light text-sm mt-0.5">Облік культур і врожаю по роках</p>
           </div>
           <button @click="showAddRotation = true" class="btn-primary text-sm py-2">➕ Додати рік</button>

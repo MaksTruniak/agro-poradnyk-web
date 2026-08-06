@@ -121,7 +121,7 @@
 
         <!-- Аналоги -->
         <div v-if="analogs.length" class="card">
-          <p class="font-bold text-agro-dark mb-4">🔄 Аналоги</p>
+          <p class="font-bold text-agro-dark mb-4 flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10"/></svg> Аналоги</p>
           <div class="grid sm:grid-cols-2 gap-3">
             <NuxtLink
               v-for="a in analogs.slice(0, 6)"
