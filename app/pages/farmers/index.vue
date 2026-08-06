@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark">🌾 Фермери</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg> Фермери</h1>
       <p class="text-agro-light mt-1">Учасники спільноти АгроПростір</p>
     </div>
 
@@ -43,7 +43,7 @@
       </NuxtLink>
       <NuxtLink v-for="c in allCrops" :key="c" :to="`/farmers/${cropToSlug(c)}`"
         class="text-sm px-3 py-1.5 rounded-full border font-medium transition-colors bg-white text-agro-dark border-agro-border hover:border-agro">
-        {{ cropEmoji(c) }} {{ c }}
+        {{ c }}
       </NuxtLink>
     </div>
 
