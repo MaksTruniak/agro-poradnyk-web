@@ -1,6 +1,6 @@
 <template>
   <img v-if="cleanUrl" :src="cleanUrl" :alt="alt" :class="imgClass" loading="lazy" />
-  <span v-else :class="fallbackClass">{{ fallbackEmoji }}</span>
+  <span v-else :class="fallbackClass" v-html="fallbackEmoji"></span>
 </template>
 
 <script setup lang="ts">
