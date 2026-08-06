@@ -236,11 +236,24 @@ const slug = route.params.slug as string
 const api = useAgroApi()
 const supabase = useSupabaseClient()
 
+const S = 'rgb(107,122,100)', W = '1.6', R = 'round'
+const svg = (d: string) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${S}" stroke-width="${W}" stroke-linecap="${R}" stroke-linejoin="${R}">${d}</svg>`
 const TYPE_EMOJI: Record<string, string> = {
-  herbicide: '🌿', fungicide: '🧴', insecticide: '🐛', fertilizer: '💊',
-  seed: '🌱', growth_regulator: '📈', rodenticide: '🐀', biostimulator: '⚡',
-  adjuvant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6m-3 0v6l4 8H8l4-8V3"/></svg>', seed_treatment: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', desiccant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>', inoculant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(107,122,100)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41"/></svg>',
-  bio_product: '🍃', biofungicide: '🍄', liquid_complex_fertilizer: '💧',
+  herbicide:               svg('<path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/>'),
+  fungicide:               svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+  insecticide:             svg('<ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/>'),
+  fertilizer:              svg('<path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0c0-5-7-13-7-13z"/>'),
+  seed:                    svg('<circle cx="12" cy="13" r="5"/><path d="M12 8V4M9 6l3-3 3 3"/>'),
+  growth_regulator:        svg('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'),
+  rodenticide:             svg('<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
+  biostimulator:           svg('<path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/>'),
+  adjuvant:                svg('<path d="M9 3h6m-3 0v6l4 8H8l4-8V3"/>'),
+  seed_treatment:          svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+  desiccant:               svg('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>'),
+  inoculant:               svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41"/>'),
+  bio_product:             svg('<path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/>'),
+  biofungicide:            svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+  liquid_complex_fertilizer: svg('<path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0c0-5-7-13-7-13z"/>'),
 }
 
 const TYPE_LABELS: Record<string, string> = {
