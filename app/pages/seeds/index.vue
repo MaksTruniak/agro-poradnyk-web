@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark">🌾 Насіння</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-middle mr-2"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/></svg> Насіння</h1>
       <p class="text-agro-light mt-1">{{ total }} сортів у базі</p>
     </div>
 
@@ -22,7 +22,7 @@
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 flex items-center gap-2"
             :class="activeCrop === c.name ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'"
           >
-            <span>{{ c.emoji }}</span><span>{{ c.name }}</span>
+            <span v-html="c.emoji"></span><span>{{ c.name }}</span>
           </button>
         </div>
       </aside>
@@ -31,7 +31,7 @@
       <div class="flex-1 min-w-0">
         <div class="relative mb-5">
           <input v-model="search" @input="onSearch" class="input pl-10" placeholder="Пошук сорту або гібриду..." />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
           <button v-if="search" @click="search = ''; load()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
         </div>
 
@@ -64,7 +64,9 @@
         </div>
 
         <div v-else class="card text-center py-16">
-          <p class="text-4xl mb-3">🌾</p>
+          <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/></svg>
+          </div>
           <p class="font-bold text-agro-dark">Нічого не знайдено</p>
           <p class="text-agro-light text-sm mt-1">Спробуйте інший запит або культуру</p>
         </div>
@@ -85,48 +87,51 @@
 definePageMeta({ layout: 'default' })
 useHead({ title: 'Насіння — АгроПростір' })
 
+const GRAIN_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/></svg>'
+const LEAF_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>'
+
 const CROPS = [
-  { name: 'Кукурудза',       emoji: '🌽' },
-  { name: 'Соняшник',        emoji: '🌻' },
-  { name: 'Пшениця озима',   emoji: '🌾' },
-  { name: 'Пшениця яра',     emoji: '🌾' },
-  { name: 'Ріпак озимий',    emoji: '🟡' },
-  { name: 'Ріпак ярий',      emoji: '🟡' },
-  { name: 'Буряк цукровий',  emoji: '🟣' },
-  { name: 'Соя',             emoji: '🫘' },
-  { name: 'Картопля',        emoji: '🥔' },
-  { name: 'Ячмінь ярий',     emoji: '🌾' },
-  { name: 'Ячмінь озимий',   emoji: '🌾' },
-  { name: 'Горох',           emoji: '🫛' },
-  { name: 'Жито озиме',      emoji: '🌾' },
-  { name: 'Сорго',           emoji: '🌿' },
-  { name: 'Тритикале озиме', emoji: '🌾' },
-  { name: 'Овес',            emoji: '🌾' },
-  { name: 'Льон',            emoji: '💙' },
-  { name: 'Просо',           emoji: '🌿' },
-  { name: 'Вика',            emoji: '🌿' },
-  { name: 'Гречка',          emoji: '⬛' },
-  { name: 'Гірчиця',         emoji: '🟤' },
-  { name: 'Квасоля',         emoji: '🫘' },
-  { name: 'Кавун',           emoji: '🍉' },
-  { name: 'Нут',             emoji: '🫘' },
-  { name: 'Гарбузи',         emoji: '🎃' },
-  { name: 'Рис',             emoji: '🍚' },
-  { name: 'Коноплі',         emoji: '🌿' },
-  { name: 'Люпин',           emoji: '🌿' },
-  { name: 'Рижій',           emoji: '🌿' },
-  { name: 'Сориз',           emoji: '🌿' },
-  { name: 'Амарант',         emoji: '🌺' },
-  { name: 'Буряк кормовий',  emoji: '🟣' },
-  { name: 'Люцерна',         emoji: '🌿' },
-  { name: 'Чина',            emoji: '🌿' },
-  { name: 'Кінські боби',    emoji: '🫘' },
-  { name: 'Спельта',         emoji: '🌾' },
-  { name: 'Гірчиця біла',    emoji: '🟤' },
-  { name: 'Цибуля',          emoji: '🧅' },
-  { name: 'Сочевиця',        emoji: '🫘' },
-  { name: 'Морква',          emoji: '🥕' },
-  { name: 'Часник',          emoji: '🧄' },
+  { name: 'Кукурудза',       emoji: LEAF_SVG },
+  { name: 'Соняшник',        emoji: LEAF_SVG },
+  { name: 'Пшениця озима',   emoji: GRAIN_SVG },
+  { name: 'Пшениця яра',     emoji: GRAIN_SVG },
+  { name: 'Ріпак озимий',    emoji: LEAF_SVG },
+  { name: 'Ріпак ярий',      emoji: LEAF_SVG },
+  { name: 'Буряк цукровий',  emoji: LEAF_SVG },
+  { name: 'Соя',             emoji: LEAF_SVG },
+  { name: 'Картопля',        emoji: LEAF_SVG },
+  { name: 'Ячмінь ярий',     emoji: GRAIN_SVG },
+  { name: 'Ячмінь озимий',   emoji: GRAIN_SVG },
+  { name: 'Горох',           emoji: LEAF_SVG },
+  { name: 'Жито озиме',      emoji: GRAIN_SVG },
+  { name: 'Сорго',           emoji: LEAF_SVG },
+  { name: 'Тритикале озиме', emoji: GRAIN_SVG },
+  { name: 'Овес',            emoji: GRAIN_SVG },
+  { name: 'Льон',            emoji: LEAF_SVG },
+  { name: 'Просо',           emoji: LEAF_SVG },
+  { name: 'Вика',            emoji: LEAF_SVG },
+  { name: 'Гречка',          emoji: LEAF_SVG },
+  { name: 'Гірчиця',         emoji: LEAF_SVG },
+  { name: 'Квасоля',         emoji: LEAF_SVG },
+  { name: 'Кавун',           emoji: LEAF_SVG },
+  { name: 'Нут',             emoji: LEAF_SVG },
+  { name: 'Гарбузи',         emoji: LEAF_SVG },
+  { name: 'Рис',             emoji: GRAIN_SVG },
+  { name: 'Коноплі',         emoji: LEAF_SVG },
+  { name: 'Люпин',           emoji: LEAF_SVG },
+  { name: 'Рижій',           emoji: LEAF_SVG },
+  { name: 'Сориз',           emoji: LEAF_SVG },
+  { name: 'Амарант',         emoji: LEAF_SVG },
+  { name: 'Буряк кормовий',  emoji: LEAF_SVG },
+  { name: 'Люцерна',         emoji: LEAF_SVG },
+  { name: 'Чина',            emoji: LEAF_SVG },
+  { name: 'Кінські боби',    emoji: LEAF_SVG },
+  { name: 'Спельта',         emoji: GRAIN_SVG },
+  { name: 'Гірчиця біла',    emoji: LEAF_SVG },
+  { name: 'Цибуля',          emoji: LEAF_SVG },
+  { name: 'Сочевиця',        emoji: LEAF_SVG },
+  { name: 'Морква',          emoji: LEAF_SVG },
+  { name: 'Часник',          emoji: LEAF_SVG },
 ]
 
 const cropEmojiMap = Object.fromEntries(CROPS.map(c => [c.name, c.emoji]))

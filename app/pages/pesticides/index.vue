@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark">🛡️ Пестициди</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-middle mr-2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Пестициди</h1>
       <p class="text-agro-light mt-1">{{ total }} препаратів у базі</p>
     </div>
 
@@ -20,7 +20,7 @@
             @click="activeType = t.slug; offset = 0; syncUrl()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 flex items-center gap-2"
             :class="activeType === t.slug ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'">
-            <span>{{ t.emoji }}</span><span>{{ t.name }}</span>
+            <span v-html="t.emoji"></span><span>{{ t.name }}</span>
           </button>
         </div>
 
@@ -30,7 +30,7 @@
           <div class="relative mb-2">
             <input v-model="ingSearch" @input="onIngSearch" placeholder="Пошук..."
               class="input text-sm py-1.5 pl-8 pr-8" />
-            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-agro-light text-xs">🔍</span>
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-agro-light text-xs"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
             <button v-if="ingSearch" @click="ingSearch = ''; ingFiltered = ingredients"
               class="absolute right-2 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark text-xs">✕</button>
           </div>
@@ -58,7 +58,7 @@
       <div class="flex-1 min-w-0">
         <div class="relative mb-5">
           <input v-model="search" @input="onSearch" class="input pl-10" placeholder="Пошук препарату..." />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
           <button v-if="search" @click="search = ''; offset = 0; syncUrl()" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark">✕</button>
         </div>
 
@@ -97,7 +97,9 @@
         </div>
 
         <div v-else class="card text-center py-16">
-          <p class="text-4xl mb-3">🛡️</p>
+          <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
           <p class="font-bold text-agro-dark">Нічого не знайдено</p>
           <p class="text-agro-light text-sm mt-1">Спробуйте інший запит або тип</p>
         </div>
@@ -119,17 +121,17 @@ definePageMeta({ layout: 'default' })
 useHead({ title: 'Пестициди — АгроПростір' })
 
 const PESTICIDE_TYPES = [
-  { slug: 'herbicide',        name: 'Гербіциди',        emoji: '🌿' },
-  { slug: 'fungicide',        name: 'Фунгіциди',        emoji: '🧴' },
-  { slug: 'insecticide',      name: 'Інсектициди',      emoji: '🐛' },
-  { slug: 'acaricide',        name: 'Акарициди',        emoji: '🕷️' },
-  { slug: 'seed_treatment',   name: 'Протруйники',      emoji: '🛡️' },
-  { slug: 'rodenticide',      name: 'Родентициди',      emoji: '🐀' },
-  { slug: 'growth_regulator', name: 'Регулятори росту', emoji: '📈' },
-  { slug: 'retardant',        name: 'Ретарданти',       emoji: '🔽' },
-  { slug: 'desiccant',        name: 'Десиканти',        emoji: '☀️' },
-  { slug: 'adjuvant',         name: "Ад'юванти / ПАР",  emoji: '🔬' },
-  { slug: 'fumigant',         name: 'Фуміганти',        emoji: '💨' },
+  { slug: 'herbicide',        name: 'Гербіциди',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>' },
+  { slug: 'fungicide',        name: 'Фунгіциди',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>' },
+  { slug: 'insecticide',      name: 'Інсектициди',      emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/></svg>' },
+  { slug: 'acaricide',        name: 'Акарициди',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/></svg>' },
+  { slug: 'seed_treatment',   name: 'Протруйники',      emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+  { slug: 'rodenticide',      name: 'Родентициди',      emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>' },
+  { slug: 'growth_regulator', name: 'Регулятори росту', emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>' },
+  { slug: 'retardant',        name: 'Ретарданти',       emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>' },
+  { slug: 'desiccant',        name: 'Десиканти',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>' },
+  { slug: 'adjuvant',         name: "Ад'юванти / ПАР",  emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6m-3 0v6l4 8H8l4-8V3"/></svg>' },
+  { slug: 'fumigant',         name: 'Фуміганти',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>' },
 ]
 const PESTICIDE_SLUGS = PESTICIDE_TYPES.map(t => t.slug)
 

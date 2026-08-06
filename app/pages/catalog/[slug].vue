@@ -99,13 +99,13 @@
           <!-- Культури та шкідники -->
           <div v-if="product.crops?.length || product.pests?.length" class="mt-6 grid sm:grid-cols-2 gap-4">
             <div v-if="product.crops?.length">
-              <p class="font-bold text-agro-dark mb-2 text-sm uppercase tracking-wide">🌾 Культури</p>
+              <p class="font-bold text-agro-dark mb-2 text-sm uppercase tracking-wide"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/></svg> Культури</p>
               <div class="flex flex-wrap gap-1.5">
                 <span v-for="c in product.crops" :key="c" class="text-xs bg-agro-bg px-2 py-1 rounded-md text-agro-light">{{ c }}</span>
               </div>
             </div>
             <div v-if="product.pests?.length">
-              <p class="font-bold text-agro-dark mb-2 text-sm uppercase tracking-wide">🐛 Шкідники/хвороби</p>
+              <p class="font-bold text-agro-dark mb-2 text-sm uppercase tracking-wide"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/></svg> Шкідники/хвороби</p>
               <div class="flex flex-wrap gap-1.5">
                 <span v-for="p in product.pests" :key="p" class="text-xs bg-agro-bg px-2 py-1 rounded-md text-agro-light">{{ p }}</span>
               </div>
@@ -162,7 +162,7 @@
                 <div>
                   <p class="font-bold text-agro-dark">{{ offer.price }} грн</p>
                   <p class="text-xs text-agro-light">{{ offer.seller_profiles?.company_name }}</p>
-                  <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light">📍 {{ offer.seller_profiles.region }}</p>
+                  <p v-if="offer.seller_profiles?.region" class="text-xs text-agro-light"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> {{ offer.seller_profiles.region }}</p>
                 </div>
                 <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">В наявності</span>
               </div>
