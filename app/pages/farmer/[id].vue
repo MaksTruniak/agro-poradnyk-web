@@ -30,7 +30,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <h1 class="text-2xl font-extrabold text-agro-dark">{{ farmer.name }}</h1>
-              <span v-if="farmer.is_verified_farmer" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">✅ Перевірений фермер</span>
+              <span v-if="farmer.is_verified_farmer" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений фермер</span>
             </div>
             <p v-if="farmer.city || farmer.region" class="text-agro-light mt-1 flex items-center gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg> {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
@@ -48,8 +48,9 @@
             </div>
           </div>
           <button v-if="uid !== farmerId" @click="startChat" :disabled="starting"
-            class="btn-primary shrink-0 text-sm py-2.5 px-5">
-            {{ starting ? '...' : '💬 Написати' }}
+            class="btn-primary shrink-0 text-sm py-2.5 px-5 inline-flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            {{ starting ? '...' : 'Написати' }}
           </button>
         </div>
 
@@ -68,19 +69,20 @@
 
       <!-- Культури -->
       <div class="card" v-if="allCrops.length">
-        <h2 class="font-bold text-agro-dark text-lg mb-5">🌱 Що вирощує</h2>
+        <h2 class="font-bold text-agro-dark text-lg mb-5 flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg> Що вирощує</h2>
         <div class="divide-y divide-agro-border">
           <div v-for="crop in allCrops" :key="crop.id"
             class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-            <span class="text-2xl shrink-0">{{ cropEmoji(crop.crop_type) }}</span>
+            <span class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg></span>
             <div class="flex-1 min-w-0">
               <NuxtLink :to="`/farmers/${cropToSlug(crop.crop_type)}`"
                 class="font-semibold text-agro-dark hover:text-agro transition-colors">
                 {{ crop.crop_type }}
               </NuxtLink>
               <p v-if="crop.variety" class="text-xs text-agro-light">Сорт: {{ crop.variety }}</p>
-              <p v-if="crop.farm_city || crop.farm_region" class="text-xs text-agro-light">
-                📍 {{ [crop.farm_city, crop.farm_region].filter(Boolean).join(', ') }}
+              <p v-if="crop.farm_city || crop.farm_region" class="text-xs text-agro-light flex items-center gap-1">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg>
+                {{ [crop.farm_city, crop.farm_region].filter(Boolean).join(', ') }}
               </p>
             </div>
             <div class="text-right shrink-0 space-y-1">
@@ -88,8 +90,9 @@
               <p v-if="crop.planned_yield_t" class="text-xs text-agro-light">план {{ crop.planned_yield_t }} т/га</p>
             </div>
             <button v-if="uid !== farmerId" @click="openRequestModal(crop)"
-              class="shrink-0 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Зробити запит
+              class="shrink-0 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap inline-flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Зробити запит
             </button>
           </div>
         </div>
@@ -153,7 +156,7 @@ definePageMeta({ layout: 'default' })
 const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
-const { cropEmoji, cropToSlug } = await import('~/utils/cropSlugs')
+const { cropToSlug } = await import('~/utils/cropSlugs')
 
 const farmerId = route.params.id as string
 
