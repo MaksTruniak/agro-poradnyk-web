@@ -4,7 +4,7 @@
       <div class="flex items-center gap-2.5 mb-1.5">
         <div class="dash-icon-box">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M16 3l1.5 2 3-1.5"/>
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
         </div>
         <h1 class="dash-title bitter">Кабінет агронома</h1>
