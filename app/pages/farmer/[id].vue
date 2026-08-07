@@ -73,7 +73,9 @@
         <div class="divide-y divide-agro-border">
           <div v-for="crop in allCrops" :key="crop.id"
             class="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-            <span class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg></span>
+            <div class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 overflow-hidden">
+              <img :src="`/crops/${cropToSlug(crop.crop_type)}.svg`" :alt="crop.crop_type" class="w-6 h-6 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
+            </div>
             <div class="flex-1 min-w-0">
               <NuxtLink :to="`/farmers/${cropToSlug(crop.crop_type)}`"
                 class="font-semibold text-agro-dark hover:text-agro transition-colors">
