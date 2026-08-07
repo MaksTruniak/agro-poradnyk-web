@@ -15,15 +15,15 @@
         <!-- Ліва: Агрономи, Фермери -->
         <nav class="hidden md:flex items-center gap-5">
           <NuxtLink to="/agronomists"
-            class="font-medium transition-colors text-sm text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)]">
+            class="font-medium transition-colors text-sm text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)] relative pb-0.5 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[rgb(47,82,51)] after:scale-x-0 after:transition-transform [&.router-link-active]:text-[rgb(27,46,27)] [&.router-link-active]:after:scale-x-100">
             Агрономи
           </NuxtLink>
           <NuxtLink to="/farmers"
-            class="font-medium transition-colors text-sm text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)]">
+            class="font-medium transition-colors text-sm text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)] relative pb-0.5 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[rgb(47,82,51)] after:scale-x-0 after:transition-transform [&.router-link-active]:text-[rgb(27,46,27)] [&.router-link-active]:after:scale-x-100">
             Фермери
           </NuxtLink>
           <NuxtLink to="/buyers"
-            class="font-medium transition-colors text-sm text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)]">
+            class="font-medium transition-colors text-sm text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)] relative pb-0.5 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[rgb(47,82,51)] after:scale-x-0 after:transition-transform [&.router-link-active]:text-[rgb(27,46,27)] [&.router-link-active]:after:scale-x-100">
             Заготівельники
           </NuxtLink>
         </nav>
