@@ -83,11 +83,13 @@
 
         <!-- Кнопки -->
         <div class="flex gap-2">
-          <NuxtLink :to="`/agronomist/${agro.user_id}`" class="btn-outline flex-1 text-sm py-2.5 text-center">
+          <NuxtLink :to="`/agronomist/${agro.user_id}`" class="btn-outline flex-1 text-sm py-2.5 text-center inline-flex items-center justify-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
             Детально
           </NuxtLink>
-          <button @click="startChat(agro)" :disabled="starting === agro.id" class="btn-primary flex-1 text-sm py-2.5">
-            {{ starting === agro.id ? '...' : '💬 Написати' }}
+          <button @click="startChat(agro)" :disabled="starting === agro.id" class="btn-primary flex-1 text-sm py-2.5 inline-flex items-center justify-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            {{ starting === agro.id ? '...' : 'Написати' }}
           </button>
         </div>
       </div>
