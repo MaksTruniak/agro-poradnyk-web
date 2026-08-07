@@ -137,7 +137,8 @@
           </div>
           <div class="flex gap-3">
             <button @click="requestModal.show = false" class="btn-outline flex-1">Скасувати</button>
-            <button @click="submitRequest" :disabled="!requestModal.quantity || !requestModal.price || requestModal.saving" class="btn-primary flex-1">
+            <button @click="submitRequest" :disabled="!requestModal.quantity || !requestModal.price || requestModal.saving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               {{ requestModal.saving ? '...' : 'Надіслати' }}
             </button>
           </div>
