@@ -39,21 +39,27 @@
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
       <div v-for="buyer in filtered" :key="buyer.id" class="card hover:shadow-md transition-all flex flex-col text-left">
+        <!-- Role badge -->
+        <div class="flex items-center justify-between mb-3">
+          <span class="inline-flex items-center gap-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg>
+            Заготівельник
+          </span>
+          <div class="flex items-center gap-1.5">
+            <span v-if="buyer.buyer_rating > 0" class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600"><svg width="11" height="11" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> {{ buyer.buyer_rating }}</span>
+            <span v-if="buyer.is_verified_buyer" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-semibold"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений</span>
+          </div>
+        </div>
+
         <div class="flex items-center gap-3 mb-4">
           <div class="w-12 h-12 rounded-2xl bg-agro-hover flex items-center justify-center font-bold text-agro text-xl shrink-0">
             {{ buyer.name?.[0]?.toUpperCase() || '?' }}
           </div>
           <div class="flex-1 min-w-0">
             <NuxtLink :to="`/buyers/${buyer.id}`" class="font-bold text-agro-dark hover:text-agro transition-colors block truncate">{{ buyer.name }}</NuxtLink>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <p class="text-sm text-agro-light truncate">
-                <template v-if="buyer.city || buyer.region"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg>{{ [buyer.city, buyer.region].filter(Boolean).join(', ') }}</template><template v-else><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg>Заготівельник</template>
-              </p>
-              <span v-if="buyer.is_verified_buyer" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-semibold shrink-0"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений</span>
-            </div>
-          </div>
-          <div v-if="buyer.buyer_rating > 0" class="text-right shrink-0">
-            <p class="text-sm font-bold text-amber-500 flex items-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> {{ buyer.buyer_rating }}</p>
+            <p class="text-sm text-agro-light truncate">
+              <template v-if="buyer.city || buyer.region"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg>{{ [buyer.city, buyer.region].filter(Boolean).join(', ') }}</template><template v-else>&nbsp;</template>
+            </p>
           </div>
         </div>
 
@@ -62,17 +68,21 @@
           <div class="flex flex-wrap gap-1.5">
             <span v-for="c in buyer.crops" :key="c.id"
               class="text-xs px-2 py-0.5 rounded-full border bg-agro-bg text-agro-dark border-agro-border">
-              {{ c.crop_type }}
-              <span v-if="c.min_qty || c.max_qty" class="text-agro-light">
-                · {{ c.min_qty || '—' }}–{{ c.max_qty || '—' }} {{ c.unit }}
-              </span>
+              {{ c.crop_type }}<span v-if="c.min_qty || c.max_qty" class="text-agro-light"> · {{ c.min_qty || '—' }}–{{ c.max_qty || '—' }} {{ c.unit }}</span>
             </span>
           </div>
         </div>
 
-        <NuxtLink :to="`/buyers/${buyer.id}`" class="btn-primary w-full text-sm py-2.5 text-center block mt-auto">
-          Детально →
-        </NuxtLink>
+        <div class="flex gap-2 mt-auto">
+          <NuxtLink :to="`/buyers/${buyer.id}`" class="btn-outline flex-1 text-sm py-2.5 text-center inline-flex items-center justify-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+            Детально
+          </NuxtLink>
+          <button @click="startChat(buyer)" :disabled="starting === buyer.id" class="btn-primary flex-1 text-sm py-2.5 inline-flex items-center justify-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            {{ starting === buyer.id ? '...' : 'Написати' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -83,12 +93,32 @@ definePageMeta({ layout: 'default' })
 useSeoMeta({ title: 'Заготівельники — АгроПростір' })
 
 const supabase = useSupabaseClient()
-const { cropEmoji } = await import('~/utils/cropSlugs')
+const router = useRouter()
 
 const search = ref('')
 const cropFilter = ref('')
 const buyers = ref<any[]>([])
 const loading = ref(true)
+const starting = ref('')
+
+const startChat = async (buyer: any) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) { navigateTo('/auth'); return }
+  const uid = session.user.id
+  if (uid === buyer.id) return
+  starting.value = buyer.id
+  const { data: existing } = await supabase.from('chats').select('id')
+    .eq('farmer_id', uid).eq('agronomist_id', buyer.id).eq('type', 'human').single()
+  if (existing) { router.push(`/dashboard/chats/${existing.id}`); return }
+  const { data: existing2 } = await supabase.from('chats').select('id')
+    .eq('farmer_id', buyer.id).eq('agronomist_id', uid).eq('type', 'human').single()
+  if (existing2) { router.push(`/dashboard/chats/${existing2.id}`); return }
+  const { data: newChat } = await supabase.from('chats')
+    .insert({ farmer_id: uid, agronomist_id: buyer.id, type: 'human', is_unlocked: true })
+    .select().single()
+  starting.value = ''
+  if (newChat) router.push(`/dashboard/chats/${newChat.id}`)
+}
 
 const { data } = await supabase
   .from('users')
