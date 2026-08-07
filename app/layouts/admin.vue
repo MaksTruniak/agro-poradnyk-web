@@ -37,6 +37,12 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg>
           Бренди
         </NuxtLink>
+        <NuxtLink to="/admin/products"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+          :class="$route.path === '/admin/products' ? 'bg-agro-hover text-agro' : 'text-agro-light hover:bg-agro-bg hover:text-agro-dark'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          Товари
+        </NuxtLink>
       </nav>
       <div class="p-3 border-t border-agro-border">
         <NuxtLink to="/" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-agro-light hover:bg-agro-bg hover:text-agro-dark transition-colors mb-1">
