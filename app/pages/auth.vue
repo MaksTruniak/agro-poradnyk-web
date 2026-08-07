@@ -78,8 +78,8 @@
                 : 'border-[rgb(225,219,198)] bg-white hover:border-[#2F5233]/40'"
             >
               <div class="shrink-0 w-10 h-10 rounded-[10px] bg-[rgb(238,241,227)] flex items-center justify-center">
-                <svg v-if="r.value === 'farmer'" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/>
+                <svg v-if="r.value === 'farmer'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/>
                 </svg>
                 <svg v-else-if="r.value === 'agronomist'" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <circle cx="10" cy="9" r="4.5" stroke="#2F5233" stroke-width="1.6"/>
@@ -222,14 +222,16 @@
 }
 .auth-input:focus { border-color: #2F5233; }
 .auth-btn {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 15px;
   border-radius: 12px;
   background: rgb(47, 82, 51);
   color: rgb(250, 246, 236);
   font-weight: 700;
   font-size: 15.5px;
-  text-align: center;
   border: none;
   cursor: pointer;
   transition: background 0.15s;
