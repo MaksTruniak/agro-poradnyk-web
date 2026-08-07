@@ -135,7 +135,32 @@
               </div>
               <div>
                 <label class="block text-xs font-semibold text-agro-dark mb-1">Форма випуску</label>
-                <input v-model="modal.form.formulation" class="input text-sm" placeholder="ВР, КС, СП..." />
+                <select v-model="modal.form.formulation_name" class="input text-sm">
+                  <option value="">— не вказано —</option>
+                  <optgroup label="Рідкі">
+                    <option value="ВР">ВР — водний розчин</option>
+                    <option value="КЕ">КЕ — концентрат емульсії</option>
+                    <option value="КС">КС — концентрат суспензії</option>
+                    <option value="МЕ">МЕ — мікроемульсія</option>
+                    <option value="СЕ">СЕ — суспо-емульсія</option>
+                    <option value="ОД">ОД — олійна дисперсія</option>
+                    <option value="ЕВ">ЕВ — емульсія вода в олії</option>
+                  </optgroup>
+                  <optgroup label="Тверді / порошки">
+                    <option value="ВДГ">ВДГ — водно-диспергований гранулят</option>
+                    <option value="ВГ">ВГ — водорозчинні гранули</option>
+                    <option value="ЗП">ЗП — змочуваний порошок</option>
+                    <option value="СП">СП — смочуваний порошок</option>
+                    <option value="ВП">ВП — водорозчинний порошок</option>
+                    <option value="ГР">ГР — гранули</option>
+                    <option value="ТАБ">ТАБ — таблетки</option>
+                    <option value="КД">КД — капсульна дисперсія</option>
+                  </optgroup>
+                  <optgroup label="Спеціальні">
+                    <option value="ТН">ТН — текучий концентрат</option>
+                    <option value="РКД">РКД — рідке комплексне добриво</option>
+                  </optgroup>
+                </select>
               </div>
             </div>
 
@@ -224,7 +249,7 @@ const modal = reactive({
   imgPreview: '',
   form: {
     name: '', slug: '', type: '', manufacturer_slug: '',
-    source_image_url: '', chem_class: '', formulation: '', dosage: '', description: '', crops_str: '',
+    source_image_url: '', chem_class: '', formulation_name: '', dosage: '', description: '', crops_str: '',
   },
 })
 
@@ -277,13 +302,13 @@ const openModal = async (product: any) => {
       manufacturer_slug: product.manufacturer_slug ?? '',
       source_image_url: product.source_image_url ?? '',
       chem_class: details?.chem_class ?? '',
-      formulation: details?.formulation ?? '',
+      formulation_name: product.formulation_name ?? '',
       dosage: details?.dosage ?? '',
       description: details?.description ?? '',
       crops_str: (product.crops || []).join(', '),
     }
   } else {
-    modal.form = { name: '', slug: '', type: '', manufacturer_slug: '', source_image_url: '', chem_class: '', formulation: '', dosage: '', description: '', crops_str: '' }
+    modal.form = { name: '', slug: '', type: '', manufacturer_slug: '', source_image_url: '', chem_class: '', formulation_name: '', dosage: '', description: '', crops_str: '' }
   }
   modal.show = true
 }
@@ -317,12 +342,12 @@ const save = async () => {
     type: modal.form.type,
     manufacturer_slug: modal.form.manufacturer_slug || null,
     source_image_url: imageUrl || null,
+    formulation_name: modal.form.formulation_name || null,
     crops,
   }
 
   const detailsPayload = {
     chem_class: modal.form.chem_class || null,
-    formulation: modal.form.formulation || null,
     dosage: modal.form.dosage || null,
     description: modal.form.description || null,
   }
