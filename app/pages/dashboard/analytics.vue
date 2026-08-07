@@ -173,9 +173,14 @@
         </div>
 
         <div v-if="!salesChartData.length" class="text-center py-12 text-agro-light">
-          <p class="text-4xl mb-3">📊</p>
-          <p class="text-sm">Немає даних за {{ selectedYear }} рік</p>
-          <NuxtLink to="/dashboard/deals" class="text-agro text-sm hover:underline mt-1 inline-block">Додати продаж →</NuxtLink>
+          <div class="w-14 h-14 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <p class="text-sm font-medium text-agro-dark">Немає даних за {{ selectedYear }} рік</p>
+          <NuxtLink to="/dashboard/deals" class="btn-outline text-sm py-2 px-4 mt-4 inline-flex items-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Додати продаж
+          </NuxtLink>
         </div>
 
         <div v-else class="space-y-5">
