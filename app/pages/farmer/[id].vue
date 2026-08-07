@@ -91,7 +91,7 @@
               <p v-if="crop.area_ha" class="text-sm font-medium text-agro-dark">{{ crop.area_ha }} га</p>
               <p v-if="crop.planned_yield_t" class="text-xs text-agro-light">план {{ crop.planned_yield_t }} т/га</p>
             </div>
-            <button v-if="uid !== farmerId" @click="openRequestModal(crop)"
+            <button v-if="canRequest" @click="openRequestModal(crop)"
               class="shrink-0 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap inline-flex items-center gap-1.5">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               Зробити запит
@@ -168,6 +168,14 @@ const requestModal = reactive({ show: false, crop: null as any, quantity: 0, uni
 
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
+
+const { data: myProfile } = uid
+  ? await supabase.from('users').select('role').eq('id', uid).single()
+  : { data: null }
+const myRole = myProfile?.role || null
+
+// Тільки покупці можуть робити запити на закупівлю
+const canRequest = computed(() => uid && uid !== farmerId && myRole === 'buyer')
 const canChat = computed(() => uid && uid !== farmerId)
 
 const allCrops = computed(() => {
