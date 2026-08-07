@@ -81,15 +81,15 @@
               </span>
             </div>
             <div class="flex gap-2">
-              <NuxtLink :to="`/dashboard/farm/${farm.id}?readOnly=1`" class="btn-outline text-sm py-2 flex-1 text-center block">
-                👁 Переглянути
+              <NuxtLink :to="`/dashboard/farm/${farm.id}?readOnly=1`" class="btn-outline text-sm py-2 flex-1 text-center inline-flex items-center justify-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="6"/><circle cx="12" cy="12" r="2.5"/></svg> Переглянути
               </NuxtLink>
               <NuxtLink :to="`/dashboard/protection/${farm.id}`" class="btn-primary text-sm py-2 flex-1 text-center block">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Програма
               </NuxtLink>
             </div>
             <button @click="openReminderModal(farm, group)" class="w-full mt-2 flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-agro-border text-sm font-medium text-agro-light hover:border-agro hover:text-agro transition-colors">
-              🔔 Нагадати фермеру
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg> Нагадати фермеру
             </button>
           </div>
         </div>

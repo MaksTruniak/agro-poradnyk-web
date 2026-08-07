@@ -107,7 +107,7 @@
         <div class="card">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <p class="font-bold text-agro-dark">🎓 Диплом / сертифікат</p>
+              <p class="font-bold text-agro-dark flex items-center gap-1.5"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Диплом / сертифікат</p>
               <p class="text-xs text-agro-light mt-0.5">Профільна освіта або курси</p>
             </div>
             <button
@@ -262,9 +262,9 @@ const allCrops = ref<any[]>([])
 const selectedCrops = ref<string[]>([])
 
 const tabs = [
-  { key: 'main', label: '📋 Основне' },
-  { key: 'education', label: '🎓 Освіта' },
-  { key: 'crops', label: '🌱 Культури' },
+  { key: 'main', label: 'Основне' },
+  { key: 'education', label: 'Освіта' },
+  { key: 'crops', label: 'Культури' },
 ]
 
 const form = reactive({

@@ -24,8 +24,9 @@
     <template v-else>
     <!-- Поточний план -->
     <div class="card mb-8 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-xl bg-agro-hover flex items-center justify-center text-2xl">
-        {{ currentPlan === 'pro' ? '⭐' : '🌱' }}
+      <div class="w-12 h-12 rounded-xl bg-agro-hover flex items-center justify-center">
+        <svg v-if="currentPlan === 'pro'" width="22" height="22" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
       </div>
       <div class="flex-1">
         <p class="text-xs text-agro-light uppercase tracking-wide">Поточний план</p>
@@ -40,7 +41,7 @@
       <!-- Базовий -->
       <div class="card border-2" :class="currentPlan === 'basic' ? 'border-agro' : 'border-agro-border'">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="font-bold text-agro-dark text-xl">🌱 Базовий</h2>
+          <h2 class="font-bold text-agro-dark text-xl flex items-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg> Базовий</h2>
           <span v-if="currentPlan === 'basic'" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
         </div>
         <p class="text-3xl font-extrabold text-agro-dark mb-1">Безкоштовно</p>
@@ -59,7 +60,7 @@
       <div class="card border-2 relative overflow-hidden" :class="currentPlan === 'pro' ? 'border-agro' : 'border-agro-border'">
         <div class="absolute top-4 right-4 bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full">ПОПУЛЯРНИЙ</div>
         <div class="flex items-center justify-between mb-4">
-          <h2 class="font-bold text-agro-dark text-xl">⭐ PRO</h2>
+          <h2 class="font-bold text-agro-dark text-xl flex items-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> PRO</h2>
           <span v-if="currentPlan === 'pro'" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
         </div>
         <p class="text-3xl font-extrabold text-agro-dark mb-1">500 <span class="text-lg font-semibold">грн</span></p>
@@ -82,7 +83,7 @@
 
     <!-- FAQ -->
     <div class="card">
-      <h2 class="font-bold text-agro-dark mb-4">❓ Питання та відповіді</h2>
+      <h2 class="font-bold text-agro-dark mb-4 flex items-center gap-1.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg> Питання та відповіді</h2>
       <div class="space-y-4">
         <div v-for="q in FAQ" :key="q.q">
           <p class="font-medium text-agro-dark text-sm">{{ q.q }}</p>
@@ -99,7 +100,7 @@
         <div v-if="showPayment" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showPayment = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-8 text-center">
-            <p class="text-5xl mb-4">💳</p>
+            <div class="w-14 h-14 rounded-2xl bg-agro-hover flex items-center justify-center mx-auto mb-4"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></div>
             <h2 class="font-bold text-agro-dark text-xl mb-2">Оплата PRO плану</h2>
             <p class="text-agro-light text-sm mb-6">500 грн / рік — доступ до всіх PRO функцій</p>
             <div class="bg-agro-bg rounded-xl p-4 mb-6 text-left space-y-2">
