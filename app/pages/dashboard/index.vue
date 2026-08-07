@@ -383,7 +383,7 @@ onMounted(async () => {
 
     const lastMsgByChat: Record<string, string> = {}
     for (const m of (lastMsgsRes.data || [])) {
-      if (!lastMsgByChat[m.chat_id]) lastMsgByChat[m.chat_id] = m.content?.startsWith('[deal:') ? '💰 Пропозиція угоди' : m.content
+      if (!lastMsgByChat[m.chat_id]) lastMsgByChat[m.chat_id] = m.content?.startsWith('[deal:') ? 'Пропозиція угоди' : m.content
     }
     const farmerMap: Record<string, string> = Object.fromEntries((farmersRes.data || []).map((u: any) => [u.id, u.name]))
     const unreadByChat: Record<string, number> = {}
@@ -423,7 +423,7 @@ onMounted(async () => {
 
     const lastMsgByChat: Record<string, string> = {}
     for (const m of (lastMsgsRes.data || [])) {
-      if (!lastMsgByChat[m.chat_id]) lastMsgByChat[m.chat_id] = m.content?.startsWith('[deal:') ? '💰 Пропозиція угоди' : m.content
+      if (!lastMsgByChat[m.chat_id]) lastMsgByChat[m.chat_id] = m.content?.startsWith('[deal:') ? 'Пропозиція угоди' : m.content
     }
     const farmerMap: Record<string, string> = Object.fromEntries((farmersRes.data || []).map((u: any) => [u.id, u.name]))
     const unreadByChat: Record<string, number> = {}

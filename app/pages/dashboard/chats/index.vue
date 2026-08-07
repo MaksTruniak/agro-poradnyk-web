@@ -109,7 +109,7 @@ const load = async () => {
     return {
       ...chat,
       interlocutorName: userRes.data?.name || 'Користувач',
-      last_message: lastMsgRes.data?.content?.startsWith('[deal:') ? '💰 Пропозиція угоди' : (lastMsgRes.data?.content || null),
+      last_message: lastMsgRes.data?.content?.startsWith('[deal:') ? 'Пропозиція угоди' : (lastMsgRes.data?.content || null),
       last_message_at: lastMsgRes.data?.created_at || chat.created_at,
       unread: unreadRes.count || 0,
       has_confirmed_deal: (dealRes.count || 0) > 0,
