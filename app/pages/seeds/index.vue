@@ -1,7 +1,12 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-middle mr-2"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/></svg> Насіння</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-3">
+        <span class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="4" ry="5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M12 13v7"/></svg>
+        </span>
+        Насіння
+      </h1>
       <p class="text-agro-light mt-1">{{ total }} сортів у базі</p>
     </div>
 

@@ -1,7 +1,12 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark">🌱 Добрива</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-3">
+        <span class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 00-5 5c0 5 5 11 5 11s5-6 5-11a5 5 0 00-5-5z"/><circle cx="12" cy="7" r="2"/></svg>
+        </span>
+        Добрива
+      </h1>
       <p class="text-agro-light mt-1">{{ total }} добрив у базі</p>
     </div>
 

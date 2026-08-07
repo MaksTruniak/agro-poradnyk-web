@@ -1,7 +1,12 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l10-10"/><path d="M16 8c0-4-3-6-7-6C5 2 2 7 2 12c0 0 4-1 7-4 1.5 3 5 6 9 6 0-2-1-5-2-6z"/></svg> Біопрепарати</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-3">
+        <span class="w-9 h-9 rounded-xl bg-agro-hover flex items-center justify-center shrink-0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C9 12 5 9 4 5c3 0 6 2 8 7z"/><path d="M12 12c3 0 7-3 8-7-3 0-6 2-8 7z"/><path d="M12 16c-2 0-4-1-5-3M12 16c2 0 4-1 5-3"/></svg>
+        </span>
+        Біопрепарати
+      </h1>
       <p class="text-agro-light mt-1">{{ total }} препаратів у базі</p>
     </div>
 
