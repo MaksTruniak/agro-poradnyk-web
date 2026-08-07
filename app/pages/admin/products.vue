@@ -94,8 +94,8 @@
                     {{ modal.imgFile ? modal.imgFile.name : 'Завантажити фото' }}
                     <input type="file" accept="image/*" class="hidden" @change="onImgFile" />
                   </label>
-                  <p class="text-xs text-agro-light mt-1">або вставте URL нижче</p>
-                  <input v-model="modal.form.source_image_url" class="input text-sm mt-1.5" placeholder="https://..." />
+                  <p v-if="modal.imgFile" class="text-xs text-agro-light mt-1">{{ (modal.imgFile.size / 1024).toFixed(0) }} KB</p>
+                  <p v-else class="text-xs text-agro-light mt-1">PNG, JPG, WebP до 5 MB</p>
                 </div>
               </div>
             </div>
