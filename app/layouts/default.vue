@@ -172,10 +172,8 @@
             <p class="font-semibold text-white/90 text-sm mb-4 uppercase tracking-wider">Для кого</p>
             <ul class="space-y-2.5 text-sm text-white/50">
               <li><NuxtLink to="/for-farmers" class="hover:text-white transition-colors">Фермерам</NuxtLink></li>
-              <li><NuxtLink to="/for-dacha" class="hover:text-white transition-colors">Дачникам</NuxtLink></li>
               <li><NuxtLink to="/for-agronomists" class="hover:text-white transition-colors">Агрономам</NuxtLink></li>
               <li><NuxtLink to="/for-buyers" class="hover:text-white transition-colors">Заготівельникам</NuxtLink></li>
-              <li><NuxtLink to="/for-sellers" class="hover:text-white transition-colors">Продавцям</NuxtLink></li>
               <li><NuxtLink to="/about" class="hover:text-white transition-colors">Про нас</NuxtLink></li>
               <li><NuxtLink to="/privacy" class="hover:text-white transition-colors">Політика конфіденційності</NuxtLink></li>
               <li><NuxtLink to="/terms" class="hover:text-white transition-colors">Умови використання</NuxtLink></li>
