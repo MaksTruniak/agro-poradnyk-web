@@ -129,7 +129,7 @@
               :class="s <= reviewModal.rating ? 'opacity-100' : 'opacity-30'"><svg width="24" height="24" viewBox="0 0 24 24" :fill="s <= reviewModal.rating ? 'rgb(180,130,40)' : 'none'" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
           </div>
           <button @click="submitReview" :disabled="!reviewModal.rating || reviewModal.saving"
-            class="btn-primary w-full" :class="(!reviewModal.rating || reviewModal.saving) ? 'opacity-50 cursor-not-allowed' : ''">
+            class="btn-primary w-full inline-flex items-center justify-center gap-1.5" :class="(!reviewModal.rating || reviewModal.saving) ? 'opacity-50 cursor-not-allowed' : ''">
             {{ reviewModal.saving ? 'Збереження...' : 'Надіслати оцінку' }}
           </button>
         </div>
