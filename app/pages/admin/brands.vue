@@ -165,10 +165,10 @@ const save = async () => {
   if (!payload.slug) payload.slug = payload.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 
   if (modal.isNew) {
-    const { data } = await supabase.from('manufacturers').insert(payload).select().single()
+    const { data } = await supabase.from('agro_manufacturers').insert(payload).select().single()
     if (data) brands.value.unshift(data)
   } else {
-    await supabase.from('manufacturers').update(payload).eq('id', modal.id)
+    await supabase.from('agro_manufacturers').update(payload).eq('id', modal.id)
     const idx = brands.value.findIndex(b => b.id === modal.id)
     if (idx !== -1) brands.value[idx] = { ...brands.value[idx], ...payload }
   }
@@ -177,7 +177,7 @@ const save = async () => {
 }
 
 onMounted(async () => {
-  const { data } = await supabase.from('manufacturers').select('*').order('name')
+  const { data } = await supabase.from('agro_manufacturers').select('*').order('name')
   brands.value = data || []
   loading.value = false
 })
