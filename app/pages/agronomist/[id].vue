@@ -31,7 +31,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <h1 class="text-2xl font-extrabold text-agro-dark">{{ user.name }}</h1>
-              <span v-if="user.is_verified_agronomist" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">✅ Перевірений агроном</span>
+              <span v-if="user.is_verified_agronomist" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений агроном</span>
             </div>
             <p v-if="profile?.specialization" class="text-agro-light mt-1">{{ profile.specialization }}</p>
             <p v-if="profile?.region || user.city" class="text-sm text-agro-light mt-0.5 flex items-center gap-1">
@@ -44,8 +44,9 @@
             </div>
           </div>
           <button v-if="uid !== agronomistId" @click="startChat" :disabled="starting"
-            class="btn-primary shrink-0 text-sm py-2.5 px-5">
-            {{ starting ? '...' : '💬 Написати' }}
+            class="btn-primary shrink-0 text-sm py-2.5 px-5 inline-flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            {{ starting ? '...' : 'Написати' }}
           </button>
         </div>
 
@@ -74,10 +75,11 @@
 
       <!-- Спеціалізація -->
       <div v-if="profile?.crops_expertise?.length" class="card">
-        <h2 class="font-bold text-agro-dark text-lg mb-4">🌱 Культури</h2>
+        <h2 class="font-bold text-agro-dark text-lg mb-4 flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg> Культури</h2>
         <div class="flex flex-wrap gap-2">
           <span v-for="c in profile.crops_expertise" :key="c"
-            class="text-sm bg-agro-bg border border-agro-border text-agro-dark px-3 py-1.5 rounded-xl">
+            class="inline-flex items-center gap-1.5 text-sm bg-agro-bg border border-agro-border text-agro-dark px-3 py-1.5 rounded-xl">
+            <img :src="`/crops/${cropToSlug(c)}.svg`" :alt="c" class="w-4 h-4 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
             {{ c }}
           </span>
         </div>
@@ -85,7 +87,7 @@
 
       <!-- Освіта -->
       <div v-if="profile?.institution" class="card">
-        <h2 class="font-bold text-agro-dark text-lg mb-3">🎓 Освіта</h2>
+        <h2 class="font-bold text-agro-dark text-lg mb-3 flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Освіта</h2>
         <p class="font-semibold text-agro-dark text-sm">{{ profile.institution }}</p>
         <p v-if="profile.education" class="text-agro-light text-sm mt-0.5">
           {{ profile.education }}<span v-if="profile.education_year"> · {{ profile.education_year }}</span>
@@ -94,8 +96,9 @@
 
       <!-- Кнопка написати (внизу для мобільних) -->
       <button v-if="uid !== agronomistId" @click="startChat" :disabled="starting"
-        class="btn-primary w-full py-3 text-sm md:hidden">
-        {{ starting ? '...' : '💬 Написати агроному' }}
+        class="btn-primary w-full py-3 text-sm md:hidden inline-flex items-center justify-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        {{ starting ? '...' : 'Написати агроному' }}
       </button>
     </div>
   </div>
@@ -108,6 +111,7 @@ const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
 
+const { cropToSlug } = await import('~/utils/cropSlugs')
 const agronomistId = route.params.id as string
 const starting = ref(false)
 
