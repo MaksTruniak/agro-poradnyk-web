@@ -120,7 +120,7 @@
             <h3 class="dash-card-title bitter">Оцінити угоду</h3>
             <button @click="reviewModal.show = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-agro-hover text-agro-light">✕</button>
           </div>
-          <p class="text-sm text-agro-light mb-4">
+          <p class="text-sm text-agro-light mb-4 text-center">
             Оцініть <span class="font-semibold text-agro-dark">{{ reviewModal.name }}</span> як {{ isFarmer ? 'заготівельника' : 'фермера' }}
           </p>
           <div class="flex justify-center gap-2 mb-5">
