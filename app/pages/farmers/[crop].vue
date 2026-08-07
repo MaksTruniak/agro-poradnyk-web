@@ -6,14 +6,19 @@
         <span>/</span>
         <span class="text-agro-dark">{{ cropName }}</span>
       </div>
-      <h1 class="text-3xl font-extrabold text-agro-dark">{{ cropEmoji }} Фермери — {{ cropName }}</h1>
+      <h1 class="text-3xl font-extrabold text-agro-dark flex items-center gap-3">
+        <span class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 overflow-hidden">
+          <img :src="`/crops/${cropSlug}.svg`" :alt="cropName" class="w-7 h-7 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
+        </span>
+        Фермери — {{ cropName }}
+      </h1>
       <p class="text-agro-light mt-1">{{ filtered.length }} {{ pluralFarmer(filtered.length) }} вирощують цю культуру</p>
     </div>
 
     <!-- Пошук + фільтр -->
     <div class="flex flex-col sm:flex-row gap-3 mb-8">
       <div class="relative flex-1 max-w-xl">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         <input v-model="search" class="input pl-11" placeholder="Пошук за ім'ям або регіоном..." />
       </div>
       <div class="relative" v-if="regions.length" @click.stop>
@@ -45,25 +50,35 @@
     </div>
 
     <div v-else-if="filtered.length === 0" class="text-center py-20">
-      <p class="text-5xl mb-4">🌾</p>
+      <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+      </div>
       <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
       <p class="text-agro-light mt-2">Спробуйте інший пошук або регіон</p>
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
       <div v-for="farmer in filtered" :key="farmer.id" class="card hover:shadow-md transition-all flex flex-col text-left">
-        <div class="flex items-start gap-4 mb-4">
+        <!-- Role badge -->
+        <div class="flex items-center justify-between mb-3">
+          <span class="inline-flex items-center gap-1 text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+            Фермер
+          </span>
+        </div>
+        <div class="flex items-center gap-3 mb-4">
           <div class="w-12 h-12 rounded-2xl bg-agro-hover flex items-center justify-center font-bold text-agro text-xl shrink-0">
             {{ farmer.name?.[0]?.toUpperCase() || '?' }}
           </div>
           <div class="flex-1 min-w-0">
-            <NuxtLink :to="`/farmer/${farmer.id}`" class="font-bold text-agro-dark hover:text-agro transition-colors">{{ farmer.name }}</NuxtLink>
-            <p v-if="farmer.city || farmer.region" class="text-sm text-agro-light mt-0.5">
-              📍 {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
+            <NuxtLink :to="`/farmer/${farmer.id}`" class="font-bold text-agro-dark hover:text-agro transition-colors block truncate">{{ farmer.name }}</NuxtLink>
+            <p v-if="farmer.city || farmer.region" class="text-sm text-agro-light mt-0.5 flex items-center gap-1">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.7" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg>
+              {{ [farmer.city, farmer.region].filter(Boolean).join(', ') }}
             </p>
           </div>
         </div>
-        <div class="mb-4">
+        <div class="flex-1 mb-4">
           <p class="text-xs text-agro-light uppercase tracking-wide mb-2">Вирощує</p>
           <div class="flex flex-wrap gap-1.5">
             <NuxtLink v-for="c in farmer.crops" :key="c"
@@ -75,9 +90,16 @@
           </div>
         </div>
 
-        <NuxtLink :to="`/farmer/${farmer.id}`" class="btn-primary w-full text-sm py-2.5 text-center block">
-          Детально →
-        </NuxtLink>
+        <div class="flex gap-2 mt-auto">
+          <NuxtLink :to="`/farmer/${farmer.id}`" class="btn-outline flex-1 text-sm py-2.5 text-center inline-flex items-center justify-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+            Детально
+          </NuxtLink>
+          <button @click="startChat(farmer)" :disabled="starting === farmer.id" class="btn-primary flex-1 text-sm py-2.5 inline-flex items-center justify-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            {{ starting === farmer.id ? '...' : 'Написати' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -90,11 +112,10 @@ const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
 
-const { slugToCrop, cropToSlug, cropEmoji: getCropEmoji } = await import('~/utils/cropSlugs')
+const { slugToCrop, cropToSlug } = await import('~/utils/cropSlugs')
 
 const cropSlug = route.params.crop as string
 const cropName = slugToCrop(cropSlug)
-const cropEmoji = getCropEmoji(cropName)
 
 // Перевірка за слагом — враховує всі аліаси ("Смородина чорна" і "Чорна смородина" → "black-currant")
 const matchesCrop = (crop: string) => cropToSlug(crop) === cropSlug
