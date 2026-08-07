@@ -13,7 +13,7 @@
       <!-- Кнопка відгуку: тільки для фермера в чаті з агрономом (не buy-request) -->
       <button v-if="!iAmAgronomist && !isBuyRequest" @click="openReviewModal"
         class="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition-colors">
-        ⭐ Відгук
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Відгук
       </button>
     </div>
 
@@ -23,20 +23,20 @@
         <div v-if="reviewModal.show" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" @click.self="reviewModal.show = false">
           <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="font-bold text-agro-dark text-lg">⭐ Залишити відгук</h3>
+              <h3 class="font-bold text-agro-dark text-lg flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Залишити відгук</h3>
               <button @click="reviewModal.show = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-agro-hover text-agro-light">✕</button>
             </div>
 
             <!-- Не eligible -->
             <div v-if="reviewModal.notEligible" class="text-center py-4">
-              <p class="text-4xl mb-3">🔒</p>
+              <div class="w-14 h-14 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-3"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
               <p class="font-semibold text-agro-dark mb-2">Відгук недоступний</p>
               <p class="text-sm text-agro-light">{{ reviewModal.notEligibleReason }}</p>
             </div>
 
             <!-- Вже залишив відгук -->
             <div v-else-if="reviewModal.alreadyReviewed" class="text-center py-4">
-              <p class="text-4xl mb-3">✅</p>
+              <div class="w-14 h-14 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-3"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
               <p class="font-semibold text-agro-dark mb-2">Ви вже залишили відгук</p>
               <p class="text-sm text-agro-light">Дякуємо за вашу оцінку!</p>
             </div>
@@ -47,8 +47,10 @@
               <!-- Зірки -->
               <div class="flex justify-center gap-2 mb-5">
                 <button v-for="s in 5" :key="s" @click="reviewModal.rating = s"
-                  class="text-3xl transition-transform hover:scale-110"
-                  :class="s <= reviewModal.rating ? 'opacity-100' : 'opacity-30'">⭐</button>
+                  class="transition-transform hover:scale-110"
+                  :class="s <= reviewModal.rating ? 'opacity-100' : 'opacity-30'">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </button>
               </div>
               <textarea v-model="reviewModal.text" rows="3"
                 class="w-full border border-agro-border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-agro mb-4"
@@ -93,13 +95,13 @@
       <template v-else>
         <!-- Підказка -->
         <div v-if="iAmAgronomist && !isBuyRequest" class="bg-agro-hover border border-agro/20 rounded-xl px-4 py-3 text-sm text-agro-dark flex gap-3 items-start">
-          <span class="text-lg shrink-0">💡</span>
+          <span class="shrink-0 mt-0.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
           <div>
             Щоб фермер міг знайти препарат у каталозі — пишіть назву з символом <span class="font-bold text-agro">@</span>, наприклад: <span class="font-bold text-agro">@Раундап</span>, <span class="font-bold text-agro">@КаратеЗеон</span>. Назва має бути одним словом без пробілів.
           </div>
         </div>
         <div v-if="isBuyRequest" class="bg-agro-hover border border-agro/20 rounded-xl px-4 py-3 text-sm text-agro-dark flex gap-3 items-start">
-          <span class="text-lg shrink-0">🛒</span>
+          <span class="shrink-0 mt-0.5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg></span>
           <div>
             <span class="font-semibold">{{ chatData?.title }}</span> — обговоріть ціну, обсяг, умови доставки та оплати.
           </div>
@@ -123,7 +125,9 @@
                 <div class="px-4 py-3 border-b"
                   :class="getDeal(msg.content)?.status === 'confirmed' ? 'bg-agro-hover' : getDeal(msg.content)?.status === 'cancelled' ? 'bg-red-50' : 'bg-yellow-50'">
                   <p class="font-bold text-agro-dark text-sm">
-                    {{ getDeal(msg.content)?.status === 'confirmed' ? '✅ Угода підтверджена' : getDeal(msg.content)?.status === 'cancelled' ? '❌ Відхилено' : getDeal(msg.content)?.proposed_by === uid ? '💰 Ваша пропозиція' : '💰 Пропозиція' }}
+                    <template v-if="getDeal(msg.content)?.status === 'confirmed'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Угода підтверджена</template>
+                    <template v-else-if="getDeal(msg.content)?.status === 'cancelled'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Відхилено</template>
+                    <template v-else><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{{ getDeal(msg.content)?.proposed_by === uid ? 'Ваша пропозиція' : 'Пропозиція' }}</template>
                   </p>
                 </div>
                 <div class="px-4 py-3 space-y-1.5 text-sm">
@@ -135,7 +139,7 @@
                 <!-- Кнопки для іншої сторони якщо pending -->
                 <div v-if="getDeal(msg.content)?.status === 'pending' && getDeal(msg.content)?.proposed_by !== uid" class="px-4 pb-4 flex gap-2">
                   <button @click="counterDeal(getDeal(msg.content)!)" class="flex-1 py-2 text-sm border-2 border-agro text-agro rounded-xl font-semibold hover:bg-agro-hover transition-colors">Зустрічна</button>
-                  <button @click="respondDeal(getDeal(msg.content)!.id, 'confirmed')" class="flex-1 py-2 text-sm bg-agro text-white rounded-xl font-semibold hover:bg-agro-dark transition-colors">✅ Прийняти</button>
+                  <button @click="respondDeal(getDeal(msg.content)!.id, 'confirmed')" class="flex-1 py-2 text-sm bg-agro text-white rounded-xl font-semibold hover:bg-agro-dark transition-colors inline-flex items-center justify-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Прийняти</button>
                 </div>
               </div>
               <p class="text-xs mt-1 opacity-50 px-1" :class="isMyMessage(msg) ? 'text-right' : ''">{{ formatTime(msg.created_at) }}</p>
@@ -167,15 +171,15 @@
             <div v-for="p in extractProducts(msg.content)" :key="p" class="flex items-center gap-0.5">
               <button
                 @click="openProduct(p)"
-                class="text-xs px-2.5 py-1 bg-agro-hover text-agro border border-agro/30 rounded-l-lg hover:bg-agro hover:text-white transition-colors font-medium">
-                🧪 {{ p }}
+                class="text-xs px-2.5 py-1 bg-agro-hover text-agro border border-agro/30 rounded-l-lg hover:bg-agro hover:text-white transition-colors font-medium inline-flex items-center gap-1">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg> {{ p }}
               </button>
               <button
                 v-if="!iAmAgronomist"
                 @click="openSchemeModalForProduct(p)"
                 class="text-xs px-2 py-1 bg-agro-hover text-agro border border-l-0 border-agro/30 rounded-r-lg hover:bg-agro hover:text-white transition-colors"
                 title="Додати до технологічної карти">
-                🛡
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </button>
             </div>
           </div>
@@ -234,7 +238,7 @@
                 {{ schemeModal.saving ? '...' : 'Додати' }}
               </button>
             </div>
-            <p v-if="schemeModal.success" class="text-agro text-sm text-center mt-3">✅ Додано до карти!</p>
+            <p v-if="schemeModal.success" class="text-agro text-sm text-center mt-3 flex items-center justify-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Додано до карти!</p>
           </div>
         </div>
       </Transition>
@@ -246,7 +250,7 @@
         <div v-if="dealModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="dealModal.show = false" />
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
-            <h2 class="font-bold text-agro-dark text-lg mb-1">💰 {{ dealModal.isCounter ? 'Зустрічна пропозиція' : 'Пропозиція' }}</h2>
+            <h2 class="font-bold text-agro-dark text-lg mb-1 flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> {{ dealModal.isCounter ? 'Зустрічна пропозиція' : 'Пропозиція' }}</h2>
             <p class="text-sm text-agro-light mb-4">{{ cropFromTitle }}</p>
             <div class="space-y-3 mb-5">
               <div>
@@ -285,7 +289,7 @@
 
     <!-- Paywall -->
     <div v-if="!isUnlocked && !iAmAgronomist && messageCount >= 3" class="bg-white border-t border-agro-border p-4 text-center">
-      <p class="font-semibold text-agro-dark mb-1">🔒 Розблокуйте повне листування</p>
+      <p class="font-semibold text-agro-dark mb-1 flex items-center justify-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Розблокуйте повне листування</p>
       <p class="text-sm text-agro-light mb-3">Перші 3 повідомлення безкоштовні</p>
       <button @click="unlock" class="btn-primary">Розблокувати</button>
     </div>
@@ -297,16 +301,16 @@
         <img :src="imagePreview" class="h-20 rounded-xl object-cover border border-agro-border" />
         <button @click="clearImage" class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center leading-none">×</button>
       </div>
-      <div class="flex items-end gap-2">
+      <div class="flex items-center gap-2">
         <!-- Кнопка пропозиції (тільки в buy-request чаті) -->
         <button v-if="isBuyRequest" @click="openDealModal"
           class="w-10 h-10 flex items-center justify-center rounded-xl border border-agro-border hover:bg-agro-hover transition-colors shrink-0 text-agro"
           title="Запропонувати ціну і кількість">
-          💰
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
         </button>
         <!-- Кнопка фото -->
         <label class="w-10 h-10 flex items-center justify-center rounded-xl border border-agro-border hover:bg-agro-hover cursor-pointer transition-colors shrink-0 text-agro-light hover:text-agro">
-          <span class="text-lg">📎</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
           <input type="file" accept="image/*" class="hidden" @change="onImagePick" ref="fileInputEl" />
         </label>
         <div class="relative flex-1">
@@ -331,7 +335,7 @@
                 @mousedown.prevent="insertProduct(p)"
                 class="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors"
                 :class="i === atIndex ? 'bg-agro-hover' : 'hover:bg-agro-bg'">
-                <div class="w-8 h-8 rounded-lg bg-agro-hover flex items-center justify-center shrink-0 text-base">🧴</div>
+                <div class="w-8 h-8 rounded-lg bg-agro-hover flex items-center justify-center shrink-0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg></div>
                 <div class="min-w-0">
                   <p class="text-sm font-semibold text-agro-dark truncate">{{ p.product_name }}</p>
                   <p class="text-xs text-agro-light truncate">{{ p.ingredient || p.category || '' }}</p>
@@ -345,8 +349,8 @@
           :disabled="(!input.trim() && !imageFile) || sending"
           class="w-11 h-11 bg-agro rounded-xl flex items-center justify-center text-white hover:bg-agro-dark transition-colors disabled:opacity-50 shrink-0"
         >
-          <span v-if="sending" class="text-sm">...</span>
-          <span v-else>↑</span>
+          <svg v-if="!sending" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <span v-else class="text-sm">...</span>
         </button>
       </div>
     </div>
