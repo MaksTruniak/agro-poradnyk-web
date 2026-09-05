@@ -47,7 +47,11 @@
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <div v-for="agro in filtered" :key="agro.id" class="card hover:shadow-md transition-all">
+      <div
+        v-for="agro in filtered" :key="agro.id"
+        class="card hover:shadow-md transition-all"
+        :class="agro.is_highlighted ? 'border-2 border-agro ring-1 ring-agro/20 bg-agro-hover/30' : ''"
+      >
         <!-- Role badge -->
         <div class="flex items-center justify-between mb-3">
           <span class="inline-flex items-center gap-1 text-xs font-semibold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
@@ -55,7 +59,10 @@
             Агроном
           </span>
           <div class="flex items-center gap-1.5">
-            <span v-if="agro.promotion_plan === 'top'" class="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold"><svg width="11" height="11" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Топ</span>
+            <span v-if="agro.is_highlighted" class="inline-flex items-center gap-1 text-xs bg-agro text-white px-2 py-0.5 rounded-full font-semibold">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              PRO
+            </span>
             <span v-if="agro.rating" class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600"><svg width="11" height="11" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> {{ agro.rating.toFixed(1) }}</span>
             <span v-if="agro.is_verified_agronomist" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений</span>
           </div>
@@ -126,9 +133,8 @@ const { data: profiles } = await supabase
   .from('agronomist_profiles')
   .select('*, users!inner(id, name, role, is_verified_agronomist)')
   .eq('users.role', 'agronomist')
-  .order('promotion_plan', { ascending: false })
 
-agronomists.value = (profiles || []).map((p: any) => ({
+const mapped = (profiles || []).map((p: any) => ({
   id: p.id,
   user_id: p.users?.id,
   name: p.users?.name || 'Агроном',
@@ -136,10 +142,21 @@ agronomists.value = (profiles || []).map((p: any) => ({
   crops: p.crops || [],
   region: p.region,
   rating: p.rating,
-  promotion_plan: p.promotion_plan,
+  is_highlighted: p.is_highlighted || false,
+  boosted_at: p.boosted_at || null,
   clients_count: p.clients_count || 0,
   is_verified_agronomist: p.users?.is_verified_agronomist || false,
 }))
+
+// PRO (is_highlighted) вгору, серед них — по boosted_at desc, решта — по рейтингу
+agronomists.value = mapped.sort((a, b) => {
+  if (a.is_highlighted && !b.is_highlighted) return -1
+  if (!a.is_highlighted && b.is_highlighted) return 1
+  if (a.is_highlighted && b.is_highlighted) {
+    return new Date(b.boosted_at || 0).getTime() - new Date(a.boosted_at || 0).getTime()
+  }
+  return (b.rating || 0) - (a.rating || 0)
+})
 
 loading.value = false
 

@@ -226,9 +226,14 @@ const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { 
 
 const verify = async (agronomist: any, approve: boolean) => {
   agronomist.saving = approve ? 'approve' : 'reject'
-  await supabase.from('agronomist_profiles')
+  const { error } = await supabase.from('agronomist_profiles')
     .update({ is_verified: approve })
     .eq('id', agronomist.id)
+  if (error) {
+    alert('Помилка: ' + error.message)
+    agronomist.saving = false
+    return
+  }
   agronomist.is_verified = approve
   agronomist.saving = false
 }

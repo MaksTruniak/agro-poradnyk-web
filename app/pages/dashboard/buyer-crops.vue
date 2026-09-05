@@ -1,19 +1,19 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Що закуповую</h1>
-        <button @click="showModal = true" class="dash-btn-primary ml-auto">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Додати культуру
-        </button>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2l-2 4h16l-2-4M4 6l2 14h12l2-14M9 10v6M12 10v6M15 10v6"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Культури які ви шукаєте</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Що закуповую</h1>
+        <p class="dash-subtitle">Культури які ви шукаєте</p>
+      </div>
+      <button @click="showModal = true" class="dash-btn-primary shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Додати культуру
+      </button>
     </div>
 
     <!-- Список -->
@@ -29,7 +29,7 @@
       </div>
       <div v-else-if="crops.length" class="divide-y divide-agro-border">
         <div v-for="c in crops" :key="c.id" class="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
-          <span class="text-2xl shrink-0">{{ cropEmoji(c.crop_type) }}</span>
+          <img :src="`/crops/${cropToSlug(c.crop_type)}.svg`" :alt="c.crop_type" class="w-7 h-7 object-contain shrink-0" @error="($event.target as HTMLImageElement).style.display='none'" />
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-agro-dark">{{ c.crop_type }}</p>
             <p class="text-xs text-agro-light mt-0.5">
@@ -69,7 +69,7 @@
                 <button v-for="s in cropSuggestions" :key="s" type="button"
                   @mousedown.prevent="selectCrop(s)"
                   class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors flex items-center gap-2">
-                  <span>{{ cropEmoji(s) }}</span>
+                  <img :src="`/crops/${cropToSlug(s)}.svg`" :alt="s" class="w-4 h-4 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
                   <span>{{ s }}</span>
                 </button>
               </div>
@@ -96,7 +96,8 @@
             </div>
             <div class="flex gap-3 pt-1">
               <button @click="showModal = false" class="btn-outline flex-1">Скасувати</button>
-              <button @click="addCrop" :disabled="!form.crop_type.trim() || saving" class="btn-primary flex-1">
+              <button @click="addCrop" :disabled="!form.crop_type.trim() || saving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
+                <svg v-if="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 {{ saving ? '...' : 'Додати' }}
               </button>
             </div>
@@ -112,7 +113,7 @@ useHead({ title: 'Що закуповую' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
-const { cropEmoji, CROP_SLUGS } = await import('~/utils/cropSlugs')
+const { cropToSlug, CROP_SLUGS } = await import('~/utils/cropSlugs')
 
 const crops = ref<any[]>([])
 const loading = ref(true)
@@ -188,13 +189,6 @@ const deleteCrop = async (id: string) => {
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

@@ -1,15 +1,15 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 11l8-7 8 7M6 10v10h12V10"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Привіт, {{ profile?.name || 'друже' }}</h1>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 11l8-7 8 7M6 10v10h12V10"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">{{ roleLabel }}</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Привіт, {{ profile?.name || 'друже' }}</h1>
+        <p class="dash-subtitle">{{ roleLabel }}</p>
+      </div>
     </div>
 
     <!-- Завантаження профілю -->
@@ -23,8 +23,8 @@
     <template v-else-if="isFarmer">
       <!-- Скелетон -->
       <template v-if="loading">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div v-for="i in 4" :key="i" class="card animate-pulse h-20"></div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+          <div v-for="i in 3" :key="i" class="card animate-pulse h-20"></div>
         </div>
         <div class="grid md:grid-cols-2 gap-6 mb-6">
           <div class="card animate-pulse h-40"></div>
@@ -188,8 +188,8 @@
     <!-- Агроном -->
     <template v-else-if="isAgronomist">
       <template v-if="loading">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div v-for="i in 4" :key="i" class="card animate-pulse h-20"></div>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div v-for="i in 3" :key="i" class="card animate-pulse h-20"></div>
         </div>
         <div class="grid md:grid-cols-2 gap-6 mb-6">
           <div class="card animate-pulse h-40"></div>
@@ -199,18 +199,18 @@
 
       <template v-else>
         <!-- Зведення -->
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          <NuxtLink to="/dashboard/fields" class="card text-center hover:shadow-md transition-shadow">
-            <p class="dash-stat-num">{{ agroStats.myFields }}</p>
-            <p class="dash-stat-label">моїх полів</p>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <NuxtLink to="/dashboard/agreements" class="card text-center hover:shadow-md transition-shadow">
+            <p class="dash-stat-num">{{ agroStats.clients }}</p>
+            <p class="dash-stat-label">Клієнтів</p>
           </NuxtLink>
-          <NuxtLink to="/dashboard/agronomist-fields" class="card text-center hover:shadow-md transition-shadow">
-            <p class="dash-stat-num">{{ agroStats.clientFields }}</p>
-            <p class="dash-stat-label">полів клієнтів</p>
+          <NuxtLink to="/dashboard/agreements" class="card text-center hover:shadow-md transition-shadow">
+            <p class="dash-stat-num">{{ agroStats.active }}</p>
+            <p class="dash-stat-label">Активних угод</p>
           </NuxtLink>
-          <NuxtLink to="/dashboard/chats" class="card text-center hover:shadow-md transition-shadow">
-            <p class="dash-stat-num">{{ agroStats.chats }}</p>
-            <p class="dash-stat-label">консультацій</p>
+          <NuxtLink to="/dashboard/agreements" class="card text-center hover:shadow-md transition-shadow">
+            <p class="dash-stat-num">{{ agroStats.completed }}</p>
+            <p class="dash-stat-label">Завершених</p>
           </NuxtLink>
         </div>
 
@@ -278,7 +278,10 @@ const profile = ref<any>(null)
 const uid = ref<string | undefined>(undefined)
 const profileLoaded = ref(false)
 
-const role = computed(() => profile.value?.role || 'farmer')
+const activeProfile = import.meta.client
+  ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role') || '')
+  : ''
+const role = computed(() => activeProfile || profile.value?.role || 'farmer')
 const isFarmer = computed(() => role.value === 'farmer' || role.value === 'dacha')
 const isAgronomist = computed(() => role.value === 'agronomist')
 const isSeller = computed(() => role.value === 'seller')
@@ -290,13 +293,14 @@ const roleLabel = computed(() => ROLE_LABELS[role.value] || '')
 const loading = ref(true)
 const stats = ref({ products: 0, orders: 0, revenue: 0 })
 const farmerStats = ref({ fields: 0, totalHa: 0, crops: 0, reminders: 0 })
-const agroStats = ref({ myFields: 0, clientFields: 0, chats: 0, reminders: 0 })
+const agroStats = ref({ clients: 0, active: 0, completed: 0, chats: 0 })
 const buyerStats = ref({ farmers: 0, requests: 0, unread: 0 })
 const buyerChats = ref<any[]>([])
 const buyerCrops = ref<{ crop: string; quantity: number; total: number }[]>([])
 const farmerDeals = ref<{ crop: string; qty: string; total: number }[]>([])
 const nextReminders = ref<any[]>([])
 const recentChats = ref<any[]>([])
+const pendingAgreements = ref<any[]>([])
 const activeOrders = ref<any[]>([])
 
 const reminderIcon = (type: string): string => {
@@ -366,12 +370,12 @@ onMounted(async () => {
   }
 
   if (isAgronomist.value) {
-    const [farmsRes, clientFieldsRes, chatsRes, remRes] = await Promise.all([
-      supabase.from('farms').select('id', { count: 'exact', head: true }).eq('user_id', uid.value),
-      supabase.from('farms').select('id', { count: 'exact', head: true }).eq('agronomist_id', uid.value),
+    const [agreementsRes, chatsRes, remRes] = await Promise.all([
+      supabase.from('agreements').select('id, farmer_id, status').eq('agronomist_id', uid.value).neq('status', 'cancelled'),
       supabase.from('chats').select('id, farmer_id').eq('agronomist_id', uid.value).eq('type', 'human').order('updated_at', { ascending: false }).limit(3),
       supabase.from('reminders').select('id').eq('user_id', uid.value).gte('scheduled_date', new Date().toISOString()),
     ])
+    const agrData = agreementsRes.data || []
     const chatIds = (chatsRes.data || []).map((c: any) => c.id)
     const farmerIds = (chatsRes.data || []).map((c: any) => c.farmer_id).filter(Boolean)
 
@@ -392,10 +396,10 @@ onMounted(async () => {
     }
 
     agroStats.value = {
-      myFields: farmsRes.count || 0,
-      clientFields: clientFieldsRes.count || 0,
+      clients: new Set(agrData.map((a: any) => a.farmer_id)).size,
+      active: agrData.filter((a: any) => a.status === 'active').length,
+      completed: agrData.filter((a: any) => a.status === 'completed').length,
       chats: chatsRes.data?.length || 0,
-      reminders: remRes.data?.length || 0,
     }
     recentChats.value = (chatsRes.data || []).map((c: any) => ({
       id: c.id,
@@ -405,6 +409,18 @@ onMounted(async () => {
     }))
     const remFull = await supabase.from('reminders').select('id, description, type, scheduled_date').eq('user_id', uid.value).gte('scheduled_date', new Date().toISOString()).order('scheduled_date').limit(3)
     nextReminders.value = remFull.data || []
+
+    // Запити на угоди
+    const { data: pendingAgrData } = await supabase.from('agreements')
+      .select('id, farmer_id, message, price, price_period, created_at')
+      .eq('agronomist_id', uid.value).eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    if (pendingAgrData?.length) {
+      const fIds = [...new Set(pendingAgrData.map((a: any) => a.farmer_id))]
+      const { data: fUsers } = await supabase.from('users').select('id, name').in('id', fIds)
+      const fMap = Object.fromEntries((fUsers || []).map((u: any) => [u.id, u.name]))
+      pendingAgreements.value = pendingAgrData.map((a: any) => ({ ...a, farmer_name: fMap[a.farmer_id] || 'Фермер' }))
+    }
   }
 
   if (isBuyer.value) {
@@ -476,21 +492,23 @@ onMounted(async () => {
 
   loading.value = false
 })
+
+const acceptDashAgreement = async (ag: any) => {
+  await supabase.from('agreements').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', ag.id)
+  pendingAgreements.value = pendingAgreements.value.filter((a: any) => a.id !== ag.id)
+}
+
+const declineDashAgreement = async (ag: any) => {
+  await supabase.from('agreements').update({ status: 'cancelled' }).eq('id', ag.id)
+  pendingAgreements.value = pendingAgreements.value.filter((a: any) => a.id !== ag.id)
+}
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.dash-icon-box-sm { width: 34px; height: 34px; border-radius: 9px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
 .dash-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
 .dash-stat-num { font-family: 'Bitter', Georgia, serif; font-size: 32px; font-weight: 800; color: rgb(47,82,51); margin: 0; }
 .dash-stat-label { font-size: 13px; color: rgb(107,122,100); margin: 4px 0 0; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

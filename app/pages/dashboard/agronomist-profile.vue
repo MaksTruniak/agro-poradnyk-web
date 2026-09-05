@@ -1,15 +1,15 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Кабінет агронома</h1>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Привіт, {{ userName }}!</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Кабінет агронома</h1>
+        <p class="dash-subtitle">Привіт, {{ userName }}!</p>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -143,7 +143,7 @@
         <div class="card">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <p class="font-bold text-agro-dark">🌾 Практичний досвід</p>
+              <p class="font-bold text-agro-dark flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V8"/><path d="M5 12C5 12 3 10 3 7c2.5 0 4.5 2 5 4"/><path d="M19 12C19 12 21 10 21 7c-2.5 0-4.5 2-5 4"/><path d="M12 8C12 8 10 6 10 3c2 0 3.5 1.5 4 3"/><path d="M12 8C12 8 14 6 14 3c-2 0-3.5 1.5-4 3"/></svg> Практичний досвід</p>
               <p class="text-xs text-agro-light mt-0.5">Роки роботи в полі без диплому</p>
             </div>
             <button
@@ -192,7 +192,7 @@
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-colors"
               :class="activeCategory === cat.name ? 'border-agro bg-agro text-white' : 'border-agro-border text-agro-light hover:border-agro'"
             >
-              <span>{{ cat.emoji }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="categoryIcon(cat.name)" />
               <span>{{ cat.name }}</span>
             </button>
           </div>
@@ -208,7 +208,7 @@
                 ? 'border-agro bg-agro-hover text-agro'
                 : 'border-agro-border text-agro-light hover:border-agro'"
             >
-              <span>{{ crop.emoji || '🌱' }}</span>
+              <img :src="`/crops/${cropToSlug(crop.name)}.svg`" :alt="crop.name" class="w-4 h-4 object-contain shrink-0" @error="($event.target as HTMLImageElement).style.display='none'" />
               <span>{{ crop.name }}</span>
             </button>
           </div>
@@ -230,9 +230,51 @@
         </template>
       </div>
 
-      <!-- Кнопка збереження -->
-      <div class="mt-6">
-        <button @click="saveProfile" :disabled="saving" class="btn-primary w-full py-3.5 text-base">
+      <!-- ВІДГУКИ -->
+      <div v-if="activeTab === 'reviews'" class="space-y-4">
+        <div v-if="!myReviews.length" class="card text-center py-12">
+          <div style="width:48px;height:48px;border-radius:14px;background:rgb(238,241,227);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="font-bold text-agro-dark mb-1">Відгуків поки немає</p>
+          <p class="text-sm text-agro-light">Відгуки з'являться після завершення угод</p>
+        </div>
+        <div v-else>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center gap-1.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span class="text-xl font-extrabold text-agro-dark">{{ profile?.rating?.toFixed(1) || '0.0' }}</span>
+            </div>
+            <span class="text-agro-light text-sm">{{ myReviews.length }} {{ myReviews.length === 1 ? 'відгук' : myReviews.length < 5 ? 'відгуки' : 'відгуків' }}</span>
+          </div>
+          <div v-for="r in myReviews" :key="r.id" class="card mb-3">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center font-bold text-agro text-sm shrink-0">
+                  {{ r.farmer_name?.[0]?.toUpperCase() || '?' }}
+                </div>
+                <div>
+                  <p class="font-semibold text-agro-dark text-sm">{{ r.farmer_name }}</p>
+                  <p class="text-xs text-agro-light">{{ formatDate(r.created_at) }}</p>
+                </div>
+              </div>
+              <div class="flex gap-0.5 shrink-0">
+                <svg v-for="s in 5" :key="s" width="14" height="14" viewBox="0 0 24 24" :fill="s <= r.rating ? 'rgb(180,130,40)' : 'rgb(220,220,220)'" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <div class="bg-agro-bg rounded-xl px-3 py-2 mb-2">
+              <p class="text-xs font-semibold text-agro-dark mb-0.5">Проблема:</p>
+              <p class="text-sm text-agro-dark">{{ r.problem_solved }}</p>
+            </div>
+            <p v-if="r.text" class="text-sm text-agro-dark leading-relaxed">{{ r.text }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Кнопка збереження (не для відгуків) -->
+      <div v-if="activeTab !== 'reviews'" class="mt-6">
+        <button @click="saveProfile" :disabled="saving" class="btn-primary w-full py-3.5 text-base inline-flex items-center justify-center gap-2">
+          <svg v-if="!saving" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           {{ saving ? 'Збереження...' : 'Зберегти профіль' }}
         </button>
         <p v-if="saved" class="text-agro text-sm text-center mt-3 flex items-center justify-center gap-1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Профіль збережено!</p>
@@ -246,6 +288,18 @@ useHead({ title: 'Кабінет агронома' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
+const { cropToSlug } = await import('~/utils/cropSlugs')
+
+const CATEGORY_ICONS: Record<string, string> = {
+  'Ягоди':     '<circle cx="8" cy="14" r="3"/><circle cx="16" cy="14" r="3"/><circle cx="12" cy="9" r="3"/><path d="M12 6V3"/>',
+  'Фрукти':    '<path d="M12 2a4 4 0 014 4c0 3-2 5-4 9-2-4-4-6-4-9a4 4 0 014-4z"/><path d="M12 2c1-1 2.5-1 3-0.5"/>',
+  'Овочі':     '<path d="M12 22V10"/><path d="M12 10C12 10 7 7 7 3c2 0 4 1.5 5 3.5C13 4.5 15 3 17 3c0 4-5 7-5 7z"/>',
+  'Зернові':   '<path d="M12 22V8"/><path d="M5 12C5 12 3 10 3 7c2.5 0 4.5 2 5 4"/><path d="M19 12C19 12 21 10 21 7c-2.5 0-4.5 2-5 4"/><path d="M12 8C12 8 10 6 10 3c2 0 3.5 1.5 4 3"/><path d="M12 8C12 8 14 6 14 3c-2 0-3.5 1.5-4 3"/>',
+  'Баштанні':  '<ellipse cx="12" cy="13" rx="8" ry="6"/><path d="M12 7V4"/><path d="M9 4c1 1 2 2 3 3"/><path d="M9 13c1-1.5 3-2 4-1"/>',
+  'Технічні':  '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>',
+}
+const CROP_ICON = '<path d="M12 22V12"/><path d="M12 12C12 12 7 9 7 4a5 5 0 0110 0c0 5-5 8-5 8z"/>'
+const categoryIcon = (name: string) => CATEGORY_ICONS[name] ?? CROP_ICON
 
 const loading = ref(true)
 const loadingCrops = ref(true)
@@ -256,7 +310,8 @@ const activeCategory = ref('')
 
 const userName = ref('')
 const profile = ref<any>(null)
-const stats = ref({ clients: 0, fields: 0, chats: 0 })
+const stats = ref({ clients: 0, active: 0, completed: 0 })
+const myReviews = ref<any[]>([])
 const categories = ref<any[]>([])
 const allCrops = ref<any[]>([])
 const selectedCrops = ref<string[]>([])
@@ -265,6 +320,7 @@ const tabs = [
   { key: 'main', label: 'Основне' },
   { key: 'education', label: 'Освіта' },
   { key: 'crops', label: 'Культури' },
+  { key: 'reviews', label: 'Відгуки' },
 ]
 
 const form = reactive({
@@ -283,6 +339,8 @@ const form = reactive({
 
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
+
+const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
 // Профіль користувача
 const { data: userData } = await supabase.from('users').select('name').eq('id', uid).single()
@@ -306,15 +364,24 @@ if (profileData) {
   selectedCrops.value = profileData.crops_expertise || []
 }
 
-// Статистика
-const [sharesRes, chatsRes] = await Promise.all([
-  supabase.from('field_shares').select('farm_id, farmer_id').eq('agronomist_id', uid).eq('status', 'accepted'),
-  supabase.from('chats').select('*', { count: 'exact', head: true }).eq('agronomist_id', uid).eq('type', 'human'),
+// Статистика з угод
+const [agreementsRes, reviewsRes] = await Promise.all([
+  supabase.from('agreements').select('id, farmer_id, status').eq('agronomist_id', uid).neq('status', 'cancelled'),
+  supabase.from('agronomist_reviews').select('id, farmer_id, rating, text, problem_solved, created_at').eq('agronomist_id', uid).order('created_at', { ascending: false }),
 ])
+const agrData = agreementsRes.data || []
 stats.value = {
-  clients: new Set((sharesRes.data || []).map((s: any) => s.farmer_id)).size,
-  fields: sharesRes.data?.length || 0,
-  chats: chatsRes.count || 0,
+  clients: new Set(agrData.map((a: any) => a.farmer_id)).size,
+  active: agrData.filter((a: any) => a.status === 'active').length,
+  completed: agrData.filter((a: any) => a.status === 'completed').length,
+}
+// Відгуки — додаємо імена фермерів
+const reviewsData = reviewsRes.data || []
+if (reviewsData.length) {
+  const fids = [...new Set(reviewsData.map((r: any) => r.farmer_id))]
+  const { data: fUsers } = await supabase.from('users').select('id, name').in('id', fids)
+  const fMap = Object.fromEntries((fUsers || []).map((u: any) => [u.id, u.name]))
+  myReviews.value = reviewsData.map((r: any) => ({ ...r, farmer_name: fMap[r.farmer_id] || 'Фермер' }))
 }
 
 loading.value = false
@@ -387,12 +454,6 @@ const saveProfile = async () => {
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

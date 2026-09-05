@@ -1,19 +1,19 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Нагадування</h1>
-        <button @click="openAdd" class="dash-btn-primary ml-auto">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Додати нагадування
-        </button>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Заплановані обробки та події</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">{{ isAgronomist ? 'Надіслані фермерам' : 'Нагадування' }}</h1>
+        <p class="dash-subtitle">{{ isAgronomist ? 'Нагадування, надіслані вашим клієнтам' : 'Заплановані обробки та події' }}</p>
+      </div>
+      <button v-if="!isAgronomist && !(isTeamMember && isViewer)" @click="openAdd" class="dash-btn-primary shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Додати нагадування
+      </button>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -21,67 +21,34 @@
     </div>
 
     <template v-else>
-      <!-- Агроном: два розділи -->
+      <!-- Агроном: тільки надіслані фермерам -->
       <template v-if="isAgronomist">
-
-        <div class="mb-8">
-          <h2 class="text-sm font-bold text-agro-dark uppercase tracking-wide mb-3 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-agro inline-block"></span> Мої нагадування
-          </h2>
-          <div v-if="reminders.length === 0" class="card text-center py-10 text-agro-light text-sm">
-            Немає особистих нагадувань
+        <div v-if="sentReminders.length === 0" class="card text-center py-16">
+          <div class="dash-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>
+            </svg>
           </div>
-          <div v-else class="space-y-3">
-            <div v-for="r in reminders" :key="r.id"
-              class="card flex items-start gap-4"
-              :class="isPast(r.scheduled_date) ? 'opacity-60' : ''">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                :class="isPast(r.scheduled_date) ? 'bg-gray-100' : 'bg-agro-hover'">
-                {{ TYPE_EMOJI[r.type] || '🔔' }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-agro-dark">{{ r.description }}</p>
-                <p class="text-xs mt-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-agro'">
-                  📅 {{ formatDate(r.scheduled_date) }}
-                </p>
-              </div>
-              <button @click="deleteReminder(r.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition-colors shrink-0">
-                <Trash2 :size="15" />
-              </button>
+          <p class="font-bold text-agro-dark text-lg mb-2">Нагадувань ще немає</p>
+          <p class="text-agro-light">Надсилайте нагадування фермерам через чат або картку поля</p>
+        </div>
+        <div v-else class="space-y-3">
+          <div v-for="r in sentReminders" :key="r.id"
+            class="card flex items-start gap-4"
+            :class="isPast(r.scheduled_date) ? 'opacity-60' : ''">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              :class="isPast(r.scheduled_date) ? 'bg-gray-100 text-gray-400' : 'bg-amber-50 text-amber-600'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[r.type] || BELL_SVG" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-agro-dark">{{ r.description }}</p>
+              <p class="text-xs mt-1 flex items-center gap-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-amber-600'">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {{ formatDate(r.scheduled_date) }}
+              </p>
             </div>
           </div>
         </div>
-
-        <div>
-          <h2 class="text-sm font-bold text-agro-dark uppercase tracking-wide mb-3 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Надіслані фермерам
-          </h2>
-          <div v-if="sentReminders.length === 0" class="card text-center py-10 text-agro-light text-sm">
-            Ви ще не надсилали нагадувань фермерам
-          </div>
-          <div v-else class="space-y-3">
-            <div v-for="r in sentReminders" :key="r.id"
-              class="card flex items-start gap-4"
-              :class="isPast(r.scheduled_date) ? 'opacity-60' : ''">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-                :class="isPast(r.scheduled_date) ? 'bg-gray-100' : 'bg-amber-50'">
-                {{ TYPE_EMOJI[r.type] || '🔔' }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <p class="font-semibold text-agro-dark">{{ r.description }}</p>
-                  <span class="text-xs bg-amber-50 border border-amber-200 text-amber-700 px-2 py-0.5 rounded-full font-medium shrink-0">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M9 4c1.5-1.5 5.5-1.5 6 1"/></svg> для фермера
-                  </span>
-                </div>
-                <p class="text-xs mt-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-amber-600'">
-                  📅 {{ formatDate(r.scheduled_date) }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </template>
 
       <!-- Фермер: звичайний список -->
@@ -100,19 +67,20 @@
           <div v-for="r in reminders" :key="r.id"
             class="card flex items-start gap-4"
             :class="isPast(r.scheduled_date) ? 'opacity-60' : ''">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
-              :class="isPast(r.scheduled_date) ? 'bg-gray-100' : 'bg-agro-hover'">
-              {{ TYPE_EMOJI[r.type] || r.type || '🔔' }}
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              :class="isPast(r.scheduled_date) ? 'bg-gray-100 text-gray-400' : 'bg-agro-hover text-agro'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[r.type] || BELL_SVG" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <p class="font-semibold text-agro-dark">{{ r.description }}</p>
-                <span v-if="r.from_agronomist" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full font-medium shrink-0">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M9 4c1.5-1.5 5.5-1.5 6 1"/></svg> від агронома
+                <span v-if="r.from_agronomist" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-1">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> від агронома
                 </span>
               </div>
-              <p class="text-xs mt-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-agro'">
-                📅 {{ formatDate(r.scheduled_date) }}
+              <p class="text-xs mt-1 flex items-center gap-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-agro'">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {{ formatDate(r.scheduled_date) }}
               </p>
             </div>
             <button @click="deleteReminder(r.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition-colors shrink-0">
@@ -146,7 +114,7 @@
                   <button v-for="t in TYPES" :key="t.value" @click="newForm.type = t.value"
                     class="flex flex-col items-center gap-1 px-2 py-3 rounded-xl border-2 text-xs transition-colors"
                     :class="newForm.type === t.value ? 'border-agro bg-agro-hover text-agro font-semibold' : 'border-agro-border text-agro-light hover:border-agro/40'">
-                    <span class="text-lg">{{ t.emoji }}</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="t.icon" />
                     <span>{{ t.label }}</span>
                   </button>
                 </div>
@@ -206,7 +174,8 @@
 
             <div class="sticky bottom-0 bg-white border-t border-agro-border px-6 py-4 flex gap-3">
               <button @click="showAdd = false" class="btn-outline flex-1">Скасувати</button>
-              <button @click="addReminder" :disabled="!newForm.title || !newForm.date || saving" class="btn-primary flex-1">
+              <button @click="addReminder" :disabled="!newForm.title || !newForm.date || saving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
+                <svg v-if="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 {{ saving ? '...' : 'Додати' }}
               </button>
             </div>
@@ -228,17 +197,22 @@ const saving = ref(false)
 const showAdd = ref(false)
 const reminders = ref<any[]>([])
 const sentReminders = ref<any[]>([])
-const isAgronomist = ref(false)
+const isAgronomist = ref(
+  import.meta.client
+    ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
+    : false
+)
 
 const TYPES = [
-  { value: 'обробка', label: 'Обробка', emoji: '' },
-  { value: 'підживлення', label: 'Підживлення', emoji: '🌿' },
-  { value: 'полив', label: 'Полив', emoji: '💧' },
-  { value: 'посів', label: 'Посів', emoji: '🌱' },
-  { value: 'збір', label: 'Збір', emoji: '🌾' },
-  { value: 'інше', label: 'Інше', emoji: '🔔' },
+  { value: 'обробка',     label: 'Обробка',     icon: '<path d="M9 3h6"/><path d="M10 3v5L5 17.5A1 1 0 006 19h12a1 1 0 00.87-1.5L14 8V3"/><line x1="8" y1="13" x2="16" y2="13"/>' },
+  { value: 'підживлення', label: 'Підживлення', icon: '<path d="M12 22V12"/><path d="M5 3a7 7 0 0 0 7 7 7 7 0 0 0-7-7"/><path d="M19 3a7 7 0 0 1-7 7 7 7 0 0 1 7-7"/>' },
+  { value: 'полив',       label: 'Полив',       icon: '<path d="M20 16.2A4.5 4.5 0 0018 8h-1.26a8 8 0 10-12.62 8"/><line x1="8" y1="16" x2="8" y2="21"/><line x1="16" y1="16" x2="16" y2="21"/><line x1="12" y1="19" x2="12" y2="23"/>' },
+  { value: 'посів',       label: 'Посів',       icon: '<path d="M12 22V12"/><path d="M12 12C12 12 7 10 7 5a5 5 0 0110 0c0 5-5 7-5 7z"/>' },
+  { value: 'збір',        label: 'Збір',        icon: '<path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 21h18"/>' },
+  { value: 'інше',        label: 'Інше',        icon: '<path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>' },
 ]
-const TYPE_EMOJI: Record<string, string> = Object.fromEntries(TYPES.map(t => [t.value, t.emoji]))
+const TYPE_SVG: Record<string, string> = Object.fromEntries(TYPES.map(t => [t.value, t.icon]))
+const BELL_SVG = '<path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>'
 const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
 
 const newForm = reactive({ title: '', note: '', type: 'інше', date: '', hour: 9, minute: 0 })
@@ -267,23 +241,23 @@ const openAdd = () => {
   showAdd.value = true
 }
 
-const { data: { session } } = await supabase.auth.getSession()
-const uid = session?.user?.id
+const { isTeamMember, isViewer, getQueryUserId } = useTeamContext()
 
 const load = async () => {
-  const { data: profile } = await supabase.from('users').select('role').eq('id', uid).single()
-  isAgronomist.value = profile?.role === 'agronomist'
+  const queryUid = await getQueryUserId()  // uid власника в режимі команди
+  if (!queryUid) { loading.value = false; return }
 
   const { data: own } = await supabase.from('reminders')
     .select('*')
-    .eq('user_id', uid)
+    .eq('user_id', queryUid)
+    .eq('from_agronomist', false)
     .order('scheduled_date', { ascending: true })
   reminders.value = own || []
 
   if (isAgronomist.value) {
     const { data: sent } = await supabase.from('reminders')
       .select('*')
-      .eq('created_by', uid)
+      .eq('created_by', queryUid)
       .eq('from_agronomist', true)
       .order('scheduled_date', { ascending: true })
     sentReminders.value = sent || []
@@ -301,11 +275,13 @@ const isPast = (d: string) => d ? new Date(d) < new Date() : false
 
 const addReminder = async () => {
   if (!newForm.title || !newForm.date) return
+  if (isTeamMember.value && isViewer.value) return
   saving.value = true
+  const queryUid = await getQueryUserId()
   const [y, m, d] = newForm.date.split('-').map(Number)
   const iso = new Date(y, m - 1, d, Number(newForm.hour), Number(newForm.minute), 0).toISOString()
   await supabase.from('reminders').insert({
-    user_id: uid,
+    user_id: queryUid,
     description: newForm.title,
     scheduled_date: iso,
     type: newForm.type,
@@ -328,14 +304,7 @@ const deleteReminder = async (id: string) => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
-.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

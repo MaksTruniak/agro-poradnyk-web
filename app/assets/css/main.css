@@ -31,3 +31,85 @@
 .page-leave-to {
   opacity: 0;
 }
+
+/* ── Глобальний стиль dash-head (як в AI Агронома) ── */
+.dash-page,
+.fields-page {
+  padding: 0 56px 40px !important;
+}
+
+@media (max-width: 1024px) {
+  .dash-page,
+  .fields-page {
+    padding: 0 20px 32px !important;
+  }
+}
+
+.dash-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  border-bottom: 1px solid rgb(224, 237, 204);
+  padding: 14px 24px;
+  margin-left: -56px;
+  margin-right: -56px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+.dash-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgb(238, 241, 227);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: rgb(47, 82, 51);
+  color: rgb(250, 246, 236);
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.dash-btn-primary:hover {
+  background: rgb(61, 107, 66);
+}
+
+.dash-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: rgb(27, 46, 27) !important;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+
+.dash-subtitle {
+  font-size: 12px !important;
+  color: rgb(107, 122, 100) !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 1024px) {
+  .dash-head {
+    margin-left: -20px;
+    margin-right: -20px;
+    padding: 12px 20px;
+  }
+}

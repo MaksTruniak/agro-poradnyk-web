@@ -1,15 +1,15 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Налаштування</h1>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Профіль та параметри акаунту</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Налаштування</h1>
+        <p class="dash-subtitle">Профіль та параметри акаунту</p>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-6">
@@ -21,6 +21,25 @@
       <!-- Профіль -->
       <div class="card">
         <h2 class="dash-card-title bitter mb-5">Профіль</h2>
+
+        <!-- Аватар -->
+        <div class="flex items-center gap-4 mb-5 pb-5 border-b border-agro-border">
+          <div class="relative shrink-0">
+            <div class="w-16 h-16 rounded-full overflow-hidden bg-agro-hover flex items-center justify-center">
+              <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" />
+              <span v-else class="text-2xl font-extrabold text-agro" style="font-family:'Bitter',serif;">{{ (form.first_name?.[0] || '?').toUpperCase() }}</span>
+            </div>
+          </div>
+          <div>
+            <label class="btn-outline text-sm cursor-pointer inline-flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              {{ uploadingAvatar ? 'Завантаження...' : 'Завантажити фото' }}
+              <input type="file" accept="image/*" class="hidden" @change="onAvatarPick" :disabled="uploadingAvatar" />
+            </label>
+            <p class="text-xs text-agro-light mt-1">JPG, PNG до 2 МБ</p>
+          </div>
+        </div>
+
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -61,6 +80,58 @@
                 {{ c.Present }}
               </button>
             </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">Адреса (вулиця, будинок)</label>
+            <input v-model="form.address" class="input" placeholder="Наприклад: вул. Шевченка 12" />
+            <p class="text-xs text-agro-light mt-1">Використовується при угодах для самовивозу або доставки</p>
+          </div>
+        </div>
+        <button @click="saveProfile" :disabled="saving" class="btn-primary mt-5">
+          {{ saving ? 'Збереження...' : 'Зберегти' }}
+        </button>
+        <p v-if="saved" class="text-agro text-sm mt-2">✅ Збережено!</p>
+      </div>
+
+      <!-- Публічний профіль агронома -->
+      <div v-if="isAgronomist" class="card">
+        <h2 class="dash-card-title bitter mb-1">Публічний профіль</h2>
+        <p class="text-sm text-agro-light mb-4">Поділіться посиланням — фермери зможуть знайти вас та надіслати запит на співпрацю</p>
+        <div class="flex items-center gap-2 bg-agro-bg rounded-xl px-4 py-3">
+          <span class="text-sm text-agro-dark flex-1 truncate">{{ publicProfileUrl }}</span>
+          <button @click="copyProfileUrl" class="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-agro hover:text-agro-dark transition-colors">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            {{ copied ? 'Скопійовано!' : 'Копіювати' }}
+          </button>
+        </div>
+        <NuxtLink :to="`/agronomist/${uid}`" target="_blank" class="inline-flex items-center gap-1.5 text-sm text-agro hover:underline mt-3">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Переглянути профіль
+        </NuxtLink>
+      </div>
+
+      <!-- Реквізити -->
+      <div class="card">
+        <h2 class="dash-card-title bitter mb-1">Реквізити</h2>
+        <p class="text-sm text-agro-light mb-5">Використовуються для формування накладних. Заповнювати за потребою.</p>
+        <div class="flex flex-col gap-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1.5">ЄДРПОУ / ІПН</label>
+              <input v-model="form.edrpou" class="input" placeholder="12345678" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1.5">Назва банку</label>
+              <input v-model="form.bank_name" class="input" placeholder="АТ КБ «ПриватБанк»" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">IBAN</label>
+            <input v-model="form.iban" class="input" placeholder="UA213996220000026007233566001" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">Юридична адреса</label>
+            <input v-model="form.legal_address" class="input" placeholder="49000, Дніпропетровська обл., м. Дніпро, вул. Шевченка 1" />
           </div>
         </div>
         <button @click="saveProfile" :disabled="saving" class="btn-primary mt-5">
@@ -138,12 +209,34 @@
         <p v-if="savedDelivery" class="text-agro text-sm mt-2">✅ Збережено!</p>
       </div>
 
-      <!-- Що закуповую (тільки для заготівельника) -->
-      <div v-if="role === 'buyer'" class="card">
-        <div class="flex items-center justify-between">
-          <h2 class="dash-card-title bitter">Що закуповую</h2>
-          <NuxtLink to="/dashboard/buyer-crops" class="text-sm text-agro font-medium hover:underline">Керувати →</NuxtLink>
+      <!-- Профілі акаунту -->
+      <div class="card">
+        <h2 class="dash-card-title bitter mb-1">Профілі акаунту</h2>
+        <p class="text-sm text-agro-light mb-4">Підключіть додатковий профіль, щоб використовувати один акаунт і як фермер, і як агроном</p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <div
+            v-for="r in userRoles"
+            :key="r"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+            style="background:rgb(234,240,222); color:rgb(47,82,51);"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#2F5233" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {{ ROLE_SHORT_MAP[r] || r }}
+          </div>
         </div>
+        <div v-if="availableToAdd.length" class="flex flex-wrap gap-2">
+          <button
+            v-for="r in availableToAdd"
+            :key="r"
+            @click="addProfile(r)"
+            :disabled="addingProfile"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 border-agro-border text-sm font-semibold text-agro-dark hover:border-agro transition-colors"
+          >
+            + Додати профіль {{ ROLE_SHORT_MAP[r] }}
+          </button>
+        </div>
+        <p v-else class="text-xs text-agro-light">Усі доступні профілі вже підключені</p>
+        <p v-if="profileAdded" class="text-agro text-sm mt-2">✅ Профіль додано! При наступному вході оберіть потрібний.</p>
       </div>
 
       <!-- Вихід -->
@@ -162,6 +255,7 @@ useHead({ title: 'Налаштування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
+const { confirm: confirmDialog } = useConfirm()
 const router = useRouter()
 
 const loading = ref(true)
@@ -174,8 +268,11 @@ const passError = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 const email = ref('')
+const avatarUrl = ref('')
+const uploadingAvatar = ref(false)
+const copied = ref(false)
 
-const form = reactive({ name: '', first_name: '', last_name: '', company_name: '', phone: '', region: '', city: '' })
+const form = reactive({ first_name: '', last_name: '', company_name: '', phone: '', region: '', city: '', address: '', edrpou: '', iban: '', bank_name: '', legal_address: '' })
 const areas = ref<any[]>([])
 const citySearch = ref('')
 const citySuggestions = ref<any[]>([])
@@ -196,25 +293,77 @@ const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 email.value = session?.user?.email || ''
 
+const publicProfileUrl = computed(() => `${import.meta.client ? window.location.origin : ''}/agronomist/${uid}`)
+const copyProfileUrl = async () => {
+  await navigator.clipboard.writeText(publicProfileUrl.value)
+  copied.value = true
+  setTimeout(() => copied.value = false, 2000)
+}
+
+const onAvatarPick = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) { alert('Файл більше 2 МБ'); return }
+  uploadingAvatar.value = true
+  const ext = file.name.split('.').pop()
+  const path = `avatars/${uid}.${ext}`
+  const { error } = await supabase.storage.from('user-avatars').upload(path, file, { upsert: true })
+  if (!error) {
+    const { data: urlData } = supabase.storage.from('user-avatars').getPublicUrl(path)
+    const url = urlData.publicUrl + '?t=' + Date.now()
+    avatarUrl.value = url
+    await supabase.from('users').update({ avatar_url: url }).eq('id', uid)
+  }
+  uploadingAvatar.value = false
+}
+
 const np = useNovaPost()
 
 // Завантажуємо області першими
 const areasData = await np.getAreas().catch(() => [])
 areas.value = areasData.sort((a: any, b: any) => a.Description.localeCompare(b.Description, 'uk'))
 
-const { data: profile } = await supabase.from('users').select('name, first_name, last_name, company_name, phone, region, city, role').eq('id', uid).single()
+const { data: profile } = await supabase.from('users').select('name, first_name, last_name, company_name, phone, region, city, role, roles, address, edrpou, iban, bank_name, legal_address, avatar_url').eq('id', uid).single()
 if (profile) {
-  form.name = profile.name || ''
-  form.first_name = profile.first_name || ''
-  form.last_name = profile.last_name || ''
+  if (profile.first_name) {
+    form.first_name = profile.first_name
+    form.last_name = profile.last_name || ''
+  } else if (profile.name) {
+    const parts = profile.name.trim().split(' ')
+    form.first_name = parts[0] || ''
+    form.last_name = parts.slice(1).join(' ') || ''
+  }
   form.company_name = profile.company_name || ''
   form.phone = profile.phone || ''
   form.region = profile.region || ''
   form.city = profile.city || ''
   citySearch.value = profile.city || ''
+  form.address = profile.address || ''
+  form.edrpou = profile.edrpou || ''
+  form.iban = profile.iban || ''
+  form.bank_name = profile.bank_name || ''
+  form.legal_address = profile.legal_address || ''
+  avatarUrl.value = profile.avatar_url || ''
 }
 
 const role = computed(() => profile?.role || '')
+const ROLE_SHORT_MAP: Record<string, string> = { farmer: 'Фермер', agronomist: 'Агроном', seller: 'Продавець', buyer: 'Заготівельник' }
+const ALL_ADDABLE_ROLES = ['farmer', 'agronomist']
+const userRoles = ref<string[]>(profile?.roles?.length ? profile.roles : [profile?.role || 'farmer'])
+const isAgronomist = computed(() => role.value === 'agronomist' || userRoles.value.includes('agronomist'))
+const availableToAdd = computed(() => ALL_ADDABLE_ROLES.filter(r => !userRoles.value.includes(r)))
+const addingProfile = ref(false)
+const profileAdded = ref(false)
+
+const addProfile = async (newRole: string) => {
+  addingProfile.value = true
+  const merged = [...new Set([...userRoles.value, newRole])]
+  await supabase.from('users').update({ roles: merged }).eq('id', uid)
+  userRoles.value = merged
+  profileAdded.value = true
+  addingProfile.value = false
+  setTimeout(() => { profileAdded.value = false }, 3000)
+}
 const isSeller = computed(() => role.value === 'seller')
 const companyLabel = computed(() => {
   if (role.value === 'farmer') return 'Назва фермерського господарства'
@@ -256,6 +405,7 @@ const addBuyerCrop = async () => {
 }
 
 const deleteBuyerCrop = async (id: string) => {
+  if (!await confirmDialog('Культуру буде видалено.', { title: 'Видалити культуру?' })) return
   await supabase.from('buyer_crops').delete().eq('id', id)
   buyerCrops.value = buyerCrops.value.filter((c: any) => c.id !== id)
 }
@@ -278,13 +428,18 @@ loading.value = false
 const saveProfile = async () => {
   saving.value = true
   await supabase.from('users').update({
-    name: `${form.first_name} ${form.last_name}`.trim() || form.name,
+    name: `${form.first_name} ${form.last_name}`.trim(),
     first_name: form.first_name,
     last_name: form.last_name,
     company_name: form.company_name || null,
     phone: form.phone,
     region: form.region,
     city: form.city,
+    address: form.address || null,
+    edrpou: form.edrpou || null,
+    iban: form.iban || null,
+    bank_name: form.bank_name || null,
+    legal_address: form.legal_address || null,
   }).eq('id', uid)
   saving.value = false
   saved.value = true
@@ -362,12 +517,6 @@ const logout = async () => {
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

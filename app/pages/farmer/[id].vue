@@ -119,10 +119,10 @@
                 <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
                   <button @click="requestModal.unit = 'т'" type="button"
                     class="px-3 py-2 text-sm font-semibold transition-colors"
-                    :class="requestModal.unit === 'т' ? 'bg-agro-hover text-agro-dark' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
+                    :class="requestModal.unit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
                   <button @click="requestModal.unit = 'кг'" type="button"
                     class="px-3 py-2 text-sm font-semibold transition-colors"
-                    :class="requestModal.unit === 'кг' ? 'bg-agro-hover text-agro-dark' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+                    :class="requestModal.unit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
                 </div>
               </div>
             </div>

@@ -1,15 +1,15 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Угоди</h1>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Продаж та купівля врожаю</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Угоди</h1>
+        <p class="dash-subtitle">Продаж та купівля врожаю</p>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-3">
@@ -50,8 +50,8 @@
           </div>
           <div class="divide-y divide-agro-border">
             <div v-for="deal in deals" :key="deal.id" class="flex items-center gap-4 px-5 py-4">
-              <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center text-xl shrink-0">
-                {{ cropEmoji(deal.crop_type) }}
+              <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center shrink-0">
+                <img :src="`/crops/${cropToSlug(deal.crop_type)}.svg`" :alt="deal.crop_type" class="w-6 h-6 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-agro-dark">{{ deal.crop_type }}</p>
@@ -69,11 +69,23 @@
               <div class="text-right shrink-0 min-w-[100px]">
                 <p class="font-extrabold text-agro">{{ deal.total_price?.toLocaleString('uk-UA') }} грн</p>
               </div>
-              <button v-if="!myReviews.has(deal.id)" @click="openReview(deal)"
-                class="shrink-0 text-xs bg-amber-50 border border-amber-200 text-amber-600 rounded-xl px-3 py-1.5 hover:bg-amber-100 transition-colors font-medium">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінити
+              <button @click="generateInvoice(deal)"
+                class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Накладна
               </button>
-              <span v-else class="shrink-0 text-xs text-agro-light flex items-center gap-1"><svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінено</span>
+              <button v-if="!isFarmer && deal.status === 'confirmed'" @click="confirmReceived(deal)"
+                class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro text-white rounded-xl px-3 py-1.5 hover:bg-agro-dark transition-colors font-medium">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Підтвердити отримання
+              </button>
+              <button v-if="!myReviews.has(deal.id) && deal.status === 'completed'" @click="openReview(deal)"
+                class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-amber-50 border border-amber-200 text-amber-600 rounded-xl px-3 py-1.5 hover:bg-amber-100 transition-colors font-medium">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінити
+              </button>
+              <span v-else-if="myReviews.has(deal.id)" class="shrink-0 inline-flex items-center gap-1.5 text-xs text-agro-light px-3 py-1.5 border border-transparent rounded-xl">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінено
+              </span>
               <NuxtLink :to="`/dashboard/chats/${deal.chat_id}`"
                 class="shrink-0 text-xs border border-agro-border text-agro-light rounded-xl px-3 py-1.5 hover:border-agro hover:text-agro transition-colors">
                 Чат →
@@ -89,8 +101,8 @@
           </div>
           <div class="divide-y divide-agro-border">
             <div v-for="s in manualSales" :key="s.id" class="flex items-center gap-4 px-5 py-4">
-              <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center text-xl shrink-0">
-                {{ cropEmoji(s.crop_type) }}
+              <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center shrink-0">
+                <img :src="`/crops/${cropToSlug(s.crop_type)}.svg`" :alt="s.crop_type" class="w-6 h-6 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-agro-dark">{{ s.crop_type }}</p>
@@ -215,7 +227,7 @@ useHead({ title: 'Угоди' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
-const { cropEmoji } = await import('~/utils/cropSlugs')
+const { cropToSlug } = await import('~/utils/cropSlugs')
 
 const loading = ref(true)
 const deals = ref<any[]>([])
@@ -369,10 +381,88 @@ const deleteManual = async (id: string) => {
   manualSales.value = manualSales.value.filter((s: any) => s.id !== id)
 }
 
+const confirmReceived = async (deal: any) => {
+  const { error } = await supabase.from('deals').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', deal.id)
+  if (!error) deal.status = 'completed'
+}
+
+const generateInvoice = async (deal: any) => {
+  const [farmerRes, buyerRes] = await Promise.all([
+    supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', deal.farmer_id).single(),
+    supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', deal.buyer_id).single(),
+  ])
+  const farmer = farmerRes.data || {}
+  const buyer = buyerRes.data || {}
+
+  const deliveryName = deal.delivery_type_id === 1 ? 'Самовивіз' : 'Доставка'
+  const totalPrice = deal.total_price ? deal.total_price.toLocaleString('uk-UA') + ' грн' : '—'
+  const pricePerUnit = deal.display_price ? deal.display_price.toLocaleString('uk-UA') + ' грн/' + deal.unit : '—'
+  const qty = deal.display_quantity ? deal.display_quantity + ' ' + deal.unit : '—'
+  const dateStr = deal.confirmed_at ? new Date(deal.confirmed_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+  const invoiceNum = deal.id.slice(0, 8).toUpperCase()
+
+  const partyBlock = (label: string, u: any) => `
+    <div class="party">
+      <div class="party-label">${label}</div>
+      <div class="party-name">${u.company_name || u.name || '—'}</div>
+      ${u.edrpou ? `<div class="party-row">ЄДРПОУ / ІПН: <b>${u.edrpou}</b></div>` : ''}
+      ${u.city ? `<div class="party-row">Адреса: ${u.legal_address || u.city + (u.region ? ', ' + u.region : '')}</div>` : ''}
+      ${u.phone ? `<div class="party-row">Телефон: ${u.phone}</div>` : ''}
+      ${u.iban ? `<div class="party-row">IBAN: <b>${u.iban}</b></div>` : ''}
+      ${u.bank_name ? `<div class="party-row">Банк: ${u.bank_name}</div>` : ''}
+    </div>`
+
+  const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Накладна №${invoiceNum}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 40px; max-width: 800px; margin: auto; }
+    h1 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 28px; }
+    .parties { display: flex; gap: 24px; margin-bottom: 24px; }
+    .party { flex: 1; border: 1px solid #ccc; border-radius: 6px; padding: 12px; }
+    .party-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 4px; }
+    .party-name { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+    .party-row { font-size: 12px; color: #444; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #f4f4f4; border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-size: 12px; }
+    td { border: 1px solid #ddd; padding: 8px 10px; font-size: 13px; }
+    .total-row td { font-weight: 700; background: #f9f9f9; }
+    .delivery { margin-bottom: 20px; font-size: 12px; color: #555; }
+    .signatures { display: flex; gap: 40px; margin-top: 40px; }
+    .sig { flex: 1; border-top: 1px solid #999; padding-top: 8px; font-size: 12px; color: #555; }
+    .footer { margin-top: 20px; font-size: 11px; color: #aaa; text-align: center; }
+    @media print { body { padding: 20px; } }
+  </style></head><body>
+  <h1>Видаткова накладна №${invoiceNum}</h1>
+  <div class="subtitle">від ${dateStr}</div>
+  <div class="parties">
+    ${partyBlock('Постачальник (Продавець)', farmer)}
+    ${partyBlock('Покупець', buyer)}
+  </div>
+  <table>
+    <thead><tr><th>№</th><th>Найменування товару</th><th>Кількість</th><th>Ціна за од.</th><th>Сума</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>${deal.crop_type}</td><td>${qty}</td><td>${pricePerUnit}</td><td>${totalPrice}</td></tr>
+      <tr class="total-row"><td colspan="4" style="text-align:right">Всього:</td><td>${totalPrice}</td></tr>
+    </tbody>
+  </table>
+  <div class="delivery">Спосіб доставки: <b>${deliveryName}</b></div>
+  <div class="signatures">
+    <div class="sig">Здав (Продавець): _______________________<br><span style="font-size:11px;color:#888">${farmer.name || ''}</span></div>
+    <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name || ''}</span></div>
+  </div>
+  <div class="footer">Сформовано через АгроПростір</div>
+  <script>window.onload = () => { window.print() }<\/script>
+  </body></html>`
+
+  const w = window.open('', '_blank')
+  if (w) { w.document.write(html); w.document.close() }
+}
+
 onMounted(async () => {
   const field = isFarmer ? 'farmer_id' : 'buyer_id'
   const [dealsRes, manualRes, farmsRes] = await Promise.all([
-    supabase.from('deals').select('*').eq(field, uid).eq('status', 'confirmed').order('confirmed_at', { ascending: false }),
+    supabase.from('deals').select('*').eq(field, uid).in('status', ['confirmed', 'completed']).order('confirmed_at', { ascending: false }),
     isFarmer ? supabase.from('manual_sales').select('*').eq('user_id', uid).order('sold_at', { ascending: false }) : Promise.resolve({ data: [] }),
     isFarmer ? supabase.from('farms').select('farm_crops(crop_type, variety)').eq('user_id', uid) : Promise.resolve({ data: [] }),
   ])
@@ -409,8 +499,13 @@ onMounted(async () => {
 
   deals.value = dealsData.map((d: any) => {
     const { unit, displayQty, displayPrice } = parseDealMessage(dealMsgMap[d.id])
+    const cleanCrop = (d.crop_type || '')
+      .replace('Пропозиція продажу: ', '')
+      .replace('Запит на купівлю: ', '')
+      .trim()
     return {
       ...d,
+      crop_type: cleanCrop,
       unit,
       display_quantity: displayQty ?? d.quantity_tons,
       display_price: displayPrice ?? d.price_per_ton,
@@ -435,14 +530,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

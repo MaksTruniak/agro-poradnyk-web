@@ -1,18 +1,18 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Сповіщення</h1>
-        <button v-if="items.length" @click="markAllRead" class="ml-auto text-sm text-agro hover:underline font-medium">
-          Позначити всі прочитаними
-        </button>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Системні повідомлення</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Сповіщення</h1>
+        <p class="dash-subtitle">Системні повідомлення</p>
+      </div>
+      <button v-if="items.length" @click="markAllRead" class="shrink-0 text-sm text-agro hover:underline font-medium">
+        Позначити всі прочитаними
+      </button>
     </div>
 
     <div v-if="loading" class="space-y-3">
@@ -101,12 +101,6 @@ onMounted(load)
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

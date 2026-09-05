@@ -1,15 +1,15 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 20V10M12 20V4M18 20v-7"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Аналітика</h1>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 20V10M12 20V4M18 20v-7"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Статистика ваших полів та культур</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Аналітика</h1>
+        <p class="dash-subtitle">Статистика ваших полів та культур</p>
+      </div>
     </div>
 
     <div v-if="loading" class="grid md:grid-cols-3 gap-5 mb-8">
@@ -402,13 +402,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
 .dash-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

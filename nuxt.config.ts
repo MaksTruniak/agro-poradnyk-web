@@ -50,6 +50,9 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
       htmlAttrs: { lang: 'uk' },
       titleTemplate: '%s — АгроПростір',
+      meta: [
+        { name: 'robots', content: 'noindex, nofollow' },
+      ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

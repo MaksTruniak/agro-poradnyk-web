@@ -35,35 +35,64 @@
         </div>
       </div>
 
+      <!-- Перемикач профілів (якщо є 2+) -->
+      <div v-if="allRoles.length > 1" style="padding: 10px 14px; border-bottom: 1px solid rgb(231,224,206);">
+        <p style="font-size:10px; font-weight:700; letter-spacing:0.06em; color:rgb(160,175,150); text-transform:uppercase; margin-bottom:6px; padding: 0 2px;">Профіль</p>
+        <div class="flex gap-1.5">
+          <button
+            v-for="r in allRoles"
+            :key="r"
+            @click="switchProfile(r)"
+            class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-bold transition-all"
+            :style="role === r
+              ? 'background:rgb(234,240,222); color:rgb(47,82,51);'
+              : 'background:transparent; color:rgb(122,138,114); border: 1px solid rgb(231,224,206);'"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path :d="ROLE_ICONS[r] || ROLE_ICONS.farmer" :stroke="role === r ? '#2F5233' : '#7A8A72'" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            {{ ROLE_SHORT[r] || r }}
+          </button>
+        </div>
+      </div>
+
       <!-- Навігація -->
-      <nav class="flex-1 overflow-y-auto" style="padding: 16px 14px; display:flex; flex-direction:column; gap:2px;">
+      <nav class="flex-1 overflow-y-auto" style="padding: 12px 14px;">
         <template v-if="!role">
           <div v-for="i in 7" :key="i" class="h-10 rounded-[10px] animate-pulse mb-0.5" style="background:rgb(238,241,227);"/>
         </template>
-        <NuxtLink
-          v-else
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          class="flex items-center gap-3 transition-colors"
-          style="padding: 11px 14px; border-radius: 10px; font-size: 14.5px;"
-          :style="isActive(item.to)
-            ? 'background:rgb(234,240,222); color:rgb(27,46,27); font-weight:700;'
-            : 'color:rgb(76,90,70); font-weight:600;'"
-        >
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" class="shrink-0">
-            <template v-for="(p, pi) in (NAV_ICONS[item.svgKey || item.to]?.paths || [])" :key="pi">
-              <path :d="p.d" :stroke="isActive(item.to) ? '#2F5233' : '#4C5A46'" :stroke-width="p.sw || 1.7" :stroke-linejoin="p.lj" :stroke-linecap="p.lc"/>
-            </template>
-            <template v-for="(c, ci) in (NAV_ICONS[item.svgKey || item.to]?.circles || [])" :key="'c'+ci">
-              <circle :cx="c.cx" :cy="c.cy" :r="c.r" :stroke="isActive(item.to) ? '#2F5233' : '#4C5A46'" :stroke-width="c.sw || 1.7"/>
-            </template>
-          </svg>
-          <span class="flex-1">{{ item.label }}</span>
-          <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#2F5233; font-size:11px;">{{ unreadChats }}</span>
-          <span v-if="item.to === '/cart' && cartCount > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#2F5233; font-size:11px;">{{ cartCount }}</span>
-          <span v-if="item.to === '/dashboard/inventory' && unreadNotifications > 0" class="w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ unreadNotifications }}</span>
-        </NuxtLink>
+        <template v-else>
+          <div v-for="group in navItems" :key="group.label" class="mb-3">
+            <p v-if="group.label" style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; color:rgb(160,175,150); text-transform:uppercase; padding: 0 14px; margin-bottom:3px;">{{ group.label }}</p>
+            <div style="display:flex; flex-direction:column; gap:1px;">
+              <NuxtLink
+                v-for="item in group.items"
+                :key="item.to"
+                :to="item.to"
+                class="flex items-center gap-3 transition-colors"
+                style="padding: 10px 14px; border-radius: 10px; font-size: 14.5px;"
+                :style="isActive(item.to)
+                  ? 'background:rgb(234,240,222); color:rgb(27,46,27); font-weight:700;'
+                  : 'color:rgb(76,90,70); font-weight:600;'"
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" class="shrink-0">
+                  <template v-for="(p, pi) in (NAV_ICONS[item.svgKey || item.to]?.paths || [])" :key="pi">
+                    <path :d="p.d" :stroke="isActive(item.to) ? '#2F5233' : '#4C5A46'" :stroke-width="p.sw || 1.7" :stroke-linejoin="p.lj" :stroke-linecap="p.lc"/>
+                  </template>
+                  <template v-for="(c, ci) in (NAV_ICONS[item.svgKey || item.to]?.circles || [])" :key="'c'+ci">
+                    <circle :cx="c.cx" :cy="c.cy" :r="c.r" :stroke="isActive(item.to) ? '#2F5233' : '#4C5A46'" :stroke-width="c.sw || 1.7"/>
+                  </template>
+                </svg>
+                <span class="flex-1">{{ item.label }}</span>
+                <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#2F5233; font-size:11px;">{{ unreadChats }}</span>
+                <span v-if="item.to === '/cart' && cartCount > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#2F5233; font-size:11px;">{{ cartCount }}</span>
+                <span v-if="item.to === '/dashboard/inventory' && unreadNotifications > 0" class="w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ unreadNotifications }}</span>
+                <span v-if="item.to === '/dashboard/agronomist-fields' && pendingShares > 0" class="w-5 h-5 bg-yellow-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ pendingShares }}</span>
+                <span v-if="item.to === '/dashboard/agreements' && pendingAgreementsCount > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#B3452F; font-size:11px;">{{ pendingAgreementsCount }}</span>
+              </NuxtLink>
+            </div>
+          </div>
+        </template>
       </nav>
 
       <!-- Вийти -->
@@ -101,6 +130,12 @@
 
     <!-- Контент -->
     <div class="lg:pl-[280px] flex-1 flex flex-col h-dvh overflow-hidden">
+      <!-- Банер члена команди -->
+      <div v-if="teamOwner" class="shrink-0 flex items-center gap-3 px-4 py-2.5 bg-amber-50 border-b border-amber-200 text-sm">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(161,98,7)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        <span class="text-amber-800">Ви переглядаєте дані <strong>{{ teamOwner.ownerName }}</strong> як {{ teamOwner.roleLabel }}</span>
+        <button @click="exitTeamMode" class="ml-auto text-xs text-amber-700 hover:text-amber-900 font-semibold underline shrink-0">Вийти</button>
+      </div>
       <div class="flex-1 pt-14 lg:pt-0 pb-20 lg:pb-0 overflow-y-auto">
         <slot />
       </div>
@@ -157,8 +192,12 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/dashboard/ai-chat':           { paths: [{ d: 'M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z', sw: 1.4, lj: 'round' }] },
   '/dashboard/reminders':         { paths: [{ d: 'M6 20V13a6 6 0 0112 0v7', sw: 1.6, lj: 'round' }, { d: 'M4 20h16', sw: 1.6, lc: 'round' }] },
   '/dashboard/chats':             { paths: [{ d: 'M4 5h16v11H8l-4 4V5z', sw: 1.6, lj: 'round' }] },
+  '/dashboard/agreements':        { paths: [{ d: 'M9 12l2 2 4-4', sw: 1.6, lc: 'round', lj: 'round' }, { d: 'M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z', sw: 1.6, lj: 'round' }] },
   '/dashboard/deals':             { paths: [{ d: 'M4 12l4-8h8l4 8-4 8H8l-4-8z', sw: 1.6, lj: 'round' }, { d: 'M9 12l2 2 4-4', sw: 1.6, lc: 'round', lj: 'round' }] },
   '/dashboard/subscription':      { paths: [{ d: 'M6 3h12l3 6-9 12L3 9l3-6z', sw: 1.6, lj: 'round' }, { d: 'M3 9h18M9 3l3 18M15 3l-3 18', sw: 1.3, lj: 'round' }] },
+  '/dashboard/support':           { paths: [{ d: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z', sw: 1.7, lj: 'round' }] },
+  '/dashboard/team':              { paths: [{ d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2', sw: 1.6, lc: 'round' }, { d: 'M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', sw: 1.6, lc: 'round' }], circles: [{ cx: 9, cy: 7, r: 4, sw: 1.6 }] },
+  '/dashboard/integrations':      { paths: [{ d: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z', sw: 1.5, lj: 'round' }] },
   '/dashboard/settings':          { paths: [{ d: 'M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z', sw: 1.5, lj: 'round' }], circles: [{ cx: 12, cy: 12, r: 3, sw: 1.6 }] },
   '/dashboard/agronomist-fields': { paths: [{ d: 'M3 14l5-4 4 3 4-5 5 4', sw: 1.6, lc: 'round', lj: 'round' }], circles: [] },
   '/dashboard/agronomist-profile':{ paths: [{ d: 'M20 20c0-3.3-4-5-6-5M4 20c0-3.9 2.7-6 6-6', sw: 1.6, lc: 'round' }], circles: [{ cx: 10, cy: 9, r: 4.5, sw: 1.6 }] },
@@ -192,9 +231,22 @@ const router = useRouter()
 const profile = ref<any>(null)
 const profileReady = ref(false)
 
+// Режим члена команди
+const teamOwner = ref<{ ownerId: string; ownerName: string; roleLabel: string } | null>(null)
+
+const exitTeamMode = () => {
+  localStorage.removeItem('agro_team_owner_id')
+  localStorage.removeItem('agro_team_owner_name')
+  localStorage.removeItem('agro_team_role_label')
+  teamOwner.value = null
+  router.push('/dashboard')
+}
+
 // Одразу беремо роль і ім'я з кешу щоб не було мигання меню
+const allRoles = ref<string[]>([])
+
 if (import.meta.client) {
-  const cachedRole = localStorage.getItem('agro_user_role')
+  const cachedRole = localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')
   const cachedName = localStorage.getItem('agro_user_name')
   if (cachedRole && cachedName) {
     profile.value = { role: cachedRole, name: cachedName }
@@ -203,21 +255,96 @@ if (import.meta.client) {
 }
 
 onMounted(async () => {
+  // Відновлюємо режим члена команди з localStorage
+  if (import.meta.client) {
+    const ownerId   = localStorage.getItem('agro_team_owner_id')
+    const ownerName = localStorage.getItem('agro_team_owner_name')
+    const roleLabel = localStorage.getItem('agro_team_role_label')
+    if (ownerId && ownerName) {
+      teamOwner.value = { ownerId, ownerName, roleLabel: roleLabel || 'Переглядач' }
+    }
+  }
+
+  // Якщо щойно прийняли запрошення
+  if (import.meta.client && useRoute().query.team_accepted) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      const { data: rec } = await supabase
+        .from('team_members')
+        .select('owner_id, role')
+        .eq('member_id', session.user.id)
+        .eq('status', 'active')
+        .maybeSingle()
+      if (rec) {
+        const { data: ownerUser } = await supabase
+          .from('users').select('name').eq('id', rec.owner_id).maybeSingle()
+        const ownerName = ownerUser?.name || 'Власник'
+        const roleLabel = rec.role === 'editor' ? 'Редактор' : 'Переглядач'
+        localStorage.setItem('agro_team_owner_id',    rec.owner_id)
+        localStorage.setItem('agro_team_owner_name',  ownerName)
+        localStorage.setItem('agro_team_role_label',  roleLabel)
+        teamOwner.value = { ownerId: rec.owner_id, ownerName, roleLabel }
+      }
+    }
+  }
+
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  const { data } = await supabase.from('users').select('name, role').eq('id', session.user.id).single()
+  const { data } = await supabase.from('users').select('name, role, roles').eq('id', session.user.id).single()
   if (data) {
-    profile.value = data
+    allRoles.value = data.roles?.length ? data.roles : [data.role || 'farmer']
+    const activeProfile = import.meta.client
+      ? (localStorage.getItem('agro_active_profile') || data.role || 'farmer')
+      : data.role
+    profile.value = { ...data, role: activeProfile }
     profileReady.value = true
-    localStorage.setItem('agro_user_role', data.role)
     localStorage.setItem('agro_user_name', data.name || '')
+    if (!localStorage.getItem('agro_active_profile')) {
+      localStorage.setItem('agro_active_profile', data.role)
+    }
+    localStorage.setItem('agro_user_role', activeProfile)
   }
   loadUnread()
+  loadPendingShares()
+  if (profile.value?.role === 'agronomist') autoBoost(session.user.id)
 })
+
+// Надаємо teamOwnerId всім дочірнім компонентам
+provide('teamOwnerId', computed(() => teamOwner.value?.ownerId ?? null))
+provide('teamRole', computed(() => teamOwner.value?.roleLabel ?? null))
+
+const switchProfile = (r: string) => {
+  localStorage.setItem('agro_active_profile', r)
+  localStorage.setItem('agro_user_role', r)
+  profile.value = { ...profile.value, role: r }
+  router.push('/dashboard')
+}
+
+const autoBoost = async (uid: string) => {
+  try {
+    const { data: sub } = await supabase
+      .from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle()
+    const isPro = sub?.plan === 'pro' && (!sub.expires_at || new Date(sub.expires_at) > new Date())
+    if (!isPro) return
+
+    const { data: profile } = await supabase
+      .from('agronomist_profiles').select('boosted_at').eq('user_id', uid).single()
+    const lastBoost = profile?.boosted_at ? new Date(profile.boosted_at) : null
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+    if (lastBoost && lastBoost >= fiveDaysAgo) return
+
+    await supabase
+      .from('agronomist_profiles')
+      .update({ boosted_at: new Date().toISOString(), is_highlighted: true })
+      .eq('user_id', uid)
+  } catch {}
+}
 
 const cartCount = ref(0)
 const unreadChats = useState('unread-chats', () => 0)
 const unreadNotifications = ref(0)
+const pendingShares = ref(0)
+const pendingAgreementsCount = ref(0)
 
 const loadNotifications = async () => {
   const { data: { session } } = await supabase.auth.getSession()
@@ -228,6 +355,17 @@ const loadNotifications = async () => {
     .eq('user_id', session.user.id)
     .eq('is_read', false)
   unreadNotifications.value = count || 0
+}
+
+const loadPendingShares = async () => {
+  if (profile.value?.role !== 'agronomist') return
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const { count } = await supabase.from('field_shares')
+    .select('*', { count: 'exact', head: true })
+    .eq('agronomist_id', session.user.id)
+    .eq('status', 'pending')
+  pendingShares.value = count || 0
 }
 
 const loadUnread = async () => {
@@ -246,6 +384,17 @@ const loadUnread = async () => {
   unreadChats.value = count || 0
 }
 
+const loadPendingAgreements = async () => {
+  if (profile.value?.role !== 'agronomist') return
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const { count } = await supabase.from('agreements')
+    .select('*', { count: 'exact', head: true })
+    .eq('agronomist_id', session.user.id)
+    .eq('status', 'pending')
+  pendingAgreementsCount.value = count || 0
+}
+
 const loadCartCount = async () => {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
@@ -254,10 +403,18 @@ const loadCartCount = async () => {
   cartCount.value = count || 0
 }
 
-onMounted(() => { loadCartCount(); loadNotifications() })
+const { checkAndNotify } = useRemindersNotify()
+const supabaseUser = useSupabaseUser()
+onMounted(() => { loadCartCount(); loadNotifications(); loadPendingAgreements() })
+watch(supabaseUser, (u) => { if (u) checkAndNotify() }, { immediate: true })
 
 const route = useRoute()
-watch(() => route.path, () => { if (route.path === '/cart' || route.path.includes('catalog')) loadCartCount() })
+watch(() => route.path, () => {
+  if (route.path === '/cart' || route.path.includes('catalog')) loadCartCount()
+  if (route.path === '/dashboard/agronomist-fields') { pendingShares.value = 0 }
+  if (route.path === '/dashboard/agreements') { pendingAgreementsCount.value = 0 }
+  if (profile.value?.role === 'agronomist') loadPendingAgreements()
+})
 
 const userName = computed(() => profile.value?.name || '')
 const userInitial = computed(() => userName.value.trim()[0]?.toUpperCase() || '?')
@@ -279,60 +436,88 @@ const roleLabel = computed(() => ROLE_LABELS[role.value] || role.value)
 const roleLabelShort = computed(() => ROLE_SHORT[role.value] || role.value)
 
 const navItems = computed(() => {
-  const adminItem = role.value === 'admin' ? [{ to: '/admin', icon: '🛡', label: 'Адмін' }] : []
+  const adminGroup = role.value === 'admin' ? [{ label: '', items: [{ to: '/admin', label: 'Адмін-панель' }] }] : []
   if (role.value === 'admin') return [
-    { to: '/admin', icon: '🛡', label: 'Адмін-панель' },
+    { label: '', items: [{ to: '/admin', label: 'Адмін-панель' }] },
   ]
   if (role.value === 'seller') return [
-    { to: '/dashboard', icon: '🏠', label: 'Головна' },
-    { to: '/dashboard/products', icon: '📦', label: 'Товари' },
-    { to: '/dashboard/orders', icon: '🛒', label: 'Замовлення' },
-    { to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' },
-    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
-    { to: '/dashboard/promotion', icon: '🚀', label: 'Просування' },
-    { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
-    ...adminItem,
+    { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
+    { label: 'Магазин', items: [
+      { to: '/dashboard/products', label: 'Товари' },
+      { to: '/dashboard/orders', label: 'Замовлення' },
+      { to: '/dashboard/promotion', label: 'Просування' },
+      { to: '/dashboard/analytics', label: 'Аналітика' },
+    ]},
+    { label: 'Комунікація', items: [
+      { to: '/dashboard/chats', label: 'Чати' },
+    ]},
+    { label: 'Акаунт', items: [
+      { to: '/dashboard/settings', label: 'Налаштування' },
+    ]},
+    ...adminGroup,
   ]
   if (role.value === 'buyer') return [
-    { to: '/dashboard', icon: '🏠', label: 'Головна' },
-    { to: '/farmers', icon: '🌾', label: 'Фермери' },
-    { to: '/dashboard/buyer-crops', icon: '📋', label: 'Що закуповую' },
-    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
-    { to: '/dashboard/deals', icon: '🤝', label: 'Угоди' },
-    { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
-    ...adminItem,
+    { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
+    { label: 'Закупівлі', items: [
+      { to: '/farmers', label: 'Фермери' },
+      { to: '/dashboard/buyer-crops', label: 'Що закуповую' },
+      { to: '/dashboard/deals', label: 'Угоди' },
+    ]},
+    { label: 'Комунікація', items: [
+      { to: '/dashboard/chats', label: 'Чати' },
+    ]},
+    { label: 'Акаунт', items: [
+      { to: '/dashboard/settings', label: 'Налаштування' },
+    ]},
+    ...adminGroup,
   ]
   if (role.value === 'agronomist') return [
-    { to: '/dashboard', icon: '🏠', label: 'Головна' },
-    { to: '/dashboard/fields', icon: '🌾', label: 'Мої поля' },
-    { to: '/dashboard/agronomist-fields', icon: '🗺', label: 'Поля клієнтів' },
-    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI агроном' },
-    { to: '/dashboard/chats', icon: '💬', label: 'Консультації' },
-    { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
-    { to: '/pesticides', icon: '📖', label: 'Каталог' },
-    ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }, { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' }] : []),
-    { to: '/dashboard/agronomist-profile', icon: '🔬', label: 'Кабінет агронома' },
-    { to: '/dashboard/promotion', icon: '🚀', label: 'Просування' },
-    { to: '/dashboard/subscription', icon: '💎', label: 'Підписка' },
-    { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
-    ...adminItem,
+    { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
+    { label: 'Агрономія', items: [
+      { to: '/dashboard/agronomist-fields', label: 'Поля клієнтів' },
+      { to: '/pesticides', label: 'Каталог' },
+      { to: '/dashboard/ai-chat', label: 'AI агроном' },
+      { to: '/dashboard/reminders', label: 'Надіслані фермерам' },
+    ]},
+    { label: 'Комунікація', items: [
+      { to: '/dashboard/chats', label: 'Консультації' },
+      { to: '/dashboard/agreements', label: 'Угоди з фермерами' },
+    ]},
+    { label: 'Кабінет', items: [
+      { to: '/dashboard/agronomist-profile', label: 'Кабінет агронома' },
+      { to: '/dashboard/promotion', label: 'Підписка агронома' },
+      { to: '/dashboard/settings', label: 'Налаштування' },
+    ]},
+    ...adminGroup,
   ]
-  const base = [
-    { to: '/dashboard', icon: '🏠', label: 'Головна' },
-    { to: '/dashboard/fields', icon: '🌾', label: role.value === 'dacha' ? 'Мої культури' : 'Мої поля' },
+  // farmer / dacha
+  const fieldLabel = role.value === 'dacha' ? 'Мої культури' : 'Мої поля'
+  const mainItems: any[] = [
+    { to: '/dashboard/fields', label: fieldLabel },
+    { to: '/dashboard/inventory', label: 'Склад' },
+    { to: '/dashboard/team', label: 'Співробітники' },
   ]
-  if (role.value !== 'dacha') base.push({ to: '/dashboard/analytics', icon: '📊', label: 'Аналітика' })
-  return [...base,
-    { to: '/pesticides', icon: '📖', label: 'Каталог' },
-    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI агроном' },
-    ...(MARKETPLACE ? [{ to: '/cart', icon: '🛒', label: 'Кошик' }, { to: '/dashboard/orders', icon: '📋', label: 'Замовлення' }] : []),
-    { to: '/dashboard/inventory', icon: '🧪', label: 'Склад' },
-    { to: '/dashboard/reminders', icon: '🔔', label: 'Нагадування' },
-    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
-    { to: '/dashboard/deals', icon: '🤝', label: 'Угоди' },
-    { to: '/dashboard/subscription', icon: '💎', label: 'Підписка' },
-    { to: '/dashboard/settings', icon: '⚙️', label: 'Налаштування' },
-    ...adminItem,
+  if (role.value !== 'dacha') mainItems.splice(1, 0, { to: '/dashboard/analytics', label: 'Аналітика' })
+  return [
+    { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
+    { label: 'Моє господарство', items: mainItems },
+    { label: 'Агрономія', items: [
+      { to: '/pesticides', label: 'Каталог' },
+      { to: '/dashboard/ai-chat', label: 'AI агроном' },
+      { to: '/dashboard/reminders', label: 'Нагадування' },
+    ]},
+    { label: 'Комунікація', items: [
+      { to: '/dashboard/chats', label: 'Чати' },
+      { to: '/dashboard/agreements', label: 'Угоди з агрономами' },
+      { to: '/dashboard/deals', label: 'Угоди із закупівельником' },
+    ]},
+    { label: 'Акаунт', items: [
+      { to: '/dashboard/subscription', label: 'Підписка' },
+      { to: '/dashboard/support', label: 'Підтримка' },
+      { to: '/dashboard/integrations', label: 'Інтеграції' },
+      { to: '/dashboard/settings', label: 'Налаштування' },
+    ]},
+    ...adminGroup,
   ]
 })
 
@@ -352,7 +537,7 @@ const bottomNavItems = computed(() => {
   ]
   if (role.value === 'agronomist') return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
-    { to: '/dashboard/fields', icon: '🌾', label: 'Поля' },
+    { to: '/dashboard/agronomist-fields', icon: '🌾', label: 'Клієнти' },
     { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
     { to: '/pesticides', icon: '📖', label: 'Каталог' },
@@ -368,6 +553,10 @@ const bottomNavItems = computed(() => {
 
 const logout = async () => {
   await supabase.auth.signOut()
+  localStorage.removeItem('agro_active_profile')
+  localStorage.removeItem('agro_user_role')
+  localStorage.removeItem('agro_user_name')
+  localStorage.removeItem('agro_pending_roles')
   router.push('/auth')
 }
 </script>

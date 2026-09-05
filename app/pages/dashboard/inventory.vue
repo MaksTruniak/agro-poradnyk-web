@@ -1,19 +1,19 @@
 <template>
   <div class="dash-page">
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="17"/><line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Склад</h1>
-        <button @click="showAdd = true" class="dash-btn-primary ml-auto">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Додати препарат
-        </button>
+      <div class="dash-icon-box shrink-0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="17"/><line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
+        </svg>
       </div>
-      <p class="dash-subtitle">Залишки та облік продукції</p>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Склад</h1>
+        <p class="dash-subtitle">Залишки та облік продукції</p>
+      </div>
+      <button v-if="!(isTeamMember && isViewer)" @click="showAdd = true" class="dash-btn-primary shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Додати препарат
+      </button>
     </div>
 
     <!-- Сповіщення про нестачу -->
@@ -150,7 +150,8 @@
         <div class="flex gap-3 mt-6">
           <button @click="showAdd = false; resetForm()" class="flex-1 btn-outline">Скасувати</button>
           <button @click="addItem" :disabled="saving || !form.name || !form.quantity"
-            class="flex-1 btn-primary">
+            class="flex-1 btn-primary inline-flex items-center justify-center gap-1.5">
+            <svg v-if="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             {{ saving ? '...' : 'Додати' }}
           </button>
         </div>
@@ -192,7 +193,8 @@
         <div class="flex gap-3 mt-6">
           <button @click="showLog = false" class="flex-1 btn-outline">Скасувати</button>
           <button @click="saveLog" :disabled="saving || !logForm.quantity"
-            class="flex-1 btn-primary">
+            class="flex-1 btn-primary inline-flex items-center justify-center gap-1.5">
+            <svg v-if="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             {{ saving ? '...' : 'Зберегти' }}
           </button>
         </div>
@@ -209,6 +211,8 @@ useHead({ title: 'Склад препаратів — Кабінет' })
 
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const { confirm: confirmDialog } = useConfirm()
+const { isTeamMember, isViewer, getQueryUserId } = useTeamContext()
 
 const items = ref<any[]>([])
 const farms = ref<any[]>([])
@@ -252,8 +256,7 @@ const resetForm = () => {
 
 async function load() {
   loading.value = true
-  const { data: { session } } = await supabase.auth.getSession()
-  const uid = session?.user?.id
+  const uid = await getQueryUserId()
   if (!uid) { loading.value = false; return }
 
   const [{ data: inv, error: invErr }, { data: farmsData }] = await Promise.all([
@@ -291,18 +294,15 @@ async function load() {
 
 async function addItem() {
   if (!form.value.name || !form.value.quantity) return
+  if (isTeamMember.value && isViewer.value) return
   saving.value = true
 
-  const { data: { session } } = await supabase.auth.getSession()
-  const uid = session?.user?.id
+  const uid = await getQueryUserId()
   if (!uid) {
     alert('Немає сесії — спробуйте перезайти')
     saving.value = false
     return
   }
-
-  // Явно встановлюємо токен щоб RLS бачив auth.uid()
-  if (session) await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token })
 
   const { data, error } = await supabase.from('farm_inventory').insert({
     user_id: uid,
@@ -365,7 +365,7 @@ async function saveLog() {
 }
 
 async function deleteItem(item: any) {
-  if (!confirm(`Видалити "${item.name}" зі складу?`)) return
+  if (!await confirmDialog(`"${item.name}" буде видалено зі складу.`, { title: 'Видалити запис?' })) return
   await supabase.from('farm_inventory').delete().eq('id', item.id)
   items.value = items.value.filter(i => i.id !== item.id)
 }
@@ -374,14 +374,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-card-title { font-family: 'Bitter', Georgia, serif; font-size: 17px; font-weight: 800; color: rgb(27,46,27); margin: 0; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-.dash-btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 10px; background: rgb(47,82,51); color: rgb(250,246,236); font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>

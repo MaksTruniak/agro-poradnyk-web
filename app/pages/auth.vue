@@ -382,9 +382,21 @@ const handleLogin = async () => {
   if (!isEmailValid.value) { showError('Введіть коректний email'); return }
   loading.value = true
   try {
-    const { error: e } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
+    const { data, error: e } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
     if (e) throw e
-    await supabase.auth.getSession()
+    const uid = data.user?.id
+    if (uid) {
+      const { data: userData } = await supabase.from('users').select('name, role, roles').eq('id', uid).single()
+      const roles: string[] = (userData?.roles?.length ? userData.roles : [userData?.role || 'farmer'])
+      localStorage.setItem('agro_user_name', userData?.name || '')
+      if (roles.length > 1) {
+        localStorage.setItem('agro_pending_roles', JSON.stringify(roles))
+        router.push('/role-select')
+        return
+      }
+      localStorage.setItem('agro_active_profile', roles[0])
+      localStorage.setItem('agro_user_role', roles[0])
+    }
     router.push('/dashboard')
   } catch (e: any) {
     showError(AUTH_ERRORS[e.message] || e.message)
@@ -418,18 +430,28 @@ const handleRegister = async () => {
     })
     if (e) throw e
     if (data.user) {
-      await supabase.from('users').upsert({
-        id: data.user.id,
-        email: email.value,
-        name: fullName,
-        first_name: firstName.value,
-        last_name: lastName.value,
-        company_name: companyName.value || null,
-        phone: phone.value,
-        region: region.value || null,
-        role: role.value,
-      } as any)
-      showSuccess('Акаунт створено! Ласкаво просимо 🌾')
+      const proExpires = new Date()
+      proExpires.setMonth(proExpires.getMonth() + 6)
+
+      await Promise.all([
+        supabase.from('users').upsert({
+          id: data.user.id,
+          email: email.value,
+          name: fullName,
+          first_name: firstName.value,
+          last_name: lastName.value,
+          company_name: companyName.value || null,
+          phone: phone.value,
+          region: region.value || null,
+          role: role.value,
+        } as any),
+        supabase.from('subscriptions').upsert({
+          user_id: data.user.id,
+          plan: 'pro',
+          expires_at: proExpires.toISOString(),
+        }, { onConflict: 'user_id' }),
+      ])
+      showSuccess('Акаунт створено! Перші 6 місяців PRO безкоштовно 🌾')
     }
     router.push('/dashboard')
   } catch (e: any) {

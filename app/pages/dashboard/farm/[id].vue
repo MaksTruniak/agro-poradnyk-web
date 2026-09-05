@@ -1,8 +1,8 @@
 <template>
   <div class="farm-page">
     <NuxtLink to="/dashboard/fields" class="farm-back">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 6H2M8 1L2 6l6 5"/>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
       </svg>
       Назад до полів
     </NuxtLink>
@@ -165,22 +165,39 @@
               <span class="text-sm font-semibold text-agro-dark">Доступно в PRO</span>
               <NuxtLink to="/dashboard/subscription" class="text-xs text-agro underline ml-1">Оновити</NuxtLink>
             </div>
-            <span class="text-2xl">{{ emojiFor(crop.crop_type) }}</span>
+            <img :src="`/crops/${cropToSlug(crop.crop_type)}.svg`" :alt="crop.crop_type" class="w-7 h-7 object-contain shrink-0" @error="($event.target as HTMLImageElement).style.display='none'" />
             <div class="flex-1">
               <p class="font-semibold text-agro-dark">{{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}</p>
               <p class="text-xs text-agro-light">{{ crop.area_ha }} га{{ crop.planned_yield_t ? ` · план ${crop.planned_yield_t} т/га` : '' }}</p>
+              <p v-if="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares)" class="text-xs text-amber-600 font-semibold mt-0.5">
+                ⚠ Перевищує площу поля ({{ farm.hectares }} га)
+              </p>
             </div>
             <NuxtLink
-              :to="`/dashboard/protection?farmCropId=${crop.id}&cropType=${crop.crop_type}`"
+              :to="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) ? undefined : `/dashboard/ai-chat?farmId=${farmId}&cropId=${crop.id}&cropType=${encodeURIComponent(crop.crop_type)}${crop.variety ? '&variety=' + encodeURIComponent(crop.variety) : ''}`"
+              class="btn-outline text-sm py-1.5 px-3 flex items-center gap-1.5 shrink-0"
+              :class="{ 'opacity-40 pointer-events-none': farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) }"
+              title="AI консультація по цій культурі"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
+                <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
+              </svg>
+              AI
+            </NuxtLink>
+            <NuxtLink
+              :to="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) ? undefined : `/dashboard/protection?farmCropId=${crop.id}&cropType=${crop.crop_type}`"
               class="btn-outline text-sm py-1.5 px-3 flex items-center gap-1.5"
-            ><ShieldCheck :size="14" /> Схема</NuxtLink>
+              :class="{ 'opacity-40 pointer-events-none': farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) }"
+            ><ShieldCheck :size="14" /> Тех. карта</NuxtLink>
             <button @click="toggleCatalog(crop)"
               :title="crop.show_in_catalog !== false ? 'Сховати з каталогу фермерів' : 'Показати у каталозі фермерів'"
-              class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors shrink-0"
+              class="text-sm py-1.5 px-3 inline-flex items-center gap-1.5 rounded-[10px] border-2 font-bold transition-colors shrink-0"
               :class="crop.show_in_catalog !== false
-                ? 'bg-agro/10 text-agro border-agro/20 hover:bg-agro/20'
-                : 'bg-gray-100 text-agro-light border-agro-border hover:bg-gray-200'">
-              {{ crop.show_in_catalog !== false ? '👁 Каталог' : '🙈 Приховано' }}
+                ? 'border-[#2F5233] text-[#2F5233] hover:bg-[#EEF1E3]'
+                : 'border-agro-border text-agro-light hover:bg-agro-hover'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="crop.show_in_catalog !== false ? '<path d=\'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\'/><circle cx=\'12\' cy=\'12\' r=\'3\'/>' : '<path d=\'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22\'/>'"/>
+              {{ crop.show_in_catalog !== false ? 'Каталог' : 'Приховано' }}
             </button>
             <button @click="deleteCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400">
               <Trash2 :size="16" />
@@ -219,7 +236,12 @@
             <tbody class="divide-y divide-agro-border">
               <tr v-for="r in rotation" :key="r.id" class="hover:bg-agro-bg transition-colors">
                 <td class="py-3 font-bold text-agro">{{ r.year }}</td>
-                <td class="py-3 font-medium text-agro-dark">{{ emojiFor(r.crop_type) }} {{ r.crop_type }}</td>
+                <td class="py-3 font-medium text-agro-dark">
+                  <span class="inline-flex items-center gap-1.5">
+                    <img :src="`/crops/${cropToSlug(r.crop_type)}.svg`" :alt="r.crop_type" class="w-4 h-4 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
+                    {{ r.crop_type }}
+                  </span>
+                </td>
                 <td class="py-3 text-agro-light">{{ r.variety || '—' }}</td>
                 <td class="py-3 text-right text-agro-dark">{{ r.area_ha || '—' }}</td>
                 <td class="py-3 text-right text-agro-light">{{ r.planned_yield_t || '—' }}</td>
@@ -241,6 +263,63 @@
         </div>
       </div>
 
+      <!-- AI Консультації -->
+      <div class="farm-card">
+        <div class="farm-section-header">
+          <div class="flex items-center gap-2.5">
+            <div class="farm-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
+                <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
+              </svg>
+            </div>
+            <h2 class="farm-section-title bitter">AI Консультації</h2>
+          </div>
+          <NuxtLink :to="`/dashboard/ai-chat?farmId=${route.params.id}`" class="farm-edit-btn inline-flex items-center gap-1.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Нова консультація
+          </NuxtLink>
+        </div>
+
+        <!-- Швидкий старт по культурі -->
+        <div v-if="crops.length" class="flex flex-wrap gap-2 mb-4">
+          <NuxtLink
+            v-for="crop in crops"
+            :key="crop.id"
+            :to="`/dashboard/ai-chat?farmId=${route.params.id}&cropId=${crop.id}&cropType=${encodeURIComponent(crop.crop_type)}${crop.variety ? '&variety=' + encodeURIComponent(crop.variety) : ''}`"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-agro-border text-xs font-semibold text-agro-dark hover:bg-agro-hover transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
+              <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
+            </svg>
+            {{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}
+          </NuxtLink>
+        </div>
+
+        <div v-if="aiChatsLoading" class="space-y-2 mt-3">
+          <div v-for="i in 3" :key="i" class="h-14 bg-gray-100 rounded-xl animate-pulse"></div>
+        </div>
+        <div v-else-if="aiChats.length === 0" class="farm-empty-text">Ще не було консультацій по цьому полю</div>
+        <div v-else class="divide-y divide-agro-border mt-1">
+          <NuxtLink
+            v-for="chat in aiChats"
+            :key="chat.id"
+            :to="`/dashboard/ai-chat?farmId=${route.params.id}&chatId=${chat.id}`"
+            class="flex items-start gap-3 py-3 hover:bg-agro-hover rounded-xl px-2 -mx-2 transition-colors"
+          >
+            <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center shrink-0 mt-0.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-agro-dark truncate">{{ chat.title }}</p>
+              <p class="text-xs text-agro-light truncate mt-0.5">{{ chat.preview }}</p>
+            </div>
+            <span class="text-xs text-agro-light shrink-0 mt-0.5">{{ chat.date }}</span>
+          </NuxtLink>
+        </div>
+      </div>
+
       <!-- Доступ агрономів (тільки для власника) -->
       <div v-if="!readOnly" class="farm-card">
         <div class="farm-section-header">
@@ -250,86 +329,34 @@
                 <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/>
               </svg>
             </div>
-            <h2 class="farm-section-title bitter">Доступ агрономів</h2>
+            <h2 class="farm-section-title bitter">Агрономи</h2>
           </div>
-          <button @click="openShareModal" class="farm-outline-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
-            </svg>
-            Поділитись
-          </button>
+          <NuxtLink to="/agronomists" class="farm-outline-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Знайти
+          </NuxtLink>
         </div>
 
-        <div v-if="shares.length === 0 && pendingShares.length === 0" class="farm-empty-text">
-          Жоден агроном ще не має доступу
+        <div v-if="activeAgronomists.length === 0" class="farm-empty-text">
+          Немає активних угод з агрономами
         </div>
 
         <div v-else class="space-y-2">
-          <div v-for="share in pendingShares" :key="'p-' + share.id" class="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600 text-sm">
-                {{ share.users?.name?.[0]?.toUpperCase() || '?' }}
-              </div>
-              <div>
-                <p class="font-medium text-agro-dark text-sm">{{ share.users?.name || 'Агроном' }}</p>
-                <p class="text-xs text-yellow-600">⏳ Очікує підтвердження</p>
-              </div>
-            </div>
-            <button @click="confirmRemove(share, true)" class="text-red-400 hover:text-red-600 text-sm transition-colors">Скасувати</button>
-          </div>
-          <div v-for="share in shares" :key="share.id" class="flex items-center justify-between p-3 bg-agro-bg rounded-xl">
+          <div v-for="agr in activeAgronomists" :key="agr.id" class="flex items-center justify-between p-3 bg-agro-bg rounded-xl">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 rounded-full bg-agro-hover flex items-center justify-center font-bold text-agro text-sm">
-                {{ share.users?.name?.[0]?.toUpperCase() || '?' }}
+                {{ agr.name?.[0]?.toUpperCase() || '?' }}
               </div>
               <div>
-                <p class="font-medium text-agro-dark text-sm">{{ share.users?.name || 'Агроном' }}</p>
-                <p class="text-xs text-agro">✓ Має доступ</p>
+                <p class="font-medium text-agro-dark text-sm">{{ agr.name }}</p>
+                <p class="text-xs text-agro">✓ Активна угода</p>
               </div>
             </div>
-            <button @click="confirmRemove(share, false)" class="text-red-400 hover:text-red-600 text-sm transition-colors">Забрати доступ</button>
+            <NuxtLink :to="`/agronomist/${agr.id}`" class="text-xs text-agro hover:underline font-medium">Профіль →</NuxtLink>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Модал підтвердження видалення агронома -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="removeTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="removeTarget = null" />
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-2xl shrink-0">⚠️</div>
-              <div>
-                <p class="font-bold text-agro-dark">{{ removeTarget.isPending ? 'Скасувати запит?' : 'Забрати доступ?' }}</p>
-                <p class="text-sm text-agro-light mt-0.5">{{ removeTarget.name }}</p>
-              </div>
-            </div>
-            <p class="text-sm text-agro-light mb-6">
-              {{ removeTarget.isPending ? 'Запит буде скасовано, агроном не отримає доступ.' : 'Агроном більше не зможе переглядати це поле.' }}
-            </p>
-            <div class="flex gap-3">
-              <button @click="removeTarget = null" class="btn-outline flex-1">Залишити</button>
-              <button @click="removeShare(removeTarget.id)" :disabled="removing"
-                class="flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50">
-                {{ removing ? '...' : removeTarget.isPending ? 'Скасувати запит' : 'Забрати доступ' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- Тост підтвердження -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="shareSent" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-agro-dark text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-sm font-medium">
-          ✅ Запит надіслано — агроном отримає повідомлення
-        </div>
-      </Transition>
-    </Teleport>
 
     <!-- Paywall модалка -->
     <Teleport to="body">
@@ -376,7 +403,7 @@
                       @mousedown.prevent="selectCrop(c)"
                       class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover border-b border-agro-border last:border-0 flex items-center gap-2"
                     >
-                      <span>{{ c.emoji || '🌱' }}</span>
+                      <img :src="`/crops/${cropToSlug(c.name)}.svg`" :alt="c.name" class="w-4 h-4 object-contain" @error="($event.target as HTMLImageElement).style.display='none'" />
                       <span class="font-medium text-agro-dark">{{ c.name }}</span>
                     </button>
                   </div>
@@ -421,7 +448,10 @@
 
             <div class="flex gap-3 mt-6">
               <button @click="showAddCrop = false; selectedCrop = null; newVariety = ''; newArea = ''; newPlannedYield = ''; newShowInCatalog = true" class="btn-outline flex-1">Скасувати</button>
-              <button @click="addCrop" :disabled="!selectedCrop || saving" class="btn-primary flex-1">{{ saving ? '...' : 'Додати' }}</button>
+              <button @click="addCrop" :disabled="!selectedCrop || saving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
+                <svg v-if="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                {{ saving ? '...' : 'Додати' }}
+              </button>
             </div>
           </div>
         </div>
@@ -478,72 +508,6 @@
       </Transition>
     </Teleport>
 
-    <!-- Модалка поділитись -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="showShareModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showShareModal = false" />
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl z-10 flex flex-col max-h-[85vh]">
-            <!-- Заголовок -->
-            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-agro-border shrink-0">
-              <div>
-                <h2 class="font-bold text-agro-dark text-xl">🤝 Запросити агронома</h2>
-                <p class="text-sm text-agro-light mt-0.5">Агроном отримає доступ до вашого поля</p>
-              </div>
-              <button @click="showShareModal = false" class="w-9 h-9 rounded-xl hover:bg-agro-hover flex items-center justify-center text-agro-light hover:text-agro-dark transition-colors text-xl">✕</button>
-            </div>
-
-            <!-- Пошук -->
-            <div class="px-6 py-4 shrink-0">
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light">🔍</span>
-                <input v-model="agronSearch" class="input pl-10" placeholder="Пошук за ім'ям або спеціалізацією..." />
-              </div>
-            </div>
-
-            <!-- Список агрономів -->
-            <div class="overflow-y-auto flex-1 px-6 pb-6">
-              <div v-if="agronListLoading" class="space-y-3">
-                <div v-for="i in 4" :key="i" class="h-20 bg-agro-bg rounded-xl animate-pulse"></div>
-              </div>
-
-              <div v-else-if="filteredAgronList.length === 0" class="text-center py-12 text-agro-light">
-                <p class="text-3xl mb-2">🔍</p>
-                <p class="font-medium">Агрономів не знайдено</p>
-              </div>
-
-              <div v-else class="space-y-2">
-                <div v-for="a in filteredAgronList" :key="a.id"
-                  class="flex items-center gap-4 p-4 border border-agro-border rounded-xl hover:border-agro hover:bg-agro-bg transition-all">
-                  <div class="w-11 h-11 rounded-xl bg-agro-hover flex items-center justify-center font-bold text-agro text-lg shrink-0">
-                    {{ a.name?.[0]?.toUpperCase() || '?' }}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <p class="font-semibold text-agro-dark text-sm">{{ a.name }}</p>
-                      <span v-if="a.rating" class="text-xs text-yellow-600 font-medium">★ {{ a.rating.toFixed(1) }}</span>
-                    </div>
-                    <p class="text-xs text-agro-light mt-0.5">{{ a.specialization || 'Агроном' }}</p>
-                    <div class="flex items-center gap-3 mt-1.5 flex-wrap">
-                      <span v-if="a.rate_per_hour" class="text-xs font-semibold text-agro">{{ a.rate_per_hour }} ₴/год</span>
-                      <span v-if="a.experience_years" class="text-xs text-agro-light">{{ a.experience_years }} р. досвіду</span>
-                      <span v-if="a.region" class="text-xs text-agro-light">📍 {{ a.region }}</span>
-                    </div>
-                  </div>
-                  <button
-                    @click="shareWithAgronomist(a)"
-                    :disabled="sharingId === a.id || acceptedIds.has(a.id) || pendingIds.has(a.id)"
-                    class="shrink-0 text-xs font-semibold px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
-                    :class="acceptedIds.has(a.id) ? 'bg-agro-hover text-agro cursor-default' : pendingIds.has(a.id) ? 'bg-yellow-50 text-yellow-700 border border-yellow-200 cursor-default' : 'btn-primary'">
-                    {{ acceptedIds.has(a.id) ? '✓ Доступ є' : pendingIds.has(a.id) ? '⏳ Запит надіслано' : sharingId === a.id ? '...' : 'Поділитись' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
   </div>
 </template>
 
@@ -557,20 +521,51 @@ const farmId = route.params.id as string
 const readOnly = route.query.readOnly === '1'
 const supabase = useSupabaseClient()
 
-onMounted(() => {
-  if (route.query.share === '1') openShareModal()
-})
 
 const loading = ref(true)
 const saving = ref(false)
 const editing = ref(false)
 const farm = ref<any>(null)
+
+// AI консультації
+const aiChats = ref<{ id: string; title: string; preview: string; date: string }[]>([])
+const aiChatsLoading = ref(true)
+
+const loadAiChats = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const { data: chats } = await supabase
+    .from('ai_chats')
+    .select('id, created_at, updated_at')
+    .eq('user_id', session.user.id)
+    .eq('farm_id', route.params.id)
+    .order('updated_at', { ascending: false })
+    .limit(10)
+  if (!chats?.length) { aiChatsLoading.value = false; return }
+  const sessions = await Promise.all(chats.map(async (chat: any) => {
+    const { data: msgs } = await supabase
+      .from('ai_messages').select('role, content, created_at')
+      .eq('chat_id', chat.id).order('created_at', { ascending: true })
+    if (!msgs?.length) return null
+    const firstUser = msgs.find((m: any) => m.role === 'user')
+    const lastMsg = msgs[msgs.length - 1]
+    const title = firstUser ? firstUser.content.slice(0, 55).replace(/\n/g, ' ') : 'Консультація'
+    const preview = (lastMsg?.content || '').replace(/@[\wА-ЯҐЄІЇа-яґєії'-]+/g, (m: string) => m.slice(1)).replace(/SCHEME_DETECTED/g, '').trim().slice(0, 70)
+    const d = new Date(chat.updated_at || chat.created_at)
+    const now = new Date()
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000)
+    const date = diffDays === 0 ? 'Сьогодні' : diffDays === 1 ? 'Вчора' : `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`
+    return { id: chat.id, title, preview, date }
+  }))
+  aiChats.value = sessions.filter(Boolean) as any[]
+  aiChatsLoading.value = false
+}
+
+loadAiChats()
 const crops = ref<any[]>([])
-const shares = ref<any[]>([])
+const activeAgronomists = ref<any[]>([])
 const showAddCrop = ref(false)
 const showPaywall = ref(false)
-const showShareModal = ref(false)
-const shareSent = ref(false)
 const showAddRotation = ref(false)
 const rotation = ref<any[]>([])
 const rotationForm = reactive({ id: '', year: new Date().getFullYear(), crop_type: '', variety: '', area_ha: '', planned_yield_t: '', actual_yield_t: '', notes: '' })
@@ -654,23 +649,6 @@ const newPlannedYield = ref('')
 const newShowInCatalog = ref(true)
 const varietySuggestions = ref<string[]>([])
 const showVarietySuggestions = ref(false)
-const agronSearch = ref('')
-const agronList = ref<any[]>([])
-const agronListLoading = ref(false)
-const sharingId = ref<string | null>(null)
-const pendingShares = ref<any[]>([])
-const removeTarget = ref<{ id: string; name: string; isPending: boolean } | null>(null)
-const removing = ref(false)
-const acceptedIds = computed(() => new Set(shares.value.map((s: any) => s.agronomist_id)))
-const pendingIds = computed(() => new Set(pendingShares.value.map((s: any) => s.agronomist_id)))
-
-const filteredAgronList = computed(() => {
-  const q = agronSearch.value.toLowerCase()
-  if (!q) return agronList.value
-  return agronList.value.filter(a =>
-    a.name?.toLowerCase().includes(q) || a.specialization?.toLowerCase().includes(q)
-  )
-})
 
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
@@ -679,31 +657,29 @@ const { data: subData } = await supabase.from('subscriptions').select('plan, exp
 const isPro = subData?.plan === 'pro' && (!subData?.expires_at || new Date(subData.expires_at) > new Date())
 
 const { load: loadCrops, emojiFor } = useCropCatalog()
+const { cropToSlug } = await import('~/utils/cropSlugs')
 
 const load = async () => {
-  const [farmData, cropsData, sharesData, pendingData, rotationData] = await Promise.all([
+  const [farmData, cropsData, rotationData] = await Promise.all([
     supabase.from('farms').select('*').eq('id', farmId).single(),
     supabase.from('farm_crops').select('*').eq('farm_id', farmId).order('created_at'),
-    supabase.from('field_shares').select('id, agronomist_id').eq('farm_id', farmId).eq('status', 'accepted'),
-    supabase.from('field_shares').select('id, agronomist_id').eq('farm_id', farmId).eq('status', 'pending'),
     supabase.from('crop_rotation').select('*').eq('farm_id', farmId).order('year', { ascending: false }),
   ])
   rotation.value = rotationData.data || []
   farm.value = farmData.data
   crops.value = cropsData.data || []
 
-  // Підтягуємо імена агрономів для accepted і pending разом
-  const rawShares = sharesData.data || []
-  const rawPending = pendingData.data || []
-  const allAgrIds = [...new Set([...rawShares, ...rawPending].map((s: any) => s.agronomist_id))]
-  if (allAgrIds.length) {
-    const { data: agrUsers } = await supabase.from('users').select('id, name').in('id', allAgrIds)
-    const agrMap = Object.fromEntries((agrUsers || []).map((u: any) => [u.id, u.name]))
-    shares.value = rawShares.map((s: any) => ({ ...s, users: { name: agrMap[s.agronomist_id] || 'Агроном' } }))
-    pendingShares.value = rawPending.map((s: any) => ({ ...s, users: { name: agrMap[s.agronomist_id] || 'Агроном' } }))
-  } else {
-    shares.value = []
-    pendingShares.value = []
+  // Агрономи фермера (власника поля) з активними угодами
+  if (uid) {
+    const { data: agrData } = await supabase.from('agreements')
+      .select('agronomist_id').eq('farmer_id', uid).eq('status', 'active')
+    const agrIds = (agrData || []).map((a: any) => a.agronomist_id)
+    if (agrIds.length) {
+      const { data: agrUsers } = await supabase.from('users').select('id, name').in('id', agrIds)
+      activeAgronomists.value = agrUsers || []
+    } else {
+      activeAgronomists.value = []
+    }
   }
   loading.value = false
 }
@@ -827,65 +803,6 @@ const toggleCatalog = async (crop: any) => {
   crop.show_in_catalog = newVal
 }
 
-const loadAgronList = async () => {
-  if (agronList.value.length) return
-  agronListLoading.value = true
-  const { data } = await supabase
-    .from('agronomist_profiles')
-    .select('user_id, specialization, region, rate_per_hour, experience_years, rating, reviews_count, users!inner(id, name, role)')
-    .eq('users.role', 'agronomist')
-    .order('promotion_plan', { ascending: false })
-  agronList.value = (data || []).map((p: any) => ({
-    id: p.users?.id || p.user_id,
-    name: p.users?.name || 'Агроном',
-    specialization: p.specialization,
-    region: p.region,
-    rate_per_hour: p.rate_per_hour,
-    experience_years: p.experience_years,
-    rating: p.rating,
-    reviews_count: p.reviews_count,
-  }))
-  agronListLoading.value = false
-}
-
-const openShareModal = async () => {
-  showShareModal.value = true
-  agronSearch.value = ''
-  await loadAgronList()
-}
-
-const shareWithAgronomist = async (agron: any) => {
-  sharingId.value = agron.id
-  const { data: existing } = await supabase
-    .from('field_shares')
-    .select('id')
-    .eq('farm_id', farmId)
-    .eq('agronomist_id', agron.id)
-    .maybeSingle()
-  if (!existing) {
-    await supabase.from('field_shares').insert(
-      { farm_id: farmId, farmer_id: uid, agronomist_id: agron.id, status: 'pending' }
-    )
-  }
-  sharingId.value = null
-  showShareModal.value = false
-  shareSent.value = true
-  setTimeout(() => { shareSent.value = false }, 3000)
-  await load()
-}
-
-const confirmRemove = (share: any, isPending: boolean) => {
-  removeTarget.value = { id: share.id, name: share.users?.name || 'Агроном', isPending }
-}
-
-const removeShare = async (shareId: string) => {
-  removing.value = true
-  await supabase.from('field_shares').delete().eq('id', shareId)
-  removeTarget.value = null
-  removing.value = false
-  await load()
-}
-
 const closeRotationModal = () => {
   showAddRotation.value = false
   Object.assign(rotationForm, { id: '', year: new Date().getFullYear(), crop_type: '', variety: '', area_ha: '', planned_yield_t: '', actual_yield_t: '', notes: '' })
@@ -941,10 +858,11 @@ const deleteRotation = async (id: string) => {
 .farm-back {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: rgb(47, 82, 51);
   font-weight: 700;
   font-size: 14.5px;
+  line-height: 1;
   text-decoration: none;
   margin-bottom: 28px;
   transition: opacity 0.15s;

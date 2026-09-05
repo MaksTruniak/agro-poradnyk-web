@@ -1,19 +1,22 @@
 <template>
   <div class="dash-page">
-    <NuxtLink to="/dashboard/agronomist-fields" class="inline-flex items-center gap-2 text-agro-light hover:text-agro mb-8 text-sm font-medium transition-colors">
-      ← Назад до полів
-    </NuxtLink>
-
     <div class="dash-head">
-      <div class="flex items-center gap-2.5 mb-1.5">
-        <div class="dash-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/>
-          </svg>
-        </div>
-        <h1 class="dash-title bitter">Схема захисту</h1>
+      <NuxtLink :to="backLink" class="dash-icon-box shrink-0 hover:bg-agro-hover transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </NuxtLink>
+      <div class="flex-1 min-w-0">
+        <h1 class="dash-title bitter">Технічна карта</h1>
+        <p class="dash-subtitle">{{ farmName || 'Програми захисту культур' }}</p>
       </div>
-      <p class="dash-subtitle">{{ farmName || 'Програми захисту культур' }}</p>
+      <button v-if="program" @click="exportPdf" class="dash-icon-box shrink-0 hover:bg-agro-hover transition-colors" title="Експорт PDF">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Перемикач культур -->
@@ -43,7 +46,17 @@
     </div>
 
     <div v-else>
-      <div v-if="!program" class="card text-center py-12">
+      <!-- Ліміт фермера вичерпано -->
+      <div v-if="farmerProgramLimitReached" class="card border-2 border-amber-300 bg-amber-50 text-center py-10">
+        <svg class="mx-auto mb-3" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/><path d="M12 8v4"/><circle cx="12" cy="15" r="1" fill="rgb(180,130,40)"/>
+        </svg>
+        <p class="font-bold text-amber-800 text-lg mb-1">Ліміт технічних карт</p>
+        <p class="text-amber-700 text-sm mb-1">Фермер використовує безкоштовний план — доступна лише 1 технічна карта.</p>
+        <p class="text-amber-600 text-xs">Щоб створити карти для всіх культур, фермеру потрібен PRO план.</p>
+      </div>
+
+      <div v-else-if="!program" class="card text-center py-12">
         <div class="dash-empty-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/>
@@ -59,9 +72,9 @@
       <template v-else>
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
-          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-hidden">
+          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-visible">
             <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
-              <span class="text-base">{{ phase.emoji }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="text-agro shrink-0" v-html="phaseIcon(phase.key)" />
               <span class="font-bold text-agro-dark">{{ phase.key }}</span>
               <span class="ml-auto text-xs text-agro-light mr-2">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
               <button v-if="!readOnly" @click="removePhase(phase)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-agro-light hover:text-red-400">
@@ -75,24 +88,34 @@
               </div>
               <div v-for="t in treatmentsByPhase[phase.key] || []" :key="t.id" class="flex items-start gap-3 px-5 py-3.5">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" :class="TYPE_BG[t.type] || 'bg-agro-bg'">
-                  <span class="text-sm">{{ TYPE_ICONS[t.type] || '🌿' }}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[t.type] || TYPE_SVG['захист']" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <span class="text-xs font-medium px-2 py-0.5 rounded-full border" :class="TYPE_BADGE[t.type] || 'bg-agro-bg border-agro-border text-agro-light'">
-                    {{ t.type }}
-                  </span>
-                  <p class="font-semibold text-agro-dark mt-1 text-sm">{{ t.product_name }}</p>
-                  <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5">📏 {{ t.dosage }}</p>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full border" :class="TYPE_BADGE[t.type] || 'bg-agro-bg border-agro-border text-agro-light'">{{ t.type }}</span>
+                    <button v-if="!readOnly" @click="cycleStatus(t)"
+                      :class="['text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors', t.status === 'done' ? 'bg-green-50 border-green-200 text-green-700' : t.status === 'missed' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-gray-50 border-gray-200 text-gray-500']">
+                      {{ t.status === 'done' ? '✓ Виконано' : t.status === 'missed' ? '✕ Пропущено' : '· Заплановано' }}
+                    </button>
+                    <span v-else :class="['text-xs font-semibold px-2 py-0.5 rounded-full border', t.status === 'done' ? 'bg-green-50 border-green-200 text-green-700' : t.status === 'missed' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-gray-50 border-gray-200 text-gray-500']">
+                      {{ t.status === 'done' ? '✓ Виконано' : t.status === 'missed' ? '✕ Пропущено' : '· Заплановано' }}
+                    </span>
+                  </div>
+                  <p class="font-semibold text-agro-dark mt-1 text-sm" :class="{ 'line-through opacity-50': t.status === 'missed' }">{{ t.product_name }}</p>
+                  <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5 flex items-center gap-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4"/></svg>
+                    {{ t.dosage }}
+                  </p>
                   <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
                 </div>
                 <div class="relative shrink-0 reminder-info-wrap">
                   <button @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
-                    :class="treatmentReminders[t.product_name]?.length ? 'bg-agro/10 text-agro hover:bg-agro/20' : 'hover:bg-agro-hover text-agro-light hover:text-agro'"
+                    :class="futureRemindersCount(t.id) ? 'bg-agro/10 text-agro hover:bg-agro/20' : 'hover:bg-agro-hover text-agro-light hover:text-agro'"
                     title="Нагадування">
                     <Bell :size="14" />
-                    <span v-if="treatmentReminders[t.product_name]?.length"
+                    <span v-if="futureRemindersCount(t.id)"
                       class="absolute -top-1 -right-1 w-4 h-4 bg-agro text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                      {{ treatmentReminders[t.product_name].length }}
+                      {{ futureRemindersCount(t.id) }}
                     </span>
                   </button>
                   <div v-if="activeReminderInfo === t.id"
@@ -102,16 +125,17 @@
                       <button @click="openReminderFor(t); activeReminderInfo = null"
                         class="text-xs text-agro font-medium hover:underline">+ Додати</button>
                     </div>
-                    <div v-if="!treatmentReminders[t.product_name]?.length" class="text-xs text-agro-light py-2 text-center">
+                    <div v-if="!treatmentReminders[t.id]?.length" class="text-xs text-agro-light py-2 text-center">
                       Немає нагадувань
                     </div>
                     <div v-else class="space-y-1.5">
-                      <div v-for="r in treatmentReminders[t.product_name]" :key="r.id"
+                      <div v-for="r in treatmentReminders[t.id]" :key="r.id"
                         class="flex items-center gap-2 text-xs py-1 px-2 rounded-lg"
                         :class="new Date(r.scheduled_date) < new Date() ? 'bg-gray-50 text-gray-400' : 'bg-amber-50 text-amber-800'">
                         <span>📅</span>
-                        <span>{{ formatReminderDate(r.scheduled_date) }}</span>
-                        <span v-if="new Date(r.scheduled_date) < new Date()" class="ml-auto text-gray-300 text-[10px]">минуло</span>
+                        <span class="flex-1">{{ formatReminderDate(r.scheduled_date) }}</span>
+                        <span v-if="new Date(r.scheduled_date) < new Date()" class="text-gray-300 text-[10px]">минуло</span>
+                        <button @click.stop="deleteReminder(r.id, t.id)" class="ml-auto text-gray-400 hover:text-red-500 transition-colors leading-none">×</button>
                       </div>
                     </div>
                   </div>
@@ -123,13 +147,15 @@
             </div>
 
             <div v-if="!readOnly" class="px-5 py-4 border-t border-agro-border bg-[#FAFDF7] space-y-3">
-              <select v-model="inlineT[phase.key].type" class="input text-sm py-2">
-                <option value="підживлення">🌿 підживлення</option>
-                <option value="захист">🛡 захист</option>
-                <option value="гербіцид">🌾 гербіцид</option>
-                <option value="фунгіцид">🍄 фунгіцид</option>
-                <option value="інсектицид">🐛 інсектицид</option>
-              </select>
+              <div class="grid grid-cols-5 gap-1.5">
+                <button v-for="tt in TREATMENT_TYPES" :key="tt.value" type="button"
+                  @click="inlineT[phase.key].type = tt.value"
+                  :class="['flex flex-col items-center gap-1 py-2 px-1 rounded-xl border-2 transition-colors text-xs font-medium',
+                    inlineT[phase.key]?.type === tt.value ? 'border-agro bg-agro-hover text-agro' : 'border-[#E0EDCC] text-gray-500 hover:border-agro/50']">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="tt.icon" />
+                  <span class="leading-tight text-center" style="font-size:10px">{{ tt.label }}</span>
+                </button>
+              </div>
               <div class="relative">
                 <input
                   v-model="inlineT[phase.key].product_name"
@@ -155,9 +181,10 @@
               <button
                 @click="saveTreatment(phase)"
                 :disabled="!inlineT[phase.key].product_name || savingPhase === phase.key"
-                class="btn-primary w-full py-2.5 text-sm"
+                class="btn-primary w-full py-2.5 text-sm inline-flex items-center justify-center gap-1.5"
               >
-                {{ savingPhase === phase.key ? '...' : '✓ Додати обробку' }}
+                <svg v-if="savingPhase !== phase.key" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                {{ savingPhase === phase.key ? '...' : 'Додати обробку' }}
               </button>
             </div>
           </div>
@@ -168,30 +195,28 @@
             ➕ Додати фазу
           </button>
           <div v-if="showPhasePicker" class="card mt-2 p-0 overflow-hidden">
+            <!-- Своя фаза — зверху, виділена -->
+            <div class="px-4 py-3 bg-agro/5 border-b-2 border-agro/20">
+              <p class="text-xs font-semibold text-agro mb-2 uppercase tracking-wide">Своя фаза</p>
+              <div class="flex gap-2">
+                <input v-model="newPhaseName" @keyup.enter="addCustomPhase" class="input flex-1 text-sm py-1.5" placeholder="Наприклад: Цвітіння, Збір врожаю..." />
+                <button @click="addCustomPhase" :disabled="!newPhaseName.trim()"
+                  class="btn-primary px-3 py-1.5 text-sm disabled:opacity-40 shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+            </div>
+            <!-- Стандартні фази -->
             <div v-if="availablePhases.length" class="divide-y divide-agro-border">
+              <p class="px-4 pt-3 pb-1 text-xs font-semibold text-agro-light uppercase tracking-wide">Стандартні фази</p>
               <button v-for="phase in availablePhases" :key="phase.key"
                 @click="addActivePhase(phase)"
                 class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-agro-hover transition-colors text-left">
-                <span class="text-base">{{ phase.emoji }}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="text-agro shrink-0" v-html="phaseIcon(phase.key)" />
                 <span class="font-medium text-agro-dark">{{ phase.key }}</span>
               </button>
             </div>
-            <p v-else class="px-4 py-3 text-sm text-agro-light">Всі фази вже додано</p>
-            <div class="border-t border-agro-border">
-              <div v-if="!showAddPhaseInline" class="px-4 py-3">
-                <button @click="showAddPhaseInline = true" class="text-sm text-agro font-medium hover:underline">+ Додати свою фазу</button>
-              </div>
-              <div v-else class="px-4 py-3 space-y-2">
-                <div class="flex gap-2">
-                  <input v-model="newPhaseEmoji" class="input w-12 text-center text-base px-1 py-1.5 shrink-0" placeholder="🌱" maxlength="2" />
-                  <input v-model="newPhaseName" @keyup.enter="addCustomPhase" class="input flex-1 text-sm py-1.5" placeholder="Назва фази..." />
-                </div>
-                <div class="flex gap-2">
-                  <button @click="showAddPhaseInline = false; newPhaseName = ''" class="btn-outline flex-1 py-1.5 text-sm">Скасувати</button>
-                  <button @click="addCustomPhase" :disabled="!newPhaseName.trim()" class="btn-primary flex-1 py-1.5 text-sm">Додати</button>
-                </div>
-              </div>
-            </div>
+            <p v-else class="px-4 py-3 text-sm text-agro-light">Всі стандартні фази вже додано</p>
           </div>
         </div>
       </template>
@@ -255,8 +280,9 @@
           </div>
           <div class="sticky bottom-0 bg-white border-t border-agro-border px-6 py-4 flex gap-3">
             <button @click="reminderTreatment = null" class="btn-outline flex-1">Скасувати</button>
-            <button @click="saveReminder" :disabled="!rDate || rSaving" class="btn-primary flex-1">
-              {{ rSaving ? '...' : 'Надіслати нагадування' }}
+            <button @click="saveReminder" :disabled="!rDate || rSaving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
+              <svg v-if="!rSaving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              {{ rSaving ? '...' : 'Додати' }}
             </button>
           </div>
         </div>
@@ -267,6 +293,8 @@
 
 <script setup lang="ts">
 import { Trash2, X, Bell } from 'lucide-vue-next'
+import { TREATMENT_TYPES, TYPE_SVG, TYPE_BG, TYPE_BADGE } from '~/utils/treatmentTypes'
+import { phaseIcon } from '~/utils/phaseIcons'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const route = useRoute()
@@ -282,7 +310,8 @@ const crops = ref<any[]>([])
 const selectedCrop = ref<any>(null)
 const program = ref<any>(null)
 const treatments = ref<any[]>([])
-const allPhases = ref<any[]>([])
+const growthPhases = useGrowthPhases()
+const allPhases = growthPhases.allPhases
 const phases = ref<any[]>([])
 const activePhasesKeys = ref<string[]>([])
 
@@ -295,15 +324,6 @@ const showSuggestionsFor = ref<string | null>(null)
 const inlineT = ref<Record<string, { product_name: string; type: string; dosage: string; notes: string }>>({})
 let searchTimer: any = null
 
-const TYPE_ICONS: Record<string, string> = { підживлення: '🌿', захист: '🛡', гербіцид: '🌾', фунгіцид: '🍄', інсектицид: '🐛' }
-const TYPE_BG: Record<string, string> = { підживлення: 'bg-amber-50', захист: 'bg-blue-50', гербіцид: 'bg-orange-50', фунгіцид: 'bg-purple-50', інсектицид: 'bg-red-50' }
-const TYPE_BADGE: Record<string, string> = {
-  підживлення: 'bg-amber-50 border-amber-200 text-amber-700',
-  захист: 'bg-blue-50 border-blue-200 text-blue-700',
-  гербіцид: 'bg-orange-50 border-orange-200 text-orange-700',
-  фунгіцид: 'bg-purple-50 border-purple-200 text-purple-700',
-  інсектицид: 'bg-red-50 border-red-200 text-red-700',
-}
 
 const CROP_GROUPS: Record<string, string> = {
   'пшениця': 'grain', 'ячмінь': 'grain', 'жито': 'grain', 'овес': 'grain', 'кукурудза': 'corn',
@@ -349,14 +369,41 @@ const ensureInlineT = (key: string) => {
 }
 
 const { data: { session } } = await supabase.auth.getSession()
+const uid = session?.user?.id
+
+const backLink = ref('/dashboard/agronomist-fields')
+const farmerIsPro = ref(true)
+const farmerProgramCount = ref(0)
+const FARMER_FREE_PROGRAM_LIMIT = 1
+
+const farmerProgramLimitReached = computed(() =>
+  !farmerIsPro.value && farmerProgramCount.value >= FARMER_FREE_PROGRAM_LIMIT && !program.value
+)
 
 onMounted(async () => {
-  const { data: phasesData } = await supabase.from('growth_phases').select('*').order('order_num', { ascending: true })
-  allPhases.value = (phasesData || []).map((p: any) => ({ key: p.key, emoji: p.emoji, order: p.order_num, crop_groups: p.crop_groups }))
+  await growthPhases.load()
 
-  const { data: farmData } = await supabase.from('farms').select('name, farm_crops(id, crop_type, variety)').eq('id', farmId).single()
+  if (uid) {
+    const { data: profile } = await supabase.from('users').select('role').eq('id', uid).single()
+    backLink.value = profile?.role === 'agronomist' ? '/dashboard/agronomist-fields' : '/dashboard/fields'
+  }
+
+  const { data: farmData } = await supabase.from('farms').select('name, user_id, farm_crops(id, crop_type, variety)').eq('id', farmId).single()
   farmName.value = farmData?.name || ''
   crops.value = farmData?.farm_crops || []
+
+  // Перевіряємо підписку фермера
+  if (farmData?.user_id) {
+    const [{ data: sub }, { count }] = await Promise.all([
+      supabase.from('subscriptions').select('plan, expires_at').eq('user_id', farmData.user_id).maybeSingle(),
+      supabase.from('protection_programs')
+        .select('id', { count: 'exact', head: true })
+        .in('farm_crop_id', (farmData.farm_crops || []).map((c: any) => c.id)),
+    ])
+    farmerIsPro.value = sub?.plan === 'pro' && (!sub.expires_at || new Date(sub.expires_at) > new Date())
+    farmerProgramCount.value = count || 0
+  }
+
   if (crops.value.length > 0) await selectCrop(crops.value[0])
   loading.value = false
 })
@@ -372,8 +419,9 @@ const selectCrop = async (crop: any) => {
     (p: any) => !p.crop_groups || !cropGroup || p.crop_groups.includes(cropGroup)
   )
 
-  const { data: programData } = await supabase
-    .from('protection_programs').select('*').eq('farm_crop_id', crop.id).maybeSingle()
+  const { data: programRows } = await supabase
+    .from('protection_programs').select('*').eq('farm_crop_id', crop.id).order('created_at', { ascending: true }).limit(1)
+  const programData = programRows?.[0] ?? null
   program.value = programData
   if (programData) {
     const { data: treatmentsData } = await supabase
@@ -381,14 +429,16 @@ const selectCrop = async (crop: any) => {
     treatments.value = treatmentsData || []
     await loadTreatmentReminders(treatmentsData || [])
     const usedPhaseKeys = [...new Set(treatmentsData?.map((t: any) => t.phase).filter(Boolean) || [])]
-    const orderedKeys = phases.value.map(p => p.key).filter(k => usedPhaseKeys.includes(k))
-    activePhasesKeys.value = orderedKeys
-    orderedKeys.forEach(ensureInlineT)
+    const savedPhaseKeys: string[] = programData.active_phases || []
+    const allKeys = [...new Set([...savedPhaseKeys, ...usedPhaseKeys])]
+    activePhasesKeys.value = allKeys
+    allKeys.forEach(ensureInlineT)
   }
 }
 
 const createProgram = async () => {
   if (!selectedCrop.value) return
+  if (farmerProgramLimitReached.value) return
   saving.value = true
   const { data } = await supabase.from('protection_programs').upsert({
     farm_crop_id: selectedCrop.value.id,
@@ -399,21 +449,66 @@ const createProgram = async () => {
   saving.value = false
 }
 
+const saveActivePhasesToDb = async () => {
+  if (!program.value?.id) return
+  await supabase.from('protection_programs').update({ active_phases: activePhasesKeys.value }).eq('id', program.value.id)
+}
+
+const STATUS_CYCLE: Record<string, string> = { planned: 'done', done: 'missed', missed: 'planned' }
+
+const cycleStatus = async (t: any) => {
+  const next = STATUS_CYCLE[t.status || 'planned'] || 'done'
+  t.status = next
+  await supabase.from('program_treatments').update({ status: next }).eq('id', t.id)
+}
+
+const exportPdf = () => {
+  const statusLabel = (s: string) => s === 'done' ? '✓ Виконано' : s === 'missed' ? '✕ Пропущено' : '· Заплановано'
+  const rows = activePhases.value.map((phase: any) => {
+    const pts = treatmentsByPhase.value[phase.key] || []
+    const tRows = pts.map((t: any) => `
+      <tr>
+        <td style="padding:6px 10px;font-size:13px;">${t.product_name}</td>
+        <td style="padding:6px 10px;font-size:12px;color:#555;">${t.type}</td>
+        <td style="padding:6px 10px;font-size:12px;color:#555;">${t.dosage || '—'}</td>
+        <td style="padding:6px 10px;font-size:12px;">${statusLabel(t.status || 'planned')}</td>
+        <td style="padding:6px 10px;font-size:12px;color:#555;">${t.notes || ''}</td>
+      </tr>`).join('')
+    return `<tr style="background:#f0f5e8;"><td colspan="5" style="padding:8px 10px;font-weight:700;font-size:13px;color:#2F5233;">${phase.key}</td></tr>${tRows}`
+  }).join('')
+  const title = selectedCrop.value ? `${selectedCrop.value.crop_type}${selectedCrop.value.variety ? ' · ' + selectedCrop.value.variety : ''}` : farmName.value
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Технічна карта — ${title}</title>
+  <style>body{font-family:Arial,sans-serif;padding:30px;color:#1a3a06}h1{font-size:20px;margin-bottom:4px}p{color:#666;font-size:13px;margin:0 0 20px}table{width:100%;border-collapse:collapse}th{background:#2F5233;color:#fff;padding:8px 10px;text-align:left;font-size:12px}tr:nth-child(even){background:#f9fdf4}td{border-bottom:1px solid #e0edcc}@media print{body{padding:15px}}</style>
+  </head><body><h1>Технічна карта</h1><p>${title} · АгроПростір · ${new Date().toLocaleDateString('uk-UA')}</p>
+  <table><thead><tr><th>Препарат</th><th>Тип</th><th>Доза</th><th>Статус</th><th>Примітки</th></tr></thead>
+  <tbody>${rows}</tbody></table></body></html>`
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  setTimeout(() => { w.print(); w.close() }, 400)
+}
+
 const removePhase = async (phase: any) => {
   const count = treatmentsByPhase.value[phase.key]?.length || 0
   if (count > 0 && !await confirmDialog(`Фаза "${phase.key}" та ${count} обробок у ній будуть видалені.`, { title: 'Видалити фазу?' })) return
   if (count > 0 && program.value) {
     const ids = treatmentsByPhase.value[phase.key].map((t: any) => t.id)
+    await supabase.from('reminders').delete().in('treatment_id', ids)
     await supabase.from('program_treatments').delete().in('id', ids)
     treatments.value = treatments.value.filter(t => t.phase !== phase.key)
+    ids.forEach((id: string) => delete treatmentReminders.value[id])
   }
   activePhasesKeys.value = activePhasesKeys.value.filter(k => k !== phase.key)
+  await saveActivePhasesToDb()
 }
 
-const addActivePhase = (phase: any) => {
+const addActivePhase = async (phase: any) => {
   if (!activePhasesKeys.value.includes(phase.key)) {
     activePhasesKeys.value.push(phase.key)
     ensureInlineT(phase.key)
+    await saveActivePhasesToDb()
   }
   showPhasePicker.value = false
   showAddPhaseInline.value = false
@@ -466,8 +561,10 @@ const { confirm: confirmDialog } = useConfirm()
 
 const deleteTreatment = async (t: any) => {
   if (!await confirmDialog(`"${t.product_name}" буде видалено з програми.`, { title: 'Видалити обробку?' })) return
+  await supabase.from('reminders').delete().eq('treatment_id', t.id)
   await supabase.from('program_treatments').delete().eq('id', t.id)
   treatments.value = treatments.value.filter(tr => tr.id !== t.id)
+  delete treatmentReminders.value[t.id]
 }
 
 const searchProducts = (phaseKey: string) => {
@@ -475,10 +572,19 @@ const searchProducts = (phaseKey: string) => {
   const q = inlineT.value[phaseKey]?.product_name.trim()
   if (!q || q.length < 2) { productSuggestions.value = []; return }
   searchTimer = setTimeout(async () => {
-    const { data } = await supabase.from('seller_offers')
-      .select('id, product_name, price, seller_profiles(company_name)')
-      .ilike('product_name', `%${q}%`).eq('in_stock', true).limit(8)
-    productSuggestions.value = data || []
+    const BIO_TYPES = ['bio_product', 'biostimulator', 'biofungicide', 'biological_fungicide', 'bioinsecticide', 'bioherbicide']
+    const [offersRes, bioRes] = await Promise.all([
+      supabase.from('seller_offers').select('id, product_name, price, seller_profiles(company_name)').ilike('product_name', `%${q}%`).eq('in_stock', true).limit(4),
+      supabase.from('agro_products').select('id, name').ilike('name', `%${q}%`).in('type', BIO_TYPES).limit(4),
+    ])
+    const offers = offersRes.data || []
+    const usedNames = new Set(offers.map((o: any) => o.product_name.toLowerCase()))
+    const addUniq = (items: any[], getName: (i: any) => string) =>
+      items.filter(i => !usedNames.has(getName(i).toLowerCase())).map(i => { usedNames.add(getName(i).toLowerCase()); return { id: i.id, product_name: getName(i), price: null, seller_profiles: null } })
+    productSuggestions.value = [
+      ...offers,
+      ...addUniq(bioRes.data || [], b => b.name),
+    ].slice(0, 8)
   }, 300)
 }
 
@@ -495,6 +601,8 @@ const hideSuggestions = () => {
 // Reminder info tooltip
 const treatmentReminders = ref<Record<string, any[]>>({})
 const activeReminderInfo = ref<string | null>(null)
+const futureRemindersCount = (treatmentId: string) =>
+  (treatmentReminders.value[treatmentId] || []).filter(r => new Date(r.scheduled_date) >= new Date()).length
 
 const toggleReminderInfo = (t: any) => {
   activeReminderInfo.value = activeReminderInfo.value === t.id ? null : t.id
@@ -502,22 +610,29 @@ const toggleReminderInfo = (t: any) => {
 
 const loadTreatmentReminders = async (ts: any[]) => {
   if (!ts.length) return
-  const names = [...new Set(ts.map((t: any) => t.product_name).filter(Boolean))]
+  const ids = ts.map((t: any) => t.id).filter(Boolean)
+  if (!ids.length) return
   const { data } = await supabase.from('reminders')
-    .select('id, description, scheduled_date')
-    .eq('created_by', session?.user?.id)
-    .eq('from_agronomist', true)
-    .in('description', names)
+    .select('id, treatment_id, description, scheduled_date, from_agronomist')
+    .in('treatment_id', ids)
     .order('scheduled_date', { ascending: true })
   const map: Record<string, any[]> = {}
   for (const r of data || []) {
-    if (!map[r.description]) map[r.description] = []
-    map[r.description].push(r)
+    if (!map[r.treatment_id]) map[r.treatment_id] = []
+    map[r.treatment_id].push(r)
   }
   treatmentReminders.value = map
 }
 
 const formatReminderDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+
+const deleteReminder = async (reminderId: string, treatmentId: string) => {
+  if (!await confirmDialog('Нагадування буде видалено.', { title: 'Видалити нагадування?' })) return
+  await supabase.from('reminders').delete().eq('id', reminderId)
+  if (treatmentReminders.value[treatmentId]) {
+    treatmentReminders.value[treatmentId] = treatmentReminders.value[treatmentId].filter(r => r.id !== reminderId)
+  }
+}
 
 // Reminder from treatment (creates reminder for the farmer)
 const reminderTreatment = ref<any>(null)
@@ -554,24 +669,16 @@ const openReminderFor = (t: any) => {
 const saveReminder = async () => {
   if (!rDate.value || !reminderTreatment.value) return
   rSaving.value = true
-  // Find farmer_id from field_shares
-  const { data: shareData } = await supabase.from('field_shares')
-    .select('farmer_id')
-    .eq('farm_id', farmId)
-    .eq('agronomist_id', session?.user?.id)
-    .eq('status', 'accepted')
-    .maybeSingle()
-  const farmerId = shareData?.farmer_id
-  if (!farmerId) { rSaving.value = false; return }
   const [y,m,d] = rDate.value.split('-').map(Number)
   const iso = new Date(y, m-1, d, Number(rHour.value), Number(rMinute.value), 0).toISOString()
   await supabase.from('reminders').insert({
-    user_id: farmerId,
+    user_id: session?.user?.id,
+    created_by: session?.user?.id,
+    treatment_id: reminderTreatment.value.id,
     description: reminderTreatment.value.product_name,
     scheduled_date: iso,
     type: 'обробка',
     from_agronomist: true,
-    created_by: session?.user?.id,
   })
   rSaving.value = false
   reminderTreatment.value = null
@@ -588,12 +695,6 @@ onMounted(() => {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-.dash-page { padding: 44px 56px; font-family: Manrope, sans-serif; max-width: 1196px; }
-.dash-head { margin-bottom: 28px; }
-.dash-title { font-family: 'Bitter', Georgia, serif; font-weight: 800; font-size: 28px; color: rgb(27,46,27); margin: 0; }
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.dash-subtitle { font-size: 15.5px; color: rgb(107,122,100); margin: 4px 0 0; }
-.dash-icon-box { width: 40px; height: 40px; border-radius: 10px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
-@media (max-width: 640px) { .dash-page { padding: 24px 20px; } }
 </style>
