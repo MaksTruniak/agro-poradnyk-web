@@ -5,7 +5,7 @@
       <div class="hero-overlay absolute inset-0"></div>
       <div class="relative z-10 px-4 py-32 md:py-40 max-w-3xl mx-auto">
         <p class="hero-eyebrow text-sm font-semibold uppercase tracking-[0.18em] mb-5">
-          Цифровий помічник аграрія
+          Цифровий помічник аграрника
         </p>
         <h1 class="hero-title text-6xl md:text-7xl font-black leading-none mb-6">
           АгроПростір
@@ -109,7 +109,7 @@ import { Image, User, Sparkles, ShoppingBag, ClipboardList, Bell } from 'lucide-
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
-  title: 'АгроПростір — цифровий помічник агрария',
+  title: 'АгроПростір — цифровий помічник аграрника',
   description: 'Керуйте полями, консультуйтесь з агрономами та продавайте врожай онлайн.',
   ogTitle: 'АгроПростір',
   ogDescription: 'Цифровий помічник для фермерів, дачників, агрономів і продавців агрохімії.',
