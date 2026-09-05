@@ -6,11 +6,11 @@
     </div>
 
     <!-- Фільтри -->
-    <div class="flex flex-col sm:flex-row gap-3 mb-8">
+    <div class="grid grid-cols-2 gap-3 mb-8 sm:flex sm:flex-row">
       <!-- Фільтр по культурі -->
-      <div class="relative" @click.stop>
+      <div class="relative" ref="cropWrapperRef">
         <button @click="cropOpen = !cropOpen"
-          class="flex items-center gap-2 w-52 border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
+          class="flex items-center gap-2 w-full border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
           :class="cropFilter ? 'text-agro-dark' : 'text-agro-light'">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 3a7 7 0 0 0 7 7 7 7 0 0 0-7-7"/><path d="M19 3a7 7 0 0 1-7 7 7 7 0 0 1 7-7"/></svg>
           <span class="flex-1 truncate">{{ cropFilter || 'Всі культури' }}</span>
@@ -20,15 +20,15 @@
           <button @click="cropFilter = ''; cropOpen = false"
             class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
             :class="!cropFilter ? 'text-agro font-semibold' : 'text-agro-dark'">Всі культури</button>
-          <button v-for="c in allCrops" :key="c" @click="cropFilter = c; cropOpen = false"
+          <button v-for="c in allCrops" :key="c" @click="cropFilter = c; cropOpen = false; regionOpen = false"
             class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
             :class="cropFilter === c ? 'text-agro font-semibold' : 'text-agro-dark'">{{ c }}</button>
         </div>
       </div>
       <!-- Фільтр по регіону -->
-      <div class="relative" @click.stop>
+      <div class="relative" ref="regionWrapperRef">
         <button @click="regionOpen = !regionOpen"
-          class="flex items-center gap-2 w-52 border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
+          class="flex items-center gap-2 w-full border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
           :class="regionFilter ? 'text-agro-dark' : 'text-agro-light'">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg>
           <span class="flex-1 truncate">{{ regionFilter || 'Всі регіони' }}</span>
@@ -154,9 +154,10 @@ const cropOpen = ref(false)
 const regionFilter = ref('')
 const regionOpen = ref(false)
 const allCropsFromDb = ref<string[]>([])
-const closeDropdowns = () => { regionOpen.value = false; cropOpen.value = false }
-onMounted(() => document.addEventListener('click', closeDropdowns))
-onUnmounted(() => document.removeEventListener('click', closeDropdowns))
+const cropWrapperRef = ref<HTMLElement | null>(null)
+const regionWrapperRef = ref<HTMLElement | null>(null)
+onClickOutside(cropWrapperRef, () => { cropOpen.value = false })
+onClickOutside(regionWrapperRef, () => { regionOpen.value = false })
 const starting = ref('')
 
 const { data: { session } } = await supabase.auth.getSession()
