@@ -201,6 +201,31 @@
         <div v-if="!filteredBrands.length" class="text-center py-12 text-agro-light text-sm">Нічого не знайдено</div>
       </div>
     </div>
+
+    <!-- Запити Enterprise -->
+    <div v-else-if="activeTab === 'contacts'">
+      <div v-if="!contacts.length" class="card text-center py-16">
+        <p class="font-bold text-agro-dark">Немає запитів</p>
+        <p class="text-agro-light text-sm mt-1">Форма Enterprise ще не заповнювалась</p>
+      </div>
+      <div v-else class="space-y-3">
+        <div v-for="c in contacts" :key="c.id" class="card flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center font-bold text-agro shrink-0">
+              {{ c.name?.[0]?.toUpperCase() || '?' }}
+            </div>
+            <div>
+              <p class="font-semibold text-agro-dark">{{ c.name }}</p>
+              <p class="text-sm text-agro-light">{{ c.email }} · {{ c.phone }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="text-xs text-agro-light">{{ formatDate(c.created_at) }}</span>
+            <span class="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-semibold capitalize">{{ c.type || 'enterprise' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </template>
@@ -217,9 +242,12 @@ const agronomists = ref<any[]>([])
 const pending = computed(() => agronomists.value.filter(a => !a.is_verified))
 const verified = computed(() => agronomists.value.filter(a => a.is_verified))
 
+const contacts = ref<any[]>([])
+
 const tabs = computed(() => [
   { key: 'pending', label: 'Очікують', count: pending.value.length || null },
   { key: 'verified', label: 'Верифіковані', count: null },
+  { key: 'contacts', label: 'Запити', count: contacts.value.length || null },
 ])
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -245,6 +273,13 @@ onMounted(async () => {
     .order('created_at', { ascending: false })
 
   agronomists.value = (data || []).map(a => ({ ...a, saving: false }))
+
+  const { data: contactData } = await supabase
+    .from('contact_requests')
+    .select('*')
+    .order('created_at', { ascending: false })
+  contacts.value = contactData || []
+
   loading.value = false
 })
 </script>
