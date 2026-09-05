@@ -86,8 +86,13 @@
             <p class="text-xs text-[rgb(27,46,27)]/40 mt-1">{{ c.count }} {{ pluralFarmer(c.count) }}</p>
           </NuxtLink>
         </div>
-        <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <div v-for="i in 12" :key="i" class="bg-white rounded-2xl h-36 animate-pulse"></div>
+        <div v-else class="text-center py-12">
+          <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+          </div>
+          <p class="font-bold text-[rgb(27,46,27)] text-lg mb-2">Станьте першим фермером на платформі</p>
+          <p class="text-[rgb(27,46,27)]/50 mb-6">Зареєструйтесь і додайте свої культури</p>
+          <NuxtLink to="/auth" class="inline-block bg-[rgb(47,82,51)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">Зареєструватись</NuxtLink>
         </div>
       </div>
     </section>
@@ -105,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { Image, User, Sparkles, ShoppingBag, ClipboardList, Bell } from 'lucide-vue-next'
+import { Image, User, Sparkles, ShoppingBag, ClipboardList, Bell, Wheat, Users, BarChart2 } from 'lucide-vue-next'
 definePageMeta({ layout: 'default' })
 
 useSeoMeta({
@@ -130,6 +135,9 @@ const features = [
   { icon: ShoppingBag,   title: 'Каталог препаратів',  desc: 'Тисячі препаратів і добрив — склад, аналоги, культури та норми витрати' },
   { icon: ClipboardList, title: 'Технологічна карта',  desc: 'Складайте календар обробок по фазах розвитку культури' },
   { icon: Bell,          title: 'Push-сповіщення',     desc: 'Нагадування про обробки, нові повідомлення та замовлення' },
+  { icon: Wheat,         title: 'Продаж врожаю',       desc: 'Публікуйте пропозиції на продаж і знаходьте заготівельників напряму' },
+  { icon: Users,         title: 'Команда',              desc: 'Додавайте менеджерів і агрономів до свого господарства' },
+  { icon: BarChart2,     title: 'Аналітика',            desc: 'Відстежуйте врожайність, витрати та ефективність по полях' },
 ]
 
 const { cropToSlug, cropEmoji: getCropEmoji } = await import('~/utils/cropSlugs')
