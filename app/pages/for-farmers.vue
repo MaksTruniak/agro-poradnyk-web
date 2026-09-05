@@ -154,11 +154,11 @@
 
           <div class="flex gap-[18px]">
             <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
             </div>
             <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Журнал сівозміни</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Ведіть облік культур по роках на кожному полі і відстежуйте врожайність т/га</p>
+              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Продаж врожаю</h3>
+              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Розміщуйте пропозиції на продаж і отримуйте запити від заготівельників напряму — без посередників</p>
             </div>
           </div>
 
