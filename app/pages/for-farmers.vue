@@ -11,7 +11,7 @@
           Все господарство —<br>в одному місці
         </h1>
         <p class="text-white/80 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-          Облік полів і культур, технологічні карти, консультації агрономів і замовлення препаратів — без паперів і зайвих дзвінків
+          Облік полів і культур, технологічні карти, консультації агрономів і продаж врожаю — без паперів і зайвих дзвінків
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <NuxtLink to="/auth?mode=register"
