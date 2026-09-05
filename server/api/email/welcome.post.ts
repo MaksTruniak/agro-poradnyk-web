@@ -1,4 +1,4 @@
-import { sendWelcomeEmail } from '~/server/utils/email'
+import { sendWelcomeEmail } from '../../utils/email'
 
 export default defineEventHandler(async (event) => {
   const { email, name } = await readBody(event)

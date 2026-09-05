@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { sendNewMessageEmail } from '~/server/utils/email'
+import { sendNewMessageEmail } from '../../utils/email'
 
 export default defineEventHandler(async (event) => {
   const { recipientId, senderName, preview } = await readBody(event)

@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
-import { sendPaymentConfirmEmail } from '~/server/utils/email'
+import { sendPaymentConfirmEmail } from '../../utils/email'
 
 function wfpSign(fields: string[], secretKey: string): string {
   return crypto
