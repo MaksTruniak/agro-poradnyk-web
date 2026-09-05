@@ -168,7 +168,7 @@
 
     <!-- Плани -->
     <section class="px-14 py-[100px] bg-[rgb(238,241,227)]">
-      <div class="max-w-[900px] mx-auto text-center">
+      <div class="max-w-[1180px] mx-auto text-center">
         <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Тарифи</h2>
         <p class="text-base text-[rgb(91,107,83)] mb-12">Базовий план безкоштовний назавжди. PRO відкриває більше га, культур і AI-запитів.</p>
 
