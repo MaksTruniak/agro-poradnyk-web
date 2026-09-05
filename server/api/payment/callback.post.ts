@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { sendPaymentConfirmEmail } from '~/server/utils/email'
 
 function wfpSign(fields: string[], secretKey: string): string {
   return crypto
@@ -93,6 +94,17 @@ export default defineEventHandler(async (event) => {
       expires_at: expiresAt.toISOString(),
     }, { onConflict: 'user_id' })
     if (error) console.error('[WFP callback] Supabase error:', error)
+  }
+
+  // Відправляємо email підтвердження
+  try {
+    const { data: userData } = await supabase.auth.admin.getUserById(userId)
+    if (userData?.user?.email) {
+      const name = userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
+      await sendPaymentConfirmEmail(userData.user.email, name, plan)
+    }
+  } catch (e) {
+    console.error('[WFP callback] Email error:', e)
   }
 
   return wfpResponse(orderReference, secretKey, 'accept')

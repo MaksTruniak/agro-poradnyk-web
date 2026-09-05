@@ -452,6 +452,11 @@ const handleRegister = async () => {
         }, { onConflict: 'user_id' }),
       ])
       showSuccess('Акаунт створено! Перші 6 місяців PRO безкоштовно 🌾')
+      // Welcome email (fire-and-forget)
+      $fetch('/api/email/welcome', {
+        method: 'POST',
+        body: { email: email.value, name: fullName },
+      }).catch(() => {})
     }
     router.push('/dashboard')
   } catch (e: any) {
