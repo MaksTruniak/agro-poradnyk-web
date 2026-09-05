@@ -82,9 +82,8 @@
                 <svg v-if="r.value === 'farmer'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/>
                 </svg>
-                <svg v-else-if="r.value === 'agronomist'" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="10" cy="9" r="4.5" stroke="#2F5233" stroke-width="1.6"/>
-                  <path d="M20 20c0-3.3-4-5-6-5M4 20c0-3.9 2.7-6 6-6" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/>
+                <svg v-else-if="r.value === 'agronomist'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/>
                 </svg>
                 <svg v-else-if="r.value === 'buyer'" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M4 20h16M6 20V10l-2-4h16l-2 4v10M9 10V6M15 10V6" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
