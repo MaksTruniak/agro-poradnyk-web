@@ -8,7 +8,7 @@
     <!-- Фільтри -->
     <div class="grid grid-cols-2 gap-3 mb-8 sm:flex sm:flex-row">
       <!-- Фільтр по культурі -->
-      <div class="relative" ref="cropWrapperRef">
+      <div class="relative flex-1" ref="cropWrapperRef">
         <button @click="cropOpen = !cropOpen"
           class="flex items-center gap-2 w-full border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
           :class="cropFilter ? 'text-agro-dark' : 'text-agro-light'">
@@ -26,7 +26,7 @@
         </div>
       </div>
       <!-- Фільтр по регіону -->
-      <div class="relative" ref="regionWrapperRef">
+      <div class="relative flex-1" ref="regionWrapperRef">
         <button @click="regionOpen = !regionOpen"
           class="flex items-center gap-2 w-full border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
           :class="regionFilter ? 'text-agro-dark' : 'text-agro-light'">
