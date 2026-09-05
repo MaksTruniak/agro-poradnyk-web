@@ -82,12 +82,12 @@
             <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">4</div>
             <div>
               <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16l-1.5 12.5a1 1 0 01-1 .9H6.5a1 1 0 01-1-.9L4 7z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 7a4 4 0 018 0" stroke="#2F5233" stroke-width="1.6"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Замовляйте препарати онлайн</h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Продавайте врожай напряму</h3>
               </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Знайдіть потрібний препарат у каталозі, порівняйте пропозиції продавців і замовте з доставкою Новою Поштою або Укрпоштою.</p>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Розміщуйте пропозиції на продаж зерна, овочів або ягід і отримуйте запити від заготівельників без посередників.</p>
               <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Тисячі препаратів', 'Порівняння цін', 'Доставка НП']" :key="tag" class="step-tag">{{ tag }}</span>
+                <span v-for="tag in ['Пропозиція на продаж', 'Прямий контакт', 'Без посередників']" :key="tag" class="step-tag">{{ tag }}</span>
               </div>
             </div>
           </div>
@@ -285,10 +285,10 @@ const steps = [
     tags: ['Схема обробки', 'Фази розвитку', 'Чат з агрономом'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg>',
-    title: 'Замовляйте препарати онлайн',
-    desc: 'Знайдіть потрібний препарат в каталозі, порівняйте пропозиції продавців і замовте з доставкою Новою Поштою або Укрпоштою.',
-    tags: ['Тисячі препаратів', 'Порівняння цін', 'Доставка НП'],
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>',
+    title: 'Продавайте врожай напряму',
+    desc: 'Розміщуйте пропозиції на продаж зерна, овочів або ягід і отримуйте запити від заготівельників без посередників.',
+    tags: ['Пропозиція на продаж', 'Прямий контакт', 'Без посередників'],
   },
 ]
 
