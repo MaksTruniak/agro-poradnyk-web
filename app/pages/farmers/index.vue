@@ -58,8 +58,15 @@
       <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
       </div>
-      <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
-      <p class="text-agro-light mt-2">Спробуйте інший пошук або регіон</p>
+      <template v-if="cropFilter || regionFilter">
+        <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
+        <p class="text-agro-light mt-1">Спробуйте змінити фільтри</p>
+      </template>
+      <template v-else>
+        <p class="font-bold text-agro-dark text-lg mb-2">Станьте першим фермером на платформі</p>
+        <p class="text-agro-light mb-6">Зареєструйтесь і додайте свої поля та культури</p>
+        <NuxtLink to="/auth" class="inline-block bg-[rgb(47,82,51)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">Зареєструватись</NuxtLink>
+      </template>
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">

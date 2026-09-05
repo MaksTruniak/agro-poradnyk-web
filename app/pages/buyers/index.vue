@@ -56,8 +56,15 @@
 
     <div v-else-if="filtered.length === 0" class="text-center py-20">
       <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg></div>
-      <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
-      <p class="text-agro-light mt-2">Спробуйте інший пошук або культуру</p>
+      <template v-if="cropFilter || regionFilter">
+        <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
+        <p class="text-agro-light mt-1">Спробуйте змінити фільтри</p>
+      </template>
+      <template v-else>
+        <p class="font-bold text-agro-dark text-lg mb-2">Поки що немає заготівельників</p>
+        <p class="text-agro-light mb-6">Зареєструйтесь і розміщуйте закупівлі — фермери знайдуть вас самі</p>
+        <NuxtLink to="/auth" class="inline-block bg-[rgb(47,82,51)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">Зареєструватись</NuxtLink>
+      </template>
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
