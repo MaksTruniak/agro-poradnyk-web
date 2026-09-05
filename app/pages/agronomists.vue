@@ -5,34 +5,49 @@
       <p class="text-agro-light mt-1">Знайдіть фахового агронома для консультації</p>
     </div>
 
-    <!-- Пошук + регіон -->
+    <!-- Фільтри -->
     <div class="flex flex-col sm:flex-row gap-3 mb-8">
-      <div class="relative flex-1 max-w-xl">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input v-model="search" class="input pl-11" placeholder="Пошук за ім'ям або спеціалізацією..." />
-      </div>
-      <div class="relative" v-if="regions.length" @click.stop>
-        <button @click="regionOpen = !regionOpen"
-          class="flex items-center gap-2 w-48 shrink-0 border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
-          :class="regionFilter ? 'text-agro-dark' : 'text-agro-light'">
-          <span class="flex-1 truncate">{{ regionFilter || 'Всі регіони' }}</span>
-          <svg class="w-4 h-4 shrink-0 transition-transform" :class="regionOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
+      <!-- Фільтр по культурі -->
+      <div class="relative" @click.stop>
+        <button @click="cropOpen = !cropOpen"
+          class="flex items-center gap-2 w-52 border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
+          :class="cropFilter ? 'text-agro-dark' : 'text-agro-light'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 3a7 7 0 0 0 7 7 7 7 0 0 0-7-7"/><path d="M19 3a7 7 0 0 1-7 7 7 7 0 0 1 7-7"/></svg>
+          <span class="flex-1 truncate">{{ cropFilter || 'Всі культури' }}</span>
+          <svg class="w-4 h-4 shrink-0 transition-transform" :class="cropOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div v-if="regionOpen" class="absolute right-0 top-full mt-1 z-20 bg-white border border-agro-border rounded-2xl shadow-xl py-1 w-56 max-h-64 overflow-y-auto">
-          <button @click="regionFilter = ''; regionOpen = false"
+        <div v-if="cropOpen" class="absolute left-0 top-full mt-1 z-20 bg-white border border-agro-border rounded-2xl shadow-xl py-1 w-56 max-h-64 overflow-y-auto">
+          <button @click="cropFilter = ''; cropOpen = false"
             class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
-            :class="!regionFilter ? 'text-agro font-semibold' : 'text-agro-dark'">
-            Всі регіони
-          </button>
-          <button v-for="r in regions" :key="r" @click="regionFilter = r; regionOpen = false"
+            :class="!cropFilter ? 'text-agro font-semibold' : 'text-agro-dark'">Всі культури</button>
+          <button v-for="c in allCrops" :key="c" @click="cropFilter = c; cropOpen = false"
             class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
-            :class="regionFilter === r ? 'text-agro font-semibold' : 'text-agro-dark'">
-            {{ r }}
-          </button>
+            :class="cropFilter === c ? 'text-agro font-semibold' : 'text-agro-dark'">{{ c }}</button>
         </div>
       </div>
+      <!-- Фільтр по регіону -->
+      <div class="relative" @click.stop>
+        <button @click="regionOpen = !regionOpen"
+          class="flex items-center gap-2 w-52 border border-agro-border rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-agro text-left"
+          :class="regionFilter ? 'text-agro-dark' : 'text-agro-light'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-7.4 7-12.5A7 7 0 005 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.3" stroke-width="1.5"/></svg>
+          <span class="flex-1 truncate">{{ regionFilter || 'Всі регіони' }}</span>
+          <svg class="w-4 h-4 shrink-0 transition-transform" :class="regionOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div v-if="regionOpen" class="absolute left-0 top-full mt-1 z-20 bg-white border border-agro-border rounded-2xl shadow-xl py-1 w-56 max-h-64 overflow-y-auto">
+          <button @click="regionFilter = ''; regionOpen = false"
+            class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
+            :class="!regionFilter ? 'text-agro font-semibold' : 'text-agro-dark'">Всі регіони</button>
+          <button v-for="r in regions" :key="r" @click="regionFilter = r; regionOpen = false"
+            class="w-full text-left px-4 py-2 text-sm hover:bg-agro-bg transition-colors"
+            :class="regionFilter === r ? 'text-agro font-semibold' : 'text-agro-dark'">{{ r }}</button>
+        </div>
+      </div>
+      <!-- Скинути фільтри -->
+      <button v-if="cropFilter || regionFilter" @click="cropFilter = ''; regionFilter = ''" class="text-sm text-agro-light hover:text-agro-dark transition-colors flex items-center gap-1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Скинути
+      </button>
     </div>
 
     <div v-if="loading" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -43,7 +58,15 @@
       <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
       </div>
-      <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
+      <template v-if="cropFilter || regionFilter">
+        <p class="font-bold text-agro-dark text-lg">Нічого не знайдено</p>
+        <p class="text-agro-light mt-1">Спробуйте змінити фільтри</p>
+      </template>
+      <template v-else>
+        <p class="font-bold text-agro-dark text-lg mb-2">Станьте першим агрономом на платформі</p>
+        <p class="text-agro-light mb-6">Зареєструйтесь і почніть приймати консультації від фермерів</p>
+        <NuxtLink to="/auth" class="inline-block bg-[rgb(47,82,51)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity">Зареєструватись</NuxtLink>
+      </template>
     </div>
 
     <div v-else class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -115,14 +138,25 @@ useSeoMeta({ title: 'Агрономи' })
 const supabase = useSupabaseClient()
 const router = useRouter()
 
+const UA_REGIONS = [
+  'Вінницька область','Волинська область','Дніпропетровська область','Донецька область',
+  'Житомирська область','Закарпатська область','Запорізька область','Івано-Франківська область',
+  'Київська область','Кіровоградська область','Луганська область','Львівська область',
+  'Миколаївська область','Одеська область','Полтавська область','Рівненська область',
+  'Сумська область','Тернопільська область','Харківська область','Херсонська область',
+  'Хмельницька область','Черкаська область','Чернівецька область','Чернігівська область','м. Київ',
+]
+
 const loading = ref(true)
 const agronomists = ref<any[]>([])
-const search = ref('')
+const cropFilter = ref('')
+const cropOpen = ref(false)
 const regionFilter = ref('')
 const regionOpen = ref(false)
-const closeRegion = () => { regionOpen.value = false }
-onMounted(() => document.addEventListener('click', closeRegion))
-onUnmounted(() => document.removeEventListener('click', closeRegion))
+const allCropsFromDb = ref<string[]>([])
+const closeDropdowns = () => { regionOpen.value = false; cropOpen.value = false }
+onMounted(() => document.addEventListener('click', closeDropdowns))
+onUnmounted(() => document.removeEventListener('click', closeDropdowns))
 const starting = ref('')
 
 const { data: { session } } = await supabase.auth.getSession()
@@ -158,15 +192,19 @@ agronomists.value = mapped.sort((a, b) => {
   return (b.rating || 0) - (a.rating || 0)
 })
 
+// Завантажуємо культури з crop_catalog
+const { data: cropCatalog } = await supabase.from('crop_catalog').select('name').order('name')
+allCropsFromDb.value = (cropCatalog || []).map((c: any) => c.name)
+
 loading.value = false
 
-const regions = computed(() => [...new Set(agronomists.value.map((a: any) => a.region).filter(Boolean))].sort())
+const regions = UA_REGIONS
+const allCrops = computed(() => allCropsFromDb.value)
 
 const filtered = computed(() => agronomists.value.filter(a => {
-  const q = search.value.toLowerCase()
-  const matchSearch = !q || a.name?.toLowerCase().includes(q) || a.specialization?.toLowerCase().includes(q) || a.crops?.some((c: string) => c.toLowerCase().includes(q))
+  const matchCrop = !cropFilter.value || a.crops?.includes(cropFilter.value)
   const matchRegion = !regionFilter.value || a.region === regionFilter.value
-  return matchSearch && matchRegion
+  return matchCrop && matchRegion
 }))
 
 const startChat = async (agro: any) => {
