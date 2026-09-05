@@ -172,41 +172,70 @@
         <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Тарифи</h2>
         <p class="text-base text-[rgb(91,107,83)] mb-12">Базовий план безкоштовний назавжди. PRO відкриває більше га, культур і AI-запитів.</p>
 
-        <div class="grid grid-cols-2 gap-6 text-left">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 text-left">
 
           <!-- Базовий -->
-          <div class="bg-white rounded-[20px] p-[34px_32px] border border-[rgb(225,219,198)]">
-            <div class="text-sm font-bold text-[rgb(91,107,83)] mb-2.5">Базовий</div>
-            <div class="bitter font-extrabold text-[30px] text-[rgb(27,46,27)] mb-6">Безкоштовно</div>
-            <div class="flex flex-col gap-3.5">
+          <div class="bg-white rounded-[20px] p-8 border border-[rgb(225,219,198)] flex flex-col">
+            <div class="text-sm font-bold text-[rgb(91,107,83)] mb-2">Базовий</div>
+            <div class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)] mb-1">Безкоштовно</div>
+            <p class="text-xs text-[rgb(91,107,83)] mb-6">назавжди</p>
+            <div class="flex flex-col gap-3 flex-1">
               <div v-for="item in ['До 2 га полів','1 культура на поле','Технічна карта','AI агроном (10 запитів/міс)','Нагадування і аналітика','Пошук агрономів і чати']" :key="item"
-                class="flex gap-2.5 items-start text-[14.5px] text-[rgb(62,79,59)]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}
               </div>
             </div>
           </div>
 
           <!-- PRO -->
-          <div class="bg-[rgb(27,46,27)] rounded-[20px] p-[34px_32px] relative shadow-[0_24px_50px_-20px_rgba(27,46,27,0.5)]">
-            <span class="absolute top-[34px] right-8 px-3 py-1 rounded-full bg-[#C98A3C] text-[rgb(27,46,27)] text-xs font-extrabold">Популярний</span>
-            <div class="text-sm font-bold text-[rgb(183,196,172)] mb-2.5">PRO</div>
-            <div class="flex items-baseline gap-2 mb-1">
-              <span class="bitter font-extrabold text-[30px] text-white">1 000</span>
-              <span class="text-[15px] text-[rgb(183,196,172)]">грн/міс</span>
+          <div class="bg-[rgb(27,46,27)] rounded-[20px] p-8 relative shadow-[0_24px_50px_-20px_rgba(27,46,27,0.5)] flex flex-col">
+            <span class="absolute top-6 right-6 px-2.5 py-0.5 rounded-full bg-[#C98A3C] text-[rgb(27,46,27)] text-xs font-extrabold">Популярний</span>
+            <div class="text-sm font-bold text-[rgb(183,196,172)] mb-2">PRO</div>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <span class="bitter font-extrabold text-[26px] text-white">1 000</span>
+              <span class="text-sm text-[rgb(183,196,172)]">грн/міс</span>
             </div>
             <p class="text-[rgb(183,196,172)] text-xs mb-6">або 10 000 грн / рік</p>
-            <div class="flex flex-col gap-3.5">
-              <div class="flex gap-2.5 items-start text-[14.5px] text-[rgb(228,233,218)]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#1B2E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Все з базового
-              </div>
-              <div v-for="item in ['До 50 га полів','Необмежена кількість культур','AI агроном (500 запитів/міс)','Співробітники — до 2 осіб','PDF / Excel звіти','Пріоритетна підтримка']" :key="item"
-                class="flex gap-2.5 items-start text-[14.5px] text-[rgb(228,233,218)]">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><path d="M12 2.5l2.4 6.3 6.7.5-5.1 4.4 1.6 6.5L12 16.8 6.4 20.2 8 13.7 2.9 9.3l6.7-.5L12 2.5z" fill="#C98A3C"/></svg>
+            <div class="flex flex-col gap-3 flex-1">
+              <div v-for="item in ['Все з базового','До 50 га полів','Необмежена кількість культур','AI агроном (500 запитів/міс)','Співробітники — до 2 осіб','PDF / Excel звіти','Пріоритетна підтримка']" :key="item"
+                class="flex gap-2 items-start text-[13.5px] text-[rgb(228,233,218)]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#1B2E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}
               </div>
             </div>
+          </div>
+
+          <!-- Business -->
+          <div class="bg-white rounded-[20px] p-8 border border-[rgb(225,219,198)] flex flex-col">
+            <div class="text-sm font-bold text-[rgb(91,107,83)] mb-2">Business</div>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <span class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)]">2 000</span>
+              <span class="text-sm text-[rgb(91,107,83)]">грн/міс</span>
+            </div>
+            <p class="text-xs text-[rgb(91,107,83)] mb-6">або 20 000 грн / рік</p>
+            <div class="flex flex-col gap-3 flex-1">
+              <div v-for="item in ['Все з PRO','До 200 га полів','AI агроном (3 000 запитів/міс, 300 фото/міс)','Співробітники — до 5 осіб','Пріоритетна підтримка']" :key="item"
+                class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {{ item }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Enterprise -->
+          <div class="bg-white rounded-[20px] p-8 border border-[rgb(225,219,198)] flex flex-col">
+            <div class="text-sm font-bold text-[rgb(91,107,83)] mb-2">Enterprise</div>
+            <div class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)] mb-1">Індивідуально</div>
+            <p class="text-xs text-[rgb(91,107,83)] mb-6">від 200 га</p>
+            <div class="flex flex-col gap-3 flex-1">
+              <div v-for="item in ['Все з Business','Від 200 га — необмежено','AI агроном без обмежень','Співробітники — необмежено','Особистий менеджер','Інтеграція з 1С / ERP','SLA — відповідь до 2 год']" :key="item"
+                class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                {{ item }}
+              </div>
+            </div>
+            <NuxtLink to="/auth?mode=register" class="mt-6 text-center text-sm font-bold text-[#2F5233] hover:underline">Зв'язатись →</NuxtLink>
           </div>
 
         </div>
