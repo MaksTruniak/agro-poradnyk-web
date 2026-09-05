@@ -113,32 +113,41 @@
     <!-- Плани -->
     <section class="py-20 px-4 border-t border-agro-border">
       <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-3xl font-extrabold text-agro-dark mb-4">Просування профілю</h2>
-        <p class="text-agro-light mb-12">Базовий план безкоштовний. Топ-просування виводить вас першими в пошуку.</p>
+        <h2 class="text-3xl font-extrabold text-agro-dark mb-4">Тарифи для агрономів</h2>
+        <p class="text-agro-light mb-12">Базовий план безкоштовний. PRO виводить вас першими в пошуку та дає більше можливостей.</p>
         <div class="grid sm:grid-cols-2 gap-6">
+          <!-- Базовий -->
           <div class="card text-left">
             <p class="font-bold text-agro-dark text-lg mb-1">Базовий</p>
             <p class="text-3xl font-extrabold text-agro mb-4">Безкоштовно</p>
-            <ul class="space-y-2 text-sm text-agro-light">
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Профіль агронома</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Чати з фермерами</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Доступ до полів клієнтів</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> До 3 активних клієнтів</li>
+            <ul class="space-y-2 text-sm mb-2">
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Профіль у каталозі агрономів</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> До 2 клієнтів</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Чати з фермерами</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Доступ до полів клієнтів</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> AI агроном (10 запитів/міс, до 2 фото)</li>
+              <li class="flex items-center gap-1.5 text-gray-400"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Без автопідняття</li>
+              <li class="flex items-center gap-1.5 text-gray-400"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Без виділення профілю</li>
             </ul>
           </div>
+          <!-- PRO -->
           <div class="card text-left border-2 border-agro">
             <div class="flex items-center justify-between mb-1">
-              <p class="font-bold text-agro-dark text-lg">Топ</p>
+              <p class="font-bold text-agro-dark text-lg">PRO</p>
               <span class="text-xs bg-agro text-white px-2 py-0.5 rounded-full font-semibold">Популярний</span>
             </div>
-            <p class="text-3xl font-extrabold text-agro mb-4">299 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
-            <ul class="space-y-2 text-sm text-agro-light">
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Все з базового</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Необмежена кількість клієнтів</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Перші в пошуку агрономів</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Значок "Топ агроном"</li>
-              <li class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Більше показів профілю</li>
+            <p class="text-3xl font-extrabold text-agro mb-1">500 <span class="text-base font-medium text-agro-light">грн/рік</span></p>
+            <p class="text-xs text-agro-light mb-4">≈ 42 грн/міс</p>
+            <ul class="space-y-2 text-sm mb-5">
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Необмежена кількість клієнтів</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> AI агроном (500 запитів/міс + 60 фото)</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Автопідняття вгору кожні 5 днів</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Виділена картка профілю</li>
+              <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Пріоритетна підтримка</li>
             </ul>
+            <NuxtLink to="/auth?mode=register" class="block text-center bg-agro text-white font-bold rounded-xl px-6 py-3 hover:bg-agro-dark transition-colors text-sm">
+              Почати безкоштовно →
+            </NuxtLink>
           </div>
         </div>
       </div>
