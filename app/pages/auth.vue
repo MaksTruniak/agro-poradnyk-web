@@ -7,6 +7,7 @@
         <NuxtLink to="/" class="w-16 h-16 rounded-[18px] bg-[#2F5233] flex items-center justify-center mb-5 shadow-[0_12px_24px_-10px_rgba(47,82,51,0.4)]">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
             <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#FAF6EC"/>
+            <path d="M12 22V10" stroke="#FAF6EC" stroke-width="1.4"/>
           </svg>
         </NuxtLink>
         <h1 class="bitter text-[28px] font-extrabold text-[rgb(27,46,27)] mb-2">АгроПростір</h1>
