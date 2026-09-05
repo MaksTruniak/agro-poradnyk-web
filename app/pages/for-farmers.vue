@@ -235,12 +235,58 @@
                 {{ item }}
               </div>
             </div>
-            <NuxtLink to="/auth?mode=register" class="mt-6 text-center text-sm font-bold text-[#2F5233] hover:underline">Зв'язатись →</NuxtLink>
+            <button @click="contactOpen = true" class="mt-6 text-center text-sm font-bold text-[#2F5233] hover:underline">Зв'язатись →</button>
           </div>
 
         </div>
       </div>
     </section>
+
+    <!-- Модалка Enterprise -->
+    <Teleport to="body">
+      <div v-if="contactOpen" class="fixed inset-0 z-50 flex items-center justify-center px-4" @click.self="contactOpen = false">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-[24px] shadow-2xl w-full max-w-md p-8">
+          <button @click="contactOpen = false" class="absolute top-5 right-5 text-[rgb(91,107,83)] hover:text-[rgb(27,46,27)] transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+
+          <template v-if="!contactSent">
+            <h3 class="bitter text-[22px] font-bold text-[rgb(27,46,27)] mb-1">Enterprise запит</h3>
+            <p class="text-sm text-[rgb(91,107,83)] mb-6">Залиште контакти — менеджер зв'яжеться з вами найближчим часом</p>
+            <form @submit.prevent="submitContact" class="flex flex-col gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-[rgb(62,79,59)] mb-1.5">Ім'я</label>
+                <input v-model="contactForm.name" required placeholder="Ваше ім'я" class="input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-[rgb(62,79,59)] mb-1.5">Email</label>
+                <input v-model="contactForm.email" type="email" required placeholder="email@example.com" class="input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-[rgb(62,79,59)] mb-1.5">Номер телефону</label>
+                <input v-model="contactForm.phone" type="tel" required placeholder="+380" class="input w-full" />
+              </div>
+              <button type="submit" :disabled="contactLoading"
+                class="mt-2 w-full py-3.5 rounded-xl bg-[#2F5233] text-white font-bold text-sm hover:bg-[#3d6b42] transition-colors disabled:opacity-60">
+                {{ contactLoading ? 'Надсилаємо...' : 'Надіслати запит' }}
+              </button>
+            </form>
+          </template>
+
+          <template v-else>
+            <div class="text-center py-6">
+              <div class="w-16 h-16 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-4">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h3 class="bitter text-[22px] font-bold text-[rgb(27,46,27)] mb-2">Дякуємо!</h3>
+              <p class="text-[rgb(91,107,83)] text-sm">Найближчим часом з вами зв'яжеться наш менеджер</p>
+              <button @click="contactOpen = false; contactSent = false" class="mt-6 text-sm font-bold text-[#2F5233] hover:underline">Закрити</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- CTA -->
     <section class="px-14 py-[100px] text-center" style="background: linear-gradient(rgb(238,241,227), rgb(220,230,203));">
@@ -290,6 +336,24 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'default' })
+
+const supabase = useSupabaseClient()
+const contactOpen = ref(false)
+const contactSent = ref(false)
+const contactLoading = ref(false)
+const contactForm = reactive({ name: '', email: '', phone: '' })
+
+const submitContact = async () => {
+  contactLoading.value = true
+  await supabase.from('contact_requests').insert({
+    name: contactForm.name,
+    email: contactForm.email,
+    phone: contactForm.phone,
+    type: 'enterprise',
+  }).then(() => {}).catch(() => {})
+  contactLoading.value = false
+  contactSent.value = true
+}
 useSeoMeta({
   title: 'АгроПростір для фермерів — облік полів і культур',
   description: 'Ведіть облік полів, культур і сортів, отримуйте консультації агрономів і замовляйте препарати онлайн.',
