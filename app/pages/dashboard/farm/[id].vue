@@ -199,6 +199,9 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="crop.show_in_catalog !== false ? '<path d=\'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\'/><circle cx=\'12\' cy=\'12\' r=\'3\'/>' : '<path d=\'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22\'/>'"/>
               {{ crop.show_in_catalog !== false ? 'Каталог' : 'Приховано' }}
             </button>
+            <button @click="openEditCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-hover transition-colors text-agro" title="Редагувати культуру">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
             <button @click="deleteCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400">
               <Trash2 :size="16" />
             </button>
@@ -502,6 +505,59 @@
             <div class="flex gap-3 mt-6">
               <button @click="closeRotationModal" class="btn-outline flex-1">Скасувати</button>
               <button @click="saveRotation" :disabled="saving" class="btn-primary flex-1">{{ saving ? '...' : 'Зберегти' }}</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Модалка редагування культури -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="editingCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editingCrop = null" />
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
+            <h2 class="font-bold text-agro-dark text-lg mb-4">Редагувати культуру</h2>
+            <p class="text-sm font-semibold text-agro-dark mb-4 flex items-center gap-2">
+              <img :src="`/crops/${cropToSlug(editingCrop.crop_type)}.svg`" class="w-5 h-5" @error="($event.target as HTMLImageElement).style.display='none'" />
+              {{ editingCrop.crop_type }}
+            </p>
+            <div class="space-y-4">
+              <div>
+                <label class="farm-edit-label">Сорт</label>
+                <div class="relative">
+                  <input
+                    v-model="editCropForm.variety"
+                    class="input"
+                    placeholder="Необов'язково"
+                    @input="searchEditVarieties"
+                    @focus="loadEditVarieties"
+                    @blur="setTimeout(() => showEditVarietySuggestions = false, 200)"
+                  />
+                  <div v-if="showEditVarietySuggestions && (editVarietySuggestions.length || editCropForm.variety.trim())"
+                    class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-40 overflow-y-auto">
+                    <button v-for="v in editVarietySuggestions" :key="v" @mousedown.prevent="editCropForm.variety = v; showEditVarietySuggestions = false"
+                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors">{{ v }}</button>
+                    <button v-if="editCropForm.variety.trim() && !editVarietySuggestions.find(v => v.toLowerCase() === editCropForm.variety.trim().toLowerCase())"
+                      @mousedown.prevent="showEditVarietySuggestions = false"
+                      class="w-full text-left px-4 py-2.5 text-sm text-agro hover:bg-agro-hover transition-colors">
+                      ➕ "{{ editCropForm.variety }}" — новий сорт
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="farm-edit-label">Площа (га)</label>
+                <input v-model="editCropForm.area_ha" class="input" type="number" step="0.01" placeholder="0.0" inputmode="decimal" />
+              </div>
+              <div>
+                <label class="farm-edit-label">Планова врожайність (т/га)</label>
+                <input v-model="editCropForm.planned_yield_t" class="input" type="number" step="0.01" placeholder="Необов'язково" inputmode="decimal" />
+              </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button @click="editingCrop = null" class="btn-outline flex-1">Скасувати</button>
+              <button @click="saveCropEdit" :disabled="saving" class="btn-primary flex-1">{{ saving ? '...' : 'Зберегти' }}</button>
             </div>
           </div>
         </div>
@@ -839,6 +895,53 @@ const saveRotation = async () => {
 const deleteRotation = async (id: string) => {
   if (!await confirmDialog('Запис сівозміни буде видалено.', { title: 'Видалити запис?' })) return
   await supabase.from('crop_rotation').delete().eq('id', id)
+  await load()
+}
+
+// Редагування культури
+const editingCrop = ref<any>(null)
+const editCropForm = reactive({ variety: '', area_ha: '', planned_yield_t: '' })
+const editVarietySuggestions = ref<string[]>([])
+const showEditVarietySuggestions = ref(false)
+
+const openEditCrop = (crop: any) => {
+  editingCrop.value = crop
+  Object.assign(editCropForm, {
+    variety: crop.variety || '',
+    area_ha: crop.area_ha || '',
+    planned_yield_t: crop.planned_yield_t || '',
+  })
+  editVarietySuggestions.value = []
+}
+
+const loadEditVarieties = async () => {
+  if (!editingCrop.value) return
+  const { data } = await supabase.from('varieties').select('name').ilike('crop_type', `${editingCrop.value.crop_type}%`).order('name')
+  editVarietySuggestions.value = (data || []).map((v: any) => v.name)
+  showEditVarietySuggestions.value = true
+}
+
+const searchEditVarieties = async () => {
+  if (!editingCrop.value) return
+  const q = editCropForm.variety.trim()
+  const { data } = await supabase.from('varieties').select('name').ilike('crop_type', `${editingCrop.value.crop_type}%`).ilike('name', `%${q}%`).order('name')
+  editVarietySuggestions.value = (data || []).map((v: any) => v.name)
+  showEditVarietySuggestions.value = true
+}
+
+const saveCropEdit = async () => {
+  if (!editingCrop.value) return
+  saving.value = true
+  if (editCropForm.variety.trim() && !editVarietySuggestions.value.includes(editCropForm.variety.trim())) {
+    await supabase.from('varieties').insert({ crop_type: editingCrop.value.crop_type, name: editCropForm.variety.trim() })
+  }
+  await supabase.from('farm_crops').update({
+    variety: editCropForm.variety.trim() || null,
+    area_ha: parseFloat(editCropForm.area_ha) || 0,
+    planned_yield_t: parseFloat(editCropForm.planned_yield_t) || null,
+  }).eq('id', editingCrop.value.id)
+  saving.value = false
+  editingCrop.value = null
   await load()
 }
 </script>
