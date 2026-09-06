@@ -136,8 +136,8 @@
               <p class="font-bold text-agro-dark text-lg">PRO</p>
               <span class="text-xs bg-agro text-white px-2 py-0.5 rounded-full font-semibold">Популярний</span>
             </div>
-            <p class="text-3xl font-extrabold text-agro mb-1">250 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
-            <p class="text-xs text-agro-light mb-4">або <strong class="text-agro-dark">2 500 грн/рік</strong> — економія 500 грн</p>
+            <p class="text-3xl font-extrabold text-agro mb-1">350 <span class="text-base font-medium text-agro-light">грн/міс</span></p>
+            <p class="text-xs text-agro-light mb-4">або <strong class="text-agro-dark">3 500 грн/рік</strong> — економія 700 грн</p>
             <ul class="space-y-2 text-sm mb-5">
               <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Необмежена кількість клієнтів</li>
               <li class="flex items-center gap-1.5 text-agro-light"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> AI агроном (500 запитів/міс + 60 фото)</li>
