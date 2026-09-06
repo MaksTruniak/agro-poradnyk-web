@@ -69,6 +69,39 @@ export async function sendPaymentConfirmEmail(to: string, name: string, plan: st
   })
 }
 
+export async function sendSubscriptionReminderEmail(to: string, name: string, plan: string, expiresAt: string) {
+  const planLabel = plan === 'pro' ? 'PRO' : plan === 'business' ? 'Business' : plan
+  const expDate = new Date(expiresAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `Ваша підписка ${planLabel} закінчується через 7 днів`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
+        <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
+        </div>
+        <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
+          <h2 style="margin:0 0 16px">Привіт, ${name}!</h2>
+          <p style="color:#5B6B53;line-height:1.6;margin:0 0 8px">
+            Ваша підписка <strong>${planLabel}</strong> закінчується <strong>${expDate}</strong>.
+          </p>
+          <p style="color:#5B6B53;line-height:1.6;margin:0 0 24px">
+            Продовжте підписку щоб не втратити доступ до всіх функцій.
+          </p>
+          <a href="https://agroprostir.com.ua/dashboard/subscription"
+            style="display:inline-block;background:#2F5233;color:#fff;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;font-size:15px">
+            Продовжити підписку →
+          </a>
+          <p style="color:#9aaa8e;font-size:13px;margin:32px 0 0">
+            Питання? Пишіть на info@agroprostir.com.ua
+          </p>
+        </div>
+      </div>
+    `,
+  })
+}
+
 export async function sendNewMessageEmail(to: string, recipientName: string, senderName: string, preview: string) {
   return getResend().emails.send({
     from: FROM,

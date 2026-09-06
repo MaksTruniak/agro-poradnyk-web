@@ -80,21 +80,40 @@ export default defineEventHandler(async (event) => {
       promotion_expires_at: expiresAt.toISOString(),
     }).eq('user_id', userId)
   } else {
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('renewal_count')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    const renewalCount = existingSub?.renewal_count ?? 0
     const expiresAt = new Date()
     const isMonth = plan.endsWith('_month')
     if (isMonth) {
       expiresAt.setMonth(expiresAt.getMonth() + 1)
     } else {
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+      // Рік (12 місяців) + 4 бонусних за річну оплату = 16
+      expiresAt.setMonth(expiresAt.getMonth() + 16)
     }
     const basePlan = plan.startsWith('pro') ? 'pro' : 'business'
     const { error } = await supabase.from('subscriptions').upsert({
-      user_id:    userId,
-      plan:       basePlan,
-      expires_at: expiresAt.toISOString(),
+      user_id:       userId,
+      plan:          basePlan,
+      expires_at:    expiresAt.toISOString(),
+      renewal_count: renewalCount + 1,
     }, { onConflict: 'user_id' })
     if (error) console.error('[WFP callback] Supabase error:', error)
   }
+
+  // Зберігаємо платіж як інвойс
+  await supabase.from('payments').insert({
+    user_id:         userId,
+    plan,
+    amount:          Number(amount),
+    currency:        currency || 'UAH',
+    status:          'paid',
+    order_reference: orderReference,
+  })
 
   // Відправляємо email підтвердження
   try {
