@@ -34,8 +34,8 @@ export default defineEventHandler(async (event) => {
   const { data: planData } = await supabase.from('plans').select('price_uah, label, is_active').eq('id', plan).single()
   if (!planData || !planData.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
 
-  // Знижка за лояльність (тільки для підписок, не для custom)
-  const isSubscription = ['pro_month','pro_year','business_month','business_year'].includes(plan)
+  // Знижка за лояльністю з БД
+  const isSubscription = ['pro_month','pro_year','business_month','business_year','agronomist_pro_month','agronomist_pro_year'].includes(plan)
   let discountPercent = 0
   let renewalCount = 0
 
@@ -46,8 +46,19 @@ export default defineEventHandler(async (event) => {
       .eq('user_id', user.id)
       .maybeSingle()
     renewalCount = existingSub?.renewal_count ?? 0
-    if (renewalCount === 1) discountPercent = 15
-    if (renewalCount >= 2) discountPercent = 30
+
+    // Визначаємо роль для знижки
+    const discountRole = plan.startsWith('agronomist') ? 'agronomist' : 'farmer'
+    const discountYear = renewalCount >= 3 ? 3 : renewalCount + 1
+
+    const { data: discountData } = await supabase
+      .from('loyalty_discounts')
+      .select('discount_percent')
+      .eq('role', discountRole)
+      .eq('renewal_year', discountYear)
+      .single()
+
+    discountPercent = discountData?.discount_percent ?? 0
   }
 
   const basePrice  = planData.price_uah
