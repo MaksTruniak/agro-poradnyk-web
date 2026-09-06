@@ -34,11 +34,30 @@ export default defineEventHandler(async (event) => {
   const { data: planData } = await supabase.from('plans').select('price_uah, label, is_active').eq('id', plan).single()
   if (!planData || !planData.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
 
+  // Знижка за лояльність (тільки для підписок, не для custom)
+  const isSubscription = ['pro_month','pro_year','business_month','business_year'].includes(plan)
+  let discountPercent = 0
+  let renewalCount = 0
+
+  if (isSubscription) {
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('renewal_count')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    renewalCount = existingSub?.renewal_count ?? 0
+    if (renewalCount === 1) discountPercent = 15
+    if (renewalCount >= 2) discountPercent = 30
+  }
+
+  const basePrice  = planData.price_uah
+  const amount     = discountPercent > 0 ? Math.round(basePrice * (1 - discountPercent / 100)) : basePrice
+  const labelSuffix = discountPercent > 0 ? ` (знижка ${discountPercent}%)` : ''
+
   const orderReference = `agro-${plan}-${user.id.slice(0, 8)}-${Date.now()}`
   const orderDate      = Math.floor(Date.now() / 1000)
-  const amount         = planData.price_uah
   const currency       = 'UAH'
-  const productName    = [planData.label]
+  const productName    = [`${planData.label}${labelSuffix}`]
   const productCount   = [1]
   const productPrice   = [amount]
 
@@ -77,5 +96,12 @@ export default defineEventHandler(async (event) => {
     merchantOptions: { userId: user.id, plan },
   }
 
-  return { ok: true, formData, endpoint: 'https://secure.wayforpay.com/pay' }
+  return {
+    ok: true,
+    formData,
+    endpoint: 'https://secure.wayforpay.com/pay',
+    amount,
+    basePrice,
+    discountPercent,
+  }
 })

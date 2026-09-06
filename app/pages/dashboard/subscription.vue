@@ -182,6 +182,15 @@
               <p class="text-sm text-agro-dark font-medium mb-2">Що входить:</p>
               <p v-for="f in selectedFeatures" :key="f" class="text-xs text-agro-light">✓ {{ f }}</p>
             </div>
+            <!-- Знижка за лояльність -->
+            <div v-if="loyaltyDiscount > 0" class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex items-center gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(22,163,74)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <div>
+                <p class="text-sm font-semibold text-green-700">Знижка за лояльність {{ loyaltyDiscount }}%</p>
+                <p class="text-xs text-green-600">Дякуємо що з нами! Ваша ціна зменшена автоматично.</p>
+              </div>
+            </div>
+
             <p class="text-xs text-agro-light mb-4">Безпечна оплата через <strong class="text-agro-dark">WayForPay</strong> — картки Visa / Mastercard</p>
             <div class="flex gap-3">
               <button @click="showPayment = false" class="btn-outline flex-1" :disabled="paying">Закрити</button>
@@ -208,6 +217,7 @@ const selectedPlan = ref('pro')
 const loading = ref(true)
 const currentPlan = ref('basic')
 const expiresAt = ref<string | null>(null)
+const loyaltyDiscount = ref(0)
 
 const PLAN_LABELS: Record<string, string> = {
   basic:    'Basic',
@@ -286,11 +296,20 @@ const paying = ref(false)
 const payError = ref('')
 const proPeriod = ref<'month' | 'year'>('month')
 
+async function loadLoyaltyDiscount() {
+  try {
+    const { data: sub } = await supabase.from('subscriptions').select('renewal_count').eq('user_id', (await supabase.auth.getSession()).data.session?.user.id || '').maybeSingle()
+    const rc = sub?.renewal_count ?? 0
+    loyaltyDiscount.value = rc === 1 ? 15 : rc >= 2 ? 30 : 0
+  } catch { loyaltyDiscount.value = 0 }
+}
+
 function openPayment(plan: string) {
   selectedPlan.value = plan
   proPeriod.value = 'month'
   payError.value = ''
   showPayment.value = true
+  loadLoyaltyDiscount()
 }
 
 // Реальний план для WFP
@@ -308,11 +327,12 @@ async function submitPayment() {
     const token = s?.access_token
     if (!token) throw new Error('Не авторизовано')
 
-    const res = await $fetch<{ ok: boolean; formData: Record<string, any>; endpoint: string }>('/api/payment/create', {
+    const res = await $fetch<{ ok: boolean; formData: Record<string, any>; endpoint: string; discountPercent: number }>('/api/payment/create', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: { plan: paymentPlan.value },
     })
+    loyaltyDiscount.value = res.discountPercent || 0
 
     // Формуємо HTML форму і відправляємо на WFP
     const form = document.createElement('form')
