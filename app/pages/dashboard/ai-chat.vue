@@ -1316,6 +1316,10 @@ const send = async () => {
     if (!res.ok) {
       const errText = await res.text().catch(() => 'unknown')
       console.error('[ai-chat] API error', res.status, errText)
+      if (res.status === 429) {
+        messages.value.push({ role: 'assistant', content: '⏳ Зараз велике навантаження на AI. Спробуйте за хвилину.' })
+        streaming.value = false; streamingText.value = ''; return
+      }
       throw new Error(`API error ${res.status}: ${errText}`)
     }
 

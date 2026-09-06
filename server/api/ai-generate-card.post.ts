@@ -46,12 +46,26 @@ export default defineEventHandler(async (event) => {
 - Дози — реалістичні
 - Відповідай тільки JSON, без \`\`\`json або інших маркерів`
 
-  const completion = await groq.chat.completions.create({
-    model: 'qwen/qwen3.8-27b',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.4,
-    max_tokens: 2000,
-  })
+  let completion: any
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      completion = await groq.chat.completions.create({
+        model: 'qwen/qwen3.8-27b',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4,
+        max_tokens: 2000,
+      })
+      break
+    } catch (err: any) {
+      const isRateLimit = err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
+      if (isRateLimit && attempt < 3) {
+        await new Promise(r => setTimeout(r, 2000 * attempt))
+        continue
+      }
+      if (isRateLimit) throw createError({ statusCode: 429, message: 'Зараз велике навантаження на AI. Спробуйте за хвилину.' })
+      throw err
+    }
+  }
 
   const text = completion.choices[0]?.message?.content?.trim() || ''
 

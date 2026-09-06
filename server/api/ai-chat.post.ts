@@ -76,22 +76,42 @@ ${farmContext ? `\nКонтекст господарства:\n${farmContext}` :
   const groq = new Groq({ apiKey })
   const model = hasImage ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'qwen/qwen3.8-27b'
 
+  const groqMessages = [{ role: 'system', content: systemPrompt }, ...messages]
+
+  // Retry з backoff при 429 (rate limit)
+  async function createStreamWithRetry(retries = 3, delayMs = 2000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        return await groq.chat.completions.create({
+          model,
+          max_tokens: 1024,
+          stream: true,
+          messages: groqMessages,
+        })
+      } catch (err: any) {
+        const isRateLimit = err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
+        if (isRateLimit && attempt < retries) {
+          console.warn(`[ai-chat] rate limit, retry ${attempt}/${retries} after ${delayMs}ms`)
+          await new Promise(r => setTimeout(r, delayMs * attempt))
+          continue
+        }
+        throw err
+      }
+    }
+  }
+
+  setHeader(event, 'Content-Type', 'text/event-stream')
+  setHeader(event, 'Cache-Control', 'no-cache')
+  setHeader(event, 'Connection', 'keep-alive')
+
   try {
-    const stream = await groq.chat.completions.create({
-      model,
-      max_tokens: 1024,
-      stream: true,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-      ],
-    })
+    const stream = await createStreamWithRetry()
 
     const encoder = new TextEncoder()
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of stream) {
+          for await (const chunk of (stream as any)) {
             const text = chunk.choices[0]?.delta?.content
             if (text) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
           }
@@ -106,7 +126,14 @@ ${farmContext ? `\nКонтекст господарства:\n${farmContext}` :
     })
     return sendStream(event, readable)
   } catch (err: any) {
-    console.error('[ai-chat] groq error:', err?.message, err?.status, err?.error)
+    const isRateLimit = err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
+    console.error('[ai-chat] groq error:', err?.message, err?.status)
+    if (isRateLimit) {
+      throw createError({
+        statusCode: 429,
+        message: 'Зараз велике навантаження на AI. Спробуйте за хвилину.',
+      })
+    }
     throw createError({ statusCode: err?.status || 500, message: err?.message || 'Groq API error' })
   }
 })
