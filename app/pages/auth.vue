@@ -86,7 +86,10 @@
                   <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/>
                 </svg>
                 <svg v-else-if="r.value === 'buyer'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 20h16M6 20V10l-2-4h16l-2 4v10M9 10V6M15 10V6"/>
+                  <path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/>
+                </svg>
+                <svg v-else-if="r.value === 'seller'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
                 </svg>
                 <span v-else class="text-lg">{{ r.emoji }}</span>
               </div>
@@ -116,7 +119,11 @@
           <button type="button" @click="step = 1"
             class="flex items-center gap-1.5 text-[13.5px] font-semibold text-[rgb(107,122,100)] hover:text-[#2F5233] transition-colors mb-1">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            {{ ROLES.find(r => r.value === role)?.emoji }} {{ ROLES.find(r => r.value === role)?.label }}
+            <svg v-if="role === 'farmer'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+            <svg v-else-if="role === 'agronomist'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+            <svg v-else-if="role === 'buyer'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg>
+            <svg v-else-if="role === 'seller'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            {{ ROLES.find(r => r.value === role)?.label }}
           </button>
 
           <div class="grid grid-cols-2 gap-3">
@@ -431,7 +438,7 @@ const handleRegister = async () => {
     if (e) throw e
     if (data.user) {
       const proExpires = new Date()
-      proExpires.setMonth(proExpires.getMonth() + 6)
+      proExpires.setMonth(proExpires.getMonth() + 2)
 
       await Promise.all([
         supabase.from('users').upsert({
