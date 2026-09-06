@@ -239,6 +239,43 @@
         <p v-if="profileAdded" class="text-agro text-sm mt-2">✅ Профіль додано! При наступному вході оберіть потрібний.</p>
       </div>
 
+      <!-- Верифікація заготівельника -->
+      <div v-if="role === 'buyer'" class="card">
+        <h2 class="dash-card-title bitter mb-1">Верифікація підприємства</h2>
+        <p class="text-sm text-agro-light mb-5">Отримайте бейдж «Перевірений заготівельник» — фермери більше довіряють перевіреним компаніям</p>
+
+        <!-- Вже верифіковано -->
+        <div v-if="isVerified" class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/></svg>
+          <div>
+            <p class="font-semibold text-green-800 text-sm">Підприємство верифіковане</p>
+            <p class="text-xs text-green-600 mt-0.5">Ваш профіль має бейдж «Перевірений заготівельник»</p>
+          </div>
+        </div>
+
+        <!-- Запит на розгляді -->
+        <div v-else-if="verificationRequested" class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <div>
+            <p class="font-semibold text-amber-800 text-sm">Запит на розгляді</p>
+            <p class="text-xs text-amber-600 mt-0.5">Зазвичай перевірка займає 1–2 робочі дні</p>
+          </div>
+        </div>
+
+        <!-- Форма подачі -->
+        <div v-else class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1.5">ЄДРПОУ / ІПН підприємства</label>
+            <input v-model="form.edrpou" class="input" placeholder="12345678" maxlength="10" />
+            <p class="text-xs text-agro-light mt-1">Введіть код підприємства — адміністратор перевірить дані в реєстрі</p>
+          </div>
+          <button @click="requestVerification" :disabled="!form.edrpou.trim() || requestingVerification" class="btn-primary disabled:opacity-50">
+            {{ requestingVerification ? 'Відправляємо...' : 'Подати запит на верифікацію' }}
+          </button>
+          <p v-if="verificationSent" class="text-agro text-sm">✅ Запит надіслано! Перевіримо протягом 1–2 робочих днів.</p>
+        </div>
+      </div>
+
       <!-- Вихід -->
       <div class="card">
         <h2 class="dash-card-title bitter mb-3">Сесія</h2>
@@ -323,7 +360,12 @@ const np = useNovaPost()
 const areasData = await np.getAreas().catch(() => [])
 areas.value = areasData.sort((a: any, b: any) => a.Description.localeCompare(b.Description, 'uk'))
 
-const { data: profile } = await supabase.from('users').select('name, first_name, last_name, company_name, phone, region, city, role, roles, address, edrpou, iban, bank_name, legal_address, avatar_url').eq('id', uid).single()
+const isVerified = ref(false)
+const verificationRequested = ref(false)
+const requestingVerification = ref(false)
+const verificationSent = ref(false)
+
+const { data: profile } = await supabase.from('users').select('name, first_name, last_name, company_name, phone, region, city, role, roles, address, edrpou, iban, bank_name, legal_address, avatar_url, is_verified, verification_requested').eq('id', uid).single()
 if (profile) {
   if (profile.first_name) {
     form.first_name = profile.first_name
@@ -344,6 +386,8 @@ if (profile) {
   form.bank_name = profile.bank_name || ''
   form.legal_address = profile.legal_address || ''
   avatarUrl.value = profile.avatar_url || ''
+  isVerified.value = profile.is_verified || false
+  verificationRequested.value = profile.verification_requested || false
 }
 
 const role = computed(() => profile?.role || '')
@@ -508,6 +552,18 @@ const saveDelivery = async () => {
   savingDelivery.value = false
   savedDelivery.value = true
   setTimeout(() => savedDelivery.value = false, 3000)
+}
+
+const requestVerification = async () => {
+  if (!form.edrpou.trim()) return
+  requestingVerification.value = true
+  await supabase.from('users').update({
+    edrpou: form.edrpou.trim(),
+    verification_requested: true,
+  }).eq('id', uid)
+  verificationRequested.value = true
+  verificationSent.value = true
+  requestingVerification.value = false
 }
 
 const logout = async () => {

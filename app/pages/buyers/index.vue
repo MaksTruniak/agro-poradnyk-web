@@ -77,7 +77,7 @@
           </span>
           <div class="flex items-center gap-1.5">
             <span v-if="buyer.buyer_rating > 0" class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600"><svg width="11" height="11" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.5" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> {{ buyer.buyer_rating }}</span>
-            <span v-if="buyer.is_verified_buyer" class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full font-semibold"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений</span>
+            <span v-if="buyer.is_verified || buyer.is_verified_buyer" class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-semibold"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Перевірений</span>
           </div>
         </div>
 
@@ -168,7 +168,7 @@ const startChat = async (buyer: any) => {
 
 const { data } = await supabase
   .from('users')
-  .select('id, name, region, city, buyer_rating, buyer_reviews_count, is_verified_buyer, buyer_crops(id, crop_type, min_qty, max_qty, unit)')
+  .select('id, name, region, city, buyer_rating, buyer_reviews_count, is_verified_buyer, is_verified, buyer_crops(id, crop_type, min_qty, max_qty, unit)')
   .eq('role', 'buyer')
   .order('name')
 

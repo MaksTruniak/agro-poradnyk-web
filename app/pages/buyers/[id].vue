@@ -27,7 +27,10 @@
             <h1 class="text-2xl font-extrabold text-agro-dark">{{ buyer.name }}</h1>
             <div class="flex items-center gap-2 mt-0.5">
               <p class="text-sm text-agro-light flex items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Заготівельник</p>
-              <span v-if="buyer.is_verified_buyer" class="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-semibold">✅ Перевірений</span>
+              <span v-if="buyer.is_verified || buyer.is_verified_buyer" class="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full font-semibold">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z"/></svg>
+                Перевірений заготівельник
+              </span>
             </div>
             <p v-if="buyer.city || buyer.region" class="text-agro-light mt-1 text-sm">
               📍 {{ [buyer.city, buyer.region].filter(Boolean).join(', ') }}
@@ -184,7 +187,7 @@ const uid = session?.user?.id
 const formatDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long' })
 
 const [userRes, dealsRes, buyerCropsRes] = await Promise.all([
-  supabase.from('users').select('id, name, region, city, created_at, buyer_rating, buyer_reviews_count, is_verified_buyer').eq('id', buyerId).single(),
+  supabase.from('users').select('id, name, region, city, created_at, buyer_rating, buyer_reviews_count, is_verified_buyer, is_verified').eq('id', buyerId).single(),
   supabase.from('deals').select('crop_type, quantity_tons').eq('buyer_id', buyerId).eq('status', 'confirmed'),
   supabase.from('buyer_crops').select('*').eq('user_id', buyerId).order('created_at'),
 ])

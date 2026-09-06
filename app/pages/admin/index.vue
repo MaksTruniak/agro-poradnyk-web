@@ -163,6 +163,64 @@
       </div>
     </div>
 
+    <!-- Заготівельники -->
+    <div v-else-if="activeTab === 'buyers'">
+      <div v-if="!buyers.length" class="card text-center py-16">
+        <p class="font-bold text-agro-dark">Заготівельників ще немає</p>
+      </div>
+      <div v-else class="space-y-3">
+        <!-- Очікують верифікації -->
+        <div v-if="pendingBuyers.length" class="mb-2">
+          <p class="text-xs text-agro-light uppercase tracking-wide font-semibold mb-2">Очікують верифікації ({{ pendingBuyers.length }})</p>
+          <div class="card overflow-hidden p-0">
+            <div class="divide-y divide-agro-border">
+              <div v-for="b in pendingBuyers" :key="b.id" class="flex items-center gap-4 px-5 py-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center font-bold text-amber-600 shrink-0">
+                  {{ b.name?.[0]?.toUpperCase() || '?' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-agro-dark">{{ b.company_name || b.name }}</p>
+                  <p class="text-xs text-agro-light">{{ b.email }} · ЄДРПОУ: <strong class="text-agro-dark">{{ b.edrpou || '—' }}</strong></p>
+                  <p class="text-xs text-agro-light mt-0.5">{{ b.region || '' }} · {{ formatDate(b.created_at) }}</p>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                  <button @click="verifyBuyer(b, true)" :disabled="b.saving"
+                    class="text-xs bg-agro text-white font-semibold px-3 py-1.5 rounded-xl hover:bg-agro-dark transition-colors disabled:opacity-50">
+                    {{ b.saving === 'approve' ? '...' : 'Верифікувати' }}
+                  </button>
+                  <button @click="verifyBuyer(b, false)" :disabled="b.saving"
+                    class="text-xs text-red-400 border border-red-100 hover:border-red-300 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50">
+                    {{ b.saving === 'reject' ? '...' : 'Відхилити' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Всі заготівельники -->
+        <p class="text-xs text-agro-light uppercase tracking-wide font-semibold mb-2">Всі заготівельники ({{ buyers.length }})</p>
+        <div class="card overflow-hidden p-0">
+          <div class="divide-y divide-agro-border">
+            <div v-for="b in buyers" :key="b.id" class="flex items-center gap-4 px-5 py-4">
+              <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center font-bold text-agro shrink-0">
+                {{ b.name?.[0]?.toUpperCase() || '?' }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-agro-dark">{{ b.company_name || b.name }}</p>
+                <p class="text-xs text-agro-light">{{ b.email }}{{ b.edrpou ? ` · ЄДРПОУ: ${b.edrpou}` : '' }}</p>
+              </div>
+              <span v-if="b.is_verified" class="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-agro-hover text-agro rounded-full font-medium shrink-0">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Верифікований
+              </span>
+              <span v-else-if="b.verification_requested" class="text-xs px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full font-medium shrink-0">На розгляді</span>
+              <span v-else class="text-xs text-agro-light shrink-0">Не верифікований</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Запити Enterprise -->
     <div v-else-if="activeTab === 'contacts'">
       <div v-if="!contacts.length" class="card text-center py-16">
@@ -243,10 +301,13 @@ const pending = computed(() => agronomists.value.filter(a => !a.is_verified))
 const verified = computed(() => agronomists.value.filter(a => a.is_verified))
 
 const contacts = ref<any[]>([])
+const buyers = ref<any[]>([])
+const pendingBuyers = computed(() => buyers.value.filter(b => b.verification_requested && !b.is_verified))
 
 const tabs = computed(() => [
   { key: 'pending', label: 'Очікують', count: pending.value.length || null },
   { key: 'verified', label: 'Верифіковані', count: null },
+  { key: 'buyers', label: 'Заготівельники', count: pendingBuyers.value.length || null },
   { key: 'contacts', label: 'Запити', count: contacts.value.length || null },
 ])
 
@@ -280,6 +341,23 @@ onMounted(async () => {
     .order('created_at', { ascending: false })
   contacts.value = contactData || []
 
+  const { data: buyerData } = await supabase
+    .from('users')
+    .select('id, name, email, company_name, edrpou, phone, region, is_verified, verification_requested, created_at')
+    .eq('role', 'buyer')
+    .order('created_at', { ascending: false })
+  buyers.value = (buyerData || []).map(b => ({ ...b, saving: false }))
+
   loading.value = false
 })
+
+const verifyBuyer = async (buyer: any, approve: boolean) => {
+  buyer.saving = approve ? 'approve' : 'reject'
+  await supabase.from('users').update({
+    is_verified: approve,
+    verification_requested: approve ? true : false,
+  }).eq('id', buyer.id)
+  buyer.is_verified = approve
+  buyer.saving = false
+}
 </script>
