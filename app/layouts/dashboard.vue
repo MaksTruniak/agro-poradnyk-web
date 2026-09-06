@@ -485,7 +485,7 @@ const navItems = computed(() => {
     ]},
     { label: 'Кабінет', items: [
       { to: '/dashboard/agronomist-profile', label: 'Кабінет агронома' },
-      { to: '/dashboard/promotion', label: 'Підписка агронома' },
+      { to: '/dashboard/agronomist-subscription', label: 'Підписка' },
       { to: '/dashboard/settings', label: 'Налаштування' },
     ]},
     ...adminGroup,

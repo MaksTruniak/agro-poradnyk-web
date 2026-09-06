@@ -79,6 +79,26 @@ export default defineEventHandler(async (event) => {
       promotion_plan: 'top',
       promotion_expires_at: expiresAt.toISOString(),
     }).eq('user_id', userId)
+  } else if (plan === 'agronomist_pro_month' || plan === 'agronomist_pro_year') {
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('renewal_count')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    const renewalCount = existingSub?.renewal_count ?? 0
+    const expiresAt = new Date()
+    if (plan === 'agronomist_pro_month') {
+      expiresAt.setMonth(expiresAt.getMonth() + 1)
+    } else {
+      expiresAt.setMonth(expiresAt.getMonth() + 16) // 12 + 4 бонусних
+    }
+    await supabase.from('subscriptions').upsert({
+      user_id:       userId,
+      plan:          'pro',
+      expires_at:    expiresAt.toISOString(),
+      renewal_count: renewalCount + 1,
+    }, { onConflict: 'user_id' })
   } else {
     const { data: existingSub } = await supabase
       .from('subscriptions')
