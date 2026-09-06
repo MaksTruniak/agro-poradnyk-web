@@ -46,6 +46,15 @@
           Верифікація агрономів
         </NuxtLink>
 
+        <NuxtLink to="/admin/plans"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+          :class="$route.path === '/admin/plans' ? 'bg-agro-hover text-agro' : 'text-agro-light hover:bg-agro-bg hover:text-agro-dark'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+          </svg>
+          Тарифи
+        </NuxtLink>
+
         <NuxtLink to="/admin/ai-limits"
           class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
           :class="$route.path === '/admin/ai-limits' ? 'bg-agro-hover text-agro' : 'text-agro-light hover:bg-agro-bg hover:text-agro-dark'">
