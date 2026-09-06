@@ -1,5 +1,9 @@
 <template>
-  <div class="dash-root min-h-screen flex" style="background: rgb(238,241,227); font-family: Manrope, sans-serif;">
+  <div class="dash-root min-h-screen flex flex-col" style="background: rgb(238,241,227); font-family: Manrope, sans-serif;">
+    <div class="bg-amber-400 text-amber-900 text-center text-xs font-semibold py-1.5 px-4 tracking-wide w-full shrink-0 z-50">
+      ⚠️ Сайт працює в тестовому режимі — платежі не є реальними
+    </div>
+    <div class="flex flex-1 min-h-0">
 
     <!-- Сайдбар (тільки десктоп) -->
     <aside class="hidden lg:flex flex-col fixed h-full z-40" style="width: 280px; background: #fff; border-right: 1px solid rgb(231,224,206);">
@@ -165,6 +169,7 @@
         </template>
       </div>
     </nav>
+  </div>
   </div>
   <ConfirmModal />
 </template>
