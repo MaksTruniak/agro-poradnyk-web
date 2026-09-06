@@ -112,26 +112,135 @@ const PLAN_LABELS: Record<string, string> = {
 }
 const planLabel = (p: string) => PLAN_LABELS[p] || p
 
-const downloadInvoice = (p: any) => {
-  const lines = [
-    `ІНВОЙС № ${p.id.slice(0, 8).toUpperCase()}`,
-    `Дата: ${formatDate(p.created_at)}`,
-    ``,
-    `Постачальник: АгроПростір (agroprostir.com.ua)`,
-    ``,
-    `Послуга: ${planLabel(p.plan)}`,
-    `Сума: ${p.amount.toLocaleString('uk-UA')} ${p.currency}`,
-    `Статус: Оплачено`,
-    ``,
-    `Номер замовлення: ${p.order_reference || '—'}`,
-  ].join('\n')
+function loadJsPDF(): Promise<any> {
+  return new Promise((resolve) => {
+    if ((window as any).jspdf) { resolve((window as any).jspdf.jsPDF); return }
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+    s.onload = () => resolve((window as any).jspdf.jsPDF)
+    document.head.appendChild(s)
+  })
+}
 
-  const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `invoice-${p.id.slice(0, 8)}.txt`
-  a.click()
-  URL.revokeObjectURL(url)
+const downloadInvoice = async (p: any) => {
+  const jsPDF = await loadJsPDF()
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+
+  const invoiceNum = p.id.slice(0, 8).toUpperCase()
+  const dateStr = formatDate(p.created_at)
+  const amountStr = `${p.amount.toLocaleString('uk-UA')} ${p.currency}`
+
+  // Кольори
+  const green = [47, 82, 51]
+  const dark  = [27, 46, 27]
+  const gray  = [107, 122, 100]
+  const light = [238, 241, 227]
+
+  // Шапка — зелений блок
+  doc.setFillColor(...green as [number,number,number])
+  doc.rect(0, 0, 210, 38, 'F')
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.text('AgroProstir', 14, 16)
+
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text('agroprostir.com.ua', 14, 23)
+  doc.text('info@agroprostir.com.ua', 14, 29)
+
+  doc.setFontSize(22)
+  doc.setFont('helvetica', 'bold')
+  doc.text('INVOICE', 196, 20, { align: 'right' })
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`# ${invoiceNum}`, 196, 28, { align: 'right' })
+
+  // Дата і статус
+  doc.setTextColor(...dark as [number,number,number])
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Дата: ${dateStr}`, 14, 48)
+  doc.setTextColor(47, 82, 51)
+  doc.text('● Оплачено', 196, 48, { align: 'right' })
+
+  // Лінія
+  doc.setDrawColor(...gray as [number,number,number])
+  doc.setLineWidth(0.3)
+  doc.line(14, 52, 196, 52)
+
+  // Постачальник і отримувач
+  doc.setTextColor(...gray as [number,number,number])
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ВІД', 14, 62)
+  doc.text('ПЛАТНИК', 110, 62)
+
+  doc.setTextColor(...dark as [number,number,number])
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text('АгроПростір', 14, 69)
+  doc.text('agroprostir.com.ua', 14, 75)
+  doc.text('info@agroprostir.com.ua', 14, 81)
+
+  const userEmail = session?.user?.email || ''
+  const userName = session?.user?.user_metadata?.full_name || ''
+  doc.text(userName || userEmail, 110, 69)
+  if (userName) doc.text(userEmail, 110, 75)
+
+  // Лінія
+  doc.line(14, 90, 196, 90)
+
+  // Таблиця послуг
+  doc.setFillColor(...light as [number,number,number])
+  doc.rect(14, 93, 182, 9, 'F')
+
+  doc.setTextColor(...gray as [number,number,number])
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ПОСЛУГА', 18, 99)
+  doc.text('К-ТЬ', 140, 99)
+  doc.text('СУМА', 188, 99, { align: 'right' })
+
+  doc.setTextColor(...dark as [number,number,number])
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(`Передплата: ${planLabel(p.plan)}`, 18, 110)
+  doc.text('1', 140, 110)
+  doc.text(amountStr, 188, 110, { align: 'right' })
+
+  doc.setDrawColor(...light as [number,number,number])
+  doc.setLineWidth(0.2)
+  doc.line(14, 115, 196, 115)
+
+  // Підсумок
+  doc.setDrawColor(...gray as [number,number,number])
+  doc.setLineWidth(0.3)
+  doc.line(130, 120, 196, 120)
+
+  doc.setFontSize(9)
+  doc.setTextColor(...gray as [number,number,number])
+  doc.text('Разом до сплати:', 132, 127)
+  doc.setTextColor(...dark as [number,number,number])
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.text(amountStr, 188, 127, { align: 'right' })
+
+  // Номер замовлення
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(...gray as [number,number,number])
+  doc.text(`Номер замовлення: ${p.order_reference || '—'}`, 14, 145)
+
+  // Футер
+  doc.setFillColor(...light as [number,number,number])
+  doc.rect(0, 272, 210, 25, 'F')
+  doc.setTextColor(...gray as [number,number,number])
+  doc.setFontSize(8)
+  doc.text('АгроПростір — платформа для агрономів і фермерів України', 105, 281, { align: 'center' })
+  doc.text('agroprostir.com.ua  ·  info@agroprostir.com.ua', 105, 287, { align: 'center' })
+
+  doc.save(`invoice-${invoiceNum}.pdf`)
 }
 </script>
