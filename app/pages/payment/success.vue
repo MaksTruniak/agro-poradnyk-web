@@ -16,7 +16,7 @@
         </div>
         <h1 class="text-2xl font-extrabold text-agro-dark bitter mb-2">Оплата успішна!</h1>
         <p class="text-agro-light mb-1">Ваш тариф <strong class="text-agro-dark">{{ planLabel }}</strong> активовано.</p>
-        <p class="text-agro-light text-sm mb-8">Доступ відкрито на 1 рік. Дякуємо!</p>
+        <p class="text-agro-light text-sm mb-8">Доступ відкрито на {{ planPeriod }}. Дякуємо!</p>
 
         <NuxtLink to="/dashboard" class="btn-primary inline-flex">
           Перейти в дашборд →
@@ -34,12 +34,18 @@ const route = useRoute()
 const plan = route.query.plan as string
 
 const PLAN_LABELS: Record<string, string> = {
-  pro: 'PRO',
-  business: 'Business',
-  enterprise: 'Enterprise',
+  pro_month: 'PRO (місяць)',
+  pro_year: 'PRO (рік)',
+  business_month: 'Business (місяць)',
+  business_year: 'Business (рік)',
+  agronomist_pro_month: 'PRO агронома (місяць)',
+  agronomist_pro_year: 'PRO агронома (рік)',
+  top_agronomist: 'Топ агронома',
+  top_seller: 'Топ продавця',
 }
 
 const planLabel = computed(() => PLAN_LABELS[plan] || plan || 'PRO')
+const planPeriod = computed(() => plan?.endsWith('_year') ? '1 рік' : '1 місяць')
 </script>
 
 <style scoped>
