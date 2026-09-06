@@ -437,10 +437,7 @@ const handleRegister = async () => {
     })
     if (e) throw e
     if (data.user) {
-      const proExpires = new Date()
-      proExpires.setMonth(proExpires.getMonth() + 2)
-
-      await Promise.all([
+      const upsertPromises: Promise<any>[] = [
         supabase.from('users').upsert({
           id: data.user.id,
           email: email.value,
@@ -452,13 +449,27 @@ const handleRegister = async () => {
           region: region.value || null,
           role: role.value,
         } as any),
-        supabase.from('subscriptions').upsert({
-          user_id: data.user.id,
-          plan: 'pro',
-          expires_at: proExpires.toISOString(),
-        }, { onConflict: 'user_id' }),
-      ])
-      showSuccess('Акаунт створено! Перші 6 місяців PRO безкоштовно 🌾')
+      ]
+
+      // 2 місяці PRO безкоштовно для фермерів і агрономів
+      if (role.value === 'farmer' || role.value === 'agronomist') {
+        const proExpires = new Date()
+        proExpires.setMonth(proExpires.getMonth() + 2)
+        upsertPromises.push(
+          supabase.from('subscriptions').upsert({
+            user_id: data.user.id,
+            plan: 'pro',
+            expires_at: proExpires.toISOString(),
+          }, { onConflict: 'user_id' })
+        )
+      }
+
+      await Promise.all(upsertPromises)
+
+      const successMsg = (role.value === 'farmer' || role.value === 'agronomist')
+        ? 'Акаунт створено! Перші 2 місяці PRO безкоштовно 🌾'
+        : 'Акаунт створено! Ласкаво просимо до АгроПростір 🌾'
+      showSuccess(successMsg)
       // Welcome email (fire-and-forget)
       $fetch('/api/email/welcome', {
         method: 'POST',
