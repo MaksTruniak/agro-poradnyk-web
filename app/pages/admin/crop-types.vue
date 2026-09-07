@@ -1,5 +1,5 @@
 <template>
-  <div class="p-8 max-w-4xl">
+  <div class="p-8">
     <div class="mb-7 flex items-start justify-between gap-4">
       <div>
         <h1 class="text-2xl font-extrabold text-agro-dark flex items-center gap-2">
