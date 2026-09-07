@@ -298,7 +298,7 @@ const startChat = async () => {
 const { data: pageData, pending } = useLazyAsyncData(`farmer-${farmerId}`, async () => {
   const [userRes, farmsRes] = await Promise.all([
     supabase.from('users').select('id, name, region, city, created_at, farmer_rating, farmer_reviews_count, is_verified_farmer').eq('id', farmerId).eq('role', 'farmer').single(),
-    supabase.from('farms').select('id, name, region, city, hectares, farm_crops(id, crop_type, variety, area_ha, planned_yield_t)').eq('user_id', farmerId),
+    supabase.from('farms').select('id, name, region, city, hectares, farm_crops(id, crop_type, variety, area_ha, planned_yield_t, stock_quantity, stock_unit, show_in_catalog)').eq('user_id', farmerId),
   ])
   return { farmer: userRes.data || null, farms: farmsRes.data || [] }
 })
