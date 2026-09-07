@@ -200,6 +200,7 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/dashboard/agreements':        { paths: [{ d: 'M9 12l2 2 4-4', sw: 1.6, lc: 'round', lj: 'round' }, { d: 'M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z', sw: 1.6, lj: 'round' }] },
   '/dashboard/deals':             { paths: [{ d: 'M4 12l4-8h8l4 8-4 8H8l-4-8z', sw: 1.6, lj: 'round' }, { d: 'M9 12l2 2 4-4', sw: 1.6, lc: 'round', lj: 'round' }] },
   '/dashboard/subscription':      { paths: [{ d: 'M6 3h12l3 6-9 12L3 9l3-6z', sw: 1.6, lj: 'round' }, { d: 'M3 9h18M9 3l3 18M15 3l-3 18', sw: 1.3, lj: 'round' }] },
+  '/dashboard/invoices':          { paths: [{ d: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z', sw: 1.6, lj: 'round' }, { d: 'M14 2v6h6M9 13h6M9 17h4', sw: 1.6, lc: 'round' }] },
   '/dashboard/support':           { paths: [{ d: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z', sw: 1.7, lj: 'round' }] },
   '/dashboard/team':              { paths: [{ d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2', sw: 1.6, lc: 'round' }, { d: 'M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', sw: 1.6, lc: 'round' }], circles: [{ cx: 9, cy: 7, r: 4, sw: 1.6 }] },
   '/dashboard/integrations':      { paths: [{ d: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z', sw: 1.5, lj: 'round' }] },
