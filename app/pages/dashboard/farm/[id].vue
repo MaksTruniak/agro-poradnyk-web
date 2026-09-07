@@ -554,6 +554,13 @@
                 <label class="farm-edit-label">Планова врожайність (т/га)</label>
                 <input v-model="editCropForm.planned_yield_t" class="input" type="number" step="0.01" placeholder="Необов'язково" inputmode="decimal" />
               </div>
+              <label class="flex items-start gap-3 cursor-pointer select-none pt-1">
+                <input type="checkbox" v-model="editCropForm.show_in_catalog" class="mt-0.5 w-4 h-4 accent-agro rounded" />
+                <span>
+                  <span class="block text-sm font-medium text-agro-dark">Показувати у каталозі фермерів</span>
+                  <span class="block text-xs text-agro-light mt-0.5">Інші користувачі побачать цю культуру у вашому профілі</span>
+                </span>
+              </label>
             </div>
             <div class="flex gap-3 mt-6">
               <button @click="editingCrop = null" class="btn-outline flex-1">Скасувати</button>
@@ -900,7 +907,7 @@ const deleteRotation = async (id: string) => {
 
 // Редагування культури
 const editingCrop = ref<any>(null)
-const editCropForm = reactive({ variety: '', area_ha: '', planned_yield_t: '' })
+const editCropForm = reactive({ variety: '', area_ha: '', planned_yield_t: '', show_in_catalog: true })
 const editVarietySuggestions = ref<string[]>([])
 const showEditVarietySuggestions = ref(false)
 
@@ -910,6 +917,7 @@ const openEditCrop = (crop: any) => {
     variety: crop.variety || '',
     area_ha: crop.area_ha || '',
     planned_yield_t: crop.planned_yield_t || '',
+    show_in_catalog: crop.show_in_catalog !== false,
   })
   editVarietySuggestions.value = []
 }
@@ -939,6 +947,7 @@ const saveCropEdit = async () => {
     variety: editCropForm.variety.trim() || null,
     area_ha: parseFloat(editCropForm.area_ha) || 0,
     planned_yield_t: parseFloat(editCropForm.planned_yield_t) || null,
+    show_in_catalog: editCropForm.show_in_catalog,
   }).eq('id', editingCrop.value.id)
   saving.value = false
   editingCrop.value = null
