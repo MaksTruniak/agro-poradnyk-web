@@ -168,7 +168,7 @@
             <img :src="`/crops/${cropToSlug(crop.crop_type)}.svg`" :alt="crop.crop_type" class="w-7 h-7 object-contain shrink-0" @error="($event.target as HTMLImageElement).style.display='none'" />
             <div class="flex-1">
               <p class="font-semibold text-agro-dark">{{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}</p>
-              <p class="text-xs text-agro-light">{{ crop.area_ha }} га{{ crop.planned_yield_t ? ` · план ${crop.planned_yield_t} т/га` : '' }}</p>
+              <p class="text-xs text-agro-light">{{ crop.area_ha }} га{{ crop.planned_yield_t ? ` · план ${crop.planned_yield_t} т/га` : '' }}{{ crop.stock_quantity != null ? ` · склад: ${crop.stock_quantity} ${crop.stock_unit || 'т'}` : '' }}</p>
               <p v-if="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares)" class="text-xs text-amber-600 font-semibold mt-0.5">
                 ⚠ Перевищує площу поля ({{ farm.hectares }} га)
               </p>
@@ -440,6 +440,16 @@
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Плановий урожай (т/га) <span class="text-agro-light font-normal">(необов'язково)</span></label>
                 <input v-model="newPlannedYield" class="input" placeholder="0.0" inputmode="decimal" @input="newPlannedYield = ($event.target as HTMLInputElement).value.replace(',', '.')" />
               </div>
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1.5">На складі <span class="text-agro-light font-normal">(необов'язково)</span></label>
+                <div class="flex gap-2">
+                  <input v-model="newStockQuantity" class="input flex-1" placeholder="0" type="number" min="0" step="0.1" inputmode="decimal" />
+                  <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
+                    <button @click="newStockUnit = 'т'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="newStockUnit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
+                    <button @click="newStockUnit = 'кг'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="newStockUnit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+                  </div>
+                </div>
+              </div>
               <label class="flex items-start gap-3 cursor-pointer select-none pt-1">
                 <input type="checkbox" v-model="newShowInCatalog" class="mt-0.5 w-4 h-4 accent-agro rounded" />
                 <div>
@@ -450,7 +460,7 @@
             </div>
 
             <div class="flex gap-3 mt-6">
-              <button @click="showAddCrop = false; selectedCrop = null; newVariety = ''; newArea = ''; newPlannedYield = ''; newShowInCatalog = true" class="btn-outline flex-1">Скасувати</button>
+              <button @click="showAddCrop = false; selectedCrop = null; newVariety = ''; newArea = ''; newPlannedYield = ''; newStockQuantity = ''; newStockUnit = 'т'; newShowInCatalog = true" class="btn-outline flex-1">Скасувати</button>
               <button @click="addCrop" :disabled="!selectedCrop || saving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
                 <svg v-if="!saving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                 {{ saving ? '...' : 'Додати' }}
@@ -553,6 +563,16 @@
               <div>
                 <label class="farm-edit-label">Планова врожайність (т/га)</label>
                 <input v-model="editCropForm.planned_yield_t" class="input" type="number" step="0.01" placeholder="Необов'язково" inputmode="decimal" />
+              </div>
+              <div>
+                <label class="farm-edit-label">На складі <span class="text-agro-light font-normal">(необов'язково)</span></label>
+                <div class="flex gap-2">
+                  <input v-model="editCropForm.stock_quantity" class="input flex-1" placeholder="0" type="number" min="0" step="0.1" inputmode="decimal" />
+                  <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
+                    <button @click="editCropForm.stock_unit = 'т'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="editCropForm.stock_unit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
+                    <button @click="editCropForm.stock_unit = 'кг'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="editCropForm.stock_unit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+                  </div>
+                </div>
               </div>
               <label class="flex items-start gap-3 cursor-pointer select-none pt-1">
                 <input type="checkbox" v-model="editCropForm.show_in_catalog" class="mt-0.5 w-4 h-4 accent-agro rounded" />
@@ -709,6 +729,8 @@ let cropSearchTimer: any = null
 const newVariety = ref('')
 const newArea = ref('')
 const newPlannedYield = ref('')
+const newStockQuantity = ref('')
+const newStockUnit = ref('т')
 const newShowInCatalog = ref(true)
 const varietySuggestions = ref<string[]>([])
 const showVarietySuggestions = ref(false)
@@ -839,6 +861,8 @@ const addCrop = async () => {
     variety: newVariety.value.trim() || null,
     area_ha: parseFloat(newArea.value) || 0,
     planned_yield_t: parseFloat(newPlannedYield.value) || null,
+    stock_quantity: newStockQuantity.value !== '' ? parseFloat(newStockQuantity.value) : null,
+    stock_unit: newStockUnit.value,
     show_in_catalog: newShowInCatalog.value,
   })
   selectedCrop.value = null
@@ -846,6 +870,8 @@ const addCrop = async () => {
   newVariety.value = ''
   newArea.value = ''
   newPlannedYield.value = ''
+  newStockQuantity.value = ''
+  newStockUnit.value = 'т'
   newShowInCatalog.value = true
   showAddCrop.value = false
   saving.value = false
@@ -907,7 +933,7 @@ const deleteRotation = async (id: string) => {
 
 // Редагування культури
 const editingCrop = ref<any>(null)
-const editCropForm = reactive({ variety: '', area_ha: '', planned_yield_t: '', show_in_catalog: true })
+const editCropForm = reactive({ variety: '', area_ha: '', planned_yield_t: '', stock_quantity: '', stock_unit: 'т', show_in_catalog: true })
 const editVarietySuggestions = ref<string[]>([])
 const showEditVarietySuggestions = ref(false)
 
@@ -917,6 +943,8 @@ const openEditCrop = (crop: any) => {
     variety: crop.variety || '',
     area_ha: crop.area_ha || '',
     planned_yield_t: crop.planned_yield_t || '',
+    stock_quantity: crop.stock_quantity != null ? String(crop.stock_quantity) : '',
+    stock_unit: crop.stock_unit || 'т',
     show_in_catalog: crop.show_in_catalog !== false,
   })
   editVarietySuggestions.value = []
@@ -947,6 +975,8 @@ const saveCropEdit = async () => {
     variety: editCropForm.variety.trim() || null,
     area_ha: parseFloat(editCropForm.area_ha) || 0,
     planned_yield_t: parseFloat(editCropForm.planned_yield_t) || null,
+    stock_quantity: editCropForm.stock_quantity !== '' ? parseFloat(editCropForm.stock_quantity) : null,
+    stock_unit: editCropForm.stock_unit,
     show_in_catalog: editCropForm.show_in_catalog,
   }).eq('id', editingCrop.value.id)
   saving.value = false

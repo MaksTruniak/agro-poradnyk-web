@@ -90,6 +90,7 @@
             <div class="text-right shrink-0 space-y-1">
               <p v-if="crop.area_ha" class="text-sm font-medium text-agro-dark">{{ crop.area_ha }} га</p>
               <p v-if="crop.planned_yield_t" class="text-xs text-agro-light">план {{ crop.planned_yield_t }} т/га</p>
+              <p v-if="crop.stock_quantity != null" class="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">склад: {{ crop.stock_quantity }} {{ crop.stock_unit || 'т' }}</p>
             </div>
             <button v-if="uid !== farmerId" @click="handleRequestClick(crop)"
               class="shrink-0 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap inline-flex items-center gap-1.5">
