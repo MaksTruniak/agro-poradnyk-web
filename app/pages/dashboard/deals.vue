@@ -149,6 +149,34 @@
     </template>
   </div>
 
+  <!-- Модалка: вибір дії для накладної -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="invoiceActionModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="invoiceActionModal.show = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <div class="w-12 h-12 rounded-xl bg-agro-hover flex items-center justify-center mx-auto mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3 class="font-bold text-agro-dark text-lg mb-1">Накладна сформована</h3>
+          <p class="text-sm text-agro-light mb-6">Що зробити з накладною?</p>
+          <div class="flex gap-3">
+            <button @click="doPrintInvoice" class="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border-2 border-agro-border hover:border-agro hover:bg-agro-hover transition-colors">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span class="text-sm font-semibold text-agro-dark">Друк</span>
+            </button>
+            <button @click="doEmailInvoice" :disabled="invoiceActionModal.sending" class="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border-2 border-agro-border hover:border-agro hover:bg-agro-hover transition-colors disabled:opacity-50">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span class="text-sm font-semibold text-agro-dark">{{ invoiceActionModal.sending ? 'Надсилається...' : 'На email' }}</span>
+            </button>
+          </div>
+          <p v-if="invoiceActionModal.sent" class="text-xs text-green-600 font-semibold mt-4">✓ Накладну надіслано на {{ invoiceActionModal.email }}</p>
+          <p v-if="invoiceActionModal.sendError" class="text-xs text-red-500 mt-4">{{ invoiceActionModal.sendError }}</p>
+          <button @click="invoiceActionModal.show = false" class="mt-4 text-xs text-agro-light hover:text-agro-dark transition-colors">Закрити</button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
   <!-- Попап: незаповнений профіль для накладної -->
   <Teleport to="body">
     <Transition name="fade">
@@ -514,6 +542,46 @@ const { confirm: confirmDialog } = useConfirm()
 
 const invoiceProfileAlert = ref(false)
 
+const invoiceActionModal = reactive({
+  show: false,
+  html: '',
+  invoiceNum: '',
+  email: '',
+  sending: false,
+  sent: false,
+  sendError: '',
+})
+
+function doPrintInvoice() {
+  const printHtml = invoiceActionModal.html.replace(
+    '</body></html>',
+    '<script>window.onload = () => { window.print() }<\/script></body></html>'
+  )
+  const w = window.open('', '_blank')
+  if (w) { w.document.write(printHtml); w.document.close() }
+  invoiceActionModal.show = false
+}
+
+async function doEmailInvoice() {
+  invoiceActionModal.sending = true
+  invoiceActionModal.sent = false
+  invoiceActionModal.sendError = ''
+  try {
+    await $fetch('/api/deals/send-invoice', {
+      method: 'POST',
+      body: {
+        html: invoiceActionModal.html,
+        email: invoiceActionModal.email,
+        invoiceNum: invoiceActionModal.invoiceNum,
+      },
+    })
+    invoiceActionModal.sent = true
+  } catch {
+    invoiceActionModal.sendError = 'Помилка надсилання. Спробуйте ще раз.'
+  }
+  invoiceActionModal.sending = false
+}
+
 const generateManualInvoice = async (s: any) => {
   const { data: farmer } = await supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', uid).single()
   const f = farmer || {}
@@ -585,11 +653,16 @@ const generateManualInvoice = async (s: any) => {
     <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name}</span></div>
   </div>
   <div class="footer">Сформовано через АгроПростір</div>
-  <script>window.onload = () => { window.print() }<\/script>
   </body></html>`
 
-  const w = window.open('', '_blank')
-  if (w) { w.document.write(html); w.document.close() }
+  // Показуємо модалку вибору дії
+  const { data: { session: s } } = await supabase.auth.getSession()
+  invoiceActionModal.html = html
+  invoiceActionModal.invoiceNum = invoiceNum
+  invoiceActionModal.email = s?.user?.email || ''
+  invoiceActionModal.sent = false
+  invoiceActionModal.sendError = ''
+  invoiceActionModal.show = true
 }
 
 const cancelDeal = async (deal: any) => {
@@ -616,6 +689,13 @@ const generateInvoice = async (deal: any) => {
   ])
   const farmer = farmerRes.data || {}
   const buyer = buyerRes.data || {}
+
+  // Перевірка: у поточного користувача мають бути заповнені дані для накладної
+  const myData = uid === deal.farmer_id ? farmer : buyer
+  if (!myData.edrpou || !myData.iban || !(myData.company_name || myData.name)) {
+    invoiceProfileAlert.value = true
+    return
+  }
 
   const deliveryName = deal.delivery_type_id === 1 ? 'Самовивіз' : 'Доставка'
   const totalPrice = deal.total_price ? deal.total_price.toLocaleString('uk-UA') + ' грн' : '—'
@@ -675,11 +755,15 @@ const generateInvoice = async (deal: any) => {
     <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name || ''}</span></div>
   </div>
   <div class="footer">Сформовано через АгроПростір</div>
-  <script>window.onload = () => { window.print() }<\/script>
   </body></html>`
 
-  const w = window.open('', '_blank')
-  if (w) { w.document.write(html); w.document.close() }
+  const { data: { session: s2 } } = await supabase.auth.getSession()
+  invoiceActionModal.html = html
+  invoiceActionModal.invoiceNum = invoiceNum
+  invoiceActionModal.email = s2?.user?.email || ''
+  invoiceActionModal.sent = false
+  invoiceActionModal.sendError = ''
+  invoiceActionModal.show = true
 }
 
 onMounted(async () => {
