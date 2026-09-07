@@ -91,7 +91,7 @@
               <p v-if="crop.area_ha" class="text-sm font-medium text-agro-dark">{{ crop.area_ha }} га</p>
               <p v-if="crop.planned_yield_t" class="text-xs text-agro-light">план {{ crop.planned_yield_t }} т/га</p>
             </div>
-            <button v-if="canRequest" @click="openRequestModal(crop)"
+            <button v-if="uid !== farmerId" @click="handleRequestClick(crop)"
               class="shrink-0 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap inline-flex items-center gap-1.5">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               Зробити запит
@@ -102,6 +102,23 @@
 
     </div>
   </div>
+
+  <!-- Попап: не заготівельник -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="notBuyerPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="notBuyerPopup = false" />
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6 text-center">
+          <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(180,90,10)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <h2 class="font-bold text-agro-dark text-lg mb-2">Недостатньо прав</h2>
+          <p class="text-sm text-agro-light mb-6">Ви не зареєстровані як заготівельник. Тільки заготівельники можуть надсилати запити на закупівлю.</p>
+          <button @click="notBuyerPopup = false" class="btn-primary w-full">Зрозуміло</button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- Модалка запиту -->
   <Teleport to="body">
@@ -173,6 +190,14 @@ const { data: myProfile } = uid
   ? await supabase.from('users').select('role').eq('id', uid).single()
   : { data: null }
 const myRole = myProfile?.role || null
+
+const notBuyerPopup = ref(false)
+
+function handleRequestClick(crop: any) {
+  if (!uid) return navigateTo('/auth')
+  if (myRole !== 'buyer') { notBuyerPopup.value = true; return }
+  openRequestModal(crop)
+}
 
 // Тільки покупці можуть робити запити на закупівлю
 const canRequest = computed(() => uid && uid !== farmerId && myRole === 'buyer')
