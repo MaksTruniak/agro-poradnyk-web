@@ -41,6 +41,15 @@
             </p>
           </div>
           <div class="flex items-center gap-3 shrink-0">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              :class="{
+                'bg-agro text-white': user.plan === 'pro',
+                'bg-blue-100 text-blue-700': user.plan === 'business',
+                'bg-amber-100 text-amber-700': user.plan === 'custom',
+                'bg-agro-bg text-agro-light': !user.plan || user.plan === 'basic',
+              }">
+              {{ user.plan === 'pro' ? 'PRO' : user.plan === 'business' ? 'Business' : user.plan === 'custom' ? 'Custom' : 'Basic' }}
+            </span>
             <div class="text-right">
               <p class="text-xs text-agro-light">{{ formatDate(user.created_at) }}</p>
               <p class="text-[10px] mt-0.5" :class="user.confirmed_at ? 'text-green-500' : 'text-amber-500'">

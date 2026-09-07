@@ -14,8 +14,16 @@ export default defineEventHandler(async (event) => {
 
   if (error) throw createError({ statusCode: 500, message: error.message })
 
-  return {
-    users: data.users,
-    total: data.total,
-  }
+  const userIds = data.users.map((u: any) => u.id)
+  const { data: subs } = await supabase.from('subscriptions').select('user_id, plan, expires_at').in('user_id', userIds)
+  const subMap: Record<string, any> = {}
+  for (const s of subs || []) subMap[s.user_id] = s
+
+  const users = data.users.map((u: any) => {
+    const sub = subMap[u.id]
+    const activePlan = sub && (!sub.expires_at || new Date(sub.expires_at) > new Date()) ? sub.plan : 'basic'
+    return { ...u, plan: activePlan }
+  })
+
+  return { users, total: data.total }
 })
