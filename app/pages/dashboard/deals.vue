@@ -215,9 +215,14 @@
                   </template>
                 </p>
                 <p v-else class="text-xs text-agro-light mt-0.5">На складі: не вказано</p>
-                <p v-if="stockShortfall > 0 && manualModal.deduct_from_stock" class="text-xs text-amber-600 font-semibold mt-1">
-                  ⚠ Не вистачає {{ stockShortfall.toFixed(2) }} т — залишок буде 0, запишіть різницю окремо
-                </p>
+                <div v-if="stockShortfall > 0 && manualModal.deduct_from_stock" class="mt-2">
+                  <p class="text-xs text-amber-600 font-semibold mb-1.5">⚠ Не вистачає {{ stockShortfall.toFixed(2) }} т — вкажіть скільки зібрали сьогодні:</p>
+                  <div class="flex gap-2 items-center">
+                    <input v-model="manualModal.extra_harvested" type="number" min="0" step="0.1"
+                      class="input flex-1 text-sm" :placeholder="`напр. ${stockShortfall.toFixed(1)}`" />
+                    <span class="text-xs text-agro-light shrink-0">т (буде додано до складу)</span>
+                  </div>
+                </div>
               </div>
             </label>
 
@@ -378,6 +383,7 @@ const manualModal = reactive({
   buyer_edrpou: '',
   buyer_iban: '',
   deduct_from_stock: true,
+  extra_harvested: 0,
   saving: false,
 })
 
@@ -410,6 +416,7 @@ const openManualModal = () => {
   manualModal.buyer_edrpou = ''
   manualModal.buyer_iban = ''
   manualModal.deduct_from_stock = true
+  manualModal.extra_harvested = 0
   manualModal.show = true
 }
 
@@ -442,8 +449,10 @@ const saveManual = async () => {
 
   // Відняти зі складу якщо галочка стоїть
   if (data && manualModal.deduct_from_stock && cropObj?.id && cropObj.stock_quantity != null) {
+    const extraHarvested = parseFloat(String(manualModal.extra_harvested)) || 0
     const currentTons = cropObj.stock_unit === 'кг' ? cropObj.stock_quantity / 1000 : cropObj.stock_quantity
-    const newTons = Math.max(0, currentTons - quantityTons)
+    const afterHarvest = currentTons + extraHarvested
+    const newTons = Math.max(0, afterHarvest - quantityTons)
     const newQty = cropObj.stock_unit === 'кг' ? newTons * 1000 : newTons
     await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', cropObj.id)
     cropObj.stock_quantity = newQty
