@@ -40,6 +40,14 @@ useHead({ title: 'Склад — Кабінет' })
 
 const sections = [
   {
+    to: '/dashboard/inventory/products',
+    title: 'Продукція',
+    desc: 'Залишки вирощеної продукції на складі',
+    bg: 'rgb(240,250,235)',
+    color: 'rgb(47,130,51)',
+    paths: ['M12 22V12', 'M8 18c0-4 4-8 4-8s4 4 4 8', 'M5 22h14', 'M4 12c0-4 3.5-7 8-7s8 3 8 7'],
+  },
+  {
     to: '/dashboard/inventory/chemicals',
     title: 'Препарати і добрива',
     desc: 'Залишки ЗЗР, добрив та інших хімікатів',

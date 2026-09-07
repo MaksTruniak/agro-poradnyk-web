@@ -1001,20 +1001,25 @@ const respondDeal = async (dealId: string, status: 'confirmed' | 'cancelled') =>
     const deal = deals.value.find(d => d.id === dealId)
 
     // Відняти кількість зі складу фермера
-    if (deal?.farmer_id && deal?.crop_type && deal?.quantity_tons) {
-      const { data: crops } = await supabase
-        .from('farm_crops')
-        .select('id, stock_quantity, stock_unit, farms!inner(user_id)')
-        .eq('farms.user_id', deal.farmer_id)
-        .eq('crop_type', deal.crop_type)
-        .not('stock_quantity', 'is', null)
-      if (crops?.length) {
-        const crop = crops[0]
+    if (deal?.quantity_tons && (deal?.farm_crop_id || (deal?.farmer_id && deal?.crop_type))) {
+      let cropRow: any = null
+      if (deal.farm_crop_id) {
+        const { data } = await supabase
+          .from('farm_crops').select('id, stock_quantity, stock_unit').eq('id', deal.farm_crop_id).single()
+        cropRow = data
+      } else {
+        const { data } = await supabase
+          .from('farm_crops').select('id, stock_quantity, stock_unit, farms!inner(user_id)')
+          .eq('farms.user_id', deal.farmer_id).eq('crop_type', deal.crop_type)
+          .not('stock_quantity', 'is', null).limit(1).single()
+        cropRow = data
+      }
+      if (cropRow?.stock_quantity != null) {
         const deductTons = deal.quantity_tons
-        const currentTons = crop.stock_unit === 'кг' ? (crop.stock_quantity / 1000) : crop.stock_quantity
+        const currentTons = cropRow.stock_unit === 'кг' ? cropRow.stock_quantity / 1000 : cropRow.stock_quantity
         const newTons = Math.max(0, currentTons - deductTons)
-        const newQty = crop.stock_unit === 'кг' ? newTons * 1000 : newTons
-        await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', crop.id)
+        const newQty = cropRow.stock_unit === 'кг' ? newTons * 1000 : newTons
+        await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', cropRow.id)
       }
     }
     // Самовивіз (id=1): заготівельник їде до фермера → потрібна адреса фермера

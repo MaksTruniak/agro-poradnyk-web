@@ -258,6 +258,7 @@ const submitRequest = async () => {
       buyer_id: uid,
       farmer_id: farmerId,
       crop_type: crop.crop_type,
+      farm_crop_id: crop.id || null,
       quantity_tons: quantityTons,
       price_per_ton: pricePerTon,
       proposed_by: uid,
