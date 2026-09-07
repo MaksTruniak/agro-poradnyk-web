@@ -44,7 +44,7 @@
             <p class="font-semibold text-agro-dark">{{ item.name }}</p>
             <p class="text-xs text-agro-light mt-0.5">{{ item.category || '—' }}</p>
           </div>
-          <span class="text-xs text-agro-light shrink-0">{{ (varieties[item.id] || []).length }} сортів</span>
+          <span class="text-xs text-agro-light shrink-0">{{ varieties[item.id] ? varieties[item.id].length : (varietyCounts[item.id] ?? 0) }} сортів</span>
           <button @click.stop="openEdit(item)"
             class="shrink-0 text-xs font-semibold text-agro hover:text-agro-dark transition-colors px-2">
             Редагувати
@@ -188,6 +188,7 @@ const expanded = ref<string | null>(null)
 const activeCategory = ref<string | null>(null)
 const filteredItems = computed(() => activeCategory.value ? items.value.filter(i => i.category_id === activeCategory.value) : items.value)
 const varieties = ref<Record<string, any[]>>({})
+const varietyCounts = ref<Record<string, number>>({})
 const loadingVarieties = ref<Record<string, boolean>>({})
 
 const seasons = [
@@ -262,12 +263,19 @@ async function saveVariety() {
 }
 
 async function load() {
-  const [itemsRes, catsRes] = await Promise.all([
+  const [itemsRes, catsRes, countsRes] = await Promise.all([
     supabase.from('crop_catalog').select('*').order('name'),
     supabase.from('crop_categories').select('id, name, emoji').order('order_num'),
+    supabase.from('varieties').select('crop_type'),
   ])
   items.value = itemsRes.data || []
   categories.value = catsRes.data || []
+  const counts: Record<string, number> = {}
+  for (const row of countsRes.data || []) {
+    const item = (itemsRes.data || []).find(i => i.name.toLowerCase() === (row.crop_type || '').toLowerCase())
+    if (item) counts[item.id] = (counts[item.id] || 0) + 1
+  }
+  varietyCounts.value = counts
   loading.value = false
 }
 
