@@ -156,39 +156,35 @@
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="manualModal.show = false" />
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
           <h2 class="dash-card-title bitter mb-4">Додати продаж вручну</h2>
-          <div class="space-y-3 mb-5">
+          <div class="space-y-3 mb-5 max-h-[70vh] overflow-y-auto pr-1">
+
+            <p class="text-xs font-semibold text-agro-light uppercase tracking-wide">Культура і кількість</p>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Культура</label>
               <template v-if="farmerCrops.length">
                 <div class="relative">
-                <select v-model="manualModal.crop_type" class="input appearance-none pr-9 w-full">
-                  <option value="" disabled>Оберіть культуру</option>
-                  <option v-for="c in farmerCrops" :key="c.value" :value="c.value">{{ c.label }}</option>
-                  <option value="__other__">✏️ Інша культура...</option>
-                </select>
-                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-agro-light">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                </span>
+                  <select v-model="manualModal.crop_type" class="input appearance-none pr-9 w-full">
+                    <option value="" disabled>Оберіть культуру</option>
+                    <option v-for="c in farmerCrops" :key="c.value" :value="c.value">{{ c.label }}</option>
+                    <option value="__other__">✏️ Інша культура...</option>
+                  </select>
+                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-agro-light">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </span>
                 </div>
                 <input v-if="manualModal.crop_type === '__other__'"
                   v-model="manualModal.crop_type_custom"
-                  type="text" class="input mt-2" placeholder="Назва культури" autofocus />
+                  type="text" class="input mt-2" placeholder="Назва культури" />
               </template>
-              <input v-else
-                v-model="manualModal.crop_type_custom"
-                type="text" class="input" placeholder="Назва культури (немає культур у полях)" />
+              <input v-else v-model="manualModal.crop_type_custom" type="text" class="input" placeholder="Назва культури" />
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Кількість</label>
               <div class="flex gap-2">
                 <input v-model="manualModal.quantity" type="number" min="0.01" step="0.01" class="input flex-1" placeholder="10" />
                 <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
-                  <button @click="manualModal.unit = 'т'" type="button"
-                    class="px-3 py-2 text-sm font-semibold transition-colors"
-                    :class="manualModal.unit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
-                  <button @click="manualModal.unit = 'кг'" type="button"
-                    class="px-3 py-2 text-sm font-semibold transition-colors"
-                    :class="manualModal.unit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+                  <button @click="manualModal.unit = 'т'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="manualModal.unit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
+                  <button @click="manualModal.unit = 'кг'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="manualModal.unit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
                 </div>
               </div>
             </div>
@@ -200,14 +196,52 @@
               <label class="block text-sm font-medium text-agro-dark mb-1">Дата продажу</label>
               <input v-model="manualModal.sold_at" type="date" class="input" />
             </div>
+
+            <!-- Склад -->
+            <label v-if="selectedCropObj" class="flex items-start gap-3 cursor-pointer select-none bg-agro-bg rounded-xl px-4 py-3">
+              <input type="checkbox" v-model="manualModal.deduct_from_stock" class="mt-0.5 w-4 h-4 accent-agro rounded shrink-0" />
+              <div class="flex-1">
+                <p class="text-sm font-medium text-agro-dark">Відняти зі складу</p>
+                <p v-if="stockInTons != null" class="text-xs text-agro-light mt-0.5">
+                  На складі: <strong>{{ selectedCropObj.stock_quantity }} {{ selectedCropObj.stock_unit || 'т' }}</strong>
+                  <template v-if="manualModal.deduct_from_stock && manualModal.quantity">
+                    → залишиться <strong :class="stockShortfall > 0 ? 'text-amber-600' : 'text-green-700'">
+                      {{ stockShortfall > 0 ? 0 : (stockInTons - orderedTons).toFixed(2) }} т
+                    </strong>
+                  </template>
+                </p>
+                <p v-else class="text-xs text-agro-light mt-0.5">На складі: не вказано</p>
+                <p v-if="stockShortfall > 0 && manualModal.deduct_from_stock" class="text-xs text-amber-600 font-semibold mt-1">
+                  ⚠ Не вистачає {{ stockShortfall.toFixed(2) }} т — залишок буде 0, запишіть різницю окремо
+                </p>
+              </div>
+            </label>
+
+            <p class="text-xs font-semibold text-agro-light uppercase tracking-wide pt-1">Покупець</p>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Назва / ім'я покупця</label>
+              <input v-model="manualModal.buyer_name" type="text" class="input" placeholder="ТОВ «Агро Трейд»" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Телефон</label>
+              <input v-model="manualModal.buyer_phone" type="tel" class="input" placeholder="+380..." />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">ЄДРПОУ</label>
+              <input v-model="manualModal.buyer_edrpou" type="text" class="input" placeholder="12345678" maxlength="10" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">IBAN</label>
+              <input v-model="manualModal.buyer_iban" type="text" class="input" placeholder="UA..." />
+            </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Примітка (необов'язково)</label>
-              <input v-model="manualModal.notes" type="text" class="input" placeholder="Покупець, умови тощо" />
+              <input v-model="manualModal.notes" type="text" class="input" placeholder="Умови, транспорт тощо" />
             </div>
           </div>
           <div class="flex gap-3">
             <button @click="manualModal.show = false" class="btn-outline flex-1">Скасувати</button>
-            <button @click="saveManual" :disabled="!(manualModal.crop_type === '__other__' ? manualModal.crop_type_custom : manualModal.crop_type) || !manualModal.quantity || manualModal.saving" class="btn-primary flex-1">
+            <button @click="saveManual" :disabled="!((manualModal.crop_type && manualModal.crop_type !== '__other__') || manualModal.crop_type_custom) || !manualModal.quantity || manualModal.saving" class="btn-primary flex-1 flex items-center justify-center">
               {{ manualModal.saving ? '...' : 'Зберегти' }}
             </button>
           </div>
@@ -233,6 +267,7 @@ const loading = ref(true)
 const deals = ref<any[]>([])
 const manualSales = ref<any[]>([])
 const farmerCrops = ref<{ label: string; value: string }[]>([])
+const farmerCropObjects = ref<any[]>([])
 const myReviews = ref<Set<string>>(new Set())
 
 const reviewModal = reactive({
@@ -334,7 +369,28 @@ const manualModal = reactive({
   price_per_ton: 0,
   sold_at: new Date().toISOString().slice(0, 10),
   notes: '',
+  buyer_name: '',
+  buyer_phone: '',
+  buyer_edrpou: '',
+  buyer_iban: '',
+  deduct_from_stock: true,
   saving: false,
+})
+
+const selectedCropObj = computed(() =>
+  farmerCropObjects.value.find(c => c.id === manualModal.crop_type) || null
+)
+const stockInTons = computed(() => {
+  const c = selectedCropObj.value
+  if (!c || c.stock_quantity == null) return null
+  return c.stock_unit === 'кг' ? c.stock_quantity / 1000 : c.stock_quantity
+})
+const orderedTons = computed(() =>
+  manualModal.quantity ? (manualModal.unit === 'кг' ? manualModal.quantity / 1000 : manualModal.quantity) : 0
+)
+const stockShortfall = computed(() => {
+  if (!manualModal.deduct_from_stock || stockInTons.value == null) return 0
+  return Math.max(0, orderedTons.value - stockInTons.value)
 })
 
 const openManualModal = () => {
@@ -345,13 +401,19 @@ const openManualModal = () => {
   manualModal.price_per_ton = 0
   manualModal.sold_at = new Date().toISOString().slice(0, 10)
   manualModal.notes = ''
+  manualModal.buyer_name = ''
+  manualModal.buyer_phone = ''
+  manualModal.buyer_edrpou = ''
+  manualModal.buyer_iban = ''
+  manualModal.deduct_from_stock = true
   manualModal.show = true
 }
 
 const saveManual = async () => {
-  const cropType = (manualModal.crop_type === '__other__' || !manualModal.crop_type)
-    ? manualModal.crop_type_custom
-    : manualModal.crop_type
+  const cropObj = selectedCropObj.value
+  const cropType = cropObj
+    ? (cropObj.variety ? `${cropObj.crop_type} (${cropObj.variety})` : cropObj.crop_type)
+    : manualModal.crop_type_custom
   if (!cropType || !manualModal.quantity) return
   manualModal.saving = true
   const quantityTons = manualModal.unit === 'кг' ? manualModal.quantity / 1000 : manualModal.quantity
@@ -366,7 +428,22 @@ const saveManual = async () => {
     price_per_ton: pricePerTon || null,
     sold_at: manualModal.sold_at,
     notes: manualModal.notes || null,
+    buyer_name: manualModal.buyer_name || null,
+    buyer_phone: manualModal.buyer_phone || null,
+    buyer_edrpou: manualModal.buyer_edrpou || null,
+    buyer_iban: manualModal.buyer_iban || null,
+    farm_crop_id: cropObj?.id || null,
+    deduct_from_stock: manualModal.deduct_from_stock,
   }).select().single()
+
+  // Відняти зі складу якщо галочка стоїть
+  if (data && manualModal.deduct_from_stock && cropObj?.id && cropObj.stock_quantity != null) {
+    const currentTons = cropObj.stock_unit === 'кг' ? cropObj.stock_quantity / 1000 : cropObj.stock_quantity
+    const newTons = Math.max(0, currentTons - quantityTons)
+    const newQty = cropObj.stock_unit === 'кг' ? newTons * 1000 : newTons
+    await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', cropObj.id)
+    cropObj.stock_quantity = newQty
+  }
 
   if (data) manualSales.value.unshift(data)
   manualModal.saving = false
@@ -464,7 +541,7 @@ onMounted(async () => {
   const [dealsRes, manualRes, farmsRes] = await Promise.all([
     supabase.from('deals').select('*').eq(field, uid).in('status', ['confirmed', 'completed']).order('confirmed_at', { ascending: false }),
     isFarmer ? supabase.from('manual_sales').select('*').eq('user_id', uid).order('sold_at', { ascending: false }) : Promise.resolve({ data: [] }),
-    isFarmer ? supabase.from('farms').select('farm_crops(crop_type, variety)').eq('user_id', uid) : Promise.resolve({ data: [] }),
+    isFarmer ? supabase.from('farms').select('farm_crops(id, crop_type, variety, stock_quantity, stock_unit)').eq('user_id', uid) : Promise.resolve({ data: [] }),
   ])
 
   if (isFarmer) {
@@ -472,10 +549,19 @@ onMounted(async () => {
     for (const farm of (farmsRes as any).data || []) {
       for (const c of farm.farm_crops || []) {
         const label = c.variety ? `${c.crop_type} (${c.variety})` : c.crop_type
-        if (!seen.has(label)) { seen.add(label); farmerCrops.value.push({ label, value: label }) }
+        if (!seen.has(label)) {
+          seen.add(label)
+          farmerCrops.value.push({ label, value: c.id })
+          farmerCropObjects.value.push(c)
+        }
       }
     }
     farmerCrops.value.sort((a, b) => a.label.localeCompare(b.label, 'uk'))
+    farmerCropObjects.value.sort((a, b) => {
+      const la = a.variety ? `${a.crop_type} (${a.variety})` : a.crop_type
+      const lb = b.variety ? `${b.crop_type} (${b.variety})` : b.crop_type
+      return la.localeCompare(lb, 'uk')
+    })
   }
 
   manualSales.value = (manualRes as any).data || []
