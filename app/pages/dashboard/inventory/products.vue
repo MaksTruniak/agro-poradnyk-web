@@ -106,7 +106,7 @@ async function load() {
 
   const { data, error } = await supabase
     .from('farms')
-    .select('id, name, farm_crops(id, crop_type, variety, area_ha, stock_quantity, stock_unit)')
+    .select('id, name, farm_crops(*)')
     .eq('user_id', uid)
     .order('created_at')
 
