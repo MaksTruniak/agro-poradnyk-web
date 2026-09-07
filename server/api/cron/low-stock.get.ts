@@ -12,21 +12,33 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Беремо всі записи де кількість <= мінімального залишку
-  const { data: lowItems } = await supabase
+  // Препарати з нестачею
+  const { data: lowChemicals } = await supabase
     .from('farm_inventory')
     .select('user_id, name, quantity, unit, min_quantity')
     .not('min_quantity', 'is', null)
     .filter('quantity', 'lte', 'min_quantity')
 
-  if (!lowItems?.length) return { ok: true, sent: 0 }
+  // Пальне з нестачею
+  const { data: lowFuel } = await supabase
+    .from('fuel_inventory')
+    .select('user_id, fuel_type, quantity, unit, min_quantity')
+    .not('min_quantity', 'is', null)
+    .filter('quantity', 'lte', 'min_quantity')
 
-  // Групуємо по user_id
-  const byUser: Record<string, typeof lowItems> = {}
-  for (const item of lowItems) {
+  // Об'єднуємо по user_id
+  const byUser: Record<string, { name: string; quantity: number; unit: string; min_quantity: number }[]> = {}
+
+  for (const item of lowChemicals || []) {
     if (!byUser[item.user_id]) byUser[item.user_id] = []
-    byUser[item.user_id].push(item)
+    byUser[item.user_id].push({ name: item.name, quantity: item.quantity, unit: item.unit, min_quantity: item.min_quantity })
   }
+  for (const item of lowFuel || []) {
+    if (!byUser[item.user_id]) byUser[item.user_id] = []
+    byUser[item.user_id].push({ name: `⛽ ${item.fuel_type}`, quantity: item.quantity, unit: item.unit, min_quantity: item.min_quantity })
+  }
+
+  if (!Object.keys(byUser).length) return { ok: true, sent: 0 }
 
   let sent = 0
   for (const [userId, items] of Object.entries(byUser)) {
@@ -34,7 +46,7 @@ export default defineEventHandler(async (event) => {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue
       const name = userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
-      await sendLowStockEmail(userData.user.email, name, items as any)
+      await sendLowStockEmail(userData.user.email, name, items)
       sent++
     } catch (e) {
       console.error(`[low-stock cron] Error for user ${userId}:`, e)

@@ -356,12 +356,15 @@ const pendingAgreementsCount = ref(0)
 const loadNotifications = async () => {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  const [{ count: notifCount }, { data: invData }] = await Promise.all([
+  const [{ count: notifCount }, { data: invData }, { data: fuelData }] = await Promise.all([
     supabase.from('farm_notifications').select('*', { count: 'exact', head: true }).eq('user_id', session.user.id).eq('is_read', false),
     supabase.from('farm_inventory').select('quantity, min_quantity').eq('user_id', session.user.id).not('min_quantity', 'is', null),
+    supabase.from('fuel_inventory').select('quantity, min_quantity').eq('user_id', session.user.id).not('min_quantity', 'is', null),
   ])
-  unreadNotifications.value = (notifCount || 0) + (invData?.filter(i => i.quantity <= i.min_quantity).length || 0)
-  lowStockCount.value = invData?.filter(i => i.quantity <= i.min_quantity).length || 0
+  const lowChemicals = invData?.filter(i => i.quantity <= i.min_quantity).length || 0
+  const lowFuel = fuelData?.filter(i => i.quantity <= i.min_quantity).length || 0
+  lowStockCount.value = lowChemicals + lowFuel
+  unreadNotifications.value = (notifCount || 0) + lowStockCount.value
 }
 
 const loadPendingShares = async () => {
