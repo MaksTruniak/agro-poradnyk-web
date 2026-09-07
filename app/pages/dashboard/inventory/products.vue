@@ -34,37 +34,62 @@
           <p class="text-xs text-agro-light mt-0.5">{{ crop.farm_name }}{{ crop.area_ha ? ` · ${crop.area_ha} га` : '' }}</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <div v-if="editing === crop.id" class="flex items-center gap-2">
-            <input v-model="editQty" type="number" min="0" step="0.1"
-              class="input w-24 text-right" placeholder="0" @keyup.enter="save(crop)" @keyup.escape="editing = null" />
-            <div class="flex rounded-xl border border-agro-border overflow-hidden">
-              <button @click="editUnit = 'т'" type="button"
-                class="px-2.5 py-1.5 text-xs font-semibold transition-colors"
-                :class="editUnit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
-              <button @click="editUnit = 'кг'" type="button"
-                class="px-2.5 py-1.5 text-xs font-semibold transition-colors"
-                :class="editUnit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
-            </div>
-            <button @click="save(crop)" :disabled="saving" class="dash-btn-primary text-xs px-3 py-1.5">
-              {{ saving ? '...' : 'Зберегти' }}
-            </button>
-            <button @click="editing = null" class="w-8 h-8 flex items-center justify-center rounded-xl border border-agro-border text-agro-light hover:bg-agro-hover transition-colors">✕</button>
-          </div>
-          <template v-else>
-            <span v-if="crop.stock_quantity != null"
-              class="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
-              {{ crop.stock_quantity }} {{ crop.stock_unit || 'т' }}
-            </span>
-            <span v-else class="text-xs text-agro-light">не вказано</span>
-            <button @click="startEdit(crop)"
-              class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-agro-hover transition-colors text-agro">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-          </template>
+          <span v-if="crop.stock_quantity != null"
+            class="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
+            {{ crop.stock_quantity }} {{ crop.stock_unit || 'т' }}
+          </span>
+          <span v-else class="text-xs text-agro-light">не вказано</span>
+          <button @click="startEdit(crop)"
+            class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-agro-hover transition-colors text-agro">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Модал редагування залишку -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="editingCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editingCrop = null" />
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
+          <div class="flex items-center gap-3 mb-5">
+            <img :src="`/crops/${cropToSlug(editingCrop.crop_type)}.svg`" :alt="editingCrop.crop_type"
+              class="w-8 h-8 object-contain shrink-0"
+              @error="($event.target as HTMLImageElement).style.display='none'" />
+            <div>
+              <h2 class="font-bold text-agro-dark text-lg leading-tight">{{ editingCrop.crop_type }}{{ editingCrop.variety ? ` · ${editingCrop.variety}` : '' }}</h2>
+              <p class="text-xs text-agro-light">{{ editingCrop.farm_name }}</p>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1.5">На складі</label>
+              <div class="flex gap-2">
+                <input v-model="editQty" type="number" min="0" step="0.1"
+                  class="input flex-1" placeholder="0" inputmode="decimal" />
+                <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
+                  <button @click="editUnit = 'т'" type="button"
+                    class="px-3 py-2 text-sm font-semibold transition-colors"
+                    :class="editUnit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
+                  <button @click="editUnit = 'кг'" type="button"
+                    class="px-3 py-2 text-sm font-semibold transition-colors"
+                    :class="editUnit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button @click="editingCrop = null" class="btn-outline flex-1">Скасувати</button>
+            <button @click="save" :disabled="saving" class="btn-primary flex-1 flex items-center justify-center">
+              {{ saving ? '...' : 'Зберегти' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -77,25 +102,26 @@ const { getQueryUserId } = useTeamContext()
 const crops = ref<any[]>([])
 const loading = ref(true)
 const saving = ref(false)
-const editing = ref<string | null>(null)
+const editingCrop = ref<any>(null)
 const editQty = ref('')
 const editUnit = ref('т')
 
 const cropToSlug = (name: string) => name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zа-яіїєґ0-9-]/gi, '') || 'grain'
 
 function startEdit(crop: any) {
-  editing.value = crop.id
+  editingCrop.value = crop
   editQty.value = crop.stock_quantity != null ? String(crop.stock_quantity) : ''
   editUnit.value = crop.stock_unit || 'т'
 }
 
-async function save(crop: any) {
+async function save() {
+  if (!editingCrop.value) return
   saving.value = true
   const qty = editQty.value !== '' ? parseFloat(editQty.value) : null
-  await supabase.from('farm_crops').update({ stock_quantity: qty, stock_unit: editUnit.value }).eq('id', crop.id)
-  crop.stock_quantity = qty
-  crop.stock_unit = editUnit.value
-  editing.value = null
+  await supabase.from('farm_crops').update({ stock_quantity: qty, stock_unit: editUnit.value }).eq('id', editingCrop.value.id)
+  editingCrop.value.stock_quantity = qty
+  editingCrop.value.stock_unit = editUnit.value
+  editingCrop.value = null
   saving.value = false
 }
 
