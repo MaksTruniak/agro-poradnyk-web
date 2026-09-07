@@ -72,7 +72,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Продукція — Склад' })
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
+const { getQueryUserId } = useTeamContext()
 
 const crops = ref<any[]>([])
 const loading = ref(true)
@@ -101,7 +101,7 @@ async function save(crop: any) {
 
 async function load() {
   loading.value = true
-  const uid = user.value?.id
+  const uid = await getQueryUserId()
   if (!uid) { loading.value = false; return }
 
   const { data, error } = await supabase
