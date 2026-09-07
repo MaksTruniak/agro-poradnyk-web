@@ -144,9 +144,9 @@
 
         <!-- Додати поле -->
         <button @click="openAddFarm()" class="fld-add-card">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-            <rect x="5" y="10" width="14" height="10" rx="2" stroke="#7A8A72" stroke-width="1.7"/>
-            <path d="M8 10V7a4 4 0 018 0v3" stroke="#7A8A72" stroke-width="1.7"/>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#7A8A72" stroke-width="1.7" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 8v8M8 12h8"/>
           </svg>
           <span class="fld-add-label">Додати поле</span>
         </button>
