@@ -198,13 +198,20 @@
               <p v-else-if="couponResult === 'invalid'" class="text-xs text-red-500 mt-1.5">Купон недійсний або вже використаний</p>
             </div>
 
-            <!-- Знижка за лояльність -->
-            <div v-if="loyaltyDiscount > 0" class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex items-center gap-3">
+            <!-- Знижка за лояльність (лише якщо немає купону) -->
+            <div v-if="loyaltyDiscount > 0 && couponResult !== 'ok'" class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(22,163,74)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               <div>
                 <p class="text-sm font-semibold text-green-700">Знижка за лояльність {{ loyaltyDiscount }}%</p>
                 <p class="text-xs text-green-600">Дякуємо що з нами! Ваша ціна зменшена автоматично.</p>
               </div>
+            </div>
+
+            <!-- До сплати -->
+            <div v-if="effectiveDiscount > 0 && finalPrice !== null" class="bg-agro-hover rounded-xl p-3 mb-4 text-center">
+              <p class="text-xs text-agro-light mb-0.5">До сплати зі знижкою {{ effectiveDiscount }}%</p>
+              <p class="text-xl font-bold text-agro-dark">{{ finalPrice.toLocaleString('uk-UA') }} грн</p>
+              <p class="text-xs text-agro-light line-through">{{ basePrice.toLocaleString('uk-UA') }} грн</p>
             </div>
 
             <p class="text-xs text-agro-light mb-4">Безпечна оплата через <strong class="text-agro-dark">WayForPay</strong> — картки Visa / Mastercard</p>
@@ -315,6 +322,15 @@ const couponCode = ref('')
 const couponResult = ref<'ok' | 'invalid' | null>(null)
 const couponDiscount = ref(0)
 const couponChecking = ref(false)
+
+const BASE_PRICES: Record<string, number> = {
+  pro_month: 1000, pro_year: 10000,
+  business_month: 2000, business_year: 20000,
+}
+const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDiscount.value : loyaltyDiscount.value)
+const basePrice = computed(() => BASE_PRICES[paymentPlan.value] ?? 0)
+const finalPrice = computed(() => basePrice.value > 0 && effectiveDiscount.value > 0
+  ? Math.round(basePrice.value * (1 - effectiveDiscount.value / 100)) : null)
 
 async function loadLoyaltyDiscount() {
   try {
