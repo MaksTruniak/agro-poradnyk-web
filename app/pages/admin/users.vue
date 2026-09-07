@@ -126,7 +126,7 @@
             <div class="flex justify-center gap-3">
               <button @click="modal.show = false" class="btn-outline px-8">Закрити</button>
               <button @click="saveCoupon" :disabled="saving || !modal.coupon_code.trim()" class="btn-primary px-8 disabled:opacity-50">
-                {{ saving ? '...' : 'Надіслати купон' }}
+                {{ saving ? '...' : 'Зберегти купон' }}
               </button>
             </div>
           </div>
