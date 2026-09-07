@@ -564,7 +564,7 @@
             </div>
             <div class="flex gap-3 mt-6">
               <button @click="editingCrop = null" class="btn-outline flex-1">Скасувати</button>
-              <button @click="saveCropEdit" :disabled="saving" class="btn-primary flex-1">{{ saving ? '...' : 'Зберегти' }}</button>
+              <button @click="saveCropEdit" :disabled="saving" class="btn-primary flex-1 flex items-center justify-center">{{ saving ? '...' : 'Зберегти' }}</button>
             </div>
           </div>
         </div>
