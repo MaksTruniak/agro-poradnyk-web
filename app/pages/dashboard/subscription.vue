@@ -35,7 +35,7 @@
         <div class="flex-1">
           <p class="text-xs text-agro-light uppercase tracking-wide">Поточний план</p>
           <p class="font-bold text-agro-dark text-lg">{{ PLAN_LABELS[currentPlan] || 'Базовий' }}</p>
-          <p v-if="expiresAt" class="text-xs text-agro-light mt-0.5">Діє до {{ formatDate(expiresAt) }}</p>
+          <p v-if="expiresAt && currentPlan !== 'basic'" class="text-xs text-agro-light mt-0.5">Діє до {{ formatDate(expiresAt) }}</p>
         </div>
         <span v-if="currentPlan !== 'basic'" class="px-3 py-1 bg-agro text-white rounded-full text-xs font-bold">Активний</span>
       </div>
