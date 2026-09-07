@@ -180,10 +180,6 @@
               </button>
             </div>
 
-            <div class="bg-agro-bg rounded-xl p-4 mb-6 text-left space-y-1.5">
-              <p class="text-sm text-agro-dark font-medium mb-2">Що входить:</p>
-              <p v-for="f in selectedFeatures" :key="f" class="text-xs text-agro-light">✓ {{ f }}</p>
-            </div>
             <!-- Купон -->
             <div class="mb-4">
               <div class="flex gap-2">
