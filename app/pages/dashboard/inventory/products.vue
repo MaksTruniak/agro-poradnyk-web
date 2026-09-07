@@ -104,19 +104,22 @@ async function load() {
   const uid = user.value?.id
   if (!uid) { loading.value = false; return }
 
-  const { data: farms } = await supabase.from('farms').select('id, name').eq('user_id', uid)
-  if (!farms?.length) { loading.value = false; return }
+  const { data, error } = await supabase
+    .from('farms')
+    .select('id, name, farm_crops(id, crop_type, variety, area_ha, stock_quantity, stock_unit)')
+    .eq('user_id', uid)
+    .order('created_at')
 
-  const farmIds = farms.map(f => f.id)
-  const farmMap: Record<string, string> = Object.fromEntries(farms.map(f => [f.id, f.name]))
+  if (error) console.error('[products]', error)
 
-  const { data } = await supabase
-    .from('farm_crops')
-    .select('id, crop_type, variety, area_ha, stock_quantity, stock_unit, farm_id')
-    .in('farm_id', farmIds)
-    .order('crop_type')
-
-  crops.value = (data || []).map(c => ({ ...c, farm_name: farmMap[c.farm_id] || '' }))
+  const result: any[] = []
+  for (const farm of data || []) {
+    for (const c of (farm.farm_crops || [])) {
+      result.push({ ...c, farm_name: farm.name })
+    }
+  }
+  result.sort((a, b) => a.crop_type.localeCompare(b.crop_type, 'uk'))
+  crops.value = result
   loading.value = false
 }
 
