@@ -6,7 +6,7 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22V12"/><path d="M8 18c0-4 4-8 4-8s4 4 4 8"/><path d="M5 22h14"/><path d="M4 12c0-4 3.5-7 8-7s8 3 8 7"/>
           </svg>
-          Категорії культур
+          Культури
         </h1>
         <p class="text-agro-light mt-1">Довідник культур та їх сортів</p>
       </div>
@@ -19,23 +19,21 @@
 
     <div v-else class="space-y-2">
       <div v-for="item in items" :key="item.id" class="card p-0 overflow-hidden">
-        <!-- Рядок культури -->
         <div class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-agro-bg/40 transition-colors"
           @click="toggleExpand(item.id)">
-          <span class="text-agro-light transition-transform text-xs" :class="expanded === item.id ? 'rotate-90' : ''">▶</span>
+          <span class="text-agro-light text-xs transition-transform inline-block" :class="expanded === item.id ? 'rotate-90' : ''">▶</span>
+          <span class="text-xl shrink-0">{{ item.emoji || '🌱' }}</span>
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-agro-dark">{{ item.name }}</p>
-            <p class="text-xs text-agro-light font-mono mt-0.5">{{ item.slug }}</p>
+            <p class="text-xs text-agro-light mt-0.5">{{ item.category || '—' }}</p>
           </div>
-          <span class="text-xs text-agro-light">{{ (varieties[item.id] || []).length }} сортів</span>
-          <span class="inline-block w-2 h-2 rounded-full shrink-0" :class="item.is_active ? 'bg-green-500' : 'bg-gray-300'" />
+          <span class="text-xs text-agro-light shrink-0">{{ (varieties[item.id] || []).length }} сортів</span>
           <button @click.stop="openEdit(item)"
             class="shrink-0 text-xs font-semibold text-agro hover:text-agro-dark transition-colors px-2">
             Редагувати
           </button>
         </div>
 
-        <!-- Розгорнута секція сортів -->
         <div v-if="expanded === item.id" class="border-t border-agro-border bg-agro-bg/30">
           <div class="px-5 py-3 flex items-center justify-between">
             <p class="text-xs font-bold text-agro-light uppercase tracking-wide">Сорти</p>
@@ -45,10 +43,7 @@
           </div>
 
           <div v-if="loadingVarieties[item.id]" class="px-5 pb-4 text-xs text-agro-light">Завантаження...</div>
-
-          <div v-else-if="!(varieties[item.id] || []).length" class="px-5 pb-4 text-xs text-agro-light italic">
-            Сортів ще немає
-          </div>
+          <div v-else-if="!(varieties[item.id] || []).length" class="px-5 pb-4 text-xs text-agro-light italic">Сортів ще немає</div>
 
           <table v-else class="w-full text-sm">
             <thead>
@@ -64,8 +59,7 @@
                 class="border-b border-agro-border last:border-0 hover:bg-white/60 transition-colors">
                 <td class="px-5 py-3 font-medium text-agro-dark">{{ v.name }}</td>
                 <td class="px-5 py-3">
-                  <span v-if="v.season" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                    :class="seasonClass(v.season)">
+                  <span v-if="v.season" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" :class="seasonClass(v.season)">
                     {{ seasonLabel(v.season) }}
                   </span>
                   <span v-else class="text-agro-light text-xs">—</span>
@@ -74,10 +68,7 @@
                   <span class="inline-block w-2 h-2 rounded-full" :class="v.is_active ? 'bg-green-500' : 'bg-gray-300'" />
                 </td>
                 <td class="px-5 py-3 text-right">
-                  <button @click="openEditVariety(item, v)"
-                    class="text-xs font-semibold text-agro hover:text-agro-dark transition-colors">
-                    Редагувати
-                  </button>
+                  <button @click="openEditVariety(item, v)" class="text-xs font-semibold text-agro hover:text-agro-dark transition-colors">Редагувати</button>
                 </td>
               </tr>
             </tbody>
@@ -99,38 +90,28 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1">Назва <span class="text-red-400">*</span></label>
-                <input v-model="modal.name" type="text" class="input" placeholder="Пшениця" @input="autoSlug" />
+                <input v-model="modal.name" type="text" class="input" placeholder="Пшениця" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-agro-dark mb-1">Slug <span class="text-red-400">*</span></label>
-                <input v-model="modal.slug" type="text" class="input font-mono text-sm" placeholder="pshenytsia" />
+                <label class="block text-sm font-medium text-agro-dark mb-1">Емодзі</label>
+                <input v-model="modal.emoji" type="text" class="input" placeholder="🌾" maxlength="4" />
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Опис</label>
-              <textarea v-model="modal.description" class="input resize-none" rows="2" placeholder="Короткий опис культури" />
+              <label class="block text-sm font-medium text-agro-dark mb-1">Категорія</label>
+              <select v-model="modal.category_id" class="input">
+                <option value="">— без категорії —</option>
+                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.emoji }} {{ c.name }}</option>
+              </select>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-agro-dark mb-1">Порядок сортування</label>
-                <input v-model.number="modal.sort_order" type="number" min="0" class="input" placeholder="0" />
-              </div>
-              <div class="flex items-end pb-1">
-                <label class="flex items-center gap-2 cursor-pointer select-none">
-                  <button @click="modal.is_active = !modal.is_active" type="button"
-                    class="w-10 h-6 rounded-full transition-colors flex items-center px-0.5"
-                    :class="modal.is_active ? 'bg-agro' : 'bg-gray-200'">
-                    <span class="w-5 h-5 rounded-full bg-white shadow transition-transform"
-                      :class="modal.is_active ? 'translate-x-4' : 'translate-x-0'" />
-                  </button>
-                  <span class="text-sm font-medium text-agro-dark">Активна</span>
-                </label>
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Опис</label>
+              <textarea v-model="modal.description" class="input resize-none" rows="2" placeholder="Короткий опис" />
             </div>
           </div>
           <div class="flex gap-3 mt-6">
             <button @click="modal.show = false" class="btn-outline flex-1">Скасувати</button>
-            <button @click="save" :disabled="!modal.name || !modal.slug || saving" class="btn-primary flex-1 flex items-center justify-center disabled:opacity-50">
+            <button @click="save" :disabled="!modal.name || saving" class="btn-primary flex-1 flex items-center justify-center disabled:opacity-50">
               {{ saving ? '...' : 'Зберегти' }}
             </button>
           </div>
@@ -165,8 +146,7 @@
               <button @click="vModal.is_active = !vModal.is_active" type="button"
                 class="w-10 h-6 rounded-full transition-colors flex items-center px-0.5"
                 :class="vModal.is_active ? 'bg-agro' : 'bg-gray-200'">
-                <span class="w-5 h-5 rounded-full bg-white shadow transition-transform"
-                  :class="vModal.is_active ? 'translate-x-4' : 'translate-x-0'" />
+                <span class="w-5 h-5 rounded-full bg-white shadow transition-transform" :class="vModal.is_active ? 'translate-x-4' : 'translate-x-0'" />
               </button>
               <span class="text-sm font-medium text-agro-dark">Активний</span>
             </div>
@@ -189,6 +169,7 @@ useHead({ title: 'Культури — Адмін' })
 
 const supabase = useSupabaseClient()
 const items = ref<any[]>([])
+const categories = ref<any[]>([])
 const loading = ref(true)
 const saving = ref(false)
 const vSaving = ref(false)
@@ -202,17 +183,11 @@ const seasons = [
   { value: 'summer', label: 'Літній' },
   { value: 'autumn', label: 'Осінній' },
 ]
-
 const seasonLabel = (v: string) => seasons.find(s => s.value === v)?.label || v
-const seasonClass = (v: string) => ({
-  winter: 'bg-blue-50 text-blue-700',
-  spring: 'bg-green-50 text-green-700',
-  summer: 'bg-amber-50 text-amber-700',
-  autumn: 'bg-orange-50 text-orange-700',
-}[v] || 'bg-agro-bg text-agro-dark')
+const seasonClass = (v: string) => ({ winter: 'bg-blue-50 text-blue-700', spring: 'bg-green-50 text-green-700', summer: 'bg-amber-50 text-amber-700', autumn: 'bg-orange-50 text-orange-700' }[v] || 'bg-agro-bg text-agro-dark')
 
-const modal = reactive({ show: false, id: null as string | null, name: '', slug: '', description: '', is_active: true, sort_order: 0 })
-const vModal = reactive({ show: false, id: null as string | null, cropId: '', cropName: '', name: '', season: '', is_active: true, sort_order: 0 })
+const modal = reactive({ show: false, id: null as string | null, name: '', emoji: '', category_id: '', description: '' })
+const vModal = reactive({ show: false, id: null as string | null, cropId: '', cropName: '', name: '', season: '', is_active: true })
 
 async function toggleExpand(id: string) {
   if (expanded.value === id) { expanded.value = null; return }
@@ -225,39 +200,30 @@ async function toggleExpand(id: string) {
   }
 }
 
-function autoSlug() {
-  if (modal.id) return
-  modal.slug = modal.name.toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-zа-яіїєґ0-9-]/gi, '')
-    .replace(/[а-яіїєґ]/gi, (c: string) => {
-      const map: Record<string, string> = { а:'a',б:'b',в:'v',г:'h',ґ:'g',д:'d',е:'e',є:'ie',ж:'zh',з:'z',и:'y',і:'i',ї:'i',й:'i',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ь:'',ю:'iu',я:'ia' }
-      return map[c.toLowerCase()] || c
-    })
-}
-
 function openAdd() {
-  Object.assign(modal, { show: true, id: null, name: '', slug: '', description: '', is_active: true, sort_order: items.value.length * 10 })
+  Object.assign(modal, { show: true, id: null, name: '', emoji: '', category_id: '', description: '' })
 }
 function openEdit(item: any) {
-  Object.assign(modal, { show: true, id: item.id, name: item.name, slug: item.slug, description: item.description || '', is_active: item.is_active, sort_order: item.sort_order })
+  Object.assign(modal, { show: true, id: item.id, name: item.name, emoji: item.emoji || '', category_id: item.category_id || '', description: item.description || '' })
 }
 function openAddVariety(item: any) {
-  Object.assign(vModal, { show: true, id: null, cropId: item.id, cropName: item.name, name: '', season: '', is_active: true, sort_order: (varieties.value[item.id] || []).length * 10 })
+  Object.assign(vModal, { show: true, id: null, cropId: item.id, cropName: item.name, name: '', season: '', is_active: true })
 }
 function openEditVariety(item: any, v: any) {
-  Object.assign(vModal, { show: true, id: v.id, cropId: item.id, cropName: item.name, name: v.name, season: v.season || '', is_active: v.is_active, sort_order: v.sort_order })
+  Object.assign(vModal, { show: true, id: v.id, cropId: item.id, cropName: item.name, name: v.name, season: v.season || '', is_active: v.is_active })
 }
 
 async function save() {
   saving.value = true
-  const payload = { name: modal.name, slug: modal.slug, description: modal.description || null, is_active: modal.is_active, sort_order: modal.sort_order }
+  const cat = categories.value.find(c => c.id === modal.category_id)
+  const payload: any = { name: modal.name, emoji: modal.emoji || null, description: modal.description || null, category_id: modal.category_id || null, category: cat?.name || null }
   if (modal.id) {
-    const { error } = await supabase.from('agro_product_types').update(payload).eq('id', modal.id)
-    if (!error) { const idx = items.value.findIndex(i => i.id === modal.id); if (idx !== -1) Object.assign(items.value[idx], payload) }
+    await supabase.from('crop_catalog').update(payload).eq('id', modal.id)
+    const idx = items.value.findIndex(i => i.id === modal.id)
+    if (idx !== -1) Object.assign(items.value[idx], payload)
   } else {
-    const { data, error } = await supabase.from('agro_product_types').insert(payload).select().single()
-    if (!error && data) { items.value.push(data); varieties.value[data.id] = [] }
+    const { data } = await supabase.from('crop_catalog').insert(payload).select().single()
+    if (data) { items.value.push(data); varieties.value[data.id] = [] }
   }
   saving.value = false
   modal.show = false
@@ -265,28 +231,27 @@ async function save() {
 
 async function saveVariety() {
   vSaving.value = true
-  const payload = { crop_type_id: vModal.cropId, name: vModal.name, season: vModal.season || null, is_active: vModal.is_active, sort_order: vModal.sort_order }
+  const payload = { crop_type_id: vModal.cropId, name: vModal.name, season: vModal.season || null, is_active: vModal.is_active }
   if (vModal.id) {
-    const { error } = await supabase.from('crop_varieties').update(payload).eq('id', vModal.id)
-    if (!error) {
-      const list = varieties.value[vModal.cropId] || []
-      const idx = list.findIndex((v: any) => v.id === vModal.id)
-      if (idx !== -1) Object.assign(list[idx], payload)
-    }
+    await supabase.from('crop_varieties').update(payload).eq('id', vModal.id)
+    const list = varieties.value[vModal.cropId] || []
+    const idx = list.findIndex((v: any) => v.id === vModal.id)
+    if (idx !== -1) Object.assign(list[idx], payload)
   } else {
-    const { data, error } = await supabase.from('crop_varieties').insert(payload).select().single()
-    if (!error && data) {
-      if (!varieties.value[vModal.cropId]) varieties.value[vModal.cropId] = []
-      varieties.value[vModal.cropId].push(data)
-    }
+    const { data } = await supabase.from('crop_varieties').insert(payload).select().single()
+    if (data) { if (!varieties.value[vModal.cropId]) varieties.value[vModal.cropId] = []; varieties.value[vModal.cropId].push(data) }
   }
   vSaving.value = false
   vModal.show = false
 }
 
 async function load() {
-  const { data } = await supabase.from('agro_product_types').select('*').order('sort_order').order('name')
-  items.value = data || []
+  const [itemsRes, catsRes] = await Promise.all([
+    supabase.from('crop_catalog').select('*').order('name'),
+    supabase.from('crop_categories').select('id, name, emoji').order('order_num'),
+  ])
+  items.value = itemsRes.data || []
+  categories.value = catsRes.data || []
   loading.value = false
 }
 
