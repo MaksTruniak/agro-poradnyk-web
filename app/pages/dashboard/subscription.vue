@@ -66,7 +66,9 @@
 
         <!-- PRO -->
         <div class="card border-2 relative overflow-hidden" :class="currentPlan === 'pro' ? 'border-agro' : 'border-agro-border'">
-          <div class="absolute top-4 right-4 bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full">ПОПУЛЯРНИЙ</div>
+          <div class="flex justify-end mb-2">
+            <span class="bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full">ПОПУЛЯРНИЙ</span>
+          </div>
           <div class="flex items-center justify-between mb-3">
             <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
