@@ -69,50 +69,66 @@
   <Teleport to="body">
     <Transition name="fade">
       <div v-if="modal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="modal.show = false">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
           <h2 class="font-bold text-agro-dark text-lg mb-1">Керування користувачем</h2>
           <p class="text-sm text-agro-light mb-5 truncate">{{ modal.email }}</p>
 
+          <!-- Таби -->
+          <div class="flex gap-1 bg-agro-bg rounded-xl p-1 mb-5">
+            <button @click="modal.tab = 'plan'" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
+              :class="modal.tab === 'plan' ? 'bg-white text-agro-dark shadow-sm' : 'text-agro-light hover:text-agro-dark'">
+              Підписка
+            </button>
+            <button @click="modal.tab = 'coupon'" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
+              :class="modal.tab === 'coupon' ? 'bg-white text-agro-dark shadow-sm' : 'text-agro-light hover:text-agro-dark'">
+              Купон на знижку
+            </button>
+          </div>
+
           <!-- Підписка -->
-          <div class="mb-5">
-            <p class="text-xs font-bold text-agro-light uppercase tracking-wide mb-3">Підписка</p>
-            <div class="grid grid-cols-2 gap-2 mb-3">
+          <div v-if="modal.tab === 'plan'">
+            <div class="grid grid-cols-2 gap-2 mb-4">
               <button v-for="p in PLANS" :key="p.value" @click="modal.plan = p.value"
-                class="py-2.5 px-3 rounded-xl text-sm font-semibold border transition-colors text-left"
+                class="py-3 px-3 rounded-xl text-sm font-semibold border transition-colors"
                 :class="modal.plan === p.value ? 'bg-agro text-white border-agro' : 'bg-white text-agro-light border-agro-border hover:border-agro hover:text-agro-dark'">
                 {{ p.label }}
               </button>
             </div>
-            <div v-if="modal.plan !== 'basic'" class="space-y-2">
+            <div v-if="modal.plan !== 'basic'" class="space-y-2 mb-4">
               <label class="block text-sm font-medium text-agro-dark">Дійсна до</label>
               <input v-model="modal.expires_at" type="date" class="input text-sm" />
+            </div>
+            <p v-if="saveMsg" class="text-green-600 text-sm font-semibold mb-3 text-center">✓ {{ saveMsg }}</p>
+            <p v-if="saveError" class="text-red-500 text-sm mb-3 text-center">{{ saveError }}</p>
+            <div class="flex justify-center gap-3">
+              <button @click="modal.show = false" class="btn-outline px-8">Закрити</button>
+              <button @click="savePlan" :disabled="saving" class="btn-primary px-8 disabled:opacity-50">
+                {{ saving ? '...' : 'Зберегти' }}
+              </button>
             </div>
           </div>
 
           <!-- Купон -->
-          <div class="border-t border-agro-border pt-5">
-            <p class="text-xs font-bold text-agro-light uppercase tracking-wide mb-3">Купон на знижку</p>
-            <div class="flex gap-2 mb-3">
+          <div v-else>
+            <div class="flex gap-2 mb-4">
               <input v-model="modal.coupon_code" type="text" class="input text-sm flex-1 font-mono uppercase" placeholder="PROMO2024"
                 @input="modal.coupon_code = modal.coupon_code.toUpperCase()" />
               <button @click="generateCode" class="shrink-0 text-xs font-semibold text-agro border border-agro-border rounded-xl px-3 hover:bg-agro-bg transition-colors">
                 Генерувати
               </button>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 mb-4">
               <label class="text-sm font-medium text-agro-dark">Знижка %</label>
               <input v-model.number="modal.coupon_discount" type="number" min="1" max="100" class="input text-sm w-24 font-mono" />
             </div>
-          </div>
-
-          <p v-if="saveMsg" class="text-green-600 text-sm font-semibold mt-3">✓ {{ saveMsg }}</p>
-          <p v-if="saveError" class="text-red-500 text-sm mt-3">{{ saveError }}</p>
-
-          <div class="flex gap-3 mt-6">
-            <button @click="modal.show = false" class="btn-outline flex-1">Закрити</button>
-            <button @click="saveManage" :disabled="saving" class="btn-primary flex-1 disabled:opacity-50">
-              {{ saving ? '...' : 'Зберегти' }}
-            </button>
+            <p v-if="saveMsg" class="text-green-600 text-sm font-semibold mb-3 text-center">✓ {{ saveMsg }}</p>
+            <p v-if="saveError" class="text-red-500 text-sm mb-3 text-center">{{ saveError }}</p>
+            <div class="flex justify-center gap-3">
+              <button @click="modal.show = false" class="btn-outline px-8">Закрити</button>
+              <button @click="saveCoupon" :disabled="saving || !modal.coupon_code.trim()" class="btn-primary px-8 disabled:opacity-50">
+                {{ saving ? '...' : 'Надіслати купон' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -145,6 +161,7 @@ const PLANS = [
 
 const modal = reactive({
   show: false,
+  tab: 'plan' as 'plan' | 'coupon',
   userId: '',
   email: '',
   plan: 'basic',
@@ -181,6 +198,7 @@ async function openManage(user: any) {
   const expiresDate = sub?.expires_at ? new Date(sub.expires_at).toISOString().split('T')[0] : ''
   Object.assign(modal, {
     show: true,
+    tab: 'plan',
     userId: user.id,
     email: user.email,
     plan: sub?.plan || 'basic',
@@ -195,36 +213,43 @@ function generateCode() {
   modal.coupon_code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
 }
 
-async function saveManage() {
+async function savePlan() {
   saving.value = true
   saveMsg.value = ''
   saveError.value = ''
   try {
-    // Оновити підписку
     const expiresAt = modal.plan !== 'basic' && modal.expires_at
       ? new Date(modal.expires_at).toISOString()
       : modal.plan === 'basic' ? new Date('2024-01-01').toISOString() : null
-
-    const { error: subErr } = await supabase.from('subscriptions').upsert({
+    const { error } = await supabase.from('subscriptions').upsert({
       user_id: modal.userId,
       plan: modal.plan,
       status: modal.plan === 'basic' ? 'expired' : 'active',
       expires_at: expiresAt,
     }, { onConflict: 'user_id' })
-    if (subErr) throw new Error(subErr.message)
+    if (error) throw new Error(error.message)
+    saveMsg.value = 'Підписку збережено'
+    setTimeout(() => { saveMsg.value = '' }, 3000)
+  } catch (e: any) {
+    saveError.value = e.message
+  }
+  saving.value = false
+}
 
-    // Зберегти купон якщо є
-    if (modal.coupon_code.trim()) {
-      const { error: couponErr } = await supabase.from('coupons').insert({
-        user_id: modal.userId,
-        code: modal.coupon_code.trim().toUpperCase(),
-        discount_percent: modal.coupon_discount,
-        expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-      })
-      if (couponErr) throw new Error('Купон: ' + couponErr.message)
-    }
-
-    saveMsg.value = 'Збережено'
+async function saveCoupon() {
+  saving.value = true
+  saveMsg.value = ''
+  saveError.value = ''
+  try {
+    const { error } = await supabase.from('coupons').insert({
+      user_id: modal.userId,
+      code: modal.coupon_code.trim().toUpperCase(),
+      discount_percent: modal.coupon_discount,
+      expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    if (error) throw new Error(error.message)
+    saveMsg.value = `Купон ${modal.coupon_code} збережено`
+    modal.coupon_code = ''
     setTimeout(() => { saveMsg.value = '' }, 3000)
   } catch (e: any) {
     saveError.value = e.message
