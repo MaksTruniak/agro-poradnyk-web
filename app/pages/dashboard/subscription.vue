@@ -157,7 +157,7 @@
       <Transition name="fade">
         <div v-if="showPayment" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showPayment = false" />
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-8 text-center">
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10 p-8 text-center">
             <div class="w-14 h-14 rounded-2xl bg-agro-hover flex items-center justify-center mx-auto mb-4">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
             </div>
@@ -184,6 +184,20 @@
               <p class="text-sm text-agro-dark font-medium mb-2">Що входить:</p>
               <p v-for="f in selectedFeatures" :key="f" class="text-xs text-agro-light">✓ {{ f }}</p>
             </div>
+            <!-- Купон -->
+            <div class="mb-4">
+              <div class="flex gap-2">
+                <input v-model="couponCode" type="text" class="input text-sm flex-1 font-mono uppercase" placeholder="Є купон на знижку?"
+                  @input="couponCode = couponCode.toUpperCase(); couponResult = null" :disabled="couponChecking" />
+                <button @click="checkCoupon" :disabled="!couponCode.trim() || couponChecking"
+                  class="shrink-0 text-xs font-semibold text-agro border border-agro-border rounded-xl px-3 hover:bg-agro-bg transition-colors disabled:opacity-40">
+                  {{ couponChecking ? '...' : 'Застосувати' }}
+                </button>
+              </div>
+              <p v-if="couponResult === 'ok'" class="text-xs text-green-600 font-semibold mt-1.5">✓ Купон застосовано — знижка {{ couponDiscount }}%</p>
+              <p v-else-if="couponResult === 'invalid'" class="text-xs text-red-500 mt-1.5">Купон недійсний або вже використаний</p>
+            </div>
+
             <!-- Знижка за лояльність -->
             <div v-if="loyaltyDiscount > 0" class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex items-center gap-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(22,163,74)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -297,6 +311,10 @@ const FAQ = [
 const paying = ref(false)
 const payError = ref('')
 const proPeriod = ref<'month' | 'year'>('month')
+const couponCode = ref('')
+const couponResult = ref<'ok' | 'invalid' | null>(null)
+const couponDiscount = ref(0)
+const couponChecking = ref(false)
 
 async function loadLoyaltyDiscount() {
   try {
@@ -310,8 +328,31 @@ function openPayment(plan: string) {
   selectedPlan.value = plan
   proPeriod.value = 'month'
   payError.value = ''
+  couponCode.value = ''
+  couponResult.value = null
+  couponDiscount.value = 0
   showPayment.value = true
   loadLoyaltyDiscount()
+}
+
+async function checkCoupon() {
+  if (!couponCode.value.trim()) return
+  couponChecking.value = true
+  couponResult.value = null
+  const { data: { session: s } } = await supabase.auth.getSession()
+  const { data } = await supabase.from('coupons')
+    .select('id, discount_percent, is_used, expires_at')
+    .eq('code', couponCode.value.trim().toUpperCase())
+    .eq('user_id', s?.user?.id)
+    .maybeSingle()
+  if (data && !data.is_used && (!data.expires_at || new Date(data.expires_at) > new Date())) {
+    couponResult.value = 'ok'
+    couponDiscount.value = data.discount_percent
+  } else {
+    couponResult.value = 'invalid'
+    couponDiscount.value = 0
+  }
+  couponChecking.value = false
 }
 
 // Реальний план для WFP
@@ -332,7 +373,7 @@ async function submitPayment() {
     const res = await $fetch<{ ok: boolean; formData: Record<string, any>; endpoint: string; discountPercent: number }>('/api/payment/create', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
-      body: { plan: paymentPlan.value },
+      body: { plan: paymentPlan.value, couponCode: couponResult.value === 'ok' ? couponCode.value.trim().toUpperCase() : undefined },
     })
     loyaltyDiscount.value = res.discountPercent || 0
 

@@ -52,8 +52,9 @@ export default defineEventHandler(async (event) => {
 
   // Витягуємо userId та план з orderReference або merchantOptions
   const opts = merchantOptions || {}
-  const userId = opts.userId
-  const plan   = opts.plan
+  const userId   = opts.userId
+  const plan     = opts.plan
+  const couponId = opts.couponId
 
   if (!userId || !plan) {
     console.error('[WFP callback] Missing userId or plan in merchantOptions', opts)
@@ -134,6 +135,11 @@ export default defineEventHandler(async (event) => {
     status:          'paid',
     order_reference: orderReference,
   })
+
+  // Позначити купон як використаний
+  if (couponId) {
+    await supabase.from('coupons').update({ is_used: true, used_at: new Date().toISOString() }).eq('id', couponId)
+  }
 
   // Відправляємо email підтвердження
   try {

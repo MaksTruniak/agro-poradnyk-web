@@ -10,7 +10,7 @@ function wfpSign(fields: string[], secretKey: string): string {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { plan } = body
+  const { plan, couponCode } = body
 
   if (!plan) throw createError({ statusCode: 400, message: 'Invalid plan' })
 
@@ -61,6 +61,20 @@ export default defineEventHandler(async (event) => {
     discountPercent = discountData?.discount_percent ?? 0
   }
 
+  // Купон
+  let couponId: string | null = null
+  if (couponCode) {
+    const { data: coupon } = await supabase.from('coupons')
+      .select('id, discount_percent, is_used, expires_at')
+      .eq('code', String(couponCode).toUpperCase())
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (coupon && !coupon.is_used && (!coupon.expires_at || new Date(coupon.expires_at) > new Date())) {
+      discountPercent = Math.max(discountPercent, coupon.discount_percent)
+      couponId = coupon.id
+    }
+  }
+
   const basePrice  = planData.price_uah
   const amount     = discountPercent > 0 ? Math.round(basePrice * (1 - discountPercent / 100)) : basePrice
   const labelSuffix = discountPercent > 0 ? ` (знижка ${discountPercent}%)` : ''
@@ -104,7 +118,7 @@ export default defineEventHandler(async (event) => {
     returnUrl: `${siteUrl}/payment/success?plan=${plan}`,
     serviceUrl: `${siteUrl}/api/payment/callback`,
     // Зберігаємо userId для callback
-    merchantOptions: { userId: user.id, plan },
+    merchantOptions: { userId: user.id, plan, couponId },
   }
 
   return {
