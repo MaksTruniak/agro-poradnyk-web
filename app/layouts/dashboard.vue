@@ -349,18 +349,19 @@ const autoBoost = async (uid: string) => {
 const cartCount = ref(0)
 const unreadChats = useState('unread-chats', () => 0)
 const unreadNotifications = ref(0)
+const lowStockCount = ref(0)
 const pendingShares = ref(0)
 const pendingAgreementsCount = ref(0)
 
 const loadNotifications = async () => {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  const { count } = await supabase
-    .from('farm_notifications')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', session.user.id)
-    .eq('is_read', false)
-  unreadNotifications.value = count || 0
+  const [{ count: notifCount }, { data: invData }] = await Promise.all([
+    supabase.from('farm_notifications').select('*', { count: 'exact', head: true }).eq('user_id', session.user.id).eq('is_read', false),
+    supabase.from('farm_inventory').select('quantity, min_quantity').eq('user_id', session.user.id).not('min_quantity', 'is', null),
+  ])
+  unreadNotifications.value = (notifCount || 0) + (invData?.filter(i => i.quantity <= i.min_quantity).length || 0)
+  lowStockCount.value = invData?.filter(i => i.quantity <= i.min_quantity).length || 0
 }
 
 const loadPendingShares = async () => {

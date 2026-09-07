@@ -132,3 +132,49 @@ export async function sendNewMessageEmail(to: string, recipientName: string, sen
     `,
   })
 }
+
+export async function sendLowStockEmail(
+  to: string,
+  name: string,
+  items: { name: string; quantity: number; unit: string; min_quantity: number }[]
+) {
+  const resend = getResend()
+  const rows = items.map(i =>
+    `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#1b2e1b;font-weight:600">${i.name}</td>
+     <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#b3452f;font-weight:700">${i.quantity} ${i.unit}</td>
+     <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#9aaa8e">мін: ${i.min_quantity} ${i.unit}</td></tr>`
+  ).join('')
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `⚠️ Закінчується запас на складі — ${items.length} позицій`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#faf6ec;padding:32px 24px;border-radius:16px">
+        <div style="text-align:center;margin-bottom:24px">
+          <span style="font-size:28px;font-weight:900;color:#1b2e1b">🌿 АгроПростір</span>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:28px">
+          <p style="color:#1b2e1b;font-size:16px;margin:0 0 8px">Привіт, <strong>${name}</strong>!</p>
+          <p style="color:#6b7a64;font-size:14px;margin:0 0 20px">На складі закінчуються запаси препаратів. Будь ласка, поповніть вчасно.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <thead>
+              <tr style="background:#f0f4e8">
+                <th style="padding:8px 12px;text-align:left;color:#4c5a46;font-size:12px;text-transform:uppercase">Препарат</th>
+                <th style="padding:8px 12px;text-align:left;color:#4c5a46;font-size:12px;text-transform:uppercase">Залишок</th>
+                <th style="padding:8px 12px;text-align:left;color:#4c5a46;font-size:12px;text-transform:uppercase">Норма</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="margin-top:24px;text-align:center">
+            <a href="https://agroprostir.com.ua/dashboard/inventory/chemicals"
+              style="display:inline-block;background:#2f5233;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+              Відкрити склад →
+            </a>
+          </div>
+        </div>
+      </div>
+    `,
+  })
+}
