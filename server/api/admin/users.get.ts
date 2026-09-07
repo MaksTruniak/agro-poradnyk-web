@@ -15,14 +15,24 @@ export default defineEventHandler(async (event) => {
   if (error) throw createError({ statusCode: 500, message: error.message })
 
   const userIds = data.users.map((u: any) => u.id)
-  const { data: subs } = await supabase.from('subscriptions').select('user_id, plan, expires_at').in('user_id', userIds)
+  const [{ data: subs }, { data: coupons }] = await Promise.all([
+    supabase.from('subscriptions').select('user_id, plan, expires_at').in('user_id', userIds),
+    supabase.from('coupons').select('user_id, code, discount_percent, is_used, expires_at').in('user_id', userIds).eq('is_used', false),
+  ])
+
   const subMap: Record<string, any> = {}
   for (const s of subs || []) subMap[s.user_id] = s
+
+  const couponMap: Record<string, any[]> = {}
+  for (const c of coupons || []) {
+    if (!couponMap[c.user_id]) couponMap[c.user_id] = []
+    couponMap[c.user_id].push(c)
+  }
 
   const users = data.users.map((u: any) => {
     const sub = subMap[u.id]
     const activePlan = sub && (!sub.expires_at || new Date(sub.expires_at) > new Date()) ? sub.plan : 'basic'
-    return { ...u, plan: activePlan }
+    return { ...u, plan: activePlan, coupons: couponMap[u.id] || [] }
   })
 
   return { users, total: data.total }

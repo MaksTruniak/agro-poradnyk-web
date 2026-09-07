@@ -41,6 +41,11 @@
             </p>
           </div>
           <div class="flex items-center gap-3 shrink-0">
+            <span v-for="c in (user.coupons || [])" :key="c.code"
+              class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+              :title="`Знижка ${c.discount_percent}%`">
+              {{ c.code }}
+            </span>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
               :class="{
                 'bg-agro text-white': user.plan === 'pro',
