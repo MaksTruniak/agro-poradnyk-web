@@ -22,7 +22,10 @@
         <div class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-agro-bg/40 transition-colors"
           @click="toggleExpand(item.id)">
           <span class="text-agro-light text-xs transition-transform inline-block" :class="expanded === item.id ? 'rotate-90' : ''">▶</span>
-          <span class="text-xl shrink-0">{{ item.emoji || '🌱' }}</span>
+          <div class="w-8 h-8 shrink-0 flex items-center justify-center">
+            <img :src="`/crops/${cropToSlug(item.name)}.svg`" :alt="item.name" class="w-7 h-7 object-contain"
+              @error="($event.target as HTMLImageElement).style.display='none'" />
+          </div>
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-agro-dark">{{ item.name }}</p>
             <p class="text-xs text-agro-light mt-0.5">{{ item.category || '—' }}</p>
@@ -87,15 +90,9 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
           <h2 class="font-bold text-agro-dark text-lg mb-5">{{ modal.id ? 'Редагувати культуру' : 'Додати культуру' }}</h2>
           <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-agro-dark mb-1">Назва <span class="text-red-400">*</span></label>
-                <input v-model="modal.name" type="text" class="input" placeholder="Пшениця" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-agro-dark mb-1">Емодзі</label>
-                <input v-model="modal.emoji" type="text" class="input" placeholder="🌾" maxlength="4" />
-              </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Назва <span class="text-red-400">*</span></label>
+              <input v-model="modal.name" type="text" class="input" placeholder="Пшениця" />
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Категорія</label>
@@ -186,7 +183,7 @@ const seasons = [
 const seasonLabel = (v: string) => seasons.find(s => s.value === v)?.label || v
 const seasonClass = (v: string) => ({ winter: 'bg-blue-50 text-blue-700', spring: 'bg-green-50 text-green-700', summer: 'bg-amber-50 text-amber-700', autumn: 'bg-orange-50 text-orange-700' }[v] || 'bg-agro-bg text-agro-dark')
 
-const modal = reactive({ show: false, id: null as string | null, name: '', emoji: '', category_id: '', description: '' })
+const modal = reactive({ show: false, id: null as string | null, name: '', category_id: '', description: '' })
 const vModal = reactive({ show: false, id: null as string | null, cropId: '', cropName: '', name: '', season: '', is_active: true })
 
 async function toggleExpand(id: string) {
@@ -194,17 +191,20 @@ async function toggleExpand(id: string) {
   expanded.value = id
   if (!varieties.value[id]) {
     loadingVarieties.value[id] = true
-    const { data } = await supabase.from('crop_varieties').select('*').eq('crop_type_id', id).order('sort_order').order('name')
+    const item = items.value.find(i => i.id === id)
+    const { data } = await supabase.from('varieties').select('id, name, season, is_active').ilike('crop_type', item?.name || '').order('name')
     varieties.value[id] = data || []
     loadingVarieties.value[id] = false
   }
 }
 
+const cropToSlug = (name: string) => name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zа-яіїєґ0-9-]/gi, '') || ''
+
 function openAdd() {
-  Object.assign(modal, { show: true, id: null, name: '', emoji: '', category_id: '', description: '' })
+  Object.assign(modal, { show: true, id: null, name: '', category_id: '', description: '' })
 }
 function openEdit(item: any) {
-  Object.assign(modal, { show: true, id: item.id, name: item.name, emoji: item.emoji || '', category_id: item.category_id || '', description: item.description || '' })
+  Object.assign(modal, { show: true, id: item.id, name: item.name, category_id: item.category_id || '', description: item.description || '' })
 }
 function openAddVariety(item: any) {
   Object.assign(vModal, { show: true, id: null, cropId: item.id, cropName: item.name, name: '', season: '', is_active: true })
@@ -216,7 +216,7 @@ function openEditVariety(item: any, v: any) {
 async function save() {
   saving.value = true
   const cat = categories.value.find(c => c.id === modal.category_id)
-  const payload: any = { name: modal.name, emoji: modal.emoji || null, description: modal.description || null, category_id: modal.category_id || null, category: cat?.name || null }
+  const payload: any = { name: modal.name, description: modal.description || null, category_id: modal.category_id || null, category: cat?.name || null }
   if (modal.id) {
     await supabase.from('crop_catalog').update(payload).eq('id', modal.id)
     const idx = items.value.findIndex(i => i.id === modal.id)
@@ -231,14 +231,14 @@ async function save() {
 
 async function saveVariety() {
   vSaving.value = true
-  const payload = { crop_type_id: vModal.cropId, name: vModal.name, season: vModal.season || null, is_active: vModal.is_active }
+  const payload = { crop_type: vModal.cropName, name: vModal.name, season: vModal.season || null, is_active: vModal.is_active }
   if (vModal.id) {
-    await supabase.from('crop_varieties').update(payload).eq('id', vModal.id)
+    await supabase.from('varieties').update(payload).eq('id', vModal.id)
     const list = varieties.value[vModal.cropId] || []
     const idx = list.findIndex((v: any) => v.id === vModal.id)
-    if (idx !== -1) Object.assign(list[idx], payload)
+    if (idx !== -1) Object.assign(list[idx], { ...payload })
   } else {
-    const { data } = await supabase.from('crop_varieties').insert(payload).select().single()
+    const { data } = await supabase.from('varieties').insert(payload).select().single()
     if (data) { if (!varieties.value[vModal.cropId]) varieties.value[vModal.cropId] = []; varieties.value[vModal.cropId].push(data) }
   }
   vSaving.value = false
