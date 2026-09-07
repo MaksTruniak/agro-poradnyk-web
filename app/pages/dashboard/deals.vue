@@ -73,11 +73,20 @@
               <div class="text-right shrink-0 min-w-[100px]">
                 <p class="font-extrabold text-agro">{{ deal.total_price?.toLocaleString('uk-UA') }} грн</p>
               </div>
-              <button @click="generateInvoice(deal)"
-                class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                Накладна
-              </button>
+              <span v-if="deal.status === 'cancelled'" class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-red-50 border border-red-200 text-red-500 rounded-xl px-3 py-1.5 font-medium">
+                Скасовано
+              </span>
+              <template v-else>
+                <button @click="generateInvoice(deal)"
+                  class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  Накладна
+                </button>
+                <button @click="cancelDeal(deal)"
+                  class="shrink-0 inline-flex items-center gap-1.5 text-xs border border-red-200 text-red-400 rounded-xl px-3 py-1.5 hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
+                  Скасувати
+                </button>
+              </template>
               <button v-if="!isFarmer && deal.status === 'confirmed'" @click="confirmReceived(deal)"
                 class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro text-white rounded-xl px-3 py-1.5 hover:bg-agro-dark transition-colors font-medium">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -119,13 +128,45 @@
               <div class="text-right shrink-0 min-w-[100px]">
                 <p v-if="s.total_price" class="font-extrabold text-agro">{{ s.total_price?.toLocaleString('uk-UA') }} грн</p>
               </div>
-              <button @click="deleteManual(s.id)" class="shrink-0 text-xs text-red-400 hover:text-red-600 transition-colors p-1">✕</button>
+              <span v-if="s.status === 'cancelled'" class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-red-50 border border-red-200 text-red-500 rounded-xl px-3 py-1.5 font-medium">
+                Скасовано
+              </span>
+              <template v-else>
+                <button @click="generateManualInvoice(s)"
+                  class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  Накладна
+                </button>
+                <button @click="cancelManual(s)"
+                  class="shrink-0 inline-flex items-center gap-1.5 text-xs border border-red-200 text-red-400 rounded-xl px-3 py-1.5 hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
+                  Скасувати
+                </button>
+              </template>
             </div>
           </div>
         </div>
       </div>
     </template>
   </div>
+
+  <!-- Попап: незаповнений профіль для накладної -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="invoiceProfileAlert" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="invoiceProfileAlert = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(180,100,20)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <h3 class="font-bold text-agro-dark text-lg mb-2">Профіль не заповнено</h3>
+          <p class="text-sm text-agro-light mb-5">Для формування накладної необхідно вказати у профілі: <strong class="text-agro-dark">назву компанії, ЄДРПОУ та IBAN</strong>.</p>
+          <div class="flex gap-3">
+            <button @click="invoiceProfileAlert = false" class="btn-outline flex-1">Закрити</button>
+            <NuxtLink to="/dashboard/settings" class="btn-primary flex-1 text-center" @click="invoiceProfileAlert = false">Заповнити профіль</NuxtLink>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- Модалка оцінки -->
   <Teleport to="body">
@@ -158,47 +199,51 @@
     <Transition name="fade">
       <div v-if="manualModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="manualModal.show = false" />
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl z-10 p-6">
           <h2 class="dash-card-title bitter mb-4">Додати продаж вручну</h2>
-          <div class="space-y-3 mb-5 max-h-[70vh] overflow-y-auto pr-1">
+          <div class="space-y-3 mb-5">
 
-            <p class="text-xs font-semibold text-agro-light uppercase tracking-wide">Культура і кількість</p>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Культура</label>
-              <template v-if="farmerCrops.length">
-                <div class="relative">
-                  <select v-model="manualModal.crop_type" class="input appearance-none pr-9 w-full">
-                    <option value="" disabled>Оберіть культуру</option>
-                    <option v-for="c in farmerCrops" :key="c.value" :value="c.value">{{ c.label }}</option>
-                    <option value="__other__">✏️ Інша культура...</option>
-                  </select>
-                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-agro-light">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                  </span>
-                </div>
-                <input v-if="manualModal.crop_type === '__other__'"
-                  v-model="manualModal.crop_type_custom"
-                  type="text" class="input mt-2" placeholder="Назва культури" />
-              </template>
-              <input v-else v-model="manualModal.crop_type_custom" type="text" class="input" placeholder="Назва культури" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Кількість</label>
-              <div class="flex gap-2">
-                <input v-model="manualModal.quantity" type="number" min="0.01" step="0.01" class="input flex-1" placeholder="10" />
-                <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
-                  <button @click="manualModal.unit = 'т'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="manualModal.unit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
-                  <button @click="manualModal.unit = 'кг'" type="button" class="px-3 py-2 text-sm font-semibold transition-colors" :class="manualModal.unit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+            <!-- Ряд 1: Культура + Кількість -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">Культура</label>
+                <template v-if="farmerCrops.length">
+                  <div class="relative">
+                    <select v-model="manualModal.crop_type" class="input appearance-none pr-9 w-full">
+                      <option value="" disabled>Оберіть</option>
+                      <option v-for="c in farmerCrops" :key="c.value" :value="c.value">{{ c.label }}</option>
+                      <option value="__other__">✏️ Інша...</option>
+                    </select>
+                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-agro-light">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </span>
+                  </div>
+                  <input v-if="manualModal.crop_type === '__other__'" v-model="manualModal.crop_type_custom" type="text" class="input mt-2" placeholder="Назва культури" />
+                </template>
+                <input v-else v-model="manualModal.crop_type_custom" type="text" class="input" placeholder="Назва культури" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">Кількість</label>
+                <div class="flex gap-2">
+                  <input v-model="manualModal.quantity" type="number" min="0.01" step="0.01" class="input flex-1" placeholder="10" />
+                  <div class="flex rounded-xl border border-agro-border overflow-hidden shrink-0">
+                    <button @click="manualModal.unit = 'т'" type="button" class="px-2.5 py-2 text-sm font-semibold transition-colors" :class="manualModal.unit === 'т' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">т</button>
+                    <button @click="manualModal.unit = 'кг'" type="button" class="px-2.5 py-2 text-sm font-semibold transition-colors" :class="manualModal.unit === 'кг' ? 'bg-agro text-white' : 'bg-white text-agro-light hover:bg-agro-hover'">кг</button>
+                  </div>
                 </div>
               </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Ціна за {{ manualModal.unit }} (грн, необов'язково)</label>
-              <input v-model="manualModal.price_per_ton" type="number" min="0" class="input" :placeholder="manualModal.unit === 'т' ? '5000' : '5'" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Дата продажу</label>
-              <input v-model="manualModal.sold_at" type="date" class="input" />
+
+            <!-- Ряд 2: Ціна + Дата -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">Ціна за {{ manualModal.unit }} (грн)</label>
+                <input v-model="manualModal.price_per_ton" type="number" min="0" class="input" :placeholder="manualModal.unit === 'т' ? '5000' : '5'" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">Дата продажу</label>
+                <input v-model="manualModal.sold_at" type="date" class="input" />
+              </div>
             </div>
 
             <!-- Склад -->
@@ -218,30 +263,32 @@
                 <div v-if="stockShortfall > 0 && manualModal.deduct_from_stock" class="mt-2">
                   <p class="text-xs text-amber-600 font-semibold mb-1.5">⚠ Не вистачає {{ stockShortfall.toFixed(2) }} т — вкажіть скільки зібрали сьогодні:</p>
                   <div class="flex gap-2 items-center">
-                    <input v-model="manualModal.extra_harvested" type="number" min="0" step="0.1"
-                      class="input flex-1 text-sm" :placeholder="`напр. ${stockShortfall.toFixed(1)}`" />
-                    <span class="text-xs text-agro-light shrink-0">т (буде додано до складу)</span>
+                    <input v-model="manualModal.extra_harvested" type="number" min="0" step="0.1" class="input flex-1 text-sm" :placeholder="`напр. ${stockShortfall.toFixed(1)}`" />
+                    <span class="text-xs text-agro-light shrink-0">т (буде додано)</span>
                   </div>
                 </div>
               </div>
             </label>
 
+            <!-- Покупець — 2 колонки -->
             <p class="text-xs font-semibold text-agro-light uppercase tracking-wide pt-1">Покупець</p>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Назва / ім'я покупця</label>
-              <input v-model="manualModal.buyer_name" type="text" class="input" placeholder="ТОВ «Агро Трейд»" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Телефон</label>
-              <input v-model="manualModal.buyer_phone" type="tel" class="input" placeholder="+380..." />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">ЄДРПОУ</label>
-              <input v-model="manualModal.buyer_edrpou" type="text" class="input" placeholder="12345678" maxlength="10" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">IBAN</label>
-              <input v-model="manualModal.buyer_iban" type="text" class="input" placeholder="UA..." />
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">Назва / ім'я</label>
+                <input v-model="manualModal.buyer_name" type="text" class="input" placeholder="ТОВ «Агро Трейд»" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">Телефон</label>
+                <input v-model="manualModal.buyer_phone" type="tel" class="input" placeholder="+380..." />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">ЄДРПОУ</label>
+                <input v-model="manualModal.buyer_edrpou" type="text" class="input" placeholder="12345678" maxlength="10" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-agro-dark mb-1">IBAN</label>
+                <input v-model="manualModal.buyer_iban" type="text" class="input" placeholder="UA..." />
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Примітка (необов'язково)</label>
@@ -465,10 +512,96 @@ const saveManual = async () => {
 
 const { confirm: confirmDialog } = useConfirm()
 
-const deleteManual = async (id: string) => {
-  if (!await confirmDialog('Запис про продаж буде видалено. Дію не можна скасувати.', { title: 'Видалити запис?' })) return
-  await supabase.from('manual_sales').delete().eq('id', id)
-  manualSales.value = manualSales.value.filter((s: any) => s.id !== id)
+const invoiceProfileAlert = ref(false)
+
+const generateManualInvoice = async (s: any) => {
+  const { data: farmer } = await supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', uid).single()
+  const f = farmer || {}
+  if (!f.edrpou || !f.iban || !(f.company_name || f.name)) {
+    invoiceProfileAlert.value = true
+    return
+  }
+  const buyer = {
+    name: s.buyer_name || '—',
+    phone: s.buyer_phone || '',
+    edrpou: s.buyer_edrpou || '',
+    iban: s.buyer_iban || '',
+    company_name: s.buyer_name || '',
+  }
+  const invoiceNum = s.id.slice(0, 8).toUpperCase()
+  const dateStr = s.sold_at ? new Date(s.sold_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+  const qty = `${s.quantity_tons} т`
+  const pricePerUnit = s.price_per_ton ? `${s.price_per_ton.toLocaleString('uk-UA')} грн/т` : '—'
+  const totalPrice = s.total_price ? `${s.total_price.toLocaleString('uk-UA')} грн` : '—'
+
+  const partyBlock = (label: string, u: any) => `
+    <div class="party">
+      <div class="party-label">${label}</div>
+      <div class="party-name">${u.company_name || u.name || '—'}</div>
+      ${u.edrpou ? `<div class="party-row">ЄДРПОУ / ІПН: <b>${u.edrpou}</b></div>` : ''}
+      ${u.city ? `<div class="party-row">Адреса: ${u.legal_address || u.city + (u.region ? ', ' + u.region : '')}</div>` : ''}
+      ${u.phone ? `<div class="party-row">Телефон: ${u.phone}</div>` : ''}
+      ${u.iban ? `<div class="party-row">IBAN: <b>${u.iban}</b></div>` : ''}
+      ${u.bank_name ? `<div class="party-row">Банк: ${u.bank_name}</div>` : ''}
+    </div>`
+
+  const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Накладна №${invoiceNum}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 40px; max-width: 800px; margin: auto; }
+    h1 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 28px; }
+    .parties { display: flex; gap: 24px; margin-bottom: 24px; }
+    .party { flex: 1; border: 1px solid #ccc; border-radius: 6px; padding: 12px; }
+    .party-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 4px; }
+    .party-name { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+    .party-row { font-size: 12px; color: #444; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th { background: #f4f4f4; border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-size: 12px; }
+    td { border: 1px solid #ddd; padding: 8px 10px; font-size: 13px; }
+    .total-row td { font-weight: 700; background: #f9f9f9; }
+    .delivery { margin-bottom: 20px; font-size: 12px; color: #555; }
+    .signatures { display: flex; gap: 40px; margin-top: 40px; }
+    .sig { flex: 1; border-top: 1px solid #999; padding-top: 8px; font-size: 12px; color: #555; }
+    .footer { margin-top: 20px; font-size: 11px; color: #aaa; text-align: center; }
+    @media print { body { padding: 20px; } }
+  </style></head><body>
+  <h1>Видаткова накладна №${invoiceNum}</h1>
+  <div class="subtitle">від ${dateStr}</div>
+  <div class="parties">
+    ${partyBlock('Постачальник (Продавець)', f)}
+    ${partyBlock('Покупець', buyer)}
+  </div>
+  <table>
+    <thead><tr><th>№</th><th>Найменування товару</th><th>Кількість</th><th>Ціна за од.</th><th>Сума</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>${s.crop_type}</td><td>${qty}</td><td>${pricePerUnit}</td><td>${totalPrice}</td></tr>
+      <tr class="total-row"><td colspan="4" style="text-align:right">Всього:</td><td>${totalPrice}</td></tr>
+    </tbody>
+  </table>
+  ${s.notes ? `<div class="delivery">Примітка: <b>${s.notes}</b></div>` : ''}
+  <div class="signatures">
+    <div class="sig">Здав (Продавець): _______________________<br><span style="font-size:11px;color:#888">${f.name || ''}</span></div>
+    <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name}</span></div>
+  </div>
+  <div class="footer">Сформовано через АгроПростір</div>
+  <script>window.onload = () => { window.print() }<\/script>
+  </body></html>`
+
+  const w = window.open('', '_blank')
+  if (w) { w.document.write(html); w.document.close() }
+}
+
+const cancelDeal = async (deal: any) => {
+  if (!await confirmDialog('Угоду буде позначено як скасовану.', { title: 'Скасувати угоду?' })) return
+  const { error } = await supabase.from('deals').update({ status: 'cancelled', cancelled_at: new Date().toISOString() }).eq('id', deal.id)
+  if (!error) deal.status = 'cancelled'
+}
+
+const cancelManual = async (s: any) => {
+  if (!await confirmDialog('Запис буде позначено як скасований.', { title: 'Скасувати продаж?' })) return
+  const { error } = await supabase.from('manual_sales').update({ status: 'cancelled' }).eq('id', s.id)
+  if (!error) s.status = 'cancelled'
 }
 
 const confirmReceived = async (deal: any) => {
