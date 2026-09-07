@@ -13,12 +13,26 @@
       <button @click="openAdd" class="btn-primary shrink-0">+ Додати культуру</button>
     </div>
 
+    <!-- Таби категорій -->
+    <div v-if="!loading" class="flex gap-2 flex-wrap mb-5">
+      <button @click="activeCategory = null"
+        class="px-4 py-2 rounded-xl text-sm font-semibold border transition-colors"
+        :class="activeCategory === null ? 'bg-agro text-white border-agro' : 'bg-white text-agro-light border-agro-border hover:border-agro hover:text-agro-dark'">
+        Всі ({{ items.length }})
+      </button>
+      <button v-for="cat in categories" :key="cat.id" @click="activeCategory = cat.id"
+        class="px-4 py-2 rounded-xl text-sm font-semibold border transition-colors"
+        :class="activeCategory === cat.id ? 'bg-agro text-white border-agro' : 'bg-white text-agro-light border-agro-border hover:border-agro hover:text-agro-dark'">
+        {{ cat.name }} ({{ items.filter(i => i.category_id === cat.id).length }})
+      </button>
+    </div>
+
     <div v-if="loading" class="space-y-3">
       <div v-for="i in 5" :key="i" class="card animate-pulse h-16" />
     </div>
 
     <div v-else class="space-y-2">
-      <div v-for="item in items" :key="item.id" class="card p-0 overflow-hidden">
+      <div v-for="item in filteredItems" :key="item.id" class="card p-0 overflow-hidden">
         <div class="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-agro-bg/40 transition-colors"
           @click="toggleExpand(item.id)">
           <span class="text-agro-light text-xs transition-transform inline-block" :class="expanded === item.id ? 'rotate-90' : ''">▶</span>
@@ -171,6 +185,8 @@ const loading = ref(true)
 const saving = ref(false)
 const vSaving = ref(false)
 const expanded = ref<string | null>(null)
+const activeCategory = ref<string | null>(null)
+const filteredItems = computed(() => activeCategory.value ? items.value.filter(i => i.category_id === activeCategory.value) : items.value)
 const varieties = ref<Record<string, any[]>>({})
 const loadingVarieties = ref<Record<string, boolean>>({})
 
