@@ -378,7 +378,8 @@ const { data: sub } = await supabase.from('subscriptions')
   .select('plan, expires_at').eq('user_id', uid).maybeSingle()
 
 if (sub) {
-  currentPlan.value = sub.plan || 'basic'
+  const isActive = !sub.expires_at || new Date(sub.expires_at) > new Date()
+  currentPlan.value = isActive ? (sub.plan || 'basic') : 'basic'
   expiresAt.value = sub.expires_at || null
 }
 loading.value = false
