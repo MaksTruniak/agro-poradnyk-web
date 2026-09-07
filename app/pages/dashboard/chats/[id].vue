@@ -999,6 +999,24 @@ const respondDeal = async (dealId: string, status: 'confirmed' | 'cancelled') =>
 
   if (status === 'confirmed') {
     const deal = deals.value.find(d => d.id === dealId)
+
+    // Відняти кількість зі складу фермера
+    if (deal?.farmer_id && deal?.crop_type && deal?.quantity_tons) {
+      const { data: crops } = await supabase
+        .from('farm_crops')
+        .select('id, stock_quantity, stock_unit, farms!inner(user_id)')
+        .eq('farms.user_id', deal.farmer_id)
+        .eq('crop_type', deal.crop_type)
+        .not('stock_quantity', 'is', null)
+      if (crops?.length) {
+        const crop = crops[0]
+        const deductTons = deal.quantity_tons
+        const currentTons = crop.stock_unit === 'кг' ? (crop.stock_quantity / 1000) : crop.stock_quantity
+        const newTons = Math.max(0, currentTons - deductTons)
+        const newQty = crop.stock_unit === 'кг' ? newTons * 1000 : newTons
+        await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', crop.id)
+      }
+    }
     // Самовивіз (id=1): заготівельник їде до фермера → потрібна адреса фермера
     // Доставка (id=2): фермер везе до заготівельника → потрібна адреса заготівельника
     const isSamovyviz = (deal?.delivery_types?.name || '').toLowerCase().includes('самовивіз') || deal?.delivery_type_id === 1
