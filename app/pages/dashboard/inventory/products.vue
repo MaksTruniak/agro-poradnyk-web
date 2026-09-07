@@ -21,8 +21,7 @@
         </svg>
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Немає культур</p>
-      <p class="text-agro-light mb-6">Додайте культури до своїх полів, щоб вести облік продукції</p>
-      <NuxtLink to="/dashboard/farms" class="dash-btn-primary inline-flex">Перейти до полів</NuxtLink>
+      <p class="text-agro-light">Додайте культури до своїх полів, щоб вести облік продукції</p>
     </div>
 
     <div v-else class="space-y-3">
