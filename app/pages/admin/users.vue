@@ -40,11 +40,16 @@
               </span>
             </p>
           </div>
-          <div class="text-right shrink-0">
-            <p class="text-xs text-agro-light">{{ formatDate(user.created_at) }}</p>
-            <p class="text-[10px] mt-0.5" :class="user.confirmed_at ? 'text-green-500' : 'text-amber-500'">
-              {{ user.confirmed_at ? 'Підтверджено' : 'Не підтверджено' }}
-            </p>
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="text-right">
+              <p class="text-xs text-agro-light">{{ formatDate(user.created_at) }}</p>
+              <p class="text-[10px] mt-0.5" :class="user.confirmed_at ? 'text-green-500' : 'text-amber-500'">
+                {{ user.confirmed_at ? 'Підтверджено' : 'Не підтверджено' }}
+              </p>
+            </div>
+            <button @click="openManage(user)" class="text-xs font-semibold text-agro hover:text-agro-dark transition-colors px-2 py-1 border border-agro-border rounded-lg hover:bg-agro-bg">
+              Керувати
+            </button>
           </div>
         </div>
       </div>
@@ -59,11 +64,67 @@
       </div>
     </div>
   </div>
+
+  <!-- Модал керування юзером -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="modal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="modal.show = false">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <h2 class="font-bold text-agro-dark text-lg mb-1">Керування користувачем</h2>
+          <p class="text-sm text-agro-light mb-5 truncate">{{ modal.email }}</p>
+
+          <!-- Підписка -->
+          <div class="mb-5">
+            <p class="text-xs font-bold text-agro-light uppercase tracking-wide mb-3">Підписка</p>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+              <button v-for="p in PLANS" :key="p.value" @click="modal.plan = p.value"
+                class="py-2.5 px-3 rounded-xl text-sm font-semibold border transition-colors text-left"
+                :class="modal.plan === p.value ? 'bg-agro text-white border-agro' : 'bg-white text-agro-light border-agro-border hover:border-agro hover:text-agro-dark'">
+                {{ p.label }}
+              </button>
+            </div>
+            <div v-if="modal.plan !== 'basic'" class="space-y-2">
+              <label class="block text-sm font-medium text-agro-dark">Дійсна до</label>
+              <input v-model="modal.expires_at" type="date" class="input text-sm" />
+            </div>
+          </div>
+
+          <!-- Купон -->
+          <div class="border-t border-agro-border pt-5">
+            <p class="text-xs font-bold text-agro-light uppercase tracking-wide mb-3">Купон на знижку</p>
+            <div class="flex gap-2 mb-3">
+              <input v-model="modal.coupon_code" type="text" class="input text-sm flex-1 font-mono uppercase" placeholder="PROMO2024"
+                @input="modal.coupon_code = modal.coupon_code.toUpperCase()" />
+              <button @click="generateCode" class="shrink-0 text-xs font-semibold text-agro border border-agro-border rounded-xl px-3 hover:bg-agro-bg transition-colors">
+                Генерувати
+              </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-medium text-agro-dark">Знижка %</label>
+              <input v-model.number="modal.coupon_discount" type="number" min="1" max="100" class="input text-sm w-24 font-mono" />
+            </div>
+          </div>
+
+          <p v-if="saveMsg" class="text-green-600 text-sm font-semibold mt-3">✓ {{ saveMsg }}</p>
+          <p v-if="saveError" class="text-red-500 text-sm mt-3">{{ saveError }}</p>
+
+          <div class="flex gap-3 mt-6">
+            <button @click="modal.show = false" class="btn-outline flex-1">Закрити</button>
+            <button @click="saveManage" :disabled="saving" class="btn-primary flex-1 disabled:opacity-50">
+              {{ saving ? '...' : 'Зберегти' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 useHead({ title: 'Користувачі — Адмін' })
 definePageMeta({ layout: 'admin', middleware: 'admin' })
+
+const supabase = useSupabaseClient()
 
 const LIMIT = 50
 const page = ref(1)
@@ -71,6 +132,26 @@ const total = ref(0)
 const users = ref<any[]>([])
 const loading = ref(true)
 const search = ref('')
+const saving = ref(false)
+const saveMsg = ref('')
+const saveError = ref('')
+
+const PLANS = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'pro', label: 'PRO' },
+  { value: 'business', label: 'Business' },
+  { value: 'custom', label: 'Custom' },
+]
+
+const modal = reactive({
+  show: false,
+  userId: '',
+  email: '',
+  plan: 'basic',
+  expires_at: '',
+  coupon_code: '',
+  coupon_discount: 10,
+})
 
 const totalPages = computed(() => Math.ceil(total.value / LIMIT))
 const filtered = computed(() => {
@@ -91,6 +172,64 @@ const changePage = (p: number) => {
   if (p < 1 || p > totalPages.value) return
   page.value = p
   load()
+}
+
+async function openManage(user: any) {
+  saveMsg.value = ''
+  saveError.value = ''
+  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).maybeSingle()
+  const expiresDate = sub?.expires_at ? new Date(sub.expires_at).toISOString().split('T')[0] : ''
+  Object.assign(modal, {
+    show: true,
+    userId: user.id,
+    email: user.email,
+    plan: sub?.plan || 'basic',
+    expires_at: expiresDate,
+    coupon_code: '',
+    coupon_discount: 10,
+  })
+}
+
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  modal.coupon_code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
+
+async function saveManage() {
+  saving.value = true
+  saveMsg.value = ''
+  saveError.value = ''
+  try {
+    // Оновити підписку
+    const expiresAt = modal.plan !== 'basic' && modal.expires_at
+      ? new Date(modal.expires_at).toISOString()
+      : modal.plan === 'basic' ? new Date('2024-01-01').toISOString() : null
+
+    const { error: subErr } = await supabase.from('subscriptions').upsert({
+      user_id: modal.userId,
+      plan: modal.plan,
+      status: modal.plan === 'basic' ? 'expired' : 'active',
+      expires_at: expiresAt,
+    }, { onConflict: 'user_id' })
+    if (subErr) throw new Error(subErr.message)
+
+    // Зберегти купон якщо є
+    if (modal.coupon_code.trim()) {
+      const { error: couponErr } = await supabase.from('coupons').insert({
+        user_id: modal.userId,
+        code: modal.coupon_code.trim().toUpperCase(),
+        discount_percent: modal.coupon_discount,
+        expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      if (couponErr) throw new Error('Купон: ' + couponErr.message)
+    }
+
+    saveMsg.value = 'Збережено'
+    setTimeout(() => { saveMsg.value = '' }, 3000)
+  } catch (e: any) {
+    saveError.value = e.message
+  }
+  saving.value = false
 }
 
 const roleLabel = (role: string) => {
