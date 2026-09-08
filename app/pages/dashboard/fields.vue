@@ -454,6 +454,7 @@ const HECTARE_LIMITS: Record<string, number> = {
   basic:      2,
   pro:        50,
   business:   200,
+  premium:    Infinity,
   enterprise: Infinity,
 }
 

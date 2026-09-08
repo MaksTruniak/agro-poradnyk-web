@@ -181,6 +181,7 @@ const MEMBER_LIMITS: Record<string, number> = {
   basic:      0,
   pro:        2,
   business:   5,
+  premium:    Infinity,
   enterprise: Infinity,
 }
 

@@ -50,10 +50,10 @@
               :class="{
                 'bg-agro text-white': user.plan === 'pro',
                 'bg-blue-100 text-blue-700': user.plan === 'business',
-                'bg-amber-100 text-amber-700': user.plan === 'custom',
+                'bg-amber-100 text-amber-700': user.plan === 'premium',
                 'bg-agro-bg text-agro-light': !user.plan || user.plan === 'basic',
               }">
-              {{ user.plan === 'pro' ? 'PRO' : user.plan === 'business' ? 'Business' : user.plan === 'custom' ? 'Custom' : 'Basic' }}
+              {{ user.plan === 'pro' ? 'PRO' : user.plan === 'business' ? 'Business' : user.plan === 'premium' ? 'Premium' : 'Basic' }}
             </span>
             <div class="text-right">
               <p class="text-xs text-agro-light">{{ formatDate(user.created_at) }}</p>
@@ -170,7 +170,7 @@ const PLANS = [
   { value: 'basic', label: 'Basic' },
   { value: 'pro', label: 'PRO' },
   { value: 'business', label: 'Business' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'premium', label: 'Premium' },
 ]
 
 const modal = reactive({

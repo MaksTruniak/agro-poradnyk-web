@@ -29,7 +29,7 @@
       <div class="card mb-8 flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl flex items-center justify-center" :style="planIconBg">
           <svg v-if="currentPlan === 'basic'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
-          <svg v-else-if="currentPlan === 'custom'" width="22" height="22" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg v-else-if="currentPlan === 'premium'" width="22" height="22" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         </div>
         <div class="flex-1">
@@ -40,7 +40,7 @@
         <span v-if="currentPlan !== 'basic'" class="px-3 py-1 bg-agro text-white rounded-full text-xs font-bold">Активний</span>
       </div>
 
-      <!-- Плани — сітка 2x2 + custom -->
+      <!-- Плани — сітка 2x2 + premium -->
       <div class="grid md:grid-cols-2 gap-4 mb-8">
 
         <!-- Basic -->
@@ -113,25 +113,27 @@
           <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-agro text-agro font-semibold text-sm cursor-default">Активний</button>
         </div>
 
-        <!-- Custom -->
-        <div class="card border-2" :class="currentPlan === 'custom' ? 'border-amber-400' : 'border-agro-border'" style="background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);">
+        <!-- Premium -->
+        <div class="card border-2" :class="currentPlan === 'premium' ? 'border-amber-400' : 'border-agro-border'" style="background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);">
           <div class="flex items-center justify-between mb-3">
             <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              Custom
+              Premium
             </h2>
-            <span v-if="currentPlan === 'custom'" class="text-xs bg-amber-400 text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
+            <span v-if="currentPlan === 'premium'" class="text-xs bg-amber-400 text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
-          <p class="text-2xl font-extrabold text-amber-600 mb-0.5">Індивідуально</p>
-          <p class="text-agro-light text-xs mb-4">від 200 га · узгоджується</p>
+          <p class="text-2xl font-extrabold text-amber-600 mb-0.5">4 500 <span class="text-base font-semibold">грн</span></p>
+          <p class="text-agro-light text-xs mb-1">необмежено га · / місяць</p>
+          <p class="text-agro-light text-xs mb-4">або <strong class="text-amber-700">54 000 грн / рік</strong></p>
           <ul class="space-y-2 mb-5">
-            <li v-for="f in CUSTOM_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
+            <li v-for="f in PREMIUM_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-amber-500 shrink-0 mt-0.5">✓</span> {{ f }}
             </li>
           </ul>
-          <a href="mailto:sales@agroporadnyk.ua" class="btn-outline w-full py-2.5 text-center block text-sm font-semibold">
-            Зв'язатися з нами →
-          </a>
+          <button v-if="currentPlan !== 'premium'" @click="openPayment('premium')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors">
+            Перейти на Premium →
+          </button>
+          <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-amber-400 text-amber-600 font-semibold text-sm cursor-default">Активний</button>
         </div>
 
       </div>
@@ -164,19 +166,19 @@
             <h2 class="font-bold text-agro-dark text-xl mb-4">Оплата {{ PLAN_LABELS[selectedPlan] }}</h2>
 
             <!-- Вибір місяць/рік для PRO або Business -->
-            <div v-if="selectedPlan === 'pro' || selectedPlan === 'business'" class="flex gap-2 mb-5">
+            <div v-if="selectedPlan === 'pro' || selectedPlan === 'business' || selectedPlan === 'premium'" class="flex gap-2 mb-5">
               <button @click="proPeriod = 'month'"
                 class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors"
                 :class="proPeriod === 'month' ? 'border-agro bg-agro text-white' : 'border-agro-border text-agro-dark'">
                 1 місяць<br>
-                <span class="text-xs font-normal opacity-80">{{ selectedPlan === 'pro' ? '1 000' : '2 000' }} грн</span>
+                <span class="text-xs font-normal opacity-80">{{ selectedPlan === 'pro' ? '1 000' : selectedPlan === 'business' ? '2 000' : '4 500' }} грн</span>
               </button>
               <button @click="proPeriod = 'year'"
                 class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors relative"
                 :class="proPeriod === 'year' ? 'border-agro bg-agro text-white' : 'border-agro-border text-agro-dark'">
                 <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-17%</span>
                 1 рік<br>
-                <span class="text-xs font-normal opacity-80">{{ selectedPlan === 'pro' ? '10 000' : '20 000' }} грн</span>
+                <span class="text-xs font-normal opacity-80">{{ selectedPlan === 'pro' ? '10 000' : selectedPlan === 'business' ? '20 000' : '54 000' }} грн</span>
               </button>
             </div>
 
@@ -242,7 +244,7 @@ const PLAN_LABELS: Record<string, string> = {
   basic:    'Basic',
   pro:      'PRO',
   business: 'Business',
-  custom:   'Custom',
+  premium:   'Premium',
 }
 
 const PLAN_PRICES: Record<string, string> = {
@@ -252,10 +254,13 @@ const PLAN_PRICES: Record<string, string> = {
   business:         '2 000 грн / місяць або 20 000 грн / рік',
   business_month:   '2 000 грн / місяць',
   business_year:    '20 000 грн / рік',
+  premium:          '4 500 грн / місяць або 54 000 грн / рік',
+  premium_month:    '4 500 грн / місяць',
+  premium_year:     '54 000 грн / рік',
 }
 
 const planIconBg = computed(() => {
-  if (currentPlan.value === 'custom') return 'background: #fff8e6'
+  if (currentPlan.value === 'premium') return 'background: #fff8e6'
   return 'background: rgb(238,241,227)'
 })
 
@@ -288,11 +293,12 @@ const BUSINESS_FEATURES = [
   'Пріоритетна підтримка',
 ]
 
-const CUSTOM_FEATURES = [
-  'Від 200 га — необмежено',
+const PREMIUM_FEATURES = [
+  'Необмежена кількість га',
   'Всі функції Business',
-  'Особистий менеджер',
+  'AI агроном — необмежено',
   'Співробітники — необмежено',
+  'Особистий менеджер',
   'Інтеграція з 1С / ERP',
   'SLA — відповідь до 2 год',
 ]
@@ -308,7 +314,7 @@ const FAQ = [
   { q: 'Чи можна скасувати підписку?', a: 'Так, підписка не продовжується автоматично. Ви платите раз на рік.' },
   { q: 'Що буде після закінчення плану?', a: 'Ваші дані збережуться, але доступ до платних функцій буде обмежено до Basic.' },
   { q: 'Як відбувається оплата?', a: 'Оплата через WayForPay — безпечний український платіжний сервіс.' },
-  { q: 'Як перейти на Custom?', a: 'Напишіть нам на sales@agroporadnyk.ua — підберемо умови індивідуально.' },
+  { q: 'Що таке Premium план?', a: 'Найвищий рівень — необмежена кількість га, AI агроном без обмежень, особистий менеджер та SLA підтримка.' },
 ]
 
 const paying = ref(false)
@@ -322,6 +328,7 @@ const couponChecking = ref(false)
 const BASE_PRICES: Record<string, number> = {
   pro_month: 1000, pro_year: 10000,
   business_month: 2000, business_year: 20000,
+  premium_month: 4500, premium_year: 54000,
 }
 const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDiscount.value : loyaltyDiscount.value)
 const basePrice = computed(() => BASE_PRICES[paymentPlan.value] ?? 0)
@@ -371,6 +378,7 @@ async function checkCoupon() {
 const paymentPlan = computed(() => {
   if (selectedPlan.value === 'pro')       return proPeriod.value === 'year' ? 'pro_year'      : 'pro_month'
   if (selectedPlan.value === 'business')  return proPeriod.value === 'year' ? 'business_year' : 'business_month'
+  if (selectedPlan.value === 'premium')   return proPeriod.value === 'year' ? 'premium_year'  : 'premium_month'
   return selectedPlan.value
 })
 

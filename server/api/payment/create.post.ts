@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   if (!planData || !planData.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
 
   // Знижка за лояльністю з БД
-  const isSubscription = ['pro_month','pro_year','business_month','business_year','agronomist_pro_month','agronomist_pro_year'].includes(plan)
+  const isSubscription = ['pro_month','pro_year','business_month','business_year','premium_month','premium_year','agronomist_pro_month','agronomist_pro_year'].includes(plan)
   let discountPercent = 0
   let renewalCount = 0
 
