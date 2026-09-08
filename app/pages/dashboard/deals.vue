@@ -582,7 +582,7 @@ async function doEmailInvoice() {
   invoiceActionModal.sending = false
 }
 
-const generateManualInvoice = async (s: any) => {
+const generateManualInvoice = async (sale: any) => {
   const { data: farmer } = await supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', uid).single()
   const f = farmer || {}
   if (!f.edrpou || !f.iban || !(f.company_name || f.name)) {
@@ -590,17 +590,17 @@ const generateManualInvoice = async (s: any) => {
     return
   }
   const buyer = {
-    name: s.buyer_name || '—',
-    phone: s.buyer_phone || '',
-    edrpou: s.buyer_edrpou || '',
-    iban: s.buyer_iban || '',
-    company_name: s.buyer_name || '',
+    name: sale.buyer_name || '—',
+    phone: sale.buyer_phone || '',
+    edrpou: sale.buyer_edrpou || '',
+    iban: sale.buyer_iban || '',
+    company_name: sale.buyer_name || '',
   }
-  const invoiceNum = s.id.slice(0, 8).toUpperCase()
-  const dateStr = s.sold_at ? new Date(s.sold_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
-  const qty = `${s.quantity_tons} т`
-  const pricePerUnit = s.price_per_ton ? `${s.price_per_ton.toLocaleString('uk-UA')} грн/т` : '—'
-  const totalPrice = s.total_price ? `${s.total_price.toLocaleString('uk-UA')} грн` : '—'
+  const invoiceNum = sale.id.slice(0, 8).toUpperCase()
+  const dateStr = sale.sold_at ? new Date(sale.sold_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+  const qty = `${sale.quantity_tons} т`
+  const pricePerUnit = sale.price_per_ton ? `${sale.price_per_ton.toLocaleString('uk-UA')} грн/т` : '—'
+  const totalPrice = sale.total_price ? `${sale.total_price.toLocaleString('uk-UA')} грн` : '—'
 
   const partyBlock = (label: string, u: any) => `
     <div class="party">
@@ -643,11 +643,11 @@ const generateManualInvoice = async (s: any) => {
   <table>
     <thead><tr><th>№</th><th>Найменування товару</th><th>Кількість</th><th>Ціна за од.</th><th>Сума</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td>${s.crop_type}</td><td>${qty}</td><td>${pricePerUnit}</td><td>${totalPrice}</td></tr>
+      <tr><td>1</td><td>${sale.crop_type}</td><td>${qty}</td><td>${pricePerUnit}</td><td>${totalPrice}</td></tr>
       <tr class="total-row"><td colspan="4" style="text-align:right">Всього:</td><td>${totalPrice}</td></tr>
     </tbody>
   </table>
-  ${s.notes ? `<div class="delivery">Примітка: <b>${s.notes}</b></div>` : ''}
+  ${sale.notes ? `<div class="delivery">Примітка: <b>${sale.notes}</b></div>` : ''}
   <div class="signatures">
     <div class="sig">Здав (Продавець): _______________________<br><span style="font-size:11px;color:#888">${f.name || ''}</span></div>
     <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name}</span></div>
