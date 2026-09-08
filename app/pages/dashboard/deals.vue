@@ -656,10 +656,10 @@ const generateManualInvoice = async (s: any) => {
   </body></html>`
 
   // Показуємо модалку вибору дії
-  const { data: { session: s } } = await supabase.auth.getSession()
+  const { data: { session: _sess } } = await supabase.auth.getSession()
   invoiceActionModal.html = html
   invoiceActionModal.invoiceNum = invoiceNum
-  invoiceActionModal.email = s?.user?.email || ''
+  invoiceActionModal.email = _sess?.user?.email || ''
   invoiceActionModal.sent = false
   invoiceActionModal.sendError = ''
   invoiceActionModal.show = true
@@ -757,10 +757,10 @@ const generateInvoice = async (deal: any) => {
   <div class="footer">Сформовано через АгроПростір</div>
   </body></html>`
 
-  const { data: { session: s2 } } = await supabase.auth.getSession()
+  const { data: { session: _sess2 } } = await supabase.auth.getSession()
   invoiceActionModal.html = html
   invoiceActionModal.invoiceNum = invoiceNum
-  invoiceActionModal.email = s2?.user?.email || ''
+  invoiceActionModal.email = _sess2?.user?.email || ''
   invoiceActionModal.sent = false
   invoiceActionModal.sendError = ''
   invoiceActionModal.show = true
