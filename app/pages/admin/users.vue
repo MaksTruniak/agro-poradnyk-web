@@ -48,12 +48,11 @@
             </span>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
               :class="{
-                'bg-agro text-white': user.plan === 'pro',
                 'bg-blue-100 text-blue-700': user.plan === 'business',
-                'bg-amber-100 text-amber-700': user.plan === 'premium',
+                'bg-amber-100 text-amber-700': user.plan === 'business_pro',
                 'bg-agro-bg text-agro-light': !user.plan || user.plan === 'basic',
               }">
-              {{ user.plan === 'pro' ? 'PRO' : user.plan === 'business' ? 'Business' : user.plan === 'premium' ? 'Premium' : 'Basic' }}
+              {{ user.plan === 'business' ? 'Бізнес' : user.plan === 'business_pro' ? 'Бізнес Про' : 'Basic' }}
             </span>
             <div class="text-right">
               <p class="text-xs text-agro-light">{{ formatDate(user.created_at) }}</p>
@@ -168,9 +167,8 @@ const saveError = ref('')
 
 const PLANS = [
   { value: 'basic', label: 'Basic' },
-  { value: 'pro', label: 'PRO' },
-  { value: 'business', label: 'Business' },
-  { value: 'premium', label: 'Premium' },
+  { value: 'business', label: 'Бізнес' },
+  { value: 'business_pro', label: 'Бізнес Про' },
 ]
 
 const modal = reactive({

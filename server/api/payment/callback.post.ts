@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
       // Рік (12 місяців) + 4 бонусних за річну оплату = 16
       expiresAt.setMonth(expiresAt.getMonth() + 16)
     }
-    const basePlan = plan.startsWith('premium') ? 'premium' : plan.startsWith('pro') ? 'pro' : 'business'
+    const basePlan = plan === 'business_pro' ? 'business_pro' : plan.startsWith('premium') ? 'premium' : plan.startsWith('pro') ? 'pro' : 'business'
     const { error } = await supabase.from('subscriptions').upsert({
       user_id:       userId,
       plan:          basePlan,

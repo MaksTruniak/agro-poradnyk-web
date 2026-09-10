@@ -10,7 +10,7 @@ function wfpSign(fields: string[], secretKey: string): string {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { plan, couponCode } = body
+  const { plan, couponCode, hectares } = body
 
   if (!plan) throw createError({ statusCode: 400, message: 'Invalid plan' })
 
@@ -30,12 +30,33 @@ export default defineEventHandler(async (event) => {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
   if (authErr || !user) throw createError({ statusCode: 401, message: 'Unauthorized' })
 
-  // Беремо ціну з БД
-  const { data: planData } = await supabase.from('plans').select('price_uah, label, is_active').eq('id', plan).single()
-  if (!planData || !planData.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
+  // Динамічна ціна: business = 299 + 10*га, business_pro = 599 + 15*га
+  const DYNAMIC_PLANS: Record<string, { base: number; haRate: number; label: string }> = {
+    business:     { base: 299, haRate: 10, label: 'Бізнес' },
+    business_pro: { base: 599, haRate: 15, label: 'Бізнес Про' },
+  }
+
+  let planLabel = ''
+  let basePrice = 0
+  let planData: { price_uah: number; label: string; is_active: boolean } | null = null
+
+  if (DYNAMIC_PLANS[plan]) {
+    const dp = DYNAMIC_PLANS[plan]
+    const ha = Number(hectares) || 0
+    if (ha < 1) throw createError({ statusCode: 400, message: 'Hectares required' })
+    basePrice = dp.base + ha * dp.haRate
+    planLabel = `${dp.label} (${ha} га)`
+    planData = { price_uah: basePrice, label: planLabel, is_active: true }
+  } else {
+    const { data } = await supabase.from('plans').select('price_uah, label, is_active').eq('id', plan).single()
+    if (!data || !data.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
+    planData = data
+    basePrice = data.price_uah
+    planLabel = data.label
+  }
 
   // Знижка за лояльністю з БД
-  const isSubscription = ['pro_month','pro_year','business_month','business_year','premium_month','premium_year','agronomist_pro_month','agronomist_pro_year'].includes(plan)
+  const isSubscription = ['business','business_pro','agronomist_pro_month','agronomist_pro_year'].includes(plan)
   let discountPercent = 0
   let renewalCount = 0
 
@@ -75,14 +96,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const basePrice  = planData.price_uah
-  const amount     = discountPercent > 0 ? Math.round(basePrice * (1 - discountPercent / 100)) : basePrice
+  const amount      = discountPercent > 0 ? Math.round(basePrice * (1 - discountPercent / 100)) : basePrice
   const labelSuffix = discountPercent > 0 ? ` (знижка ${discountPercent}%)` : ''
 
   const orderReference = `agro-${plan}-${user.id.slice(0, 8)}-${Date.now()}`
   const orderDate      = Math.floor(Date.now() / 1000)
   const currency       = 'UAH'
-  const productName    = [`${planData.label}${labelSuffix}`]
+  const productName    = [`${planLabel}${labelSuffix}`]
   const productCount   = [1]
   const productPrice   = [amount]
 
@@ -118,7 +138,7 @@ export default defineEventHandler(async (event) => {
     returnUrl: `${siteUrl}/payment/success?plan=${plan}`,
     serviceUrl: `${siteUrl}/api/payment/callback`,
     // Зберігаємо userId для callback
-    merchantOptions: { userId: user.id, plan, couponId },
+    merchantOptions: { userId: user.id, plan, couponId, hectares: Number(hectares) || 0 },
   }
 
   return {

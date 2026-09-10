@@ -133,7 +133,7 @@ onMounted(async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) { loading.value = false; return }
   const { data: sub } = await supabase.from('subscriptions').select('plan').eq('user_id', user.id).maybeSingle()
-  isCustom.value = sub?.plan === 'premium'
+  isCustom.value = sub?.plan === 'business_pro'
   loading.value = false
 })
 

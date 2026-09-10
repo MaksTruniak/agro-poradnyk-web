@@ -482,11 +482,9 @@ const proLink = isAgronomist ? '/dashboard/promotion' : '/dashboard/subscription
 const hasOlderHistory = ref(false)
 
 const PLAN_LIMITS_FALLBACK: Record<string, { text: number; photo: number }> = {
-  basic:      { text: 10,    photo: 1    },
-  pro:        { text: 500,   photo: 60   },
-  business:   { text: 3000,  photo: 300  },
-  premium:    { text: 99999, photo: 9999 },
-  enterprise: { text: 99999, photo: 9999 },
+  basic:        { text: 0,     photo: 0    },
+  business:     { text: 3000,  photo: 300  },
+  business_pro: { text: 99999, photo: 9999 },
 }
 const planLimitsDb = ref<Record<string, { text: number; photo: number }>>({})
 

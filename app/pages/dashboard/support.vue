@@ -164,7 +164,7 @@ onMounted(async () => {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  isCustom.value = sub?.plan === 'premium'
+  isCustom.value = sub?.plan === 'business_pro'
 
   if (isCustom.value && sub?.manager_id) {
     const { data: mgr } = await supabase

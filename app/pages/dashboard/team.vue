@@ -178,11 +178,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const MEMBER_LIMITS: Record<string, number> = {
-  basic:      0,
-  pro:        2,
-  business:   5,
-  premium:    Infinity,
-  enterprise: Infinity,
+  basic:        0,
+  business:     5,
+  business_pro: Infinity,
 }
 
 const memberLimit = computed(() => MEMBER_LIMITS[currentPlan.value] ?? 0)
