@@ -73,7 +73,19 @@
 
     <!-- Sessions List -->
     <div v-if="!loading && showSessionsList" class="flex-1 overflow-y-auto flex flex-col bg-agro-bg">
-      <div v-if="chatSessions.length === 0" class="flex flex-col items-center justify-center h-full text-center py-12">
+      <!-- Basic — AI недоступний (сесійний список) -->
+      <div v-if="!isPro" class="flex flex-col items-center justify-center h-full text-center py-12 px-6">
+        <div class="w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-5">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
+            <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
+          </svg>
+        </div>
+        <p class="font-bold text-agro-dark text-lg mb-2">AI агроном</p>
+        <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Необмежені консультації, аналіз фото, захист культур — доступні на тарифі Бізнес</p>
+        <NuxtLink :to="proLink" class="dash-btn-primary inline-flex">Перейти на Бізнес →</NuxtLink>
+      </div>
+      <div v-else-if="chatSessions.length === 0" class="flex flex-col items-center justify-center h-full text-center py-12">
         <div class="dash-empty-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
