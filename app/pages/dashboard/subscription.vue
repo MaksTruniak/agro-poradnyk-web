@@ -80,8 +80,8 @@
             </h2>
             <span v-if="currentPlan === 'business'" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
-          <p class="text-2xl font-extrabold text-agro-dark mb-0.5">299 <span class="text-base font-semibold">грн</span></p>
-          <p class="text-agro-light text-xs mb-4">+ 10 грн/га · 2–50 га · / місяць</p>
+          <p class="text-2xl font-extrabold text-agro-dark mb-0.5">{{ getBase('business') }} <span class="text-base font-semibold">грн</span></p>
+          <p class="text-agro-light text-xs mb-4">+ {{ getRate('business') }} грн/га · 2–50 га · / місяць</p>
           <ul class="space-y-2 mb-5">
             <li v-for="f in BUSINESS_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-agro shrink-0 mt-0.5">✓</span> {{ f }}
@@ -102,8 +102,8 @@
             </h2>
             <span v-if="currentPlan === 'business_pro'" class="text-xs bg-amber-400 text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
-          <p class="text-2xl font-extrabold text-amber-600 mb-0.5">599 <span class="text-base font-semibold">грн</span></p>
-          <p class="text-agro-light text-xs mb-4">+ 15 грн/га · 50+ га · / місяць</p>
+          <p class="text-2xl font-extrabold text-amber-600 mb-0.5">{{ getBase('business_pro') }} <span class="text-base font-semibold">грн</span></p>
+          <p class="text-agro-light text-xs mb-4">+ {{ getRate('business_pro') }} грн/га · 50+ га · / місяць</p>
           <ul class="space-y-2 mb-5">
             <li v-for="f in BUSINESS_PRO_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-amber-500 shrink-0 mt-0.5">✓</span> {{ f }}
@@ -124,6 +124,10 @@
           Питання та відповіді
         </h2>
         <div class="space-y-4">
+          <div>
+            <p class="font-medium text-agro-dark text-sm">Як розраховується ціна?</p>
+            <p class="text-agro-light text-sm mt-1">{{ faqPriceEntry }}</p>
+          </div>
           <div v-for="q in FAQ" :key="q.q">
             <p class="font-medium text-agro-dark text-sm">{{ q.q }}</p>
             <p class="text-agro-light text-sm mt-1">{{ q.a }}</p>
@@ -155,11 +159,11 @@
             <div v-if="hectares > 0" class="bg-agro-hover rounded-xl p-4 mb-5 text-left">
               <div class="flex justify-between text-sm mb-1">
                 <span class="text-agro-light">Базова ставка</span>
-                <span class="font-medium text-agro-dark">{{ selectedPlan === 'business' ? '299' : '599' }} грн</span>
+                <span class="font-medium text-agro-dark">{{ getBase(selectedPlan) }} грн</span>
               </div>
               <div class="flex justify-between text-sm mb-2">
-                <span class="text-agro-light">{{ hectares }} га × {{ selectedPlan === 'business' ? '10' : '15' }} грн</span>
-                <span class="font-medium text-agro-dark">{{ (hectares * (selectedPlan === 'business' ? 10 : 15)).toLocaleString('uk-UA') }} грн</span>
+                <span class="text-agro-light">{{ hectares }} га × {{ getRate(selectedPlan) }} грн</span>
+                <span class="font-medium text-agro-dark">{{ (hectares * getRate(selectedPlan)).toLocaleString('uk-UA') }} грн</span>
               </div>
               <div class="border-t border-agro-border pt-2 flex justify-between">
                 <span class="font-bold text-agro-dark">До сплати / місяць</span>
@@ -275,12 +279,15 @@ const BUSINESS_PRO_FEATURES = [
 ]
 
 const FAQ = [
-  { q: 'Як розраховується ціна?', a: 'Базова ставка + кількість га × ставка за га. Бізнес: 299 + 10 грн/га. Бізнес Про: 599 + 15 грн/га.' },
   { q: 'Чи можна скасувати підписку?', a: 'Так, підписка не продовжується автоматично. Ви платите раз на місяць або рік.' },
   { q: 'Що буде після закінчення плану?', a: 'Ваші дані збережуться, але доступ до платних функцій буде обмежено до Basic.' },
   { q: 'Як відбувається оплата?', a: 'Оплата через WayForPay — безпечний український платіжний сервіс.' },
   { q: 'Що таке Бізнес Про?', a: 'Для господарств 50+ га — всі функції без обмежень, інтеграції та пріоритетна підтримка.' },
 ]
+
+const faqPriceEntry = computed(() =>
+  `Базова ставка + кількість га × ставка за га. Бізнес: ${getBase('business')} + ${getRate('business')} грн/га. Бізнес Про: ${getBase('business_pro')} + ${getRate('business_pro')} грн/га.`
+)
 
 const paying = ref(false)
 const payError = ref('')
@@ -289,19 +296,19 @@ const couponResult = ref<'ok' | 'invalid' | null>(null)
 const couponDiscount = ref(0)
 const couponChecking = ref(false)
 
-const BASE_RATE: Record<string, number> = {
-  business:     299,
-  business_pro: 599,
-}
-const HA_RATE: Record<string, number> = {
-  business:     10,
-  business_pro: 15,
+// Ціни з БД
+const plansDb = ref<Record<string, { base_price: number; ha_rate: number; label: string }>>({})
+
+const { data: plansData } = await supabase.from('plans').select('id, label, base_price, ha_rate').in('id', ['business', 'business_pro'])
+for (const p of plansData || []) {
+  plansDb.value[p.id] = { base_price: p.base_price ?? 0, ha_rate: p.ha_rate ?? 0, label: p.label }
 }
 
+const getBase = (plan: string) => plansDb.value[plan]?.base_price ?? 0
+const getRate = (plan: string) => plansDb.value[plan]?.ha_rate ?? 0
+
 const calculatedPrice = computed(() => {
-  const base = BASE_RATE[selectedPlan.value] ?? 0
-  const rate = HA_RATE[selectedPlan.value] ?? 0
-  return base + (hectares.value > 0 ? hectares.value * rate : 0)
+  return getBase(selectedPlan.value) + (hectares.value > 0 ? hectares.value * getRate(selectedPlan.value) : 0)
 })
 
 const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDiscount.value : loyaltyDiscount.value)

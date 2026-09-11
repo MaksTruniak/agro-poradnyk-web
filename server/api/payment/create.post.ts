@@ -30,29 +30,26 @@ export default defineEventHandler(async (event) => {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
   if (authErr || !user) throw createError({ statusCode: 401, message: 'Unauthorized' })
 
-  // Динамічна ціна: business = 299 + 10*га, business_pro = 599 + 15*га
-  const DYNAMIC_PLANS: Record<string, { base: number; haRate: number; label: string }> = {
-    business:     { base: 299, haRate: 10, label: 'Бізнес' },
-    business_pro: { base: 599, haRate: 15, label: 'Бізнес Про' },
-  }
+  // Беремо план з БД
+  const { data: planData } = await supabase
+    .from('plans')
+    .select('label, base_price, ha_rate, is_active')
+    .eq('id', plan)
+    .single()
 
-  let planLabel = ''
+  if (!planData || !planData.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
+
   let basePrice = 0
-  let planData: { price_uah: number; label: string; is_active: boolean } | null = null
+  let planLabel = planData.label
 
-  if (DYNAMIC_PLANS[plan]) {
-    const dp = DYNAMIC_PLANS[plan]
+  if (planData.ha_rate > 0) {
+    // Ціна з гектарами
     const ha = Number(hectares) || 0
     if (ha < 1) throw createError({ statusCode: 400, message: 'Hectares required' })
-    basePrice = dp.base + ha * dp.haRate
-    planLabel = `${dp.label} (${ha} га)`
-    planData = { price_uah: basePrice, label: planLabel, is_active: true }
+    basePrice = (planData.base_price || 0) + ha * planData.ha_rate
+    planLabel = `${planData.label} (${ha} га)`
   } else {
-    const { data } = await supabase.from('plans').select('price_uah, label, is_active').eq('id', plan).single()
-    if (!data || !data.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
-    planData = data
-    basePrice = data.price_uah
-    planLabel = data.label
+    basePrice = planData.base_price || 0
   }
 
   // Знижка за лояльністю з БД
