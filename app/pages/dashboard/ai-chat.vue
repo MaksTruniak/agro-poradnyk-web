@@ -159,9 +159,9 @@
             <span class="text-lg shrink-0">🔒</span>
             <div class="flex-1">
               <p class="font-medium text-amber-800">Показано лише 7 днів історії</p>
-              <p class="text-amber-600 text-xs mt-0.5">Перейдіть на PRO щоб бачити повну історію</p>
+              <p class="text-amber-600 text-xs mt-0.5">Перейдіть на Бізнес щоб бачити повну історію</p>
             </div>
-            <NuxtLink :to="proLink" class="text-xs font-bold text-amber-700 hover:text-amber-900 shrink-0">PRO →</NuxtLink>
+            <NuxtLink :to="proLink" class="text-xs font-bold text-amber-700 hover:text-amber-900 shrink-0">Бізнес →</NuxtLink>
           </div>
 
           <div v-for="(msg, i) in messages" :key="i" class="flex gap-3" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
@@ -235,8 +235,17 @@
         </template>
       </div>
 
+      <!-- Basic — AI недоступний -->
+      <div v-if="!isPro" class="px-6 py-5 border-t border-agro-border bg-white shrink-0 text-center">
+        <p class="font-semibold text-agro-dark mb-1">🌿 AI агроном — у тарифі Бізнес</p>
+        <p class="text-sm text-agro-light mb-3">Необмежені консультації, аналіз фото, захист культур — доступні на платному тарифі.</p>
+        <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5">
+          Перейти на Бізнес →
+        </NuxtLink>
+      </div>
+
       <!-- Ліміт вичерпано -->
-      <div v-if="monthlyTextCount >= textLimit" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center">
+      <div v-else-if="monthlyTextCount >= textLimit" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center">
         <p class="font-semibold text-agro-dark mb-1">🔒 Місячний ліміт вичерпано</p>
         <p class="text-sm text-agro-light mb-3">Ліміт запитів на цей місяць: {{ textLimit }}. Оновіть тариф для збільшення.</p>
         <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5">
@@ -474,7 +483,7 @@ const queryAnalyzeCard = computed(() => route.query.analyzeCard === '1')
 
 const loading = ref(true)
 const currentPlan = ref<'basic' | 'pro' | 'business' | 'enterprise'>('basic')
-const isPro = computed(() => currentPlan.value !== 'basic')
+const isPro = computed(() => currentPlan.value === 'business' || currentPlan.value === 'business_pro')
 const isAgronomist = import.meta.client
   ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
   : false
