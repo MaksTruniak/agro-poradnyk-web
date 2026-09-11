@@ -103,7 +103,7 @@
 
       <!-- Basic — заглушка -->
       <div v-if="!hasPaidPlan" class="card text-center py-16">
-        <div class="dash-empty-icon mx-auto mb-5">
+        <div class="w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-5">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 20V10M12 20V4M18 20v-7"/>
           </svg>
