@@ -193,6 +193,7 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/dashboard':                   { paths: [{ d: 'M4 11l8-7 8 7M6 10v10h12V10', sw: 1.7, lj: 'round' }] },
   '/dashboard/fields':            { paths: [{ d: 'M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z', sw: 1.6, lj: 'round' }] },
   '/dashboard/analytics':         { paths: [{ d: 'M6 20V10M12 20V4M18 20v-7', sw: 1.8, lc: 'round' }] },
+  '/dashboard/expenses':          { paths: [{ d: 'M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6', sw: 1.7, lc: 'round' }] },
   '/pesticides':                  { paths: [{ d: 'M4 6a2 2 0 012-2h5v16H6a2 2 0 01-2-2V6zM20 6a2 2 0 00-2-2h-5v16h5a2 2 0 002-2V6z', sw: 1.6, lj: 'round' }] },
   '/dashboard/ai-chat':           { paths: [{ d: 'M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z', sw: 1.4, lj: 'round' }] },
   '/dashboard/reminders':         { paths: [{ d: 'M6 20V13a6 6 0 0112 0v7', sw: 1.6, lj: 'round' }, { d: 'M4 20h16', sw: 1.6, lc: 'round' }] },
@@ -507,7 +508,10 @@ const navItems = computed(() => {
     { to: '/dashboard/inventory', label: 'Склад' },
     { to: '/dashboard/team', label: 'Співробітники' },
   ]
-  if (role.value !== 'dacha') mainItems.splice(1, 0, { to: '/dashboard/analytics', label: 'Аналітика' })
+  if (role.value !== 'dacha') {
+    mainItems.splice(1, 0, { to: '/dashboard/analytics', label: 'Аналітика' })
+    mainItems.splice(2, 0, { to: '/dashboard/expenses', label: 'Витрати' })
+  }
   return [
     { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
     { label: 'Моє господарство', items: mainItems },
