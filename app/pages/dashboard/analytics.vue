@@ -100,6 +100,22 @@
 
     <!-- Аналітика фермера -->
     <template v-else>
+
+      <!-- Basic — заглушка -->
+      <div v-if="!hasPaidPlan" class="card text-center py-16">
+        <div class="dash-empty-icon mx-auto mb-5">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 20V10M12 20V4M18 20v-7"/>
+          </svg>
+        </div>
+        <p class="font-bold text-agro-dark text-lg mb-2">Аналітика</p>
+        <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Детальна статистика полів, культур і продажів — доступна на тарифі Бізнес</p>
+        <NuxtLink to="/dashboard/subscription" class="dash-btn-primary inline-flex">
+          Перейти на Бізнес →
+        </NuxtLink>
+      </div>
+
+      <template v-else>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="card text-center">
           <p class="text-3xl font-extrabold text-agro">{{ totalHa }}</p>
@@ -235,6 +251,7 @@
           </div>
         </div>
       </div>
+      </template><!-- end v-else hasPaidPlan -->
     </template>
   </div>
 </template>
@@ -279,6 +296,12 @@ const uid = session?.user?.id
 
 const { data: userData } = await supabase.from('users').select('role').eq('id', uid).single()
 const isSeller = userData?.role === 'seller'
+
+const { data: subData } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle()
+const subPlan = subData?.plan ?? 'basic'
+const subActive = !subData?.expires_at || new Date(subData.expires_at) > new Date()
+const currentPlan = subActive ? subPlan : 'basic'
+const hasPaidPlan = currentPlan === 'business' || currentPlan === 'business_pro'
 
 // Фермер computed
 const totalHa = computed(() => farms.value.reduce((s, f) => s + (f.hectares || 0), 0).toFixed(1).replace(/\.0$/, ''))
