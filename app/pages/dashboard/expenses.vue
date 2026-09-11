@@ -10,7 +10,7 @@
         <h1 class="dash-title bitter">Витрати та прибуток</h1>
         <p class="dash-subtitle">Фінансовий облік господарства</p>
       </div>
-      <button @click="openAddModal" class="btn-primary inline-flex items-center gap-1.5 shrink-0">
+      <button v-if="hasPaidPlan" @click="openAddModal" class="btn-primary inline-flex items-center gap-1.5 shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати
       </button>
