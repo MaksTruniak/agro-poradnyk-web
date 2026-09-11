@@ -81,7 +81,7 @@
               </select>
             </div>
             <div v-if="limitReached" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-              Досягнуто ліміт співробітників для тарифу <strong>{{ currentPlan === 'pro' ? 'PRO' : 'Business' }}</strong>.
+              Досягнуто ліміт співробітників для тарифу <strong>Бізнес</strong>.
               <NuxtLink to="/dashboard/subscription" class="underline ml-1">Оновити план →</NuxtLink>
             </div>
             <button @click="sendInvite" :disabled="inviting || !inviteEmail.trim() || limitReached"
@@ -129,15 +129,11 @@
           <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Запросіть команду для спільного доступу до акаунту</p>
           <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6 text-sm">
             <div class="flex items-center gap-2 px-4 py-2 bg-agro-bg rounded-xl">
-              <span class="font-semibold text-agro-dark">PRO</span>
-              <span class="text-agro-light">— до 2 співробітників</span>
-            </div>
-            <div class="flex items-center gap-2 px-4 py-2 bg-agro-bg rounded-xl">
-              <span class="font-semibold text-agro-dark">Business</span>
+              <span class="font-semibold text-agro-dark">Бізнес</span>
               <span class="text-agro-light">— до 5 співробітників</span>
             </div>
             <div class="flex items-center gap-2 px-4 py-2 bg-agro-bg rounded-xl">
-              <span class="font-semibold text-agro-dark">Enterprise</span>
+              <span class="font-semibold text-agro-dark">Бізнес Про</span>
               <span class="text-agro-light">— необмежено</span>
             </div>
           </div>
