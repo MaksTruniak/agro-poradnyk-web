@@ -7,8 +7,8 @@
         </svg>
       </div>
       <div class="flex-1 min-w-0">
-        <h1 class="dash-title bitter">Інвойси</h1>
-        <p class="dash-subtitle">Історія платежів</p>
+        <h1 class="dash-title bitter">Платежі</h1>
+        <p class="dash-subtitle">Історія оплат</p>
       </div>
     </div>
 
@@ -23,7 +23,7 @@
         </svg>
       </div>
       <p class="font-bold text-agro-dark mb-1">Платежів ще немає</p>
-      <p class="text-sm text-agro-light">Тут з'являться інвойси після першої оплати</p>
+      <p class="text-sm text-agro-light">Тут з'являться платежі після першої оплати</p>
     </div>
 
     <div v-else class="card overflow-hidden p-0">
@@ -62,22 +62,11 @@
       </div>
     </div>
 
-    <!-- Активна підписка -->
-    <div v-if="subscription" class="card mt-4">
-      <p class="text-xs text-agro-light uppercase tracking-wide mb-2 font-semibold">Активна підписка</p>
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="font-bold text-agro-dark">{{ planLabel(subscription.plan) }}</p>
-          <p class="text-sm text-agro-light mt-0.5">Діє до {{ formatDate(subscription.expires_at) }}</p>
-        </div>
-        <NuxtLink to="/dashboard/subscription" class="btn-outline text-sm py-2 px-4">Продовжити →</NuxtLink>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-useHead({ title: 'Інвойси' })
+useHead({ title: 'Платежі' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
@@ -101,12 +90,12 @@ const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
 
 const PLAN_LABELS: Record<string, string> = {
-  pro:             'PRO (місяць)',
-  pro_month:       'PRO (місяць)',
-  pro_year:        'PRO (рік)',
-  business:        'Business (місяць)',
-  business_month:  'Business (місяць)',
-  business_year:   'Business (рік)',
+  basic:           'Basic',
+  business:        'Бізнес',
+  business_pro:    'Бізнес Про',
+  pro:             'Бізнес',
+  pro_month:       'Бізнес',
+  pro_year:        'Бізнес (рік)',
   top_agronomist:  'Топ агронома',
   top_seller:      'Топ продавця',
 }

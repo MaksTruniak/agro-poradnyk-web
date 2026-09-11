@@ -523,7 +523,7 @@ const navItems = computed(() => {
     ]},
     { label: 'Акаунт', items: [
       { to: '/dashboard/subscription', label: 'Підписка' },
-      { to: '/dashboard/invoices', label: 'Інвойси' },
+      { to: '/dashboard/invoices', label: 'Платежі' },
       { to: '/dashboard/support', label: 'Підтримка' },
       { to: '/dashboard/integrations', label: 'Інтеграції' },
       { to: '/dashboard/settings', label: 'Налаштування' },
