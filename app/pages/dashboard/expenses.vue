@@ -137,10 +137,12 @@
         <div class="space-y-2">
           <div v-for="s in filteredSales" :key="s.id"
             class="flex items-center gap-3 p-3 rounded-xl hover:bg-agro-hover transition-colors">
-            <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center shrink-0 text-base">🌾</div>
+            <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center shrink-0 text-base">
+              {{ s.source === 'deal' ? '🤝' : '🌾' }}
+            </div>
             <div class="flex-1 min-w-0">
-              <p class="font-medium text-agro-dark text-sm">{{ s.crop_type }}</p>
-              <p class="text-xs text-agro-light">{{ formatDate(s.sold_at || s.created_at) }} · {{ s.quantity_tons }} т × {{ s.price_per_ton?.toLocaleString('uk-UA') }} грн/т</p>
+              <p class="font-medium text-agro-dark text-sm">{{ s.crop_type }} <span class="text-xs font-normal text-agro-light">{{ s.source === 'deal' ? '· платформа' : '· вручну' }}</span></p>
+              <p class="text-xs text-agro-light">{{ formatDate(s.sold_at || s.created_at) }} · {{ s.quantity_tons?.toFixed(2) }} т × {{ s.price_per_ton?.toLocaleString('uk-UA') }} грн/т</p>
             </div>
             <p class="font-bold text-agro shrink-0">{{ s.total_price?.toLocaleString('uk-UA') }} грн</p>
           </div>
@@ -369,11 +371,12 @@ onMounted(async () => {
   const uid = session?.user?.id
   if (!uid) { loading.value = false; return }
 
-  const [subRes, farmsRes, expRes, salesRes] = await Promise.all([
+  const [subRes, farmsRes, expRes, manualSalesRes, dealsRes] = await Promise.all([
     supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle(),
     supabase.from('farms').select('id, name, farm_crops(crop_type)').eq('user_id', uid).order('created_at'),
     supabase.from('expenses').select('*').eq('user_id', uid).order('expense_date', { ascending: false }),
     supabase.from('manual_sales').select('id, crop_type, quantity_tons, price_per_ton, total_price, sold_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('sold_at', { ascending: false }),
+    supabase.from('deals').select('id, crop_type, quantity_tons, display_quantity, unit, price_per_ton, display_price, total_price, completed_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('completed_at', { ascending: false }),
   ])
 
   const plan = subRes.data?.plan ?? 'basic'
@@ -387,7 +390,22 @@ onMounted(async () => {
   farms.value.forEach(f => { farmMap[f.id] = f.name })
 
   expenses.value = (expRes.data || []).map(e => ({ ...e, farm_name: e.farm_id ? farmMap[e.farm_id] : null }))
-  sales.value = salesRes.data || []
+
+  // Об'єднуємо manual_sales і deals в один список продажів
+  const manualSales = (manualSalesRes.data || []).map(s => ({ ...s, source: 'manual' }))
+  const platformDeals = (dealsRes.data || []).map(d => ({
+    id: d.id,
+    crop_type: d.crop_type,
+    quantity_tons: d.unit === 'кг' ? (d.display_quantity || 0) / 1000 : (d.display_quantity || d.quantity_tons || 0),
+    price_per_ton: d.display_price || d.price_per_ton,
+    total_price: d.total_price,
+    sold_at: d.completed_at || d.created_at,
+    created_at: d.created_at,
+    source: 'deal',
+  }))
+  sales.value = [...manualSales, ...platformDeals].sort((a, b) =>
+    new Date(b.sold_at || b.created_at).getTime() - new Date(a.sold_at || a.created_at).getTime()
+  )
 
   loading.value = false
 })
