@@ -178,3 +178,53 @@ export async function sendLowStockEmail(
     `,
   })
 }
+
+export async function sendReminderEmail(to: string, name: string, reminders: { description: string; scheduled_date: string; type: string }[]) {
+  const UK_TYPES: Record<string, string> = {
+    'обробка': '🌿', 'підживлення': '🌱', 'полив': '💧', 'посів': '🌾', 'збір': '🍎', 'інше': '🔔',
+  }
+  const rows = reminders.map(r => {
+    const date = new Date(r.scheduled_date)
+    const timeStr = date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false })
+    const icon = UK_TYPES[r.type] || '🔔'
+    return `
+      <tr>
+        <td style="padding:12px 16px;border-bottom:1px solid #eee;font-size:20px;width:36px">${icon}</td>
+        <td style="padding:12px 16px;border-bottom:1px solid #eee">
+          <div style="font-weight:600;color:#1B2E1B;font-size:15px">${r.description}</div>
+          <div style="color:#7a8a72;font-size:13px;margin-top:2px">${r.type} · ${timeStr}</div>
+        </td>
+      </tr>`
+  }).join('')
+
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `🔔 Нагадування на сьогодні — АгроПростір`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
+        <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
+        </div>
+        <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
+          <h2 style="margin:0 0 8px;font-size:20px">Привіт, ${name}!</h2>
+          <p style="color:#5B6B53;margin:0 0 24px;font-size:14px">
+            Сьогодні у вас заплановані наступні події:
+          </p>
+          <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+            ${rows}
+          </table>
+          <div style="margin-top:24px;text-align:center">
+            <a href="https://agroprostir.com.ua/dashboard/reminders"
+              style="display:inline-block;background:#2f5233;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+              Відкрити нагадування →
+            </a>
+          </div>
+          <p style="color:#aaa;font-size:12px;text-align:center;margin-top:20px">
+            АгроПростір · <a href="https://agroprostir.com.ua/dashboard/reminders" style="color:#aaa">Керувати нагадуваннями</a>
+          </p>
+        </div>
+      </div>
+    `,
+  })
+}
