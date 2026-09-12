@@ -54,8 +54,28 @@
       <!-- Фермер: агрокалендар + список -->
       <template v-else>
 
+        <!-- Підказки агрокалендаря — gate для Basic -->
+        <div v-if="calendarTips.length && !hasPaidPlan" class="mb-5 relative">
+          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально цього місяця</p>
+          <div class="space-y-2 select-none pointer-events-none">
+            <div v-for="tip in calendarTips.slice(0, 2)" :key="tip.id"
+              class="card flex items-start gap-3 py-3 px-4 blur-sm opacity-60">
+              <div class="w-9 h-9 rounded-xl bg-agro-hover shrink-0" />
+              <div class="flex-1">
+                <div class="h-3 bg-gray-200 rounded w-2/3 mb-2" />
+                <div class="h-2 bg-gray-100 rounded w-full" />
+              </div>
+            </div>
+          </div>
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center bg-white/70 rounded-xl backdrop-blur-[1px]">
+            <p class="font-bold text-agro-dark text-sm mb-1">Агрокалендар доступний на тарифі Бізнес</p>
+            <p class="text-xs text-agro-light mb-3">Підказки по догляду за культурами з AI поясненнями</p>
+            <NuxtLink to="/dashboard/invoices" class="dash-btn-primary inline-flex text-sm">Перейти на Бізнес →</NuxtLink>
+          </div>
+        </div>
+
         <!-- Підказки агрокалендаря -->
-        <div v-if="calendarTips.length" class="mb-5">
+        <div v-else-if="calendarTips.length && hasPaidPlan" class="mb-5">
           <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально цього місяця</p>
           <div class="space-y-2">
             <div v-for="tip in calendarTips" :key="tip.id" class="card py-3 px-4">
@@ -266,6 +286,7 @@ const tipExplanations = ref<Record<string, string>>({})
 const tipLoading = ref<Record<string, boolean>>({})
 const farmerRegion = ref('')
 const cropAreas = ref<Record<string, number>>({})
+const hasPaidPlan = ref(false)
 
 const explainTip = async (tip: any) => {
   if (tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
@@ -294,6 +315,11 @@ const CATEGORY_SVG: Record<string, string> = {
 const loadCalendarTips = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
+
+  const subRes = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).maybeSingle()
+  const plan = subRes.data?.plan ?? 'basic'
+  const active = !subRes.data?.expires_at || new Date(subRes.data.expires_at) > new Date()
+  hasPaidPlan.value = active && (plan === 'business' || plan === 'business_pro')
   const currentMonth = new Date().getMonth() + 1
 
   const { data: farms } = await supabase.from('farms')
