@@ -51,8 +51,46 @@
         </div>
       </template>
 
-      <!-- Фермер: звичайний список -->
+      <!-- Фермер: агрокалендар + список -->
       <template v-else>
+
+        <!-- Підказки агрокалендаря -->
+        <div v-if="calendarTips.length" class="mb-5">
+          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально цього місяця</p>
+          <div class="space-y-2">
+            <div v-for="tip in calendarTips" :key="tip.id"
+              class="card flex items-start gap-3 py-3 px-4 cursor-pointer hover:shadow-sm transition-shadow"
+              @click="addFromCalendar(tip)">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                :class="{
+                  'bg-red-50 text-red-500': tip.urgency === 'high',
+                  'bg-amber-50 text-amber-500': tip.urgency === 'medium',
+                  'bg-agro-hover text-agro': tip.urgency === 'low',
+                }">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="CATEGORY_SVG[tip.category]" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="font-semibold text-agro-dark text-sm">{{ tip.title }}</p>
+                  <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                    :class="{
+                      'bg-red-50 text-red-600': tip.urgency === 'high',
+                      'bg-amber-50 text-amber-600': tip.urgency === 'medium',
+                      'bg-agro-hover text-agro': tip.urgency === 'low',
+                    }">
+                    {{ tip.urgency === 'high' ? 'Важливо' : tip.urgency === 'medium' ? 'Рекомендовано' : 'Опційно' }}
+                  </span>
+                  <span class="text-xs text-agro-light">{{ tip.crop_type }}</span>
+                </div>
+                <p class="text-xs text-agro-light mt-0.5 line-clamp-2">{{ tip.description }}</p>
+              </div>
+              <div class="shrink-0 text-agro-light hover:text-agro transition-colors" title="Додати як нагадування">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div v-if="reminders.length === 0" class="card text-center py-16">
           <div class="dash-empty-icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -203,6 +241,63 @@ const isAgronomist = ref(
     : false
 )
 
+const calendarTips = ref<any[]>([])
+
+const CATEGORY_SVG: Record<string, string> = {
+  pest:        '<path d="M12 2a5 5 0 100 10A5 5 0 0012 2z"/><path d="M12 12v10"/><path d="M8 14l-4 2"/><path d="M16 14l4 2"/>',
+  disease:     '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  nutrition:   '<path d="M12 22V12"/><path d="M5 3a7 7 0 007 7 7 7 0 00-7-7"/><path d="M19 3a7 7 0 01-7 7 7 7 0 017-7"/>',
+  irrigation:  '<path d="M20 16.2A4.5 4.5 0 0018 8h-1.26a8 8 0 10-12.62 8"/><line x1="8" y1="16" x2="8" y2="21"/><line x1="16" y1="16" x2="16" y2="21"/><line x1="12" y1="19" x2="12" y2="23"/>',
+  harvest:     '<path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 21h18"/>',
+  preparation: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>',
+}
+
+const loadCalendarTips = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const currentMonth = new Date().getMonth() + 1
+
+  const { data: farms } = await supabase.from('farms')
+    .select('id, name, farm_crops(crop_type)')
+    .eq('user_id', user.id)
+
+  const cropSet = new Set<string>()
+  for (const farm of (farms || [])) {
+    for (const fc of (farm.farm_crops || [])) {
+      if (fc.crop_type) cropSet.add(fc.crop_type)
+    }
+  }
+
+  if (cropSet.size === 0) return
+
+  const { data: allTips } = await supabase.from('agro_calendar')
+    .select('*')
+    .eq('month', currentMonth)
+    .order('urgency', { ascending: true })
+
+  const crops = [...cropSet].map(c => c.toLowerCase())
+  const tips = (allTips || []).filter(tip =>
+    crops.some(c => c.includes(tip.crop_type.toLowerCase()) || tip.crop_type.toLowerCase().includes(c.split(' ')[0]))
+  )
+
+  calendarTips.value = tips
+}
+
+const addFromCalendar = (tip: any) => {
+  const now = new Date()
+  calMonth.value = now.getMonth()
+  calYear.value = now.getFullYear()
+  Object.assign(newForm, {
+    title: tip.title,
+    note: tip.description,
+    type: tip.category === 'irrigation' ? 'полив' : tip.category === 'harvest' ? 'збір' : tip.category === 'nutrition' ? 'підживлення' : 'обробка',
+    date: '',
+    hour: 9,
+    minute: 0,
+  })
+  showAdd.value = true
+}
+
 const TYPES = [
   { value: 'обробка',     label: 'Обробка',     icon: '<path d="M9 3h6"/><path d="M10 3v5L5 17.5A1 1 0 006 19h12a1 1 0 00.87-1.5L14 8V3"/><line x1="8" y1="13" x2="16" y2="13"/>' },
   { value: 'підживлення', label: 'Підживлення', icon: '<path d="M12 22V12"/><path d="M5 3a7 7 0 0 0 7 7 7 7 0 0 0-7-7"/><path d="M19 3a7 7 0 0 1-7 7 7 7 0 0 1 7-7"/>' },
@@ -265,7 +360,7 @@ const load = async () => {
 
   loading.value = false
 }
-onMounted(load)
+onMounted(() => { load(); if (!isAgronomist.value) loadCalendarTips() })
 
 const formatDate = (d: string) => d
   ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
