@@ -31,18 +31,9 @@
     <template v-else>
       <!-- Фільтри -->
       <div class="flex flex-wrap gap-3 mb-5">
-        <select v-model="filterYear" class="input w-auto">
-          <option v-for="y in years" :key="y" :value="y">{{ y }} рік</option>
-        </select>
-        <select v-model="filterCrop" class="input w-auto">
-          <option value="">Всі культури</option>
-          <option v-for="c in cropOptions" :key="c" :value="c">{{ c }}</option>
-        </select>
-        <select v-model="filterFarm" class="input w-auto">
-          <option value="">Всі поля</option>
-          <option value="__general__">Загальні</option>
-          <option v-for="f in farms" :key="f.id" :value="f.id">{{ f.name }}</option>
-        </select>
+        <UiAppSelect v-model="filterYear" :options="years.map(y => ({ value: y, label: y + ' рік' }))" class="w-36" />
+        <UiAppSelect v-model="filterCrop" :options="[{ value: '', label: 'Всі культури' }, ...cropOptions.map(c => ({ value: c, label: c }))]" class="w-44" />
+        <UiAppSelect v-model="filterFarm" :options="[{ value: '', label: 'Всі поля' }, { value: '__general__', label: 'Загальні' }, ...farms.map(f => ({ value: f.id, label: f.name }))]" class="w-44" />
       </div>
 
       <!-- Картки підсумку -->
@@ -198,19 +189,15 @@
           <!-- Поле -->
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Поле (необов'язково)</label>
-            <select v-model="modal.farm_id" class="input">
-              <option value="">Загальна витрата</option>
-              <option v-for="f in farms" :key="f.id" :value="f.id">{{ f.name }}</option>
-            </select>
+            <UiAppSelect v-model="modal.farm_id" :drop-up="true"
+              :options="[{ value: '', label: 'Загальна витрата' }, ...farms.map(f => ({ value: f.id, label: f.name }))]" />
           </div>
 
           <!-- Культура -->
           <div v-if="modal.farm_id">
             <label class="block text-sm font-medium text-agro-dark mb-1">Культура (необов'язково)</label>
-            <select v-model="modal.crop_type" class="input">
-              <option value="">Без культури</option>
-              <option v-for="c in farmCrops(modal.farm_id)" :key="c" :value="c">{{ c }}</option>
-            </select>
+            <UiAppSelect v-model="modal.crop_type" :drop-up="true"
+              :options="[{ value: '', label: 'Без культури' }, ...farmCrops(modal.farm_id).map(c => ({ value: c, label: c }))]" />
           </div>
         </div>
 
