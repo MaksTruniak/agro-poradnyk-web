@@ -75,7 +75,7 @@
         <div class="space-y-2">
           <div v-for="cat in categoryTotals" :key="cat.key" class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" :style="{ background: cat.bg }">
-              <span class="text-base">{{ cat.icon }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" :stroke="cat.color" v-html="cat.svg" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between mb-1">
@@ -108,9 +108,11 @@
         <div v-else class="space-y-2">
           <div v-for="exp in filteredExpenses" :key="exp.id"
             class="flex items-center gap-3 p-3 rounded-xl hover:bg-agro-hover transition-colors group">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-base"
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               :style="{ background: CATEGORIES[exp.category]?.bg || '#f3f4f6' }">
-              {{ CATEGORIES[exp.category]?.icon || '📦' }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                :stroke="CATEGORIES[exp.category]?.color || '#6b7280'"
+                v-html="CATEGORIES[exp.category]?.svg || CATEGORIES.other.svg" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="font-medium text-agro-dark text-sm truncate">
@@ -167,9 +169,9 @@
             <div class="grid grid-cols-3 gap-2">
               <button v-for="(cat, key) in CATEGORIES" :key="key"
                 @click="modal.category = key"
-                :class="['flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-xs font-medium',
+                :class="['flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-xs font-medium',
                   modal.category === key ? 'border-agro bg-agro/10 text-agro' : 'border-agro-border hover:bg-agro-hover text-agro-dark']">
-                <span class="text-xl">{{ cat.icon }}</span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" :stroke="modal.category === key ? 'rgb(47,82,51)' : 'rgb(107,122,100)'" v-html="cat.svg" />
                 {{ cat.label }}
               </button>
             </div>
@@ -231,13 +233,13 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const supabase = useSupabaseClient()
 const loading = ref(true)
 
-const CATEGORIES: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  fuel:       { label: 'Паливо',    icon: '⛽', color: '#ef4444', bg: '#fef2f2' },
-  fertilizer: { label: 'Добрива',   icon: '🌱', color: '#22c55e', bg: '#f0fdf4' },
-  chemicals:  { label: 'ЗЗР',       icon: '🧪', color: '#a855f7', bg: '#faf5ff' },
-  machinery:  { label: 'Техніка',   icon: '🚜', color: '#f97316', bg: '#fff7ed' },
-  labor:      { label: 'Праця',     icon: '👷', color: '#3b82f6', bg: '#eff6ff' },
-  other:      { label: 'Інше',      icon: '📦', color: '#6b7280', bg: '#f9fafb' },
+const CATEGORIES: Record<string, { label: string; icon: string; svg: string; color: string; bg: string }> = {
+  fuel:       { label: 'Паливо',  icon: '⛽', color: '#ef4444', bg: '#fef2f2', svg: '<path d="M3 22V8l2-4h10l2 4v14" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12h14M7 8v4M13 8v4" stroke-width="1.6" stroke-linecap="round"/><path d="M17 8h1a2 2 0 012 2v3a2 2 0 002 2v5" stroke-width="1.6" stroke-linecap="round"/><path d="M21 20a1 1 0 01-2 0v-2h2v2z" stroke-width="1.4"/>' },
+  fertilizer: { label: 'Добрива', icon: '🌱', color: '#22c55e', bg: '#f0fdf4', svg: '<path d="M12 22V12" stroke-width="1.6" stroke-linecap="round"/><path d="M12 12C12 7 7 4 3 5c0 4 3 8 9 7z" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12c0-5 5-8 9-7-1 4-4 8-9 7z" stroke-width="1.6" stroke-linejoin="round"/>' },
+  chemicals:  { label: 'ЗЗР',     icon: '🧪', color: '#a855f7', bg: '#faf5ff', svg: '<path d="M9 3h6M10 3v5l-5 9a2 2 0 001.7 3h10.6A2 2 0 0019 17l-5-9V3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 14h7" stroke-width="1.6" stroke-linecap="round"/>' },
+  machinery:  { label: 'Техніка', icon: '🚜', color: '#f97316', bg: '#fff7ed', svg: '<path d="M3 17a3 3 0 106 0 3 3 0 00-6 0zM14 17a3 3 0 106 0 3 3 0 00-6 0z" stroke-width="1.6"/><path d="M9 17H6M17 17h-3M6 17V9l3-5h8l2 4v9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 9h10" stroke-width="1.6" stroke-linecap="round"/>' },
+  labor:      { label: 'Праця',   icon: '👷', color: '#3b82f6', bg: '#eff6ff', svg: '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke-width="1.6"/><path d="M20 8v6M23 11h-6" stroke-width="1.6" stroke-linecap="round"/>' },
+  other:      { label: 'Інше',    icon: '📦', color: '#6b7280', bg: '#f9fafb', svg: '<path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" stroke-width="1.6" stroke-linejoin="round"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" stroke-width="1.6" stroke-linecap="round"/>' },
 }
 
 // Стан
