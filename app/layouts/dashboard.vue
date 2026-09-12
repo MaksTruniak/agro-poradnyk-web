@@ -510,7 +510,7 @@ const navItems = computed(() => {
   ]
   if (role.value !== 'dacha') {
     mainItems.splice(1, 0, { to: '/dashboard/analytics', label: 'Аналітика' })
-    mainItems.splice(2, 0, { to: '/dashboard/expenses', label: 'Витрати' })
+    mainItems.splice(2, 0, { to: '/dashboard/expenses', label: 'Витрати / Доходи' })
   }
   return [
     { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
