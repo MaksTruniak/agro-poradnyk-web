@@ -213,7 +213,7 @@
         <div class="flex gap-3 mt-6">
           <button @click="modal.open = false" class="btn-outline flex-1">Скасувати</button>
           <button @click="saveExpense" :disabled="!modal.amount || !modal.category || modal.saving"
-            class="btn-primary flex-1 disabled:opacity-50">
+            class="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center">
             {{ modal.saving ? 'Збереження...' : 'Зберегти' }}
           </button>
         </div>
