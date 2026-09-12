@@ -265,14 +265,16 @@ const calendarTips = ref<any[]>([])
 const tipExplanations = ref<Record<string, string>>({})
 const tipLoading = ref<Record<string, boolean>>({})
 const farmerRegion = ref('')
+const cropAreas = ref<Record<string, number>>({})
 
 const explainTip = async (tip: any) => {
   if (tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
   tipLoading.value[tip.id] = true
   try {
+    const area_ha = cropAreas.value[tip.crop_type.toLowerCase()] || null
     const res = await $fetch<{ explanation: string }>('/api/calendar-explain', {
       method: 'POST',
-      body: { tip, region: farmerRegion.value },
+      body: { tip, region: farmerRegion.value, area_ha },
     })
     tipExplanations.value[tip.id] = res.explanation
   } finally {
@@ -295,14 +297,18 @@ const loadCalendarTips = async () => {
   const currentMonth = new Date().getMonth() + 1
 
   const { data: farms } = await supabase.from('farms')
-    .select('id, name, region, farm_crops(crop_type)')
+    .select('id, name, region, farm_crops(crop_type, area_ha)')
     .eq('user_id', user.id)
 
   const cropSet = new Set<string>()
   for (const farm of (farms || [])) {
     if (farm.region && !farmerRegion.value) farmerRegion.value = farm.region
     for (const fc of (farm.farm_crops || [])) {
-      if (fc.crop_type) cropSet.add(fc.crop_type)
+      if (fc.crop_type) {
+        cropSet.add(fc.crop_type)
+        const key = fc.crop_type.toLowerCase()
+        cropAreas.value[key] = (cropAreas.value[key] || 0) + (parseFloat(fc.area_ha) || 0)
+      }
     }
   }
 
@@ -314,9 +320,22 @@ const loadCalendarTips = async () => {
     .order('urgency', { ascending: true })
 
   const crops = [...cropSet].map(c => c.toLowerCase())
-  const tips = (allTips || []).filter(tip =>
-    crops.some(c => c.includes(tip.crop_type.toLowerCase()) || tip.crop_type.toLowerCase().includes(c.split(' ')[0]))
-  )
+  const tips = (allTips || []).filter(tip => {
+    const tc = tip.crop_type.toLowerCase()
+    return crops.some(c => {
+      // Точний збіг
+      if (c === tc) return true
+      // Культура фермера містить назву з календаря (напр. "смородина чорна" містить "смородина")
+      // але НЕ якщо в календарі є уточнення кольору якого немає у фермера
+      // "смородина чорна" → матч "смородина" ✅, але НЕ "смородина червона" ✅
+      if (tc.includes(' ')) {
+        // Календар має уточнення (напр. "смородина червона") — перевіряємо точний збіг з фермером
+        return c === tc || c.startsWith(tc)
+      }
+      // Календар без уточнення (напр. "смородина") — матч якщо фермер містить це слово
+      return c.startsWith(tc) || c === tc
+    })
+  })
 
   calendarTips.value = tips
 }
