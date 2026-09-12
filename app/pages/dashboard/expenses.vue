@@ -144,8 +144,8 @@
     </template>
 
     <!-- Модальне вікно додавання витрати -->
-    <div v-if="modal.open" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-      <div class="card w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <UiAppModal v-model="modal.open">
+      <div class="p-6">
         <div class="flex items-center justify-between mb-5">
           <p class="font-bold text-agro-dark text-lg">Нова витрата</p>
           <button @click="modal.open = false" class="p-1.5 rounded-lg hover:bg-agro-hover text-agro-light">
@@ -209,7 +209,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </UiAppModal>
   </div>
 </template>
 

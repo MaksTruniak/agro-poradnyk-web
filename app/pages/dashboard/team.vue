@@ -103,7 +103,7 @@
         </div>
 
         <!-- Підтвердження видалення -->
-        <div v-if="removeTarget" class="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
+        <div v-if="removeTarget" class="modal-backdrop fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
           <div class="card w-full max-w-sm">
             <p class="font-bold text-agro-dark mb-2">Видалити доступ?</p>
             <p class="text-sm text-agro-light mb-5">{{ removeTarget.name || removeTarget.email }} більше не матиме доступу до акаунту.</p>
