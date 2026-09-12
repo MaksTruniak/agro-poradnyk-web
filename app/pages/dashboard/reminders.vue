@@ -58,34 +58,54 @@
         <div v-if="calendarTips.length" class="mb-5">
           <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально цього місяця</p>
           <div class="space-y-2">
-            <div v-for="tip in calendarTips" :key="tip.id"
-              class="card flex items-start gap-3 py-3 px-4 cursor-pointer hover:shadow-sm transition-shadow"
-              @click="addFromCalendar(tip)">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                :class="{
-                  'bg-red-50 text-red-500': tip.urgency === 'high',
-                  'bg-amber-50 text-amber-500': tip.urgency === 'medium',
-                  'bg-agro-hover text-agro': tip.urgency === 'low',
-                }">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="CATEGORY_SVG[tip.category]" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <p class="font-semibold text-agro-dark text-sm">{{ tip.title }}</p>
-                  <span class="text-xs px-2 py-0.5 rounded-full font-medium"
-                    :class="{
-                      'bg-red-50 text-red-600': tip.urgency === 'high',
-                      'bg-amber-50 text-amber-600': tip.urgency === 'medium',
-                      'bg-agro-hover text-agro': tip.urgency === 'low',
-                    }">
-                    {{ tip.urgency === 'high' ? 'Важливо' : tip.urgency === 'medium' ? 'Рекомендовано' : 'Опційно' }}
-                  </span>
-                  <span class="text-xs text-agro-light">{{ tip.crop_type }}</span>
+            <div v-for="tip in calendarTips" :key="tip.id" class="card py-3 px-4">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  :class="{
+                    'bg-red-50 text-red-500': tip.urgency === 'high',
+                    'bg-amber-50 text-amber-500': tip.urgency === 'medium',
+                    'bg-agro-hover text-agro': tip.urgency === 'low',
+                  }">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="CATEGORY_SVG[tip.category]" />
                 </div>
-                <p class="text-xs text-agro-light mt-0.5 line-clamp-2">{{ tip.description }}</p>
-              </div>
-              <div class="shrink-0 text-agro-light hover:text-agro transition-colors" title="Додати як нагадування">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <p class="font-semibold text-agro-dark text-sm">{{ tip.title }}</p>
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                      :class="{
+                        'bg-red-50 text-red-600': tip.urgency === 'high',
+                        'bg-amber-50 text-amber-600': tip.urgency === 'medium',
+                        'bg-agro-hover text-agro': tip.urgency === 'low',
+                      }">
+                      {{ tip.urgency === 'high' ? 'Важливо' : tip.urgency === 'medium' ? 'Рекомендовано' : 'Опційно' }}
+                    </span>
+                    <span class="text-xs text-agro-light">{{ tip.crop_type }}</span>
+                  </div>
+                  <p class="text-xs text-agro-light mt-0.5">{{ tip.description }}</p>
+
+                  <!-- AI пояснення -->
+                  <div v-if="tipExplanations[tip.id]" class="mt-2 p-2.5 bg-agro-bg rounded-xl text-xs text-agro-dark leading-relaxed">
+                    <span class="text-agro font-semibold">✦ AI агроном: </span>{{ tipExplanations[tip.id] }}
+                  </div>
+                  <div v-else-if="tipLoading[tip.id]" class="mt-2 flex items-center gap-1.5 text-xs text-agro-light">
+                    <svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                    AI аналізує...
+                  </div>
+
+                  <div class="flex items-center gap-2 mt-2">
+                    <button @click="explainTip(tip)"
+                      v-if="!tipExplanations[tip.id] && !tipLoading[tip.id]"
+                      class="text-xs text-agro hover:underline flex items-center gap-1">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                      Детальніше від AI
+                    </button>
+                    <button @click="addFromCalendar(tip)"
+                      class="text-xs font-medium text-agro-dark bg-agro-hover hover:bg-agro hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ml-auto">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                      Додати нагадування
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -242,6 +262,23 @@ const isAgronomist = ref(
 )
 
 const calendarTips = ref<any[]>([])
+const tipExplanations = ref<Record<string, string>>({})
+const tipLoading = ref<Record<string, boolean>>({})
+const farmerRegion = ref('')
+
+const explainTip = async (tip: any) => {
+  if (tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
+  tipLoading.value[tip.id] = true
+  try {
+    const res = await $fetch<{ explanation: string }>('/api/calendar-explain', {
+      method: 'POST',
+      body: { tip, region: farmerRegion.value },
+    })
+    tipExplanations.value[tip.id] = res.explanation
+  } finally {
+    tipLoading.value[tip.id] = false
+  }
+}
 
 const CATEGORY_SVG: Record<string, string> = {
   pest:        '<path d="M12 2a5 5 0 100 10A5 5 0 0012 2z"/><path d="M12 12v10"/><path d="M8 14l-4 2"/><path d="M16 14l4 2"/>',
@@ -258,11 +295,12 @@ const loadCalendarTips = async () => {
   const currentMonth = new Date().getMonth() + 1
 
   const { data: farms } = await supabase.from('farms')
-    .select('id, name, farm_crops(crop_type)')
+    .select('id, name, region, farm_crops(crop_type)')
     .eq('user_id', user.id)
 
   const cropSet = new Set<string>()
   for (const farm of (farms || [])) {
+    if (farm.region && !farmerRegion.value) farmerRegion.value = farm.region
     for (const fc of (farm.farm_crops || [])) {
       if (fc.crop_type) cropSet.add(fc.crop_type)
     }
