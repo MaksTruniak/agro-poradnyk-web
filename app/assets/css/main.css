@@ -10,10 +10,10 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-[#2F5233] text-[#FAF6EC] font-bold rounded-[10px] px-5 py-2.5 hover:bg-[#3D6B42] transition-colors inline-flex items-center gap-1.5;
+    @apply bg-[#2F5233] text-[#FAF6EC] font-bold rounded-[10px] px-5 h-10 text-sm hover:bg-[#3D6B42] transition-colors inline-flex items-center justify-center gap-1.5;
   }
   .btn-outline {
-    @apply border-2 border-[#2F5233] text-[#2F5233] font-bold rounded-[10px] px-5 py-2.5 hover:bg-[#EEF1E3] transition-colors box-border;
+    @apply border-2 border-[#2F5233] text-[#2F5233] font-bold rounded-[10px] px-5 h-10 text-sm hover:bg-[#EEF1E3] transition-colors box-border inline-flex items-center justify-center;
   }
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-[#E0EDCC] p-5;
@@ -76,7 +76,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 20px;
+  padding: 0 20px;
+  height: 40px;
   border-radius: 10px;
   background: rgb(47, 82, 51);
   color: rgb(250, 246, 236);

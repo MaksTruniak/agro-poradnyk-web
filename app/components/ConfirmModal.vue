@@ -8,7 +8,7 @@
             <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
               :class="state.danger ? 'bg-red-50' : 'bg-agro-hover'">
               <svg v-if="state.danger" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(179,69,47)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 12.5a1 1 0 01-1 .9H6.5a1 1 0 01-1-.9L4 7z"/><path d="M8 7a4 4 0 018 0"/></svg>
-              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <h3 class="font-bold text-agro-dark text-base mb-1">{{ state.title }}</h3>
             <p class="text-sm text-agro-light leading-relaxed">{{ state.message }}</p>
@@ -16,8 +16,9 @@
           <div class="flex gap-2 px-6 pb-5">
             <button @click="cancel" class="btn-outline flex-1">Скасувати</button>
             <button @click="accept"
-              class="flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors"
-              :class="state.danger ? 'bg-red-500 hover:bg-red-600 text-white' : 'btn-primary'">
+              :class="state.danger
+                ? 'flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors bg-red-500 hover:bg-red-600 text-white'
+                : 'btn-primary flex-1 justify-center'">
               {{ state.confirmLabel }}
             </button>
           </div>

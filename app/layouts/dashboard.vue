@@ -214,6 +214,9 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/farmers':                     { paths: [{ d: 'M20 20c0-3.3-4-5-6-5H10c-2 0-6 1.7-6 5', sw: 1.6, lc: 'round' }], circles: [{ cx: 12, cy: 9, r: 4, sw: 1.6 }] },
   '/dashboard/buyer-crops':       { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', sw: 1.6, lj: 'round' }] },
   '/dashboard/inventory':         { paths: [{ d: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18', sw: 1.6, lj: 'round' }] },
+  '/dashboard/treatments':        { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4', sw: 1.6, lj: 'round' }] },
+  '/dashboard/harvest':           { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h2M9 16h2M13 12h2M13 16h2', sw: 1.6, lj: 'round' }] },
+  '/dashboard/harvest/workers':   { paths: [{ d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', sw: 1.6, lj: 'round' }] },
   '/admin':                       { paths: [{ d: 'M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7l2-7z', sw: 1.5, lj: 'round' }] },
   '/cart':                        { paths: [{ d: 'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z', sw: 1.6, lj: 'round' }] },
 }
@@ -514,11 +517,12 @@ const navItems = computed(() => {
   }
   return [
     { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
-    { label: 'Моє господарство', items: mainItems },
+    { label: 'Моє господарство', items: [...mainItems, { to: '/dashboard/harvest', label: 'Облік збору' }] },
     { label: 'Агрономія', items: [
       { to: '/pesticides', label: 'Каталог' },
       { to: '/dashboard/ai-chat', label: 'AI агроном' },
       { to: '/dashboard/reminders', label: 'Нагадування' },
+      { to: '/dashboard/treatments', label: 'Журнал обробок' },
     ]},
     { label: 'Комунікація', items: [
       { to: '/dashboard/chats', label: 'Чати' },

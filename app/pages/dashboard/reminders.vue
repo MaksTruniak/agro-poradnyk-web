@@ -144,14 +144,15 @@
         <div v-else class="space-y-3">
           <div v-for="r in reminders" :key="r.id"
             class="card flex items-start gap-4"
-            :class="isPast(r.scheduled_date) ? 'opacity-60' : ''">
+            :class="r.completed_at ? 'opacity-50' : isPast(r.scheduled_date) ? 'opacity-60' : ''">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              :class="isPast(r.scheduled_date) ? 'bg-gray-100 text-gray-400' : 'bg-agro-hover text-agro'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[r.type] || BELL_SVG" />
+              :class="r.completed_at ? 'bg-green-50 text-green-500' : isPast(r.scheduled_date) ? 'bg-gray-100 text-gray-400' : 'bg-agro-hover text-agro'">
+              <svg v-if="r.completed_at" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[r.type] || BELL_SVG" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
-                <p class="font-semibold text-agro-dark">{{ r.description }}</p>
+                <p class="font-semibold text-agro-dark" :class="r.completed_at ? 'line-through' : ''">{{ r.description }}</p>
                 <span v-if="r.from_agronomist" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-1">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> від агронома
                 </span>
@@ -160,6 +161,18 @@
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 {{ formatDate(r.scheduled_date) }}
               </p>
+              <span v-if="r.completed_at" class="mt-2 text-xs text-green-600 font-medium inline-flex items-center gap-1">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Виконано {{ new Date(r.completed_at).toLocaleDateString('uk-UA') }}
+              </span>
+              <button v-else-if="LOGGABLE_TYPES.includes(r.type)"
+                @click="logToJournal(r)"
+                :disabled="savingJournal"
+                class="mt-2 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1"
+                :class="r.journal_data ? 'text-white bg-agro hover:bg-agro-dark' : 'text-agro bg-agro-hover hover:bg-agro hover:text-white'">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ r.journal_data ? '✓ Виконано → в журнал' : 'Виконано' }}
+              </button>
             </div>
             <button @click="deleteReminder(r.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition-colors shrink-0">
               <Trash2 :size="15" />
@@ -174,7 +187,7 @@
       <Transition name="fade">
         <div v-if="showAdd" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAdd = false" />
-          <div class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md z-10 max-h-[90vh] overflow-y-auto">
+          <div class="relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl z-10 max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-white rounded-t-3xl sm:rounded-t-2xl px-6 pt-6 pb-4 border-b border-agro-border">
               <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
               <h2 class="dash-card-title bitter">Нове нагадування</h2>
@@ -195,6 +208,49 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="t.icon" />
                     <span>{{ t.label }}</span>
                   </button>
+                </div>
+              </div>
+
+              <!-- Деталі для журналу -->
+              <div v-if="LOGGABLE_TYPES.includes(newForm.type)" class="rounded-2xl border border-agro-border bg-agro-bg p-4 space-y-3">
+                <p class="text-xs font-bold uppercase tracking-wider text-agro-light flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                  Деталі для журналу обробок
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-agro-dark mb-1.5">Поле</label>
+                    <UiAppSelect v-model="newForm.j_farm_id"
+                      :options="[{ value: '', label: 'Без прив\'язки' }, ...farms.map(f => ({ value: f.id, label: f.name }))]"
+                      @update:modelValue="onJournalFarmChange" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-agro-dark mb-1.5">Культура</label>
+                    <UiAppSelect v-if="journalFarmCrops.length" v-model="newForm.j_crop_type"
+                      :options="[{ value: '', label: 'Оберіть' }, ...journalFarmCrops.map((c: string) => ({ value: c, label: c }))]" />
+                    <input v-else v-model="newForm.j_crop_type" class="w-full px-3 py-2 border border-agro-border rounded-xl text-sm bg-white focus:outline-none focus:border-agro" placeholder="смородина" />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-agro-dark mb-1.5">Препарат / назва заходу</label>
+                  <input v-model="newForm.j_product_name" class="w-full px-3 py-2 border border-agro-border rounded-xl text-sm bg-white focus:outline-none focus:border-agro" :placeholder="newForm.title || 'Актара 25 WG...'" />
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label class="block text-xs font-semibold text-agro-dark mb-1.5">Норма / га</label>
+                    <input type="number" v-model.number="newForm.j_dose_per_ha" class="w-full px-3 py-2 border border-agro-border rounded-xl text-sm bg-white focus:outline-none focus:border-agro" placeholder="0.5" step="0.01" min="0" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-agro-dark mb-1.5">Площа (га)</label>
+                    <input type="number" v-model.number="newForm.j_area_ha" class="w-full px-3 py-2 border border-agro-border rounded-xl text-sm bg-white focus:outline-none focus:border-agro" placeholder="2" step="0.1" min="0" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-agro-dark mb-1.5">Одиниця</label>
+                    <UiAppSelect v-model="newForm.j_unit" :options="['л','мл','кг','г','т'].map(u => ({ value: u, label: u }))" />
+                  </div>
+                </div>
+                <div v-if="journalCalcTotal" class="text-xs text-agro font-semibold">
+                  Всього: {{ journalCalcTotal }} {{ newForm.j_unit }}
                 </div>
               </div>
 
@@ -275,6 +331,8 @@ const saving = ref(false)
 const showAdd = ref(false)
 const reminders = ref<any[]>([])
 const sentReminders = ref<any[]>([])
+const farms = ref<any[]>([])
+const savingJournal = ref(false)
 const isAgronomist = ref(
   import.meta.client
     ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
@@ -374,9 +432,9 @@ const addFromCalendar = (tip: any) => {
     title: tip.title,
     note: tip.description,
     type: tip.category === 'irrigation' ? 'полив' : tip.category === 'harvest' ? 'збір' : tip.category === 'nutrition' ? 'підживлення' : 'обробка',
-    date: '',
-    hour: 9,
-    minute: 0,
+    date: '', hour: 9, minute: 0,
+    j_farm_id: '', j_farm_name: '', j_crop_type: tip.crop_type || '',
+    j_product_name: '', j_dose_per_ha: null, j_area_ha: null, j_unit: 'л',
   })
   showAdd.value = true
 }
@@ -393,7 +451,40 @@ const TYPE_SVG: Record<string, string> = Object.fromEntries(TYPES.map(t => [t.va
 const BELL_SVG = '<path d="M6 20V13a6 6 0 0112 0v7"/><path d="M4 20h16"/><circle cx="12" cy="7" r="1"/>'
 const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
 
-const newForm = reactive({ title: '', note: '', type: 'інше', date: '', hour: 9, minute: 0 })
+const newForm = reactive({
+  title: '', note: '', type: 'інше', date: '', hour: 9, minute: 0,
+  // деталі для журналу (опційно)
+  j_farm_id: '', j_farm_name: '', j_crop_type: '',
+  j_product_name: '', j_dose_per_ha: null as number | null,
+  j_area_ha: null as number | null, j_unit: 'л',
+})
+
+const LOGGABLE_TYPES = ['обробка', 'підживлення', 'полив', 'посів', 'збір']
+
+const REMINDER_TO_PRODUCT_TYPE: Record<string, string> = {
+  'обробка': 'захист', 'підживлення': 'підживлення',
+  'полив': 'полив', 'посів': 'посів', 'збір': 'збір',
+}
+
+const journalFarmCrops = computed(() => {
+  const f = farms.value.find((f: any) => f.id === newForm.j_farm_id)
+  return f?.farm_crops?.map((c: any) => c.crop_type) || []
+})
+
+const onJournalFarmChange = () => {
+  const f = farms.value.find((f: any) => f.id === newForm.j_farm_id)
+  newForm.j_farm_name = f?.name || ''
+  if (f?.hectares) newForm.j_area_ha = parseFloat(f.hectares)
+  const crops = f?.farm_crops?.map((c: any) => c.crop_type) || []
+  if (crops.length === 1) newForm.j_crop_type = crops[0]
+  else newForm.j_crop_type = ''
+}
+
+const journalCalcTotal = computed(() => {
+  if (newForm.j_dose_per_ha && newForm.j_area_ha)
+    return Math.round(newForm.j_dose_per_ha * newForm.j_area_ha * 100) / 100
+  return null
+})
 
 const calMonth = ref(new Date().getMonth())
 const calYear = ref(new Date().getFullYear())
@@ -415,7 +506,11 @@ const openAdd = () => {
   const now = new Date()
   calMonth.value = now.getMonth()
   calYear.value = now.getFullYear()
-  Object.assign(newForm, { title: '', note: '', type: 'інше', date: '', hour: 9, minute: 0 })
+  Object.assign(newForm, {
+    title: '', note: '', type: 'інше', date: '', hour: 9, minute: 0,
+    j_farm_id: '', j_farm_name: '', j_crop_type: '', j_product_name: '',
+    j_dose_per_ha: null, j_area_ha: null, j_unit: 'л',
+  })
   showAdd.value = true
 }
 
@@ -425,12 +520,12 @@ const load = async () => {
   const queryUid = await getQueryUserId()  // uid власника в режимі команди
   if (!queryUid) { loading.value = false; return }
 
-  const { data: own } = await supabase.from('reminders')
-    .select('*')
-    .eq('user_id', queryUid)
-    .eq('from_agronomist', false)
-    .order('scheduled_date', { ascending: true })
+  const [{ data: own }, { data: farmsData }] = await Promise.all([
+    supabase.from('reminders').select('*').eq('user_id', queryUid).eq('from_agronomist', false).order('scheduled_date', { ascending: true }),
+    supabase.from('farms').select('*, farm_crops(*)').eq('user_id', queryUid).order('name'),
+  ])
   reminders.value = own || []
+  farms.value = farmsData || []
 
   if (isAgronomist.value) {
     const { data: sent } = await supabase.from('reminders')
@@ -443,7 +538,32 @@ const load = async () => {
 
   loading.value = false
 }
-onMounted(() => { load(); if (!isAgronomist.value) loadCalendarTips() })
+onMounted(() => {
+  load()
+  if (!isAgronomist.value) loadCalendarTips()
+
+  const route = useRoute()
+  if (route.query.title) {
+    const now = new Date()
+    calMonth.value = now.getMonth()
+    calYear.value = now.getFullYear()
+    const q = route.query as Record<string, string>
+    Object.assign(newForm, {
+      title: q.title || '',
+      note: '',
+      type: q.type || 'обробка',
+      date: '', hour: 9, minute: 0,
+      j_farm_id: q.farm_id || '',
+      j_farm_name: q.farm_name || '',
+      j_crop_type: q.crop_type || '',
+      j_product_name: q.product_name || '',
+      j_dose_per_ha: q.dose_per_ha ? parseFloat(q.dose_per_ha) : null,
+      j_area_ha: q.area_ha ? parseFloat(q.area_ha) : null,
+      j_unit: q.unit || 'л',
+    })
+    showAdd.value = true
+  }
+})
 
 const formatDate = (d: string) => d
   ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
@@ -458,16 +578,68 @@ const addReminder = async () => {
   const queryUid = await getQueryUserId()
   const [y, m, d] = newForm.date.split('-').map(Number)
   const iso = new Date(y, m - 1, d, Number(newForm.hour), Number(newForm.minute), 0).toISOString()
+  const hasJournalData = LOGGABLE_TYPES.includes(newForm.type) && (newForm.j_product_name || newForm.j_dose_per_ha || newForm.j_farm_id)
   await supabase.from('reminders').insert({
     user_id: queryUid,
     description: newForm.title,
     scheduled_date: iso,
     type: newForm.type,
     from_agronomist: false,
+    journal_data: hasJournalData ? {
+      farm_id: newForm.j_farm_id || null,
+      farm_name: newForm.j_farm_name || null,
+      crop_type: newForm.j_crop_type || null,
+      product_name: newForm.j_product_name || newForm.title,
+      product_type: REMINDER_TO_PRODUCT_TYPE[newForm.type] || 'other',
+      dose_per_ha: newForm.j_dose_per_ha || null,
+      area_ha: newForm.j_area_ha || null,
+      total_amount: journalCalcTotal.value,
+      unit: newForm.j_unit,
+    } : null,
   })
   showAdd.value = false
   saving.value = false
   await load()
+}
+
+const logToJournal = async (r: any) => {
+  const confirmed = await confirmDialog(
+    r.journal_data
+      ? `Записати виконання в журнал обробок і позначити нагадування як виконане?`
+      : `Позначити нагадування як виконане?`,
+    { title: '✓ Виконано', confirmLabel: 'Виконано', danger: false }
+  )
+  if (!confirmed) return
+  savingJournal.value = true
+  try {
+    if (r.journal_data) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const jd = r.journal_data
+        const { error: jErr } = await supabase.from('field_treatments').insert({
+          user_id: session.user.id,
+          farm_id: jd.farm_id || null,
+          farm_name: jd.farm_name || null,
+          crop_type: jd.crop_type || null,
+          treatment_date: new Date(r.scheduled_date).toISOString().slice(0, 10),
+          product_name: jd.product_name || r.description,
+          product_type: jd.product_type || 'other',
+          dose_per_ha: jd.dose_per_ha || null,
+          area_ha: jd.area_ha || null,
+          total_amount: jd.total_amount || null,
+          unit: jd.unit || 'л',
+        })
+        if (jErr) console.error('[journal insert]', jErr)
+      }
+    }
+    const { error: uErr } = await supabase.from('reminders').update({ completed_at: new Date().toISOString() }).eq('id', r.id)
+    if (uErr) console.error('[reminders update]', uErr)
+    await load()
+  } catch (e) {
+    console.error('[logToJournal]', e)
+  } finally {
+    savingJournal.value = false
+  }
 }
 
 const { confirm: confirmDialog } = useConfirm()

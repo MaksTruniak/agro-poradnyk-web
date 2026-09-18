@@ -28,6 +28,20 @@ export const TREATMENT_TYPES = [
     badge: 'bg-sky-50 border-sky-200 text-sky-700',
   },
   {
+    value: 'посів',
+    label: 'Посів',
+    icon: '<path d="M12 22V12"/><path d="M12 12C12 12 7 10 7 5a5 5 0 0110 0c0 5-5 7-5 7z"/>',
+    bg: 'bg-lime-50',
+    badge: 'bg-lime-50 border-lime-200 text-lime-700',
+  },
+  {
+    value: 'збір',
+    label: 'Збір',
+    icon: '<path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 21h18"/>',
+    bg: 'bg-orange-50',
+    badge: 'bg-orange-50 border-orange-200 text-orange-700',
+  },
+  {
     value: 'інше',
     label: 'Інше',
     icon: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',

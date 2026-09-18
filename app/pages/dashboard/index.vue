@@ -71,6 +71,27 @@
             </div>
           </div>
 
+          <!-- Погода по полях -->
+          <div v-if="farmsForWeather.length && role !== 'dacha'" class="card mt-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="dash-card-title bitter">Погода по полях</h2>
+              <NuxtLink to="/dashboard/fields" class="text-sm text-agro hover:underline">Всі поля →</NuxtLink>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div v-for="farm in farmsForWeather" :key="farm.id" class="bg-agro-bg rounded-xl p-3">
+                <p class="text-xs font-semibold text-agro-dark truncate mb-1">{{ farm.name }}</p>
+                <div v-if="farmWeather[farm.id]" class="flex items-center gap-1.5">
+                  <span class="text-xl">{{ farmWeather[farm.id].icon }}</span>
+                  <span class="font-bold text-agro-dark text-base">{{ farmWeather[farm.id].temp }}°C</span>
+                  <span class="text-xs text-agro-light">{{ farmWeather[farm.id].condition }}</span>
+                </div>
+                <div v-else-if="farm.region" class="text-xs text-agro-light animate-pulse">Завантаження...</div>
+                <div v-else class="text-xs text-agro-light">Регіон не вказано</div>
+                <p v-if="farm.region" class="text-xs text-agro-light mt-1 truncate">{{ farm.region }}</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Продано -->
           <div v-if="farmerDeals.length" class="card mt-6">
             <div class="flex items-center justify-between mb-4">
@@ -300,6 +321,36 @@ const buyerCrops = ref<{ crop: string; quantity: number; total: number }[]>([])
 const farmerDeals = ref<{ crop: string; qty: string; total: number }[]>([])
 const nextReminders = ref<any[]>([])
 const recentChats = ref<any[]>([])
+const farmWeather = ref<Record<string, { temp: number; condition: string; icon: string }>>({})
+const farmsForWeather = ref<any[]>([])
+
+const REGION_COORDS: Record<string, { lat: number; lon: number }> = {
+  'Вінницька': { lat: 49.23, lon: 28.47 }, 'Волинська': { lat: 50.74, lon: 25.32 },
+  'Дніпропетровська': { lat: 48.46, lon: 35.04 }, 'Донецька': { lat: 48.02, lon: 37.80 },
+  'Житомирська': { lat: 50.25, lon: 28.66 }, 'Закарпатська': { lat: 48.62, lon: 22.30 },
+  'Запорізька': { lat: 47.84, lon: 35.14 }, 'Івано-Франківська': { lat: 48.92, lon: 24.71 },
+  'Київська': { lat: 50.40, lon: 30.52 }, 'Кіровоградська': { lat: 48.51, lon: 32.26 },
+  'Львівська': { lat: 49.84, lon: 24.03 }, 'Миколаївська': { lat: 46.97, lon: 32.00 },
+  'Одеська': { lat: 46.48, lon: 30.73 }, 'Полтавська': { lat: 49.59, lon: 34.55 },
+  'Рівненська': { lat: 50.62, lon: 26.25 }, 'Сумська': { lat: 50.91, lon: 34.80 },
+  'Тернопільська': { lat: 49.55, lon: 25.59 }, 'Харківська': { lat: 49.99, lon: 36.23 },
+  'Херсонська': { lat: 46.64, lon: 32.62 }, 'Хмельницька': { lat: 49.42, lon: 26.99 },
+  'Черкаська': { lat: 49.44, lon: 32.06 }, 'Чернівецька': { lat: 48.29, lon: 25.94 },
+  'Чернігівська': { lat: 51.49, lon: 31.29 },
+}
+
+const loadFarmWeather = async (farmId: string, region: string) => {
+  try {
+    const coords = Object.entries(REGION_COORDS).find(([key]) => region.includes(key))?.[1]
+    if (!coords) return
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,weather_code&forecast_days=1&timezone=Europe%2FKyiv`)
+    const data = await res.json()
+    const code = data.current.weather_code
+    const icon = code === 0 ? '☀️' : code <= 3 ? '⛅' : code <= 67 ? '🌧️' : code <= 77 ? '❄️' : code <= 99 ? '⛈️' : '🌤️'
+    const condition = code === 0 ? 'Ясно' : code <= 3 ? 'Хмарно' : code <= 67 ? 'Дощ' : code <= 77 ? 'Сніг' : code <= 99 ? 'Гроза' : 'Мінлива'
+    farmWeather.value[farmId] = { temp: Math.round(data.current.temperature_2m), condition, icon }
+  } catch {}
+}
 const pendingAgreements = ref<any[]>([])
 const activeOrders = ref<any[]>([])
 
@@ -337,7 +388,7 @@ onMounted(async () => {
   if (isFarmer.value) {
     const isDacha = role.value === 'dacha'
     const [farmsRes, dachaCropsRes, remRes, ordersRes] = await Promise.all([
-      isDacha ? Promise.resolve({ data: [] }) : supabase.from('farms').select('hectares, farm_crops(crop_type)').eq('user_id', uid.value),
+      isDacha ? Promise.resolve({ data: [] }) : supabase.from('farms').select('id, name, hectares, region, farm_crops(crop_type)').eq('user_id', uid.value),
       isDacha ? supabase.from('dacha_crops').select('crop_type').eq('user_id', uid.value) : Promise.resolve({ data: [] }),
       supabase.from('reminders').select('id, description, type, scheduled_date').eq('user_id', uid.value).gte('scheduled_date', new Date().toISOString()).order('scheduled_date').limit(3),
       MARKETPLACE ? supabase.from('orders').select('id, status, total').eq('user_id', uid.value).in('status', ['pending', 'processing', 'shipped']).order('created_at', { ascending: false }).limit(3) : Promise.resolve({ data: [] }),
@@ -354,6 +405,12 @@ onMounted(async () => {
     }
     nextReminders.value = remRes.data || []
     activeOrders.value = ordersRes.data || []
+
+    // Погода по полях
+    if (!isDacha) {
+      farmsForWeather.value = farms.map((f: any) => ({ id: f.id, name: f.name, region: f.region }))
+      farms.filter((f: any) => f.region).forEach((f: any) => loadFarmWeather(f.id, f.region))
+    }
 
     // Підтверджені угоди фермера
     const { data: dealsData } = await supabase
