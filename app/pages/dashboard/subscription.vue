@@ -376,6 +376,8 @@ async function submitPayment() {
       },
     })
     loyaltyDiscount.value = res.discountPercent || 0
+    console.log('[WFP] formData:', JSON.stringify(res.formData, null, 2))
+    console.log('[WFP] endpoint:', res.endpoint)
 
     const form = document.createElement('form')
     form.method = 'POST'
