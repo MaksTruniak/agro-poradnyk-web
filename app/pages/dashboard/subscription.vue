@@ -406,7 +406,11 @@ async function submitPayment() {
     }
 
     document.body.appendChild(form)
-    form.submit()
+    console.log('[WFP] merchantAccount:', res.formData.merchantAccount)
+    console.log('[WFP] merchantSignature:', res.formData.merchantSignature)
+    console.log('[WFP] amount:', res.formData.amount)
+    // form.submit() // тимчасово вимкнено для дебагу
+    alert('Дивись консоль — form data перед сабмітом')
   } catch (e: any) {
     payError.value = e?.data?.message || 'Помилка. Спробуйте ще раз.'
     paying.value = false
