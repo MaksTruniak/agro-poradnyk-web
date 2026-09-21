@@ -205,7 +205,7 @@
             <p class="text-xs text-agro-light mb-4">Безпечна оплата через <strong class="text-agro-dark">WayForPay</strong> — картки Visa / Mastercard</p>
             <div class="flex gap-3">
               <button @click="showPayment = false" class="btn-outline flex-1" :disabled="paying">Закрити</button>
-              <button @click="submitPayment" :disabled="paying || hectares < 1" class="btn-primary flex-1 justify-center disabled:opacity-60">
+              <button @click="submitPayment" :disabled="paying || hectares < 1 || ((selectedPlan === 'business' || selectedPlan === 'business_pro') && hectares < 50)" class="btn-primary flex-1 justify-center disabled:opacity-60">
                 <span v-if="paying" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                 {{ paying ? 'Перенаправляємо...' : 'Оплатити →' }}
               </button>
