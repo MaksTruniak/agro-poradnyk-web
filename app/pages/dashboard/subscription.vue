@@ -151,7 +151,8 @@
             <!-- Кількість га -->
             <div class="mb-5 text-left">
               <label class="block text-sm font-medium text-agro-dark mb-1">Скільки у вас га?</label>
-              <input v-model.number="hectares" type="number" min="1" step="1" class="input text-center font-semibold text-lg" placeholder="10" />
+              <input v-model.number="hectares" type="number" :min="selectedPlan === 'business' || selectedPlan === 'business_pro' ? 50 : 1" step="1" class="input text-center font-semibold text-lg" :placeholder="selectedPlan === 'business' || selectedPlan === 'business_pro' ? '50' : '10'" />
+              <p class="text-xs text-agro-light mt-1">Мінімум 50 га для цього плану</p>
               <p v-if="hectaresError" class="text-xs text-red-500 mt-1">{{ hectaresError }}</p>
             </div>
 
@@ -357,6 +358,14 @@ async function submitPayment() {
   hectaresError.value = ''
   if (!hectares.value || hectares.value < 1) {
     hectaresError.value = 'Вкажіть кількість га'
+    return
+  }
+  if (selectedPlan.value === 'business' && hectares.value < 50) {
+    hectaresError.value = 'Мінімум 50 га для плану Business'
+    return
+  }
+  if (selectedPlan.value === 'business_pro' && hectares.value < 50) {
+    hectaresError.value = 'Мінімум 50 га для плану Business Pro'
     return
   }
   paying.value = true
