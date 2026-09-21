@@ -151,8 +151,8 @@
             <!-- Кількість га -->
             <div class="mb-5 text-left">
               <label class="block text-sm font-medium text-agro-dark mb-1">Скільки у вас га?</label>
-              <input v-model.number="hectares" type="number" :min="selectedPlan === 'business' || selectedPlan === 'business_pro' ? 50 : 1" step="1" class="input text-center font-semibold text-lg" :placeholder="selectedPlan === 'business' || selectedPlan === 'business_pro' ? '50' : '10'" />
-              <p class="text-xs text-agro-light mt-1">Мінімум 50 га для цього плану</p>
+              <input v-model.number="hectares" type="number" min="50" step="1" class="input text-center font-semibold text-lg" placeholder="50" />
+              <p class="text-xs text-agro-light mt-1">Мінімум 50 га</p>
               <p v-if="hectaresError" class="text-xs text-red-500 mt-1">{{ hectaresError }}</p>
             </div>
 
@@ -229,7 +229,7 @@ const loading = ref(true)
 const currentPlan = ref('basic')
 const expiresAt = ref<string | null>(null)
 const loyaltyDiscount = ref(0)
-const hectares = ref(0)
+const hectares = ref(50)
 const hectaresError = ref('')
 
 const PLAN_LABELS: Record<string, string> = {
