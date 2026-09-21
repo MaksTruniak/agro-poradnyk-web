@@ -385,8 +385,7 @@ async function submitPayment() {
       },
     })
     loyaltyDiscount.value = res.discountPercent || 0
-    console.log('[WFP] formData:', JSON.stringify(res.formData, null, 2))
-    console.log('[WFP] endpoint:', res.endpoint)
+
 
     const form = document.createElement('form')
     form.method = 'POST'
@@ -415,11 +414,7 @@ async function submitPayment() {
     }
 
     document.body.appendChild(form)
-    console.log('[WFP] merchantAccount:', res.formData.merchantAccount)
-    console.log('[WFP] merchantSignature:', res.formData.merchantSignature)
-    console.log('[WFP] amount:', res.formData.amount)
-    // form.submit() // тимчасово вимкнено для дебагу
-    alert('Дивись консоль — form data перед сабмітом')
+    form.submit()
   } catch (e: any) {
     payError.value = e?.data?.message || 'Помилка. Спробуйте ще раз.'
     paying.value = false
