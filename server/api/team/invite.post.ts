@@ -14,17 +14,18 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Отримуємо токен з team_members (вже вставлено на фронті)
-  const { data: member, error } = await supabase
-    .from('team_members')
-    .select('token')
-    .eq('owner_id', memberId)
-    .eq('email', email)
-    .maybeSingle()
+  // Отримуємо токен з team_members і ім'я власника з users
+  const [memberRes, ownerRes] = await Promise.all([
+    supabase.from('team_members').select('token').eq('owner_id', memberId).eq('email', email).maybeSingle(),
+    supabase.from('users').select('name').eq('id', memberId).maybeSingle(),
+  ])
 
-  if (error || !member?.token) {
+  const member = memberRes.data
+  if (memberRes.error || !member?.token) {
     throw createError({ statusCode: 404, message: 'Team member record not found' })
   }
+
+  const resolvedOwnerName = ownerRes.data?.name || ownerName
 
   const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://agroprostir.com.ua'
   const inviteUrl = `${siteUrl}/invite?token=${member.token}`
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
   await resend.emails.send({
     from: 'АгроПростір <onboarding@resend.dev>',
     to: email,
-    subject: `${ownerName || 'Господарство'} запрошує вас до АгроПростір`,
+    subject: `${resolvedOwnerName || 'Господарство'} запрошує вас до АгроПростір`,
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a2e1a">
         <div style="background:#2f5233;padding:28px 32px;border-radius:16px 16px 0 0">
@@ -50,7 +51,7 @@ export default defineEventHandler(async (event) => {
         <div style="background:#fff;border:1px solid #e0edcc;border-top:0;padding:32px;border-radius:0 0 16px 16px">
           <h2 style="color:#1a2e1a;margin-top:0">Запрошення до команди</h2>
           <p style="color:#5a7a5a;line-height:1.6">
-            <strong>${ownerName || 'Господарство'}</strong> запрошує вас як
+            <strong>${resolvedOwnerName || 'Господарство'}</strong> запрошує вас як
             <strong>${roleLabel}</strong> для доступу до свого облікового запису на платформі АгроПростір.
           </p>
           <p style="color:#5a7a5a;line-height:1.6">
