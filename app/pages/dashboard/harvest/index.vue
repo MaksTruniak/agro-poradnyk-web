@@ -208,7 +208,7 @@
           <div>
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Поле / культура *</label>
             <div v-if="farmCropsLoading" class="input text-agro-light text-sm">Завантаження...</div>
-            <AppSelect v-else v-model="form.farm_crop_id"
+            <UiAppSelect v-else v-model="form.farm_crop_id"
               :options="[{ value: '', label: '— Виберіть поле —' }, ...farmCrops.map(fc => ({ value: fc.id, label: `${fc.crop_type}${fc.variety ? ` (${fc.variety})` : ''} · ${fc.farms?.name}` }))]"
               @update:modelValue="onCropSelect" />
           </div>

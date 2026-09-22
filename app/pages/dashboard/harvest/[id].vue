@@ -230,7 +230,7 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Працівник *</label>
-            <AppSelect
+            <UiAppSelect
               v-model="rForm.worker_id"
               :options="[{ value: '', label: '— Виберіть —' }, ...workers.filter(w => w.is_active).map(w => ({ value: w.id, label: `${w.first_name} ${w.last_name}` }))]"
               @update:modelValue="v => rForm.worker_id = String(v)"
