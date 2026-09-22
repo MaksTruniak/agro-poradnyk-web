@@ -170,11 +170,11 @@
     <div v-if="showWorkerModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" @click.self="showWorkerModal=false">
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 overflow-y-auto max-h-[90vh]">
         <h2 class="text-xl font-bold text-agro-dark mb-2 bitter">Додати збирача</h2>
-        <p class="text-sm text-agro-light mb-6">Виберіть зі списку або <NuxtLink to="/dashboard/harvest/workers" class="text-agro underline">додайте нового збирача</NuxtLink></p>
+        <p class="text-sm text-agro-light mb-6">Виберіть зі списку або <NuxtLink to="/dashboard/harvest?tab=workers" class="text-agro underline">додайте нового збирача</NuxtLink></p>
 
         <div v-if="availableWorkers.length === 0" class="text-center py-6 text-agro-light text-sm">
           Всі збирачі вже додані до цього обліку.<br>
-          <NuxtLink to="/dashboard/harvest/workers" class="text-agro underline mt-1 inline-block">Створити нового збирача</NuxtLink>
+          <NuxtLink to="/dashboard/harvest?tab=workers" class="text-agro underline mt-1 inline-block">Створити нового збирача</NuxtLink>
         </div>
 
         <div v-else class="space-y-2 mb-6">
