@@ -146,6 +146,14 @@ const submit = async () => {
     .update({ member_id: userId, status: 'active' })
     .eq('token', token)
 
+  // Створюємо запис у users щоб пройти перевірку onboarding в middleware
+  await supabase.from('users').upsert({
+    id: userId,
+    email: invite.value.email,
+    role: 'farmer',
+    onboarded_at: new Date().toISOString(),
+  }, { onConflict: 'id', ignoreDuplicates: true })
+
   submitting.value = false
   await navigateTo('/dashboard?team_accepted=1')
 }

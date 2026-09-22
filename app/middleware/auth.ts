@@ -15,14 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Перевіряємо онбординг (тільки для dashboard сторінок)
   if (to.path.startsWith('/dashboard')) {
-    const [userRes, teamRes] = await Promise.all([
-      supabase.from('users').select('onboarded_at').eq('id', session.user.id).maybeSingle(),
-      supabase.from('team_members').select('id').eq('member_id', session.user.id).eq('status', 'active').maybeSingle(),
-    ])
-    const isTeamMember = !!teamRes.data
-    // Якщо запит до users повернув помилку — не блокуємо (щоб не ламати доступ)
-    if (userRes.error) return
-    const isOnboarded = !!userRes.data?.onboarded_at
-    if (!isOnboarded && !isTeamMember) return navigateTo('/onboarding')
+    const { data: user } = await supabase.from('users').select('onboarded_at').eq('id', session.user.id).maybeSingle()
+    if (!user?.onboarded_at) return navigateTo('/onboarding')
   }
 })
