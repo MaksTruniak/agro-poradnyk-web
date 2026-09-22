@@ -75,10 +75,13 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Роль доступу</label>
-              <select v-model="inviteRole" class="input">
-                <option value="editor">Редактор — може змінювати дані полів і складу</option>
-                <option value="viewer">Переглядач — тільки читання</option>
-              </select>
+              <UiAppSelect
+                v-model="inviteRole"
+                :options="[
+                  { value: 'editor', label: 'Редактор — може змінювати дані' },
+                  { value: 'viewer', label: 'Переглядач — тільки читання' },
+                ]"
+              />
             </div>
             <div v-if="limitReached" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
               Досягнуто ліміт співробітників для тарифу <strong>Бізнес</strong>.

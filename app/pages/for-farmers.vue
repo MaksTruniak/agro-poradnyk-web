@@ -204,7 +204,7 @@
             </div>
             <p class="text-[rgb(183,196,172)] text-xs mb-6">+ {{ plans['business']?.ha_rate ?? 0 }} грн/га · 2–50 га · / місяць</p>
             <div class="flex flex-col gap-3 flex-1">
-              <div v-for="item in ['Все що в Basic','Поля — необмежено (2–50 га)','Культури — необмежено','1 технологічна карта на культуру','AI агроном — повний доступ','Аналітика','Облік збору врожаю','Співробітники — до 5 осіб']" :key="item"
+              <div v-for="item in ['Все що в Basic','Поля — необмежено (2–50 га)','Культури — необмежено','1 технологічна карта на культуру','AI агроном — повний доступ','Аналітика','Облік збору врожаю','Співробітники до 5 осіб (поля, склад, нагадування, збір)']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(228,233,218)]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#1B2E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}
@@ -222,7 +222,7 @@
             </div>
             <p class="text-xs text-[rgb(91,107,83)] mb-6">+ {{ plans['business_pro']?.ha_rate ?? 0 }} грн/га · 50+ га · / місяць</p>
             <div class="flex flex-col gap-3 flex-1">
-              <div v-for="item in ['Все що в Бізнес','Поля — необмежено (50+ га)','AI агроном — без обмежень','Співробітники — необмежено','Інтеграції','Пріоритетна підтримка']" :key="item"
+              <div v-for="item in ['Все що в Бізнес','Поля — необмежено (50+ га)','AI агроном — без обмежень','Співробітники — необмежено (поля, склад, нагадування, збір)','Інтеграції','Пріоритетна підтримка']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}

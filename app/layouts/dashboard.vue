@@ -265,13 +265,34 @@ if (import.meta.client) {
 }
 
 onMounted(async () => {
-  // Відновлюємо режим члена команди з localStorage
+  // Відновлюємо режим члена команди з localStorage або з БД
   if (import.meta.client) {
     const ownerId   = localStorage.getItem('agro_team_owner_id')
     const ownerName = localStorage.getItem('agro_team_owner_name')
     const roleLabel = localStorage.getItem('agro_team_role_label')
     if (ownerId && ownerName) {
       teamOwner.value = { ownerId, ownerName, roleLabel: roleLabel || 'Переглядач' }
+    } else {
+      // localStorage порожній — перевіряємо БД (нова сесія / інший браузер)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: rec } = await supabase
+          .from('team_members')
+          .select('owner_id, role')
+          .eq('member_id', user.id)
+          .eq('status', 'active')
+          .maybeSingle()
+        if (rec) {
+          const { data: ownerUser } = await supabase
+            .from('users').select('name').eq('id', rec.owner_id).maybeSingle()
+          const name = ownerUser?.name || 'Власник'
+          const label = rec.role === 'editor' ? 'Редактор' : 'Переглядач'
+          localStorage.setItem('agro_team_owner_id',   rec.owner_id)
+          localStorage.setItem('agro_team_owner_name', name)
+          localStorage.setItem('agro_team_role_label', label)
+          teamOwner.value = { ownerId: rec.owner_id, ownerName: name, roleLabel: label }
+        }
+      }
     }
   }
 

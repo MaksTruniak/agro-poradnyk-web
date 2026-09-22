@@ -340,6 +340,8 @@ const supabase = useSupabaseClient()
 const route = useRoute()
 const seasonId = route.params.id as string
 
+const { isTeamMember, isViewer, getQueryUserId } = useTeamContext()
+
 const loading = ref(true)
 const season = ref<any>(null)
 const workers = ref<any[]>([])
@@ -502,11 +504,11 @@ const openAddWorker = async () => {
   workerCustomPrices.value = {}
   showWorkerModal.value = true
   // Завантажуємо збирачів власника яких ще немає в цьому сезоні
-  const { data: { session } } = await supabase.auth.getSession()
+  const ownerId = await getQueryUserId()
   const { data: allWorkers } = await supabase
     .from('harvest_workers')
     .select('id, first_name, last_name, phone')
-    .eq('owner_id', session!.user.id)
+    .eq('owner_id', ownerId)
     .order('first_name')
   const currentIds = workers.value.map(w => w.id)
   availableWorkers.value = (allWorkers || []).filter(w => !currentIds.includes(w.id))
@@ -538,14 +540,14 @@ const openRecord = () => {
 const saveRecord = async () => {
   if (!rForm.worker_id || !rForm.weight_kg) return
   rSaving.value = true
-  const { data: { session } } = await supabase.auth.getSession()
+  const currentUserId = await getQueryUserId()
   const price = effectivePrice(rForm.worker_id)
   await supabase.from('harvest_records').insert({
     worker_id: rForm.worker_id,
     season_id: seasonId,
     weight_kg: Number(rForm.weight_kg),
     price_per_kg: price,
-    recorded_by: session!.user.id,
+    recorded_by: currentUserId,
   })
   rSaving.value = false
   showRecordModal.value = false

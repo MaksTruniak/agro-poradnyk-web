@@ -10,11 +10,11 @@
         <h1 class="dash-title bitter">Облік збору</h1>
         <p class="dash-subtitle">Сезони збору врожаю і облік працівників</p>
       </div>
-      <button v-if="hasAccess && tab === 'seasons'" @click="openCreate" class="dash-btn-primary shrink-0">
+      <button v-if="hasAccess && tab === 'seasons' && !(isTeamMember && isViewer)" @click="openCreate" class="dash-btn-primary shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         Створити облік
       </button>
-      <button v-else-if="hasAccess" @click="openCreateWorker" class="dash-btn-primary shrink-0">
+      <button v-else-if="hasAccess && !(isTeamMember && isViewer)" @click="openCreateWorker" class="dash-btn-primary shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати збирача
       </button>
@@ -58,7 +58,7 @@
         </div>
         <p class="font-bold text-agro-dark text-lg mb-2">Немає активних обліків</p>
         <p class="text-agro-light text-sm mb-6">Створіть перший облік збору врожаю</p>
-        <button @click="openCreate" class="dash-btn-primary">Створити облік</button>
+        <button v-if="!(isTeamMember && isViewer)" @click="openCreate" class="dash-btn-primary">Створити облік</button>
       </div>
 
       <div v-else class="space-y-4">
@@ -123,7 +123,7 @@
           </div>
           <p class="font-bold text-agro-dark text-lg mb-2">Немає збирачів</p>
           <p class="text-agro-light text-sm mb-6">Додайте першого збирача врожаю</p>
-          <button @click="openCreateWorker" class="dash-btn-primary">Додати збирача</button>
+          <button v-if="!(isTeamMember && isViewer)" @click="openCreateWorker" class="dash-btn-primary">Додати збирача</button>
         </div>
         <div v-else class="space-y-3">
           <div v-for="w in workers" :key="w.id" class="card flex items-center gap-4">
@@ -235,6 +235,7 @@ definePageMeta({ middleware: 'auth', layout: 'dashboard' })
 
 const supabase = useSupabaseClient()
 const router = useRouter()
+const { isTeamMember, isViewer, getQueryUserId } = useTeamContext()
 
 const route = useRoute()
 const tab = ref<'seasons'|'workers'>(route.query.tab === 'workers' ? 'workers' : 'seasons')
@@ -263,11 +264,11 @@ const seasonWord = (n: number) => n === 1 ? 'облік' : n >= 2 && n <= 4 ? '�
 
 const loadWorkers = async () => {
   workersLoading.value = true
-  const { data: { session } } = await supabase.auth.getSession()
+  const ownerId = await getQueryUserId()
   const { data } = await supabase
     .from('harvest_workers')
     .select('*')
-    .eq('owner_id', session!.user.id)
+    .eq('owner_id', ownerId)
     .order('first_name')
   workers.value = (data || []).map((w: any) => ({ ...w, _seasons: 0 }))
   workersLoading.value = false
@@ -319,9 +320,8 @@ const workerWord = (n: number) => n === 1 ? 'працівник' : n >= 2 && n <
 const hasAccess = ref<boolean | null>(null)
 
 const load = async () => {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return
-  const uid = session.user.id
+  const uid = await getQueryUserId()
+  if (!uid) return
 
   const { data: sub } = await supabase
     .from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle()
@@ -368,8 +368,8 @@ const openCreate = async () => {
   form.farm_crop_id = ''; form.crop = ''; form.variety = ''; form.price_per_kg = ''
   showCreate.value = true
   farmCropsLoading.value = true
-  const { data: { session } } = await supabase.auth.getSession()
-  const { data: farmsData } = await supabase.from('farms').select('id').eq('user_id', session!.user.id)
+  const ownerId = await getQueryUserId()
+  const { data: farmsData } = await supabase.from('farms').select('id').eq('user_id', ownerId)
   const farmIds = (farmsData || []).map((f: any) => f.id)
   if (farmIds.length) {
     const { data } = await supabase
@@ -387,9 +387,9 @@ const createSeason = async () => {
   if (!form.farm_crop_id || !form.price_per_kg) return
   saving.value = true
   createSeasonError.value = ''
-  const { data: { session } } = await supabase.auth.getSession()
+  const ownerId = await getQueryUserId()
   const { data, error } = await supabase.from('harvest_seasons').insert({
-    owner_id: session!.user.id,
+    owner_id: ownerId,
     farm_crop_id: form.farm_crop_id,
     crop: form.crop,
     variety: form.variety || null,
