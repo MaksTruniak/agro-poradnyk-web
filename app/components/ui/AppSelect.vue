@@ -3,7 +3,8 @@
     <button
       type="button"
       @click="toggle"
-      class="flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-xl border border-agro-border bg-white text-sm text-agro-dark hover:border-agro/50 transition-colors"
+      style="background-color: white; border: 1px solid #D4E8B8; color: #1A3A06;"
+      class="flex items-center justify-between gap-2 w-full px-4 py-2.5 rounded-xl text-sm hover:border-agro/50 transition-colors"
       :class="open ? 'border-agro ring-2 ring-agro/10' : ''"
     >
       <span class="truncate">{{ selectedLabel }}</span>
