@@ -64,24 +64,33 @@
 
       <div v-else class="space-y-4">
         <h2 class="font-bold text-agro-dark text-base">Працівники ({{ workers.length }})</h2>
-        <div v-for="w in workers" :key="w.id" class="card">
+        <div v-for="w in workers" :key="w.id" class="card" :class="!w.is_active ? 'opacity-60' : ''">
           <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 font-bold text-agro text-sm">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm"
+              :class="w.is_active ? 'bg-agro-hover text-agro' : 'bg-gray-100 text-gray-400'">
               {{ w.first_name[0] }}{{ w.last_name[0] }}
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <p class="font-bold text-agro-dark">{{ w.first_name }} {{ w.last_name }}</p>
-
-                <span class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-2 py-0.5">
+                <span v-if="!w.is_active" class="text-xs bg-gray-100 border border-gray-200 text-gray-500 rounded-lg px-2 py-0.5">Не збирає</span>
+                <span v-else class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-2 py-0.5">
                   {{ w.custom_price_per_kg || season?.price_per_kg }} грн/кг
                   <button @click.stop="openChangeWorkerPrice(w)" class="ml-1 underline hover:no-underline">змінити</button>
                 </span>
               </div>
               <p v-if="w.phone || w.email" class="text-sm text-agro-light mt-0.5">{{ [w.phone, w.email].filter(Boolean).join(' · ') }}</p>
             </div>
+            <!-- Деактивувати / Реактивувати -->
+            <button @click="toggleWorkerActive(w)" :title="w.is_active ? 'Завершити роботу' : 'Поновити роботу'"
+              class="shrink-0 inline-flex items-center gap-1.5 text-xs border rounded-xl px-3 py-1.5 transition-colors font-medium"
+              :class="w.is_active ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-agro-hover border-agro-border text-agro hover:bg-agro hover:text-white'">
+              <svg v-if="w.is_active" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ w.is_active ? 'Завершити' : 'Поновити' }}
+            </button>
             <!-- QR -->
-            <button @click="showQR(w)" class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
+            <button v-if="w.is_active" @click="showQR(w)" class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14h3M14 17v3"/></svg>
               QR
             </button>
@@ -223,7 +232,7 @@
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Працівник *</label>
             <select v-model="rForm.worker_id" class="w-full px-4 py-2.5 rounded-xl border border-agro-border bg-white text-sm text-agro-dark focus:outline-none focus:border-agro focus:ring-2 focus:ring-agro/10 transition-colors appearance-none cursor-pointer">
               <option value="">— Виберіть —</option>
-              <option v-for="w in workers" :key="w.id" :value="w.id">{{ w.first_name }} {{ w.last_name }}</option>
+              <option v-for="w in workers.filter(w => w.is_active)" :key="w.id" :value="w.id">{{ w.first_name }} {{ w.last_name }}</option>
             </select>
           </div>
           <div>
@@ -439,16 +448,17 @@ const load = async () => {
   const [seasonRes, swRes] = await Promise.all([
     supabase.from('harvest_seasons').select('*').eq('id', seasonId).single(),
     supabase.from('harvest_season_workers')
-      .select('custom_price_per_kg, harvest_workers(*)')
+      .select('custom_price_per_kg, is_active, harvest_workers(*)')
       .eq('season_id', seasonId)
       .order('created_at'),
   ])
   season.value = seasonRes.data
 
-  // Розгортаємо workers з join, зберігаємо custom_price_per_kg зі зв'язку
+  // Розгортаємо workers з join, зберігаємо custom_price_per_kg і is_active зі зв'язку
   workers.value = (swRes.data || []).map((sw: any) => ({
     ...sw.harvest_workers,
     custom_price_per_kg: sw.custom_price_per_kg,
+    is_active: sw.is_active !== false,
   }))
 
   if (workers.value.length) {
@@ -473,6 +483,16 @@ const load = async () => {
     workerRecords.value = recs
   }
   loading.value = false
+}
+
+const toggleWorkerActive = async (w: any) => {
+  const newVal = !w.is_active
+  const { error } = await supabase
+    .from('harvest_season_workers')
+    .update({ is_active: newVal })
+    .eq('season_id', seasonId)
+    .eq('worker_id', w.id)
+  if (!error) w.is_active = newVal
 }
 
 const openAddWorker = async () => {
