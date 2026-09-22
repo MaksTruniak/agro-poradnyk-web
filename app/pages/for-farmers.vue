@@ -174,19 +174,24 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-[900px] mx-auto">
 
-          <!-- Базовий -->
+          <!-- Basic -->
           <div class="bg-white rounded-[20px] p-8 border border-[rgb(225,219,198)] flex flex-col">
             <div class="text-sm font-bold text-[rgb(91,107,83)] mb-2">Basic</div>
             <div class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)] mb-1">Безкоштовно</div>
-            <p class="text-xs text-[rgb(91,107,83)] mb-6">назавжди</p>
+            <p class="text-xs text-[rgb(91,107,83)] mb-6">до 2 га · назавжди</p>
             <div class="flex flex-col gap-3 flex-1">
-              <div v-for="item in ['До 2 га полів','1 культура на поле','Технічна карта','AI агроном (10 запитів/міс)','Нагадування і аналітика','Пошук агрономів і чати']" :key="item"
+              <div v-for="item in ['До 2 га полів','1 культура','1 технологічна карта','Склад','Нагадування','Чати','Угоди з агрономом','Угоди із заготівельником']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}
               </div>
+              <div v-for="item in ['AI агроном','Аналітика','Співробітники','Інтеграції']" :key="item"
+                class="flex gap-2 items-start text-[13.5px] text-[rgb(180,196,160)] line-through">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#d1dcc8"/><path d="M8 12h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                {{ item }}
+              </div>
             </div>
-            <NuxtLink to="/register" class="mt-6 text-center text-sm font-bold text-[#2F5233] hover:underline">Почати безкоштовно →</NuxtLink>
+            <NuxtLink to="/register" class="mt-6 text-center text-sm font-bold text-[#2F5233] border border-[#2F5233] rounded-xl px-4 py-2.5 hover:bg-agro-hover transition-colors block">Почати безкоштовно →</NuxtLink>
           </div>
 
           <!-- Business -->
@@ -197,9 +202,9 @@
               <span class="bitter font-extrabold text-[26px] text-white">{{ (plans['business']?.base_price ?? 0).toLocaleString('uk-UA') }}</span>
               <span class="text-sm text-[rgb(183,196,172)]">грн/міс</span>
             </div>
-            <p class="text-[rgb(183,196,172)] text-xs mb-6">+ {{ plans['business']?.ha_rate ?? 0 }} грн/га · від 50 га</p>
+            <p class="text-[rgb(183,196,172)] text-xs mb-6">+ {{ plans['business']?.ha_rate ?? 0 }} грн/га · 2–50 га · / місяць</p>
             <div class="flex flex-col gap-3 flex-1">
-              <div v-for="item in ['Все з Basic','Від 50 га полів','AI агроном (500 запитів/міс)','Облік збору врожаю','Співробітники','Аналітика і звіти']" :key="item"
+              <div v-for="item in ['Все що в Basic','Поля — необмежено (2–50 га)','Культури — необмежено','1 технологічна карта на культуру','AI агроном — повний доступ','Аналітика','Співробітники — до 5 осіб']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(228,233,218)]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#1B2E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}
@@ -212,18 +217,18 @@
           <div class="bg-white rounded-[20px] p-8 border border-[rgb(225,219,198)] flex flex-col" style="background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);">
             <div class="text-sm font-bold text-amber-600 mb-2">Business Pro</div>
             <div class="flex items-baseline gap-1.5 mb-1">
-              <span class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)]">{{ (plans['business_pro']?.base_price ?? 0).toLocaleString('uk-UA') }}</span>
+              <span class="bitter font-extrabold text-[26px] text-amber-600">{{ (plans['business_pro']?.base_price ?? 0).toLocaleString('uk-UA') }}</span>
               <span class="text-sm text-[rgb(91,107,83)]">грн/міс</span>
             </div>
-            <p class="text-xs text-[rgb(91,107,83)] mb-6">+ {{ plans['business_pro']?.ha_rate ?? 0 }} грн/га · від 50 га</p>
+            <p class="text-xs text-[rgb(91,107,83)] mb-6">+ {{ plans['business_pro']?.ha_rate ?? 0 }} грн/га · 50+ га · / місяць</p>
             <div class="flex flex-col gap-3 flex-1">
-              <div v-for="item in ['Все з Business','AI агроном без обмежень','Пріоритетна підтримка','Необмежена кількість співробітників','Розширена аналітика']" :key="item"
+              <div v-for="item in ['Все що в Бізнес','Поля — необмежено (50+ га)','Все необмежено','Інтеграції','Пріоритетна підтримка']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-px"><circle cx="12" cy="12" r="10" fill="#C98A3C"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 {{ item }}
               </div>
             </div>
-            <NuxtLink to="/dashboard/subscription" class="mt-6 text-center text-sm font-bold text-amber-600 hover:underline">Обрати Business Pro →</NuxtLink>
+            <NuxtLink to="/dashboard/subscription" class="mt-6 inline-block text-center text-sm font-bold bg-amber-500 text-white rounded-xl px-4 py-2.5 hover:bg-amber-600 transition-colors">Перейти на Бізнес Про →</NuxtLink>
           </div>
 
         </div>
