@@ -230,10 +230,11 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Працівник *</label>
-            <select v-model="rForm.worker_id" class="w-full px-4 py-2.5 rounded-xl border border-agro-border bg-white text-sm text-agro-dark focus:outline-none focus:border-agro focus:ring-2 focus:ring-agro/10 transition-colors appearance-none cursor-pointer">
-              <option value="">— Виберіть —</option>
-              <option v-for="w in workers.filter(w => w.is_active)" :key="w.id" :value="w.id">{{ w.first_name }} {{ w.last_name }}</option>
-            </select>
+            <AppSelect
+              v-model="rForm.worker_id"
+              :options="[{ value: '', label: '— Виберіть —' }, ...workers.filter(w => w.is_active).map(w => ({ value: w.id, label: `${w.first_name} ${w.last_name}` }))]"
+              @update:modelValue="v => rForm.worker_id = String(v)"
+            />
           </div>
           <div>
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Вага (кг) *</label>
