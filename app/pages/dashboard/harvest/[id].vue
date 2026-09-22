@@ -221,10 +221,9 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Працівник *</label>
-            <select v-model="rForm.worker_id" class="input">
-              <option value="">— Виберіть —</option>
-              <option v-for="w in workers" :key="w.id" :value="w.id">{{ w.first_name }} {{ w.last_name }}</option>
-            </select>
+            <AppSelect v-model="rForm.worker_id"
+              :options="[{ value: '', label: '— Виберіть —' }, ...workers.map(w => ({ value: w.id, label: `${w.first_name} ${w.last_name}` }))]"
+              @update:modelValue="v => rForm.worker_id = String(v)" />
           </div>
           <div>
             <label class="block text-sm font-semibold text-agro-dark mb-1.5">Вага (кг) *</label>
