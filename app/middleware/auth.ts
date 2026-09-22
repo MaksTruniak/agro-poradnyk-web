@@ -16,6 +16,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Перевіряємо онбординг (тільки для dashboard сторінок)
   if (to.path.startsWith('/dashboard')) {
     const { data: user } = await supabase.from('users').select('onboarded_at').eq('id', session.user.id).single()
-    if (!user?.onboarded_at) return navigateTo('/onboarding')
+    if (!user?.onboarded_at) {
+      // Співробітники команди не проходять onboarding
+      const { data: teamMember } = await supabase
+        .from('team_members')
+        .select('id')
+        .eq('member_id', session.user.id)
+        .eq('status', 'active')
+        .maybeSingle()
+      if (!teamMember) return navigateTo('/onboarding')
+    }
   }
 })
