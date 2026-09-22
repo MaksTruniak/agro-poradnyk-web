@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   const resend = new Resend(resendKey)
 
   await resend.emails.send({
-    from: 'АгроПростір <noreply@agroprostir.com.ua>',
+    from: 'АгроПростір <onboarding@resend.dev>',
     to: email,
     subject: `${ownerName || 'Господарство'} запрошує вас до АгроПростір`,
     html: `

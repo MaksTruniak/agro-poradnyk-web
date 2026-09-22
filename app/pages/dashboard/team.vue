@@ -156,7 +156,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
 const loading = ref(true)
-const currentPlan = ref<'basic' | 'pro' | 'business' | 'enterprise'>('basic')
+const currentPlan = ref<string>('basic')
 const members = ref<any[]>([])
 
 const inviteEmail    = ref('')
@@ -226,6 +226,13 @@ async function sendInvite() {
     position: invitePosition.value.trim() || null,
     status:   'pending',
   }, { onConflict: 'owner_id,email' })
+
+  if (insertErr) {
+    console.error('team_members upsert error:', insertErr)
+    inviting.value = false
+    alert('Помилка: ' + insertErr.message)
+    return
+  }
 
   if (!insertErr) {
     // Відправляємо email через API
