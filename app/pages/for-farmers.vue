@@ -194,10 +194,10 @@
             <span class="absolute top-6 right-6 px-2.5 py-0.5 rounded-full bg-[#C98A3C] text-[rgb(27,46,27)] text-xs font-extrabold">Популярний</span>
             <div class="text-sm font-bold text-[rgb(183,196,172)] mb-2">Business</div>
             <div class="flex items-baseline gap-1.5 mb-1">
-              <span class="bitter font-extrabold text-[26px] text-white">від 500</span>
+              <span class="bitter font-extrabold text-[26px] text-white">{{ (plans['business']?.base_price ?? 0).toLocaleString('uk-UA') }}</span>
               <span class="text-sm text-[rgb(183,196,172)]">грн/міс</span>
             </div>
-            <p class="text-[rgb(183,196,172)] text-xs mb-6">базова ставка + грн/га · від 50 га</p>
+            <p class="text-[rgb(183,196,172)] text-xs mb-6">+ {{ plans['business']?.ha_rate ?? 0 }} грн/га · від 50 га</p>
             <div class="flex flex-col gap-3 flex-1">
               <div v-for="item in ['Все з Basic','Від 50 га полів','AI агроном (500 запитів/міс)','Облік збору врожаю','Співробітники','Аналітика і звіти']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(228,233,218)]">
@@ -212,10 +212,10 @@
           <div class="bg-white rounded-[20px] p-8 border border-[rgb(225,219,198)] flex flex-col" style="background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);">
             <div class="text-sm font-bold text-amber-600 mb-2">Business Pro</div>
             <div class="flex items-baseline gap-1.5 mb-1">
-              <span class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)]">від 1 000</span>
+              <span class="bitter font-extrabold text-[26px] text-[rgb(27,46,27)]">{{ (plans['business_pro']?.base_price ?? 0).toLocaleString('uk-UA') }}</span>
               <span class="text-sm text-[rgb(91,107,83)]">грн/міс</span>
             </div>
-            <p class="text-xs text-[rgb(91,107,83)] mb-6">базова ставка + грн/га · від 50 га</p>
+            <p class="text-xs text-[rgb(91,107,83)] mb-6">+ {{ plans['business_pro']?.ha_rate ?? 0 }} грн/га · від 50 га</p>
             <div class="flex flex-col gap-3 flex-1">
               <div v-for="item in ['Все з Business','AI агроном без обмежень','Пріоритетна підтримка','Необмежена кількість співробітників','Розширена аналітика']" :key="item"
                 class="flex gap-2 items-start text-[13.5px] text-[rgb(62,79,59)]">
@@ -326,6 +326,16 @@
 definePageMeta({ layout: 'default' })
 
 const supabase = useSupabaseClient()
+
+const plans = ref<Record<string, { base_price: number; ha_rate: number }>>({})
+const { data: plansData } = await useAsyncData('public-plans', async () => {
+  const { data } = await supabase.from('plans').select('id, base_price, ha_rate').in('id', ['business', 'business_pro'])
+  return data
+})
+if (plansData.value) {
+  for (const p of plansData.value) plans.value[p.id] = { base_price: p.base_price ?? 0, ha_rate: p.ha_rate ?? 0 }
+}
+
 const contactOpen = ref(false)
 const contactSent = ref(false)
 const contactLoading = ref(false)
