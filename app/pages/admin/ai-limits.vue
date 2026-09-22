@@ -96,9 +96,8 @@
           <label class="block text-sm font-medium text-agro-dark mb-1">Тариф</label>
           <select v-model="userForm.plan" class="input text-sm">
             <option value="basic">Basic (безкоштовний)</option>
-            <option value="pro">PRO</option>
             <option value="business">Business</option>
-            <option value="enterprise">Enterprise</option>
+            <option value="business_pro">Business Pro</option>
           </select>
         </div>
 
@@ -204,14 +203,13 @@ useHead({ title: 'AI Ліміти — Адмін' })
 const supabase = useSupabaseClient()
 
 const PLAN_LABELS: Record<string, string> = {
-  basic: 'Basic', pro: 'PRO', business: 'Business', enterprise: 'Enterprise',
+  basic: 'Basic', business: 'Business', business_pro: 'Business Pro',
 }
 
 const planDot = (plan: string) => ({
   basic: 'bg-gray-400',
-  pro: 'bg-agro',
   business: 'bg-blue-500',
-  enterprise: 'bg-amber-500',
+  business_pro: 'bg-amber-500',
 }[plan] || 'bg-gray-400')
 
 // ─── Дефолтні ліміти по планах ───────────────────────────────────────────────
@@ -221,10 +219,9 @@ const savingPlans  = ref(false)
 const savedPlans   = ref(false)
 
 const planLimits = ref([
-  { plan: 'basic',      text_limit: 10,   photo_limit: 2   },
-  { plan: 'pro',        text_limit: 500,  photo_limit: 60  },
-  { plan: 'business',   text_limit: 3000, photo_limit: 300 },
-  { plan: 'enterprise', text_limit: 9999, photo_limit: 9999 },
+  { plan: 'basic',        text_limit: 10,   photo_limit: 1   },
+  { plan: 'business',     text_limit: 3000, photo_limit: 300 },
+  { plan: 'business_pro', text_limit: 500,  photo_limit: 60  },
 ])
 
 onMounted(async () => {
