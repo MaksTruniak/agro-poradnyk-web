@@ -64,7 +64,7 @@
 
       <div v-else class="space-y-4">
         <h2 class="font-bold text-agro-dark text-base">Працівники ({{ workers.length }})</h2>
-        <div v-for="w in workers" :key="w.id" class="card" :class="!w.is_active ? 'opacity-60' : ''">
+        <div v-for="w in [...workers].sort((a, b) => (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0))" :key="w.id" class="card" :class="!w.is_active ? 'opacity-60' : ''">
           <div class="flex items-start gap-4">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm"
               :class="w.is_active ? 'bg-agro-hover text-agro' : 'bg-gray-100 text-gray-400'">
