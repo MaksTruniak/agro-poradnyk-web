@@ -151,8 +151,8 @@
             <!-- Кількість га -->
             <div class="mb-5 text-left">
               <label class="block text-sm font-medium text-agro-dark mb-1">Скільки у вас га?</label>
-              <input v-model.number="hectares" type="number" min="50" step="1" class="input text-center font-semibold text-lg" placeholder="50" />
-              <p class="text-xs text-agro-light mt-1">Мінімум 50 га</p>
+              <input v-model.number="hectares" type="number" :min="selectedPlan === 'business_pro' ? 50 : 1" step="1" class="input text-center font-semibold text-lg" :placeholder="selectedPlan === 'business_pro' ? '50' : '1'" />
+              <p v-if="selectedPlan === 'business_pro'" class="text-xs text-agro-light mt-1">Мінімум 50 га</p>
               <p v-if="hectaresError" class="text-xs text-red-500 mt-1">{{ hectaresError }}</p>
             </div>
 
@@ -205,7 +205,7 @@
             <p class="text-xs text-agro-light mb-4">Безпечна оплата через <strong class="text-agro-dark">WayForPay</strong> — картки Visa / Mastercard</p>
             <div class="flex gap-3">
               <button @click="showPayment = false" class="btn-outline flex-1" :disabled="paying">Закрити</button>
-              <button @click="submitPayment" :disabled="paying || hectares < 1 || ((selectedPlan === 'business' || selectedPlan === 'business_pro') && hectares < 50)" class="btn-primary flex-1 justify-center disabled:opacity-60">
+              <button @click="submitPayment" :disabled="paying || hectares < 1 || (selectedPlan === 'business_pro' && hectares < 50)" class="btn-primary flex-1 justify-center disabled:opacity-60">
                 <span v-if="paying" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                 {{ paying ? 'Перенаправляємо...' : 'Оплатити →' }}
               </button>
@@ -311,8 +311,7 @@ const getBase = (plan: string) => plansDb.value[plan]?.base_price ?? 0
 const getRate = (plan: string) => plansDb.value[plan]?.ha_rate ?? 0
 
 const effectiveHectares = computed(() => {
-  const isPaid = selectedPlan.value === 'business' || selectedPlan.value === 'business_pro'
-  if (isPaid && hectares.value > 0 && hectares.value < 50) return 50
+  if (selectedPlan.value === 'business_pro' && hectares.value > 0 && hectares.value < 50) return 50
   return hectares.value
 })
 
@@ -368,8 +367,8 @@ async function submitPayment() {
     hectaresError.value = 'Вкажіть кількість га'
     return
   }
-  if (selectedPlan.value === 'business' && hectares.value < 50) {
-    hectaresError.value = 'Мінімум 50 га для плану Business'
+  if (selectedPlan.value === 'business_pro' && hectares.value < 50) {
+    hectaresError.value = 'Мінімум 50 га для плану Бізнес Про'
     return
   }
   if (selectedPlan.value === 'business_pro' && hectares.value < 50) {
