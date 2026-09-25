@@ -469,6 +469,7 @@ const getCropGroup = (crop: string): string | null => {
 const loading = ref(true)
 const saving = ref(false)
 const hasPaidPlan = ref(false)
+const farmInfo = ref<{ id: string; name: string; area_ha: number | null } | null>(null)
 const savingPhase = ref<string | null>(null)
 const program = ref<any>(null)
 const treatments = ref<any[]>([])
@@ -724,6 +725,13 @@ const load = async () => {
   phases.value = allPhases.value.filter((p: any) => !p.crop_groups || !cropGroup || p.crop_groups?.includes(cropGroup))
 
   if (farmCropId) {
+    const { data: farmCropRow } = await supabase
+      .from('farm_crops').select('farm_id, farms(id, name, area_ha)').eq('id', farmCropId).maybeSingle()
+    if (farmCropRow?.farms) {
+      const f = farmCropRow.farms as any
+      farmInfo.value = { id: f.id, name: f.name, area_ha: f.area_ha }
+    }
+
     const { data: programRows, error: progErr } = await supabase
       .from('protection_programs').select('*').eq('farm_crop_id', farmCropId).limit(1)
     const programData = programRows?.[0] ?? null
@@ -1002,14 +1010,28 @@ const saveReminder = async () => {
   if (!session) { rSaving.value = false; return }
   const [y,m,d] = rDate.value.split('-').map(Number)
   const iso = new Date(y, m-1, d, Number(rHour.value), Number(rMinute.value), 0).toISOString()
+  const t = reminderTreatment.value
   await supabase.from('reminders').insert({
     user_id: session.user.id,
     created_by: session.user.id,
-    treatment_id: reminderTreatment.value.id,
-    description: reminderTreatment.value.product_name,
+    treatment_id: t.id,
+    description: t.product_name,
     scheduled_date: iso,
     type: 'обробка',
     from_agronomist: false,
+    journal_data: {
+      farm_id: farmInfo.value?.id || null,
+      farm_name: farmInfo.value?.name || null,
+      crop_type: cropType || null,
+      product_name: t.product_name,
+      product_type: t.type || 'захист',
+      dose_per_ha: t.dosage ? parseFloat(t.dosage) : null,
+      area_ha: farmInfo.value?.area_ha || null,
+      total_amount: (t.dosage && farmInfo.value?.area_ha)
+        ? parseFloat(t.dosage) * farmInfo.value.area_ha
+        : null,
+      unit: t.dosage?.includes('кг') ? 'кг' : 'л',
+    },
   })
   rSaving.value = false
   reminderTreatment.value = null
