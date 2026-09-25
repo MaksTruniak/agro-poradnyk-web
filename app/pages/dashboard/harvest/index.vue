@@ -28,7 +28,7 @@
         </svg>
       </div>
       <div>
-        <p class="font-bold text-agro-dark text-lg">Функція доступна на планах Business і Business Pro</p>
+        <p class="font-bold text-agro-dark text-lg">Функція доступна на планах Бізнес і Бізнес Про</p>
         <p class="text-agro-light text-sm mt-1">Оновіть підписку щоб отримати доступ до обліку збору врожаю та управління збирачами</p>
       </div>
       <NuxtLink to="/dashboard/subscription" class="dash-btn-primary mt-2">Оновити план</NuxtLink>

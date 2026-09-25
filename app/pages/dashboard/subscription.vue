@@ -398,7 +398,7 @@ async function submitPayment() {
     return
   }
   if (selectedPlan.value === 'business_pro' && hectares.value < 50) {
-    hectaresError.value = 'Мінімум 50 га для плану Business Pro'
+    hectaresError.value = 'Мінімум 50 га для плану Бізнес Про'
     return
   }
   paying.value = true
