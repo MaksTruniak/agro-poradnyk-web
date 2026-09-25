@@ -22,8 +22,15 @@
       </div>
     </div>
 
+    <!-- Завантаження плану -->
+    <div v-if="planLoading" class="space-y-3">
+      <div class="card animate-pulse h-16" />
+      <div class="card animate-pulse h-16" />
+      <div class="card animate-pulse h-16" />
+    </div>
+
     <!-- Upgrade для Basic -->
-    <div v-if="!hasPaidPlan" class="card text-center py-16">
+    <div v-else-if="!hasPaidPlan" class="card text-center py-16">
       <div class="w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-5">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
@@ -34,7 +41,7 @@
       <NuxtLink to="/dashboard/subscription" class="dash-btn-primary inline-flex">Перейти на Бізнес →</NuxtLink>
     </div>
 
-    <template v-else>
+    <template v-else-if="hasPaidPlan">
       <!-- Фільтри -->
       <div v-if="items.length" class="flex flex-wrap gap-3 mb-5">
         <UiAppSelect v-model="filterFarm" :options="[{ value: '', label: 'Всі поля' }, ...farms.map(f => ({ value: f.id, label: f.name }))]" class="w-44" />
@@ -273,6 +280,7 @@ const supabase = useSupabaseClient()
 const { confirm: confirmDialog } = useConfirm()
 
 const loading = ref(true)
+const planLoading = ref(true)
 const saving = ref(false)
 const items = ref<any[]>([])
 const farms = ref<any[]>([])
@@ -435,6 +443,7 @@ const load = async () => {
   farms.value = farmsData || []
   items.value = treatmentsData || []
   loading.value = false
+  planLoading.value = false
 }
 
 const openAdd = () => {
