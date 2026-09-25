@@ -13,9 +13,4 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // Перевіряємо онбординг (тільки для dashboard сторінок)
-  if (to.path.startsWith('/dashboard')) {
-    const { data: user } = await supabase.from('users').select('onboarded_at').eq('id', session.user.id).single()
-    if (!user?.onboarded_at) return navigateTo('/onboarding')
-  }
 })
