@@ -103,11 +103,12 @@ export default defineEventHandler(async (event) => {
   } else {
     const { data: existingSub } = await supabase
       .from('subscriptions')
-      .select('renewal_count')
+      .select('renewal_count, first_paid_at')
       .eq('user_id', userId)
       .maybeSingle()
 
     const renewalCount = existingSub?.renewal_count ?? 0
+    const firstPaidAt = existingSub?.first_paid_at ?? new Date().toISOString()
     const expiresAt = new Date()
     const isMonth = plan.endsWith('_month')
     if (isMonth) {
@@ -122,6 +123,7 @@ export default defineEventHandler(async (event) => {
       plan:          basePlan,
       expires_at:    expiresAt.toISOString(),
       renewal_count: renewalCount + 1,
+      first_paid_at: firstPaidAt,
     }, { onConflict: 'user_id' })
     if (error) console.error('[WFP callback] Supabase error:', error)
   }

@@ -334,8 +334,15 @@ const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDis
 
 async function loadLoyaltyDiscount() {
   try {
-    const { data: sub } = await supabase.from('subscriptions').select('renewal_count').eq('user_id', (await supabase.auth.getSession()).data.session?.user.id || '').maybeSingle()
+    const uid = (await supabase.auth.getSession()).data.session?.user.id || ''
+    const { data: sub } = await supabase.from('subscriptions').select('renewal_count, first_paid_at').eq('user_id', uid).maybeSingle()
     const rc = sub?.renewal_count ?? 0
+    const firstPaid = sub?.first_paid_at ? new Date(sub.first_paid_at) : null
+    const yearAgo = new Date()
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+    // Знижка тільки якщо була реальна оплата (rc >= 1) і пройшов рік від першої оплати
+    const yearPassed = firstPaid && firstPaid <= yearAgo
+    if (!yearPassed) { loyaltyDiscount.value = 0; return }
     loyaltyDiscount.value = rc === 1 ? 15 : rc >= 2 ? 30 : 0
   } catch { loyaltyDiscount.value = 0 }
 }
