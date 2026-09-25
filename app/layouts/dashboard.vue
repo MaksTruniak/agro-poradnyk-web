@@ -592,12 +592,15 @@ const navItems = computed(() => {
   }
   return [
     { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
-    { label: 'Моє господарство', items: [...mainItems, { to: '/dashboard/harvest', label: 'Облік збору' }] },
+    { label: 'Моє господарство', items: [
+      ...mainItems,
+      { to: '/dashboard/harvest', label: 'Облік збору' },
+      { to: '/dashboard/reminders', label: 'Нагадування' },
+      { to: '/dashboard/treatments', label: 'Журнал обробок' },
+    ]},
     { label: 'Агрономія', items: [
       { to: '/pesticides', label: 'Каталог' },
       { to: '/dashboard/ai-chat', label: 'AI агроном' },
-      { to: '/dashboard/reminders', label: 'Нагадування' },
-      { to: '/dashboard/treatments', label: 'Журнал обробок' },
     ]},
     { label: 'Комунікація', items: [
       { to: '/dashboard/chats', label: 'Чати' },
