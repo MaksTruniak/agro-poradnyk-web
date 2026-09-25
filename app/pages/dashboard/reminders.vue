@@ -55,22 +55,14 @@
       <template v-else>
 
         <!-- Підказки агрокалендаря — gate для Basic -->
-        <div v-if="calendarTips.length && !hasPaidPlan" class="mb-5 relative">
-          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально цього місяця</p>
-          <div class="space-y-2 select-none pointer-events-none">
-            <div v-for="tip in calendarTips.slice(0, 2)" :key="tip.id"
-              class="card flex items-start gap-3 py-3 px-4 blur-sm opacity-60">
-              <div class="w-9 h-9 rounded-xl bg-agro-hover shrink-0" />
-              <div class="flex-1">
-                <div class="h-3 bg-gray-200 rounded w-2/3 mb-2" />
-                <div class="h-2 bg-gray-100 rounded w-full" />
-              </div>
+        <div v-if="calendarTips.length && !hasPaidPlan" class="mb-5">
+          <div class="card flex items-center gap-4 py-4 px-5">
+            <div class="w-11 h-11 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 text-xl">🌱</div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-agro-dark text-sm">Агрокалендар</p>
+              <p class="text-xs text-agro-light mt-0.5">Підказки по догляду за культурами з AI — на тарифі Бізнес</p>
             </div>
-          </div>
-          <div class="absolute inset-0 flex flex-col items-center justify-center text-center bg-white/70 rounded-xl backdrop-blur-[1px]">
-            <p class="font-bold text-agro-dark text-sm mb-1">Агрокалендар доступний на тарифі Бізнес</p>
-            <p class="text-xs text-agro-light mb-3">Підказки по догляду за культурами з AI поясненнями</p>
-            <NuxtLink to="/dashboard/invoices" class="dash-btn-primary inline-flex text-sm">Перейти на Бізнес →</NuxtLink>
+            <NuxtLink to="/dashboard/subscription" class="dash-btn-primary shrink-0 text-sm whitespace-nowrap">Бізнес →</NuxtLink>
           </div>
         </div>
 
@@ -141,44 +133,65 @@
           <p class="text-agro-light mb-6">Додайте нагадування про обробку або будь-яку подію</p>
           <button @click="openAdd" class="dash-btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Додати нагадування</button>
         </div>
-        <div v-else class="space-y-3">
-          <div v-for="r in reminders" :key="r.id"
-            class="card flex items-start gap-4"
-            :class="r.completed_at ? 'opacity-50' : isPast(r.scheduled_date) ? 'opacity-60' : ''">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              :class="r.completed_at ? 'bg-green-50 text-green-500' : isPast(r.scheduled_date) ? 'bg-gray-100 text-gray-400' : 'bg-agro-hover text-agro'">
-              <svg v-if="r.completed_at" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[r.type] || BELL_SVG" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <p class="font-semibold text-agro-dark" :class="r.completed_at ? 'line-through' : ''">{{ r.description }}</p>
-                <span v-if="r.from_agronomist" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-1">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> від агронома
-                </span>
+
+        <template v-else>
+          <!-- Активні нагадування -->
+          <div class="space-y-2 mb-5">
+            <div v-for="r in activeReminders" :key="r.id"
+              class="card flex items-center gap-4"
+              :class="isPast(r.scheduled_date) ? 'border border-orange-200 bg-orange-50/30' : ''">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                :class="isPast(r.scheduled_date) ? 'bg-orange-100 text-orange-400' : 'bg-agro-hover text-agro'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="TYPE_SVG[r.type] || BELL_SVG" />
               </div>
-              <p class="text-xs mt-1 flex items-center gap-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-agro'">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                {{ formatDate(r.scheduled_date) }}
-              </p>
-              <span v-if="r.completed_at" class="mt-2 text-xs text-green-600 font-medium inline-flex items-center gap-1">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                Виконано {{ new Date(r.completed_at).toLocaleDateString('uk-UA') }}
-              </span>
-              <button v-else-if="LOGGABLE_TYPES.includes(r.type)"
-                @click="logToJournal(r)"
-                :disabled="savingJournal"
-                class="mt-2 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1"
-                :class="r.journal_data ? 'text-white bg-agro hover:bg-agro-dark' : 'text-agro bg-agro-hover hover:bg-agro hover:text-white'">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                {{ r.journal_data ? '✓ Виконано → в журнал' : 'Виконано' }}
-              </button>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="font-semibold text-agro-dark">{{ r.description }}</p>
+                  <span v-if="r.from_agronomist" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-1">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> від агронома
+                  </span>
+                  <span v-if="isPast(r.scheduled_date)" class="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">Прострочено</span>
+                </div>
+                <p class="text-xs mt-1 flex items-center gap-1" :class="isPast(r.scheduled_date) ? 'text-orange-400' : 'text-agro-light'">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{ formatDate(r.scheduled_date) }}
+                </p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button v-if="LOGGABLE_TYPES.includes(r.type)"
+                  @click="logToJournal(r)"
+                  :disabled="savingJournal"
+                  class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1 bg-agro-hover text-agro hover:bg-agro hover:text-white">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Виконано
+                </button>
+                <button @click="deleteReminder(r.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-300 hover:text-red-400 transition-colors">
+                  <Trash2 :size="15" />
+                </button>
+              </div>
             </div>
-            <button @click="deleteReminder(r.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition-colors shrink-0">
-              <Trash2 :size="15" />
-            </button>
           </div>
-        </div>
+
+          <!-- Виконані нагадування -->
+          <template v-if="completedReminders.length">
+            <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-2">Виконані</p>
+            <div class="space-y-2">
+              <div v-for="r in completedReminders" :key="r.id"
+                class="card flex items-center gap-4 bg-gray-50/50">
+                <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(22,163,74)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-agro-light text-sm">{{ r.description }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">Виконано {{ new Date(r.completed_at).toLocaleDateString('uk-UA') }}</p>
+                </div>
+                <button @click="deleteReminder(r.id)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-300 hover:text-red-400 transition-colors shrink-0">
+                  <Trash2 :size="15" />
+                </button>
+              </div>
+            </div>
+          </template>
+        </template>
       </template>
     </template>
 
@@ -570,6 +583,9 @@ const formatDate = (d: string) => d
   : ''
 
 const isPast = (d: string) => d ? new Date(d) < new Date() : false
+
+const activeReminders = computed(() => reminders.value.filter(r => !r.completed_at))
+const completedReminders = computed(() => reminders.value.filter(r => r.completed_at))
 
 const addReminder = async () => {
   if (!newForm.title || !newForm.date) return
