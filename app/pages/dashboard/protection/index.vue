@@ -106,12 +106,12 @@
                   <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
                 </div>
                 <div class="relative shrink-0 reminder-info-wrap">
-                  <button @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors shrink-0"
-                    :class="futureRemindersCount(t.id) ? 'bg-agro/10 text-agro hover:bg-agro/20' : 'hover:bg-agro-hover text-agro-light hover:text-agro'"
+                  <button @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors shrink-0 relative"
+                    :class="futureRemindersCount(t.id) ? 'bg-agro text-white hover:bg-agro-dark' : 'hover:bg-agro-hover text-agro-light hover:text-agro'"
                     title="Нагадування">
                     <Bell :size="14" />
                     <span v-if="futureRemindersCount(t.id)"
-                      class="absolute -top-1 -right-1 w-4 h-4 bg-agro text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                      class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 text-white text-[8px] font-bold rounded-full flex items-center justify-center leading-none">
                       {{ futureRemindersCount(t.id) }}
                     </span>
                   </button>
