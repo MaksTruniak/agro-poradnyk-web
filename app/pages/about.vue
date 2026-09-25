@@ -31,10 +31,10 @@
         </div>
         <div class="card text-center">
           <div class="w-12 h-12 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-3">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
           </div>
-          <h3 class="font-bold text-agro-dark mb-2">Продавцям</h3>
-          <p class="text-sm text-agro-light">Каталог товарів, онлайн-замовлення, управління залишками</p>
+          <h3 class="font-bold text-agro-dark mb-2">Заготівельникам</h3>
+          <p class="text-sm text-agro-light">Пошук фермерів, переговори про купівлю зерна, управління угодами</p>
         </div>
       </div>
 
@@ -46,7 +46,7 @@
       </div>
 
       <div class="text-center">
-        <NuxtLink to="/auth?mode=register" class="btn-primary inline-block px-10 py-4 text-lg">
+        <NuxtLink to="/auth?mode=register" class="btn-primary inline-flex items-center justify-center px-10 py-4 text-lg">
           Приєднатись до платформи →
         </NuxtLink>
       </div>

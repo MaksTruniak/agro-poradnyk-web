@@ -107,7 +107,7 @@
             </svg>
           </div>
           <p class="font-bold text-agro-dark text-lg mb-2">Інтеграції з ERP і API</p>
-          <p class="text-agro-light text-sm mb-6 max-w-sm mx-auto">Підключення 1С, Agri ERP та REST API доступне на тарифі <strong class="text-agro-dark">Custom</strong> (від 200 га)</p>
+          <p class="text-agro-light text-sm mb-6 max-w-sm mx-auto">Підключення 1С, Agri ERP та REST API доступне на тарифі <strong class="text-agro-dark">Бізнес Про</strong></p>
           <NuxtLink to="/dashboard/subscription" class="dash-btn-primary inline-flex">
             Переглянути тарифи →
           </NuxtLink>

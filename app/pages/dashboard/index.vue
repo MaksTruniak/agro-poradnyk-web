@@ -483,7 +483,7 @@ onMounted(async () => {
 
   if (isBuyer.value) {
     const chatsRes = await supabase.from('chats').select('id, farmer_id, title')
-      .eq('agronomist_id', uid.value).eq('type', 'human').order('created_at', { ascending: false }).limit(5)
+      .eq('buyer_id', uid.value).eq('type', 'human').order('created_at', { ascending: false }).limit(5)
     const chatsData = chatsRes.data || []
     const chatIds = chatsData.map((c: any) => c.id)
     const farmerIds = [...new Set(chatsData.map((c: any) => c.farmer_id).filter(Boolean))]

@@ -275,6 +275,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'dashboard' })
+useHead({ title: 'Журнал обробок — АгроПростір' })
 
 const supabase = useSupabaseClient()
 const { confirm: confirmDialog } = useConfirm()

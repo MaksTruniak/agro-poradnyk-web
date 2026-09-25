@@ -296,6 +296,7 @@ import { Trash2, X, Bell } from 'lucide-vue-next'
 import { TREATMENT_TYPES, TYPE_SVG, TYPE_BG, TYPE_BADGE } from '~/utils/treatmentTypes'
 import { phaseIcon } from '~/utils/phaseIcons'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
+useHead({ title: 'Технічна карта — АгроПростір' })
 
 const route = useRoute()
 const farmId = route.params.farmId as string

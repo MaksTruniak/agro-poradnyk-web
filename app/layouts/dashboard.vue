@@ -6,7 +6,7 @@
     <div class="flex flex-1 min-h-0">
 
     <!-- Сайдбар (тільки десктоп) -->
-    <aside class="hidden lg:flex flex-col fixed h-full z-40" style="width: 280px; background: #fff; border-right: 1px solid rgb(231,224,206);">
+    <aside class="hidden lg:flex flex-col fixed z-40" style="width: 280px; height: 100dvh; background: #fff; border-right: 1px solid rgb(231,224,206);">
 
       <!-- Лого -->
       <div style="padding: 26px 24px; border-bottom: 1px solid rgb(231,224,206);">

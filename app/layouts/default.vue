@@ -179,8 +179,10 @@
               <li><NuxtLink to="/for-agronomists" class="hover:text-white transition-colors">Агрономам</NuxtLink></li>
               <li><NuxtLink to="/for-buyers" class="hover:text-white transition-colors">Заготівельникам</NuxtLink></li>
               <li><NuxtLink to="/about" class="hover:text-white transition-colors">Про нас</NuxtLink></li>
+              <li><NuxtLink to="/contacts" class="hover:text-white transition-colors">Контакти</NuxtLink></li>
               <li><NuxtLink to="/privacy" class="hover:text-white transition-colors">Політика конфіденційності</NuxtLink></li>
               <li><NuxtLink to="/terms" class="hover:text-white transition-colors">Умови використання</NuxtLink></li>
+              <li><NuxtLink to="/refund-policy" class="hover:text-white transition-colors">Політика повернення</NuxtLink></li>
             </ul>
           </div>
         </div>

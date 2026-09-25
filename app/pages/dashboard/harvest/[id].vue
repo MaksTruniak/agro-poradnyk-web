@@ -335,6 +335,7 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
+useHead({ title: 'Сезон збору — АгроПростір' })
 
 const supabase = useSupabaseClient()
 const route = useRoute()

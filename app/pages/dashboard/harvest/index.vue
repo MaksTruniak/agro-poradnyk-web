@@ -232,6 +232,7 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth', layout: 'dashboard' })
+useHead({ title: 'Облік збору — АгроПростір' })
 
 const supabase = useSupabaseClient()
 const router = useRouter()

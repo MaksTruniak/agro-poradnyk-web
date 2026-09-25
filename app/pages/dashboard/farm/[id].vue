@@ -598,6 +598,7 @@
 import { Trash2, ShieldCheck } from 'lucide-vue-next'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
+useHead({ title: 'Поле — АгроПростір' })
 
 const route = useRoute()
 const farmId = route.params.id as string

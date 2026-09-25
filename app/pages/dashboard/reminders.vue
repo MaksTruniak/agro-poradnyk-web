@@ -10,10 +10,6 @@
         <h1 class="dash-title bitter">{{ isAgronomist ? 'Надіслані фермерам' : 'Нагадування' }}</h1>
         <p class="dash-subtitle">{{ isAgronomist ? 'Нагадування, надіслані вашим клієнтам' : 'Заплановані обробки та події' }}</p>
       </div>
-      <button v-if="!isAgronomist && !(isTeamMember && isViewer)" @click="openAdd" class="dash-btn-primary shrink-0">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        Додати нагадування
-      </button>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -130,8 +126,7 @@
             </svg>
           </div>
           <p class="font-bold text-agro-dark text-lg mb-2">Нагадувань поки немає</p>
-          <p class="text-agro-light mb-6">Додайте нагадування про обробку або будь-яку подію</p>
-          <button @click="openAdd" class="dash-btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Додати нагадування</button>
+          <p class="text-agro-light">Нагадування додаються з технічної карти або журналу обробок</p>
         </div>
 
         <template v-else>
@@ -158,7 +153,7 @@
                 </p>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <button v-if="LOGGABLE_TYPES.includes(r.type)"
+                <button v-if="hasPaidPlan && LOGGABLE_TYPES.includes(r.type)"
                   @click="logToJournal(r)"
                   :disabled="savingJournal"
                   class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1 bg-agro-hover text-agro hover:bg-agro hover:text-white">
