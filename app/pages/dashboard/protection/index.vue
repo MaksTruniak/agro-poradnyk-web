@@ -1009,7 +1009,7 @@ const saveReminder = async () => {
     description: reminderTreatment.value.product_name,
     scheduled_date: iso,
     type: 'обробка',
-    from_agronomist: true,
+    from_agronomist: false,
   })
   rSaving.value = false
   reminderTreatment.value = null
