@@ -29,7 +29,7 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                 <path :d="ROLE_ICONS[role] || ROLE_ICONS.farmer" stroke="#7A8A72" stroke-width="1.8" stroke-linejoin="round"/>
               </svg>
-              {{ roleLabelShort }}
+              {{ teamOwner?.position || roleLabelShort }}
             </div>
           </template>
           <template v-else>
@@ -242,12 +242,13 @@ const profile = ref<any>(null)
 const profileReady = ref(false)
 
 // Режим члена команди
-const teamOwner = ref<{ ownerId: string; ownerName: string; roleLabel: string } | null>(null)
+const teamOwner = ref<{ ownerId: string; ownerName: string; roleLabel: string; position?: string } | null>(null)
 
 const exitTeamMode = () => {
   localStorage.removeItem('agro_team_owner_id')
   localStorage.removeItem('agro_team_owner_name')
   localStorage.removeItem('agro_team_role_label')
+  localStorage.removeItem('agro_team_position')
   teamOwner.value = null
   router.push('/dashboard')
 }
@@ -270,15 +271,16 @@ onMounted(async () => {
     const ownerId   = localStorage.getItem('agro_team_owner_id')
     const ownerName = localStorage.getItem('agro_team_owner_name')
     const roleLabel = localStorage.getItem('agro_team_role_label')
+    const position  = localStorage.getItem('agro_team_position') || undefined
     if (ownerId && ownerName) {
-      teamOwner.value = { ownerId, ownerName, roleLabel: roleLabel || 'Переглядач' }
+      teamOwner.value = { ownerId, ownerName, roleLabel: roleLabel || 'Переглядач', position }
     } else {
       // localStorage порожній — перевіряємо БД (нова сесія / інший браузер)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: rec } = await supabase
           .from('team_members')
-          .select('owner_id, role')
+          .select('owner_id, role, position')
           .eq('member_id', user.id)
           .eq('status', 'active')
           .maybeSingle()
@@ -290,7 +292,8 @@ onMounted(async () => {
           localStorage.setItem('agro_team_owner_id',   rec.owner_id)
           localStorage.setItem('agro_team_owner_name', name)
           localStorage.setItem('agro_team_role_label', label)
-          teamOwner.value = { ownerId: rec.owner_id, ownerName: name, roleLabel: label }
+          if (rec.position) localStorage.setItem('agro_team_position', rec.position)
+          teamOwner.value = { ownerId: rec.owner_id, ownerName: name, roleLabel: label, position: rec.position || undefined }
         }
       }
     }
@@ -302,7 +305,7 @@ onMounted(async () => {
     if (session) {
       const { data: rec } = await supabase
         .from('team_members')
-        .select('owner_id, role')
+        .select('owner_id, role, position')
         .eq('member_id', session.user.id)
         .eq('status', 'active')
         .maybeSingle()
@@ -314,7 +317,8 @@ onMounted(async () => {
         localStorage.setItem('agro_team_owner_id',    rec.owner_id)
         localStorage.setItem('agro_team_owner_name',  ownerName)
         localStorage.setItem('agro_team_role_label',  roleLabel)
-        teamOwner.value = { ownerId: rec.owner_id, ownerName, roleLabel }
+        if (rec.position) localStorage.setItem('agro_team_position', rec.position)
+        teamOwner.value = { ownerId: rec.owner_id, ownerName, roleLabel, position: rec.position || undefined }
       }
     }
   }
