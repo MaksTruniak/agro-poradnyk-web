@@ -153,8 +153,15 @@
             <!-- Кількість га -->
             <div class="mb-5 text-left">
               <label class="block text-sm font-medium text-agro-dark mb-1">Скільки у вас га?</label>
-              <input v-model.number="hectares" type="number" :min="selectedPlan === 'business_pro' ? 50 : 1" step="1" class="input text-center font-semibold text-lg" :placeholder="selectedPlan === 'business_pro' ? '50' : '1'" />
-              <p v-if="selectedPlan === 'business_pro'" class="text-xs text-agro-light mt-1">Мінімум 50 га</p>
+              <input v-model.number="hectares" type="number"
+                :min="selectedPlan === 'business_pro' ? 50 : 2"
+                :max="selectedPlan === 'business' ? 50 : undefined"
+                step="1" class="input text-center font-semibold text-lg"
+                :placeholder="selectedPlan === 'business_pro' ? '50' : '2'" />
+              <p class="text-xs text-agro-light mt-1">
+                <template v-if="selectedPlan === 'business'">від 2 до 50 га</template>
+                <template v-else-if="selectedPlan === 'business_pro'">мінімум 50 га</template>
+              </p>
               <p v-if="hectaresError" class="text-xs text-red-500 mt-1">{{ hectaresError }}</p>
             </div>
 
@@ -207,7 +214,7 @@
             <p class="text-xs text-agro-light mb-4">Безпечна оплата через <strong class="text-agro-dark">WayForPay</strong> — картки Visa / Mastercard</p>
             <div class="flex gap-3">
               <button @click="showPayment = false" class="btn-outline flex-1" :disabled="paying">Закрити</button>
-              <button @click="submitPayment" :disabled="paying || hectares < 1 || (selectedPlan === 'business_pro' && hectares < 50)" class="btn-primary flex-1 justify-center disabled:opacity-60">
+              <button @click="submitPayment" :disabled="paying || hectares < 1 || (selectedPlan === 'business' && (hectares < 2 || hectares > 50)) || (selectedPlan === 'business_pro' && hectares < 50)" class="btn-primary flex-1 justify-center disabled:opacity-60">
                 <span v-if="paying" class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                 {{ paying ? 'Перенаправляємо...' : 'Оплатити →' }}
               </button>
@@ -313,6 +320,8 @@ const getBase = (plan: string) => plansDb.value[plan]?.base_price ?? 0
 const getRate = (plan: string) => plansDb.value[plan]?.ha_rate ?? 0
 
 const effectiveHectares = computed(() => {
+  if (selectedPlan.value === 'business' && hectares.value > 50) return 50
+  if (selectedPlan.value === 'business' && hectares.value > 0 && hectares.value < 2) return 2
   if (selectedPlan.value === 'business_pro' && hectares.value > 0 && hectares.value < 50) return 50
   return hectares.value
 })
@@ -367,6 +376,14 @@ async function submitPayment() {
   hectaresError.value = ''
   if (!hectares.value || hectares.value < 1) {
     hectaresError.value = 'Вкажіть кількість га'
+    return
+  }
+  if (selectedPlan.value === 'business' && hectares.value < 2) {
+    hectaresError.value = 'Мінімум 2 га для плану Бізнес'
+    return
+  }
+  if (selectedPlan.value === 'business' && hectares.value > 50) {
+    hectaresError.value = 'Максимум 50 га для плану Бізнес. Оберіть Бізнес Про для більшої площі'
     return
   }
   if (selectedPlan.value === 'business_pro' && hectares.value < 50) {
