@@ -48,7 +48,7 @@
             <label class="block text-sm font-medium text-agro-dark mb-1">
               {{ isExistingUser ? 'Пароль' : 'Придумайте пароль' }}
             </label>
-            <input v-model="password" type="password" class="input" placeholder="Мінімум 8 символів"
+            <input v-model="password" type="password" class="input focus:ring-2 focus:ring-agro/20" placeholder="Мінімум 8 символів"
               @keydown.enter="submit" />
           </div>
         </div>
