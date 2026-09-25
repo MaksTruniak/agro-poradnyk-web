@@ -535,6 +535,37 @@ const navItems = computed(() => {
   // farmer / dacha
   const fieldLabel = role.value === 'dacha' ? 'Мої культури' : 'Мої поля'
 
+  // Менеджер-співробітник бачить все крім підписки
+  if (teamOwner.value?.position === 'Менеджер') {
+    const fieldLabel2 = role.value === 'dacha' ? 'Мої культури' : 'Мої поля'
+    const mainItems2: any[] = [
+      { to: '/dashboard/fields', label: fieldLabel2 },
+      { to: '/dashboard/analytics', label: 'Аналітика' },
+      { to: '/dashboard/expenses', label: 'Витрати / Доходи' },
+      { to: '/dashboard/inventory', label: 'Склад' },
+      { to: '/dashboard/harvest', label: 'Облік збору' },
+    ]
+    return [
+      { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
+      { label: 'Моє господарство', items: mainItems2 },
+      { label: 'Агрономія', items: [
+        { to: '/pesticides', label: 'Каталог' },
+        { to: '/dashboard/ai-chat', label: 'AI агроном' },
+        { to: '/dashboard/reminders', label: 'Нагадування' },
+        { to: '/dashboard/treatments', label: 'Журнал обробок' },
+      ]},
+      { label: 'Комунікація', items: [
+        { to: '/dashboard/chats', label: 'Чати' },
+        { to: '/dashboard/agreements', label: 'Угоди з агрономами' },
+        { to: '/dashboard/deals', label: 'Угоди із закупівельником' },
+      ]},
+      { label: 'Акаунт', items: [
+        { to: '/dashboard/support', label: 'Підтримка' },
+        { to: '/dashboard/settings', label: 'Налаштування' },
+      ]},
+    ]
+  }
+
   // Агроном-співробітник бачить тільки своє
   if (teamOwner.value?.position === 'Агроном') {
     return [
@@ -585,6 +616,13 @@ const navItems = computed(() => {
 })
 
 const bottomNavItems = computed(() => {
+  if (teamOwner.value?.position === 'Менеджер') return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/dashboard/fields', icon: '🌾', label: 'Поля' },
+    { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
+    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
+    { to: '/dashboard/settings', icon: '⚙️', label: 'Більше' },
+  ]
   if (teamOwner.value?.position === 'Агроном') return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
     { to: '/dashboard/fields', icon: '🌾', label: 'Поля' },
