@@ -8,7 +8,7 @@
         <h1 class="dash-title bitter">Технічна карта</h1>
         <p class="dash-subtitle">{{ cropType || 'Програми захисту культур' }}</p>
       </div>
-      <button v-if="program && hasPaidPlan" @click="generateCard" :disabled="generating" class="dash-btn-outline shrink-0 flex items-center gap-1.5">
+      <button v-if="program" @click="generateCard" :disabled="generating || !hasPaidPlan" class="dash-btn-outline shrink-0 flex items-center gap-1.5" :title="!hasPaidPlan ? 'Доступно на тарифі Бізнес' : ''" :class="!hasPaidPlan ? 'opacity-40 cursor-not-allowed' : ''">
         <svg v-if="!generating" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
           <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
@@ -16,7 +16,7 @@
         <svg v-else class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
         {{ generating ? 'Генерую...' : 'AI генерація' }}
       </button>
-      <button v-if="program && hasPaidPlan" @click="openAiAnalysis" class="dash-btn-outline shrink-0 flex items-center gap-1.5">
+      <button v-if="program" @click="openAiAnalysis" :disabled="!hasPaidPlan" class="dash-btn-outline shrink-0 flex items-center gap-1.5" :title="!hasPaidPlan ? 'Доступно на тарифі Бізнес' : ''" :class="!hasPaidPlan ? 'opacity-40 cursor-not-allowed' : ''">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
           <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
