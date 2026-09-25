@@ -58,7 +58,7 @@
             </div>
             <div v-if="nextReminders.length === 0" class="text-agro-light text-sm text-center py-6">
               Немає запланованих нагадувань
-              <div class="mt-3"><NuxtLink to="/dashboard/reminders" class="btn-primary text-sm inline-flex items-center justify-center">Додати</NuxtLink></div>
+              
             </div>
             <div v-else class="space-y-3">
               <div v-for="r in nextReminders" :key="r.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
@@ -244,7 +244,7 @@
             </div>
             <div v-if="nextReminders.length === 0" class="text-agro-light text-sm text-center py-6">
               Немає запланованих нагадувань
-              <div class="mt-3"><NuxtLink to="/dashboard/reminders" class="btn-primary text-sm inline-flex items-center justify-center">Додати</NuxtLink></div>
+              
             </div>
             <div v-else class="space-y-3">
               <div v-for="r in nextReminders" :key="r.id" class="flex items-center gap-3 p-3 bg-agro-bg rounded-xl">
