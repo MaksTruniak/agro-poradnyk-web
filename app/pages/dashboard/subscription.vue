@@ -40,79 +40,81 @@
       </div>
 
       <!-- Плани — сітка 3 колонки -->
-      <div class="grid md:grid-cols-3 gap-4 mb-8">
+      <div class="grid md:grid-cols-3 gap-4 mb-8 items-stretch">
 
-        <!-- Basic -->
-        <div class="card border-2" :class="currentPlan === 'basic' ? 'border-agro' : 'border-agro-border'">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
-              Звичайний
-            </h2>
+        <!-- Звичайний -->
+        <div class="card border-2 flex flex-col" :class="currentPlan === 'basic' ? 'border-agro' : 'border-agro-border'">
+          <!-- Бейдж рядок (резервуємо висоту) -->
+          <div class="h-7 flex items-center justify-end mb-2">
             <span v-if="currentPlan === 'basic'" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
+          <!-- Назва -->
+          <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5 mb-3">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
+            Звичайний
+          </h2>
           <p class="text-2xl font-extrabold text-agro-dark mb-0.5">Безкоштовно</p>
           <p class="text-agro-light text-xs mb-4">до 2 га · назавжди</p>
-          <ul class="space-y-2 mb-5">
+          <ul class="space-y-2 mb-4 flex-1">
             <li v-for="f in BASIC_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-agro shrink-0 mt-0.5">✓</span> {{ f }}
             </li>
-          </ul>
-          <ul class="space-y-2 mb-5">
             <li v-for="f in BASIC_DISABLED" :key="f" class="flex items-start gap-2 text-sm text-agro-light line-through">
               <span class="shrink-0 mt-0.5">✕</span> {{ f }}
             </li>
           </ul>
-          <button disabled class="w-full py-2.5 rounded-xl border-2 border-agro-border text-agro-light font-semibold text-sm cursor-default">
+          <button disabled class="w-full py-2.5 rounded-xl border-2 border-agro-border text-agro-light font-semibold text-sm cursor-default mt-auto">
             {{ currentPlan === 'basic' ? 'Поточний план' : 'Звичайний' }}
           </button>
         </div>
 
         <!-- Бізнес -->
-        <div class="card border-2 relative overflow-hidden" :class="currentPlan === 'business' ? 'border-agro' : 'border-agro-border'">
-          <div class="flex justify-end mb-2">
-            <span class="bg-agro text-white text-xs font-bold px-2.5 py-1 rounded-full">ПОПУЛЯРНИЙ</span>
-          </div>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              Бізнес
-            </h2>
+        <div class="card border-2 flex flex-col" :class="currentPlan === 'business' ? 'border-agro' : 'border-agro-border'">
+          <!-- Бейдж рядок -->
+          <div class="h-7 flex items-center justify-between mb-2">
+            <span class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-bold tracking-wide">ПОПУЛЯРНИЙ</span>
             <span v-if="currentPlan === 'business'" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
+          <!-- Назва -->
+          <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5 mb-3">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Бізнес
+          </h2>
           <p class="text-2xl font-extrabold text-agro-dark mb-0.5">{{ getBase('business') }} <span class="text-base font-semibold">грн</span></p>
           <p class="text-agro-light text-xs mb-4">+ {{ getRate('business') }} грн/га · 2–50 га · / місяць</p>
-          <ul class="space-y-2 mb-5">
+          <ul class="space-y-2 mb-4 flex-1">
             <li v-for="f in BUSINESS_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-agro shrink-0 mt-0.5">✓</span> {{ f }}
             </li>
           </ul>
-          <button v-if="currentPlan !== 'business'" @click="openPayment('business')" class="btn-primary w-full py-2.5 justify-center">
+          <button v-if="currentPlan !== 'business'" @click="openPayment('business')" class="btn-primary w-full py-2.5 justify-center mt-auto">
             Перейти на Бізнес →
           </button>
-          <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-agro text-agro font-semibold text-sm cursor-default">Активний</button>
+          <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-agro text-agro font-semibold text-sm cursor-default mt-auto">Активний</button>
         </div>
 
         <!-- Бізнес Про -->
-        <div class="card border-2" :class="currentPlan === 'business_pro' ? 'border-amber-400' : 'border-agro-border'" style="background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              Бізнес Про
-            </h2>
+        <div class="card border-2 flex flex-col" :class="currentPlan === 'business_pro' ? 'border-amber-400' : 'border-agro-border'" style="background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);">
+          <!-- Бейдж рядок -->
+          <div class="h-7 flex items-center justify-end mb-2">
             <span v-if="currentPlan === 'business_pro'" class="text-xs bg-amber-400 text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
+          <!-- Назва -->
+          <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5 mb-3">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Бізнес Про
+          </h2>
           <p class="text-2xl font-extrabold text-amber-600 mb-0.5">{{ getBase('business_pro') }} <span class="text-base font-semibold">грн</span></p>
           <p class="text-agro-light text-xs mb-4">+ {{ getRate('business_pro') }} грн/га · 50+ га · / місяць</p>
-          <ul class="space-y-2 mb-5">
+          <ul class="space-y-2 mb-4 flex-1">
             <li v-for="f in BUSINESS_PRO_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-amber-500 shrink-0 mt-0.5">✓</span> {{ f }}
             </li>
           </ul>
-          <button v-if="currentPlan !== 'business_pro'" @click="openPayment('business_pro')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors">
+          <button v-if="currentPlan !== 'business_pro'" @click="openPayment('business_pro')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors mt-auto">
             Перейти на Бізнес Про →
           </button>
-          <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-amber-400 text-amber-600 font-semibold text-sm cursor-default">Активний</button>
+          <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-amber-400 text-amber-600 font-semibold text-sm cursor-default mt-auto">Активний</button>
         </div>
 
       </div>
