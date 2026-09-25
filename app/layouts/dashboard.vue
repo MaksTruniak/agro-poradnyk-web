@@ -534,6 +534,22 @@ const navItems = computed(() => {
   ]
   // farmer / dacha
   const fieldLabel = role.value === 'dacha' ? 'Мої культури' : 'Мої поля'
+
+  // Агроном-співробітник бачить тільки своє
+  if (teamOwner.value?.position === 'Агроном') {
+    return [
+      { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
+      { label: 'Господарство', items: [
+        { to: '/dashboard/fields', label: 'Поля' },
+        { to: '/dashboard/inventory', label: 'Склад' },
+        { to: '/dashboard/treatments', label: 'Журнал обробок' },
+      ]},
+      { label: 'Агрономія', items: [
+        { to: '/dashboard/ai-chat', label: 'AI агроном' },
+      ]},
+    ]
+  }
+
   const mainItems: any[] = [
     { to: '/dashboard/fields', label: fieldLabel },
     { to: '/dashboard/inventory', label: 'Склад' },
@@ -569,6 +585,13 @@ const navItems = computed(() => {
 })
 
 const bottomNavItems = computed(() => {
+  if (teamOwner.value?.position === 'Агроном') return [
+    { to: '/dashboard', icon: '🏠', label: 'Головна' },
+    { to: '/dashboard/fields', icon: '🌾', label: 'Поля' },
+    { to: '/dashboard/inventory', icon: '📦', label: 'Склад' },
+    { to: '/dashboard/treatments', icon: '📋', label: 'Обробки' },
+    { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
+  ]
   if (role.value === 'seller') return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
     { to: '/dashboard/products', icon: '📦', label: 'Товари' },
