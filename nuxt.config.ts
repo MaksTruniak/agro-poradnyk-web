@@ -1,6 +1,6 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  ssr: false,
+  ssr: true,
   devtools: { enabled: true },
 
   vite: {
@@ -65,6 +65,19 @@ export default defineNuxtConfig({
   routeRules: {
     '/catalog': { redirect: { to: '/pesticides', statusCode: 301 } },
     '/catalog/**': { redirect: { to: '/pesticides/**', statusCode: 301 } },
+
+    // SPA-режим для захищених / клієнтських сторінок
+    '/dashboard/**':    { ssr: false },
+    '/admin/**':        { ssr: false },
+    '/auth':            { ssr: false },
+    '/role-select':     { ssr: false },
+    '/onboarding':      { ssr: false },
+    '/invite':          { ssr: false },
+    '/payment/**':      { ssr: false },
+    '/cart':            { ssr: false },
+    '/checkout':        { ssr: false },
+    '/harvest-worker':  { ssr: false },
+
     '/**': {
       headers: {
         'X-Frame-Options': 'SAMEORIGIN',
