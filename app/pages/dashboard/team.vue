@@ -71,7 +71,20 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Посада</label>
-              <input v-model="invitePosition" type="text" class="input" placeholder="Агроном, Комбайнер, Бухгалтер...">
+              <UiAppSelect
+                v-model="invitePosition"
+                :options="[
+                  { value: '', label: 'Не вказано' },
+                  { value: 'Агроном', label: 'Агроном' },
+                  { value: 'Тракторист', label: 'Тракторист' },
+                  { value: 'Комбайнер', label: 'Комбайнер' },
+                  { value: 'Водій', label: 'Водій' },
+                  { value: 'Механік', label: 'Механік' },
+                  { value: 'Бухгалтер', label: 'Бухгалтер' },
+                  { value: 'Робітник поля', label: 'Робітник поля' },
+                  { value: 'Менеджер', label: 'Менеджер' },
+                ]"
+              />
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Роль доступу</label>
@@ -218,14 +231,13 @@ async function sendInvite() {
 
   const email = inviteEmail.value.trim()
 
-  // Вставляємо запис (токен генерується автоматично в БД)
-  const { error: insertErr } = await supabase.from('team_members').upsert({
-    owner_id: currentUser.value?.id,
-    email,
-    role:     inviteRole.value,
-    position: invitePosition.value.trim() || null,
-    status:   'pending',
-  }, { onConflict: 'owner_id,email' })
+  // Вставляємо або оновлюємо запис, токен генерується через функцію БД
+  const { error: insertErr } = await supabase.rpc('upsert_team_member', {
+    p_owner_id: currentUser.value?.id,
+    p_email: email,
+    p_role: inviteRole.value,
+    p_position: invitePosition.value.trim() || null,
+  })
 
   if (insertErr) {
     console.error('team_members upsert error:', insertErr)
