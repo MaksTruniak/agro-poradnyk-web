@@ -163,8 +163,8 @@
                 <span class="font-medium text-agro-dark">{{ getBase(selectedPlan) }} грн</span>
               </div>
               <div class="flex justify-between text-sm mb-2">
-                <span class="text-agro-light">{{ hectares }} га × {{ getRate(selectedPlan) }} грн</span>
-                <span class="font-medium text-agro-dark">{{ (hectares * getRate(selectedPlan)).toLocaleString('uk-UA') }} грн</span>
+                <span class="text-agro-light">{{ effectiveHectares }} га × {{ getRate(selectedPlan) }} грн</span>
+                <span class="font-medium text-agro-dark">{{ (effectiveHectares * getRate(selectedPlan)).toLocaleString('uk-UA') }} грн</span>
               </div>
               <div class="border-t border-agro-border pt-2 flex justify-between">
                 <span class="font-bold text-agro-dark">До сплати / місяць</span>
@@ -310,8 +310,14 @@ for (const p of plansData || []) {
 const getBase = (plan: string) => plansDb.value[plan]?.base_price ?? 0
 const getRate = (plan: string) => plansDb.value[plan]?.ha_rate ?? 0
 
+const effectiveHectares = computed(() => {
+  const isPaid = selectedPlan.value === 'business' || selectedPlan.value === 'business_pro'
+  if (isPaid && hectares.value > 0 && hectares.value < 50) return 50
+  return hectares.value
+})
+
 const calculatedPrice = computed(() => {
-  return getBase(selectedPlan.value) + (hectares.value > 0 ? hectares.value * getRate(selectedPlan.value) : 0)
+  return getBase(selectedPlan.value) + (effectiveHectares.value > 0 ? effectiveHectares.value * getRate(selectedPlan.value) : 0)
 })
 
 const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDiscount.value : loyaltyDiscount.value)
@@ -382,7 +388,7 @@ async function submitPayment() {
       headers: { Authorization: `Bearer ${token}` },
       body: {
         plan: selectedPlan.value,
-        hectares: hectares.value,
+        hectares: effectiveHectares.value,
         couponCode: couponResult.value === 'ok' ? couponCode.value.trim().toUpperCase() : undefined,
       },
     })
