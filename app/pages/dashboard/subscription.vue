@@ -342,7 +342,7 @@ async function loadLoyaltyDiscount() {
 
 function openPayment(plan: string) {
   selectedPlan.value = plan
-  hectares.value = 50
+  hectares.value = plan === 'business' ? 2 : 50
   hectaresError.value = ''
   payError.value = ''
   couponCode.value = ''
