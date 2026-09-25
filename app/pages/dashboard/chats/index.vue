@@ -24,7 +24,7 @@
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Чатів поки немає</p>
       <p class="text-agro-light mb-6" v-if="!isAgronomist">Знайдіть агронома і почніть консультацію</p>
-      <NuxtLink v-if="!isAgronomist" to="/agronomists" class="btn-primary inline-block">Знайти агронома →</NuxtLink>
+      <NuxtLink v-if="!isAgronomist" to="/agronomists" class="btn-primary inline-flex items-center justify-center">Знайти агронома →</NuxtLink>
     </div>
 
     <div v-else class="space-y-3">
