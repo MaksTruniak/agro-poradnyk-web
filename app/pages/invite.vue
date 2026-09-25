@@ -44,6 +44,16 @@
             <label class="block text-sm font-medium text-agro-dark mb-1">Email</label>
             <input :value="invite.email" type="email" class="input opacity-70 cursor-not-allowed" disabled />
           </div>
+          <template v-if="!isExistingUser">
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Прізвище та ім'я</label>
+              <input v-model="fullName" type="text" class="input" placeholder="Іваненко Іван Іванович" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Номер телефону</label>
+              <input v-model="phone" type="tel" class="input" placeholder="+380XXXXXXXXX" />
+            </div>
+          </template>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">
               {{ isExistingUser ? 'Пароль' : 'Придумайте пароль' }}
@@ -80,6 +90,8 @@ const token = route.query.token as string
 const loading = ref(true)
 const invite  = ref<any>(null)
 const password = ref('')
+const fullName = ref('')
+const phone    = ref('')
 const authError = ref('')
 const submitting = ref(false)
 const isExistingUser = ref(false)
@@ -108,6 +120,7 @@ const toggleMode = () => {
 
 const submit = async () => {
   if (!password.value || !invite.value) return
+  if (!isExistingUser.value && !fullName.value.trim()) { authError.value = 'Вкажіть прізвище та ім\'я'; return }
   if (password.value.length < 8) { authError.value = 'Пароль мінімум 8 символів'; return }
 
   authError.value = ''
@@ -141,18 +154,20 @@ const submit = async () => {
 
   if (!userId) { authError.value = 'Помилка авторизації'; submitting.value = false; return }
 
-  await supabase
-    .from('team_members')
-    .update({ member_id: userId, status: 'active' })
-    .eq('token', token)
+  const updateData: any = { member_id: userId, status: 'active' }
+  if (!isExistingUser.value && fullName.value.trim()) updateData.name = fullName.value.trim()
+  await supabase.from('team_members').update(updateData).eq('token', token)
 
   // Створюємо запис у users щоб пройти перевірку onboarding в middleware
-  await supabase.from('users').upsert({
+  const userData: any = {
     id: userId,
     email: invite.value.email,
     role: 'farmer',
     onboarded_at: new Date().toISOString(),
-  }, { onConflict: 'id', ignoreDuplicates: true })
+  }
+  if (!isExistingUser.value && fullName.value.trim()) userData.name = fullName.value.trim()
+  if (!isExistingUser.value && phone.value.trim()) userData.phone = phone.value.trim()
+  await supabase.from('users').upsert(userData, { onConflict: 'id', ignoreDuplicates: false })
 
   submitting.value = false
   await navigateTo('/dashboard?team_accepted=1')
