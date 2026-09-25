@@ -309,7 +309,8 @@ const isSeller = computed(() => role.value === 'seller')
 const isBuyer = computed(() => role.value === 'buyer')
 
 const ROLE_LABELS: Record<string, string> = { farmer: 'Фермер', dacha: 'Дачник', agronomist: 'Агроном', seller: 'Продавець', buyer: 'Заготівельник' }
-const roleLabel = computed(() => ROLE_LABELS[role.value] || '')
+const { isTeamMember, teamRole } = useTeamContext()
+const roleLabel = computed(() => isTeamMember.value && teamRole.value ? teamRole.value : (ROLE_LABELS[role.value] || ''))
 
 const loading = ref(true)
 const stats = ref({ products: 0, orders: 0, revenue: 0 })

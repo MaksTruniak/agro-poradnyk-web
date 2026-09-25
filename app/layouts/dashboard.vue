@@ -468,7 +468,10 @@ const ROLE_SHORT: Record<string, string> = {
   seller: 'Продавець', buyer: 'Заготівельник', admin: 'Адміністратор',
 }
 const roleLabel = computed(() => ROLE_LABELS[role.value] || role.value)
-const roleLabelShort = computed(() => ROLE_SHORT[role.value] || role.value)
+const roleLabelShort = computed(() => {
+  if (teamOwner.value) return teamOwner.value.roleLabel
+  return ROLE_SHORT[role.value] || role.value
+})
 
 const navItems = computed(() => {
   const adminGroup = role.value === 'admin' ? [{ label: '', items: [{ to: '/admin', label: 'Адмін-панель' }] }] : []
