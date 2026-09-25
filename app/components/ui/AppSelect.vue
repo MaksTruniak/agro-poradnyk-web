@@ -29,11 +29,14 @@
             <button
               v-for="opt in options" :key="opt.value"
               type="button"
-              @click="select(opt.value)"
-              class="flex items-center justify-between w-full px-4 py-2.5 text-sm text-left hover:bg-agro-hover transition-colors"
-              :class="opt.value === modelValue ? 'text-agro font-semibold bg-agro/5' : 'text-agro-dark'"
+              @click="!opt.disabled && select(opt.value)"
+              class="flex items-center justify-between w-full px-4 py-2.5 text-sm text-left transition-colors"
+              :class="[
+                opt.disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-agro-hover cursor-pointer',
+                opt.value === modelValue ? 'text-agro font-semibold bg-agro/5' : 'text-agro-dark',
+              ]"
             >
-              {{ opt.label }}
+              <span>{{ opt.label }}<span v-if="opt.disabled" class="ml-1.5 text-xs text-agro-light">(в розробці)</span></span>
               <svg v-if="opt.value === modelValue" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
           </div>
@@ -46,7 +49,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   modelValue: string | number
-  options: { value: string | number; label: string }[]
+  options: { value: string | number; label: string; disabled?: boolean }[]
   dropUp?: boolean
 }>()
 const emit = defineEmits<{ 'update:modelValue': [v: string | number] }>()

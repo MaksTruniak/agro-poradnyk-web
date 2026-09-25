@@ -76,13 +76,13 @@
                 :options="[
                   { value: '', label: 'Не вказано' },
                   { value: 'Агроном', label: 'Агроном' },
-                  { value: 'Тракторист', label: 'Тракторист' },
-                  { value: 'Комбайнер', label: 'Комбайнер' },
-                  { value: 'Водій', label: 'Водій' },
-                  { value: 'Механік', label: 'Механік' },
-                  { value: 'Бухгалтер', label: 'Бухгалтер' },
-                  { value: 'Робітник поля', label: 'Робітник поля' },
                   { value: 'Менеджер', label: 'Менеджер' },
+                  { value: 'Тракторист', label: 'Тракторист', disabled: true },
+                  { value: 'Комбайнер', label: 'Комбайнер', disabled: true },
+                  { value: 'Водій', label: 'Водій', disabled: true },
+                  { value: 'Механік', label: 'Механік', disabled: true },
+                  { value: 'Бухгалтер', label: 'Бухгалтер', disabled: true },
+                  { value: 'Робітник поля', label: 'Робітник поля', disabled: true },
                 ]"
               />
             </div>
