@@ -33,7 +33,7 @@
         </div>
         <div class="flex-1">
           <p class="text-xs text-agro-light uppercase tracking-wide">Поточний план</p>
-          <p class="font-bold text-agro-dark text-lg">{{ PLAN_LABELS[currentPlan] || 'Basic' }}</p>
+          <p class="font-bold text-agro-dark text-lg">{{ PLAN_LABELS[currentPlan] || 'Звичайний' }}</p>
           <p v-if="expiresAt && currentPlan !== 'basic'" class="text-xs text-agro-light mt-0.5">Діє до {{ formatDate(expiresAt) }}</p>
         </div>
         <span v-if="currentPlan !== 'basic'" class="px-3 py-1 bg-agro text-white rounded-full text-xs font-bold">Активний</span>
@@ -47,7 +47,7 @@
           <div class="flex items-center justify-between mb-3">
             <h2 class="font-bold text-agro-dark text-lg flex items-center gap-1.5">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
-              Basic
+              Звичайний
             </h2>
             <span v-if="currentPlan === 'basic'" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
@@ -64,7 +64,7 @@
             </li>
           </ul>
           <button disabled class="w-full py-2.5 rounded-xl border-2 border-agro-border text-agro-light font-semibold text-sm cursor-default">
-            {{ currentPlan === 'basic' ? 'Поточний план' : 'Basic' }}
+            {{ currentPlan === 'basic' ? 'Поточний план' : 'Звичайний' }}
           </button>
         </div>
 
@@ -233,7 +233,7 @@ const hectares = ref(50)
 const hectaresError = ref('')
 
 const PLAN_LABELS: Record<string, string> = {
-  basic:        'Basic',
+  basic:        'Звичайний',
   business:     'Бізнес',
   business_pro: 'Бізнес Про',
 }
@@ -262,7 +262,7 @@ const BASIC_DISABLED = [
 ]
 
 const BUSINESS_FEATURES = [
-  'Все що в Basic',
+  'Все що у Звичайному',
   'Поля — необмежено (2–50 га)',
   'Культури — необмежено',
   '1 технологічна карта на культуру',
@@ -283,7 +283,7 @@ const BUSINESS_PRO_FEATURES = [
 
 const FAQ = [
   { q: 'Чи можна скасувати підписку?', a: 'Так, підписка не продовжується автоматично. Ви платите раз на місяць або рік.' },
-  { q: 'Що буде після закінчення плану?', a: 'Ваші дані збережуться, але доступ до платних функцій буде обмежено до Basic.' },
+  { q: 'Що буде після закінчення плану?', a: 'Ваші дані збережуться, але доступ до платних функцій буде обмежено до Звичайного.' },
   { q: 'Як відбувається оплата?', a: 'Оплата через WayForPay — безпечний український платіжний сервіс.' },
   { q: 'Що таке Бізнес Про?', a: 'Для господарств 50+ га — всі функції без обмежень, інтеграції та пріоритетна підтримка.' },
 ]
