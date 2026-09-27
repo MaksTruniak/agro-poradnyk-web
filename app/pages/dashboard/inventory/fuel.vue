@@ -86,13 +86,13 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Тип пального *</label>
-            <select v-model="form.fuel_type" class="input">
-              <option value="Дизель">Дизель</option>
-              <option value="Бензин А-95">Бензин А-95</option>
-              <option value="Бензин А-92">Бензин А-92</option>
-              <option value="Газ (LPG)">Газ (LPG)</option>
-              <option value="Адблю (AdBlue)">Адблю (AdBlue)</option>
-            </select>
+            <UiAppSelect v-model="form.fuel_type" :options="[
+              { value: 'Дизель', label: 'Дизель' },
+              { value: 'Бензин А-95', label: 'Бензин А-95' },
+              { value: 'Бензин А-92', label: 'Бензин А-92' },
+              { value: 'Газ (LPG)', label: 'Газ (LPG)' },
+              { value: 'Адблю (AdBlue)', label: 'Адблю (AdBlue)' },
+            ]" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -101,10 +101,10 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Одиниця</label>
-              <select v-model="form.unit" class="input">
-                <option value="л">л</option>
-                <option value="кг">кг</option>
-              </select>
+              <UiAppSelect v-model="form.unit" :options="[
+                { value: 'л', label: 'л' },
+                { value: 'кг', label: 'кг' },
+              ]" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
