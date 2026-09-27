@@ -113,14 +113,14 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Одиниця</label>
-              <select v-model="form.unit" class="input">
-                <option value="л">л</option>
-                <option value="кг">кг</option>
-                <option value="т">т</option>
-                <option value="шт">шт</option>
-                <option value="мл">мл</option>
-                <option value="г">г</option>
-              </select>
+              <UiAppSelect v-model="form.unit" :options="[
+                { value: 'л', label: 'л' },
+                { value: 'кг', label: 'кг' },
+                { value: 'т', label: 'т' },
+                { value: 'шт', label: 'шт' },
+                { value: 'мл', label: 'мл' },
+                { value: 'г', label: 'г' },
+              ]" />
             </div>
           </div>
           <div>
@@ -132,10 +132,10 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Поле / ферма</label>
-            <select v-model="form.farm_id" class="input">
-              <option value="">— Загальний склад —</option>
-              <option v-for="f in farms" :key="f.id" :value="f.id">{{ f.name }}</option>
-            </select>
+            <UiAppSelect v-model="form.farm_id" :options="[
+              { value: '', label: '— Загальний склад —' },
+              ...farms.map((f: any) => ({ value: f.id, label: f.name }))
+            ]" />
           </div>
         </div>
         <div class="flex gap-3 mt-6">
@@ -165,10 +165,10 @@
           </div>
           <div v-if="logForm.type === 'out'">
             <label class="block text-sm font-medium text-agro-dark mb-1">На яке поле</label>
-            <select v-model="logForm.field_id" class="input">
-              <option value="">— Не вказано —</option>
-              <option v-for="f in farms" :key="f.id" :value="f.id">{{ f.name }}</option>
-            </select>
+            <UiAppSelect v-model="logForm.field_id" :options="[
+              { value: '', label: '— Не вказано —' },
+              ...farms.map((f: any) => ({ value: f.id, label: f.name }))
+            ]" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Примітка</label>
