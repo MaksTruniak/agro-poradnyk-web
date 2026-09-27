@@ -88,17 +88,17 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Тип техніки</label>
-              <select v-model="form.type" class="input">
-                <option value="Трактор">Трактор</option>
-                <option value="Комбайн">Комбайн</option>
-                <option value="Сівалка">Сівалка</option>
-                <option value="Обприскувач">Обприскувач</option>
-                <option value="Культиватор">Культиватор</option>
-                <option value="Плуг">Плуг</option>
-                <option value="Причіп">Причіп</option>
-                <option value="Автомобіль">Автомобіль</option>
-                <option value="Інше">Інше</option>
-              </select>
+              <UiAppSelect v-model="form.type" :options="[
+                { value: 'Трактор', label: 'Трактор' },
+                { value: 'Комбайн', label: 'Комбайн' },
+                { value: 'Сівалка', label: 'Сівалка' },
+                { value: 'Обприскувач', label: 'Обприскувач' },
+                { value: 'Культиватор', label: 'Культиватор' },
+                { value: 'Плуг', label: 'Плуг' },
+                { value: 'Причіп', label: 'Причіп' },
+                { value: 'Автомобіль', label: 'Автомобіль' },
+                { value: 'Інше', label: 'Інше' },
+              ]" />
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Рік випуску</label>
@@ -107,11 +107,11 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Стан</label>
-            <select v-model="form.status" class="input">
-              <option value="ok">Працює</option>
-              <option value="repair">На ремонті</option>
-              <option value="idle">Не використовується</option>
-            </select>
+            <UiAppSelect v-model="form.status" :options="[
+              { value: 'ok', label: 'Працює' },
+              { value: 'repair', label: 'На ремонті' },
+              { value: 'idle', label: 'Не використовується' },
+            ]" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Наступне ТО</label>
