@@ -451,15 +451,15 @@ const handleRegister = async () => {
         } as any),
       ]
 
-      // 2 місяці PRO безкоштовно для фермерів і агрономів
+      // 6 місяців Бізнес безкоштовно для фермерів і агрономів
       if (role.value === 'farmer' || role.value === 'agronomist') {
-        const proExpires = new Date()
-        proExpires.setMonth(proExpires.getMonth() + 2)
+        const trialExpires = new Date()
+        trialExpires.setMonth(trialExpires.getMonth() + 6)
         upsertPromises.push(
           supabase.from('subscriptions').upsert({
             user_id: data.user.id,
-            plan: 'pro',
-            expires_at: proExpires.toISOString(),
+            plan: 'business',
+            expires_at: trialExpires.toISOString(),
           }, { onConflict: 'user_id' })
         )
       }
@@ -467,7 +467,7 @@ const handleRegister = async () => {
       await Promise.all(upsertPromises)
 
       const successMsg = (role.value === 'farmer' || role.value === 'agronomist')
-        ? 'Акаунт створено! Перші 2 місяці PRO безкоштовно 🌾'
+        ? 'Акаунт створено! Перші 6 місяців Бізнес безкоштовно 🌾'
         : 'Акаунт створено! Ласкаво просимо до АгроПростір 🌾'
       showSuccess(successMsg)
       // Welcome email (fire-and-forget)
