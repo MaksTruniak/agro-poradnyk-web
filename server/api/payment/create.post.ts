@@ -119,7 +119,7 @@ export default defineEventHandler(async (event) => {
 
   const formData = {
     merchantAccount,
-    merchantDomain,
+    merchantDomainName: merchantDomain,
     merchantTransactionSecureType: 'AUTO',
     merchantSignature,
     orderReference,
