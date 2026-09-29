@@ -30,6 +30,17 @@ export default defineEventHandler(async (event) => {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
   if (authErr || !user) throw createError({ statusCode: 401, message: 'Unauthorized' })
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const fullName = profile?.full_name || ''
+  const nameParts = fullName.trim().split(' ')
+  const clientFirstName = nameParts[0] || ''
+  const clientLastName = nameParts.slice(1).join(' ') || ''
+
   // Беремо план з БД
   const { data: planData } = await supabase
     .from('plans')
@@ -131,6 +142,9 @@ export default defineEventHandler(async (event) => {
     productCount,
     productPrice,
     clientEmail: user.email,
+    clientFirstName,
+    clientLastName,
+    clientPhone: user.phone || '',
     language: 'UA',
     returnUrl: `${siteUrl}/payment/success?plan=${plan}`,
     serviceUrl: `${siteUrl}/api/payment/callback`,
