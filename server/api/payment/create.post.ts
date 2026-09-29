@@ -76,18 +76,20 @@ export default defineEventHandler(async (event) => {
       .maybeSingle()
     renewalCount = existingSub?.renewal_count ?? 0
 
-    // Визначаємо роль для знижки
-    const discountRole = plan.startsWith('agronomist') ? 'agronomist' : 'farmer'
-    const discountYear = renewalCount >= 3 ? 3 : renewalCount + 1
+    // Знижка тільки починаючи з 2-ї оплати (renewal_count >= 1)
+    if (renewalCount >= 1) {
+      const discountRole = plan.startsWith('agronomist') ? 'agronomist' : 'farmer'
+      const discountYear = renewalCount >= 3 ? 3 : renewalCount + 1
 
-    const { data: discountData } = await supabase
-      .from('loyalty_discounts')
-      .select('discount_percent')
-      .eq('role', discountRole)
-      .eq('renewal_year', discountYear)
-      .single()
+      const { data: discountData } = await supabase
+        .from('loyalty_discounts')
+        .select('discount_percent')
+        .eq('role', discountRole)
+        .eq('renewal_year', discountYear)
+        .single()
 
-    discountPercent = discountData?.discount_percent ?? 0
+      discountPercent = discountData?.discount_percent ?? 0
+    }
   }
 
   // Купон
