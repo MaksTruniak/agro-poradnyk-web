@@ -41,7 +41,14 @@ export default defineEventHandler(async (event) => {
 
   const expectedSign = wfpSign(signFields, secretKey)
   if (expectedSign !== merchantSignature) {
-    console.error('[WFP callback] Invalid signature')
+    console.error('[WFP callback] Invalid signature', {
+      merchantAccount,
+      signFields,
+      expected: expectedSign.slice(0, 8) + '...',
+      received: merchantSignature?.slice(0, 8) + '...',
+      secretKeyLen: secretKey?.length,
+      secretKeyStart: secretKey?.slice(0, 4) + '...',
+    })
     throw createError({ statusCode: 400, message: 'Invalid signature' })
   }
 
