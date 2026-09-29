@@ -37,31 +37,71 @@ export async function sendWelcomeEmail(to: string, name: string) {
   })
 }
 
-export async function sendPaymentConfirmEmail(to: string, name: string, plan: string) {
-  const planLabel = plan === 'pro' ? 'PRO' : plan === 'top_seller' ? 'Топ продавець' : 'PRO'
+export async function sendPaymentConfirmEmail(
+  to: string,
+  name: string,
+  plan: string,
+  opts?: { amount?: number; currency?: string; orderReference?: string; paidAt?: string }
+) {
+  const PLAN_LABELS: Record<string, string> = {
+    business: 'Бізнес', business_pro: 'Бізнес Про', pro: 'PRO',
+    top_seller: 'Топ продавець', top_agronomist: 'Топ агроном',
+    agronomist_pro_month: 'Агроном Про (місяць)', agronomist_pro_year: 'Агроном Про (рік)',
+  }
+  const planLabel = PLAN_LABELS[plan] || plan
+  const amount = opts?.amount ? `${opts.amount} ${opts?.currency || 'UAH'}` : ''
+  const paidAt = opts?.paidAt
+    ? new Date(opts.paidAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
+  const orderRef = opts?.orderReference || ''
+
   return getResend().emails.send({
     from: FROM,
     to,
-    subject: `Підписка ${planLabel} активована ✅`,
+    subject: `Чек оплати — ${planLabel} ✅`,
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
+          <p style="color:#a8c5a0;margin:8px 0 0;font-size:14px">agroprostir.com.ua</p>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
-          <h2 style="margin:0 0 16px">Дякуємо, ${name}!</h2>
-          <p style="color:#5B6B53;line-height:1.6;margin:0 0 8px">
-            Вашу підписку <strong>${planLabel}</strong> успішно активовано.
-          </p>
-          <p style="color:#5B6B53;line-height:1.6;margin:0 0 24px">
-            Усі можливості плану вже доступні у вашому кабінеті.
-          </p>
-          <a href="https://agroprostir.com.ua/dashboard"
-            style="display:inline-block;background:#2F5233;color:#fff;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;font-size:15px">
-            Відкрити кабінет →
-          </a>
-          <p style="color:#9aaa8e;font-size:13px;margin:32px 0 0">
-            Питання? Пишіть на info@agroprostir.com.ua
+          <h2 style="margin:0 0 8px">Дякуємо, ${name}!</h2>
+          <p style="color:#5B6B53;margin:0 0 28px">Оплата успішно прийнята. Підписку активовано.</p>
+
+          <div style="background:#fff;border:1px solid #e2ddd0;border-radius:12px;overflow:hidden;margin:0 0 28px">
+            <div style="background:#f0f4e8;padding:12px 20px;font-size:12px;font-weight:700;color:#4c5a46;text-transform:uppercase;letter-spacing:.5px">
+              Чек оплати
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:14px">
+              <tr>
+                <td style="padding:14px 20px;color:#7a8a72;border-bottom:1px solid #f0ede5">Послуга</td>
+                <td style="padding:14px 20px;font-weight:600;color:#1B2E1B;border-bottom:1px solid #f0ede5;text-align:right">Підписка ${planLabel}</td>
+              </tr>
+              ${amount ? `<tr>
+                <td style="padding:14px 20px;color:#7a8a72;border-bottom:1px solid #f0ede5">Сума</td>
+                <td style="padding:14px 20px;font-weight:700;color:#2F5233;border-bottom:1px solid #f0ede5;text-align:right;font-size:18px">${amount}</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding:14px 20px;color:#7a8a72;border-bottom:1px solid #f0ede5">Дата</td>
+                <td style="padding:14px 20px;font-weight:600;color:#1B2E1B;border-bottom:1px solid #f0ede5;text-align:right">${paidAt}</td>
+              </tr>
+              ${orderRef ? `<tr>
+                <td style="padding:14px 20px;color:#7a8a72">Номер платежу</td>
+                <td style="padding:14px 20px;font-size:12px;color:#9aaa8e;text-align:right;word-break:break-all">${orderRef}</td>
+              </tr>` : ''}
+            </table>
+          </div>
+
+          <div style="text-align:center;margin:0 0 28px">
+            <a href="https://agroprostir.com.ua/dashboard/invoices"
+              style="display:inline-block;background:#2F5233;color:#fff;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;font-size:15px">
+              Переглянути рахунки →
+            </a>
+          </div>
+
+          <p style="color:#9aaa8e;font-size:13px;margin:0">
+            Питання? Пишіть на <a href="mailto:info@agroprostir.com.ua" style="color:#2F5233">info@agroprostir.com.ua</a>
           </p>
         </div>
       </div>

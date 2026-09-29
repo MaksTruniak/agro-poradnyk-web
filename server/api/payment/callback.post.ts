@@ -174,12 +174,26 @@ export default defineEventHandler(async (event) => {
     await supabase.from('coupons').update({ is_used: true, used_at: new Date().toISOString() }).eq('id', couponId)
   }
 
-  // Відправляємо email підтвердження
+  // Відправляємо email підтвердження з чеком
   try {
-    const { data: userData } = await supabase.auth.admin.getUserById(userId)
-    if (userData?.user?.email) {
-      const name = userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
-      await sendPaymentConfirmEmail(userData.user.email, name, plan)
+    const { data: profileData } = await supabase
+      .from('users')
+      .select('email, first_name, last_name, name')
+      .eq('id', userId)
+      .maybeSingle()
+
+    const emailTo = profileData?.email || (await supabase.auth.admin.getUserById(userId)).data?.user?.email
+    const firstName = profileData?.first_name || profileData?.name?.split(' ')[0] || ''
+    const lastName  = profileData?.last_name  || profileData?.name?.split(' ').slice(1).join(' ') || ''
+    const fullName  = [firstName, lastName].filter(Boolean).join(' ') || emailTo?.split('@')[0] || ''
+
+    if (emailTo) {
+      await sendPaymentConfirmEmail(emailTo, fullName, plan, {
+        amount: Number(amount),
+        currency: currency || 'UAH',
+        orderReference,
+        paidAt: new Date().toISOString(),
+      })
     }
   } catch (e) {
     console.error('[WFP callback] Email error:', e)
