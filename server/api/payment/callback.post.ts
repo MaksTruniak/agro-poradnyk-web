@@ -98,12 +98,11 @@ export default defineEventHandler(async (event) => {
       // userId8 — лише перші 8 символів, потрібно знайти юзера в БД
       if (!userId) {
         const supabaseTmp = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-        const { data: userData } = await supabaseTmp
-          .from('users')
-          .select('id')
-          .ilike('id', `${userId8}%`)
-          .maybeSingle()
-        userId = userData?.id || null
+        // UUID треба шукати через auth.admin або через rpc
+        const { data: { users: authUsers } } = await supabaseTmp.auth.admin.listUsers({ perPage: 1000 })
+        const found = authUsers?.find(u => u.id.startsWith(userId8))
+        userId = found?.id || null
+        console.log('[WFP callback] userId lookup:', userId8, '→', userId)
       }
       console.log('[WFP callback] Parsed from orderReference:', { plan, userId8, timestamp })
     }
