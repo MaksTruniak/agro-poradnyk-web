@@ -31,15 +31,13 @@ export default defineEventHandler(async (event) => {
   if (authErr || !user) throw createError({ statusCode: 401, message: 'Unauthorized' })
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
+    .from('users')
+    .select('first_name, last_name, name')
     .eq('id', user.id)
     .maybeSingle()
 
-  const fullName = profile?.full_name || ''
-  const nameParts = fullName.trim().split(' ')
-  const clientFirstName = nameParts[0] || ''
-  const clientLastName = nameParts.slice(1).join(' ') || ''
+  const clientFirstName = profile?.first_name || profile?.name?.split(' ')[0] || ''
+  const clientLastName  = profile?.last_name  || profile?.name?.split(' ').slice(1).join(' ') || ''
 
   // Беремо план з БД
   const { data: planData } = await supabase
