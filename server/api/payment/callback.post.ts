@@ -10,7 +10,17 @@ function wfpSign(fields: string[], secretKey: string): string {
 }
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+  const contentType = getHeader(event, 'content-type') || ''
+  let body: any
+
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    const raw = await readRawBody(event)
+    body = Object.fromEntries(new URLSearchParams(raw || ''))
+  } else {
+    body = await readBody(event)
+  }
+
+  console.log('[WFP callback] content-type:', contentType, 'body keys:', Object.keys(body || {}))
 
   const secretKey = process.env.WFP_SECRET_KEY!
 
