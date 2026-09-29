@@ -87,7 +87,7 @@ subscription.value = subRes.data
 loading.value = false
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
+  new Date(d).toLocaleString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
 const PLAN_LABELS: Record<string, string> = {
   basic:           'Basic',
