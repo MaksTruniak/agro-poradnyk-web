@@ -417,9 +417,6 @@ async function submitPayment() {
         couponCode: couponResult.value === 'ok' ? couponCode.value.trim().toUpperCase() : undefined,
       },
     })
-    loyaltyDiscount.value = res.discountPercent || 0
-
-
     const form = document.createElement('form')
     form.method = 'POST'
     form.action = res.endpoint
