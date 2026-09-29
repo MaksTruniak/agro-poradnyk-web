@@ -13,7 +13,7 @@
         <div class="flex gap-2"><span class="text-agro-dark font-medium w-40 shrink-0">ІПН:</span><span>3402206173</span></div>
         <div class="flex gap-2"><span class="text-agro-dark font-medium w-40 shrink-0">Юридична адреса:</span><span>Україна, Львівська область, с. Нагачів, вул. Лесі Українки, 1</span></div>
         <div class="flex gap-2"><span class="text-agro-dark font-medium w-40 shrink-0">Телефон:</span><a href="tel:+380631817169" class="text-agro hover:underline">+38 063 181 71 69</a></div>
-        <div class="flex gap-2"><span class="text-agro-dark font-medium w-40 shrink-0">Email:</span><a href="mailto:info@agroprostir.ua" class="text-agro hover:underline">info@agroprostir.ua</a></div>
+        <div class="flex gap-2"><span class="text-agro-dark font-medium w-40 shrink-0">Email:</span><a href="mailto:info@agroprostir.com.ua" class="text-agro hover:underline">info@agroprostir.com.ua</a></div>
       </div>
     </div>
 
@@ -23,7 +23,7 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
         <h3 class="font-bold text-agro-dark mb-1">Email</h3>
-        <a href="mailto:info@agroprostir.ua" class="text-agro hover:underline">info@agroprostir.ua</a>
+        <a href="mailto:info@agroprostir.com.ua" class="text-agro hover:underline">info@agroprostir.com.ua</a>
       </div>
       <div class="card text-center">
         <div class="w-12 h-12 rounded-2xl bg-[rgb(238,241,227)] flex items-center justify-center mx-auto mb-3">
