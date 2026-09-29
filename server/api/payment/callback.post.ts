@@ -50,14 +50,38 @@ export default defineEventHandler(async (event) => {
     return wfpResponse(orderReference, secretKey, 'accept')
   }
 
-  // Витягуємо userId та план з orderReference або merchantOptions
+  // Витягуємо userId та план з merchantOptions або з orderReference
   const opts = merchantOptions || {}
-  const userId   = opts.userId
-  const plan     = opts.plan
-  const couponId = opts.couponId
+  let userId   = opts.userId
+  let plan     = opts.plan
+  const couponId = opts.couponId || null
+
+  // Fallback: парсимо orderReference = agro-{plan}-{userId8}-{timestamp}
+  if ((!userId || !plan) && orderReference) {
+    const parts = orderReference.split('-')
+    // agro | plan | userId8 | timestamp  (plan може бути з '_' тому беремо частини)
+    if (parts.length >= 4 && parts[0] === 'agro') {
+      // userId8 — це передостання частина перед timestamp
+      const timestamp = parts[parts.length - 1]
+      const userId8   = parts[parts.length - 2]
+      const planParts = parts.slice(1, parts.length - 2)
+      if (!plan) plan = planParts.join('_')
+      // userId8 — лише перші 8 символів, потрібно знайти юзера в БД
+      if (!userId) {
+        const supabaseTmp = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+        const { data: subData } = await supabaseTmp
+          .from('subscriptions')
+          .select('user_id')
+          .ilike('user_id', `${userId8}%`)
+          .maybeSingle()
+        userId = subData?.user_id || null
+      }
+      console.log('[WFP callback] Parsed from orderReference:', { plan, userId8, timestamp })
+    }
+  }
 
   if (!userId || !plan) {
-    console.error('[WFP callback] Missing userId or plan in merchantOptions', opts)
+    console.error('[WFP callback] Missing userId or plan', { opts, orderReference })
     return wfpResponse(orderReference, secretKey, 'accept')
   }
 
