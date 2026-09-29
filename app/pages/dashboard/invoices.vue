@@ -101,135 +101,112 @@ const PLAN_LABELS: Record<string, string> = {
 }
 const planLabel = (p: string) => PLAN_LABELS[p] || p
 
-function loadJsPDF(): Promise<any> {
-  return new Promise((resolve) => {
-    if ((window as any).jspdf) { resolve((window as any).jspdf.jsPDF); return }
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-    s.onload = () => resolve((window as any).jspdf.jsPDF)
-    document.head.appendChild(s)
-  })
-}
-
-const downloadInvoice = async (p: any) => {
-  const jsPDF = await loadJsPDF()
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
-
+const downloadInvoice = (p: any) => {
   const invoiceNum = p.id.slice(0, 8).toUpperCase()
   const dateStr = formatDate(p.created_at)
   const amountStr = `${p.amount.toLocaleString('uk-UA')} ${p.currency}`
-
-  // Кольори
-  const green = [47, 82, 51]
-  const dark  = [27, 46, 27]
-  const gray  = [107, 122, 100]
-  const light = [238, 241, 227]
-
-  // Шапка — зелений блок
-  doc.setFillColor(...green as [number,number,number])
-  doc.rect(0, 0, 210, 38, 'F')
-
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(20)
-  doc.setFont('helvetica', 'bold')
-  doc.text('AgroProstir', 14, 16)
-
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.text('agroprostir.com.ua', 14, 23)
-  doc.text('info@agroprostir.com.ua', 14, 29)
-
-  doc.setFontSize(22)
-  doc.setFont('helvetica', 'bold')
-  doc.text('INVOICE', 196, 20, { align: 'right' })
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.text(`# ${invoiceNum}`, 196, 28, { align: 'right' })
-
-  // Дата і статус
-  doc.setTextColor(...dark as [number,number,number])
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.text(`Дата: ${dateStr}`, 14, 48)
-  doc.setTextColor(47, 82, 51)
-  doc.text('● Оплачено', 196, 48, { align: 'right' })
-
-  // Лінія
-  doc.setDrawColor(...gray as [number,number,number])
-  doc.setLineWidth(0.3)
-  doc.line(14, 52, 196, 52)
-
-  // Постачальник і отримувач
-  doc.setTextColor(...gray as [number,number,number])
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'bold')
-  doc.text('ВІД', 14, 62)
-  doc.text('ПЛАТНИК', 110, 62)
-
-  doc.setTextColor(...dark as [number,number,number])
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text('АгроПростір', 14, 69)
-  doc.text('agroprostir.com.ua', 14, 75)
-  doc.text('info@agroprostir.com.ua', 14, 81)
-
   const userEmail = session?.user?.email || ''
   const userName = session?.user?.user_metadata?.full_name || ''
-  doc.text(userName || userEmail, 110, 69)
-  if (userName) doc.text(userEmail, 110, 75)
 
-  // Лінія
-  doc.line(14, 90, 196, 90)
+  const html = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Рахунок №${invoiceNum}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', Arial, sans-serif; font-size: 13px; color: #1b2e1b; background: #fff; }
+  .header { background: #2f5233; color: #fff; padding: 24px 40px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-brand { font-size: 22px; font-weight: 700; }
+  .header-sub { font-size: 11px; opacity: .75; margin-top: 4px; }
+  .header-right { text-align: right; }
+  .header-right .invoice-title { font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+  .header-right .invoice-num { font-size: 11px; opacity: .75; margin-top: 4px; }
+  .meta { padding: 16px 40px; display: flex; justify-content: space-between; border-bottom: 1px solid #e0e4d8; }
+  .meta-date { color: #1b2e1b; }
+  .meta-status { color: #2f5233; font-weight: 600; }
+  .parties { padding: 20px 40px; display: flex; gap: 40px; border-bottom: 1px solid #e0e4d8; }
+  .party { flex: 1; }
+  .party-label { font-size: 10px; color: #6b7a64; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .party-name { font-weight: 600; margin-bottom: 3px; }
+  .party-info { color: #6b7a64; font-size: 12px; line-height: 1.6; }
+  .table { margin: 20px 40px; }
+  .table-head { background: #eef1e3; display: flex; padding: 8px 12px; font-size: 10px; color: #6b7a64; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-radius: 4px; }
+  .table-row { display: flex; padding: 12px 12px; border-bottom: 1px solid #eef1e3; align-items: center; }
+  .col-service { flex: 1; }
+  .col-qty { width: 60px; text-align: center; }
+  .col-sum { width: 120px; text-align: right; }
+  .total { margin: 16px 40px 0; display: flex; justify-content: flex-end; }
+  .total-box { border-top: 2px solid #2f5233; padding-top: 12px; min-width: 220px; }
+  .total-label { font-size: 11px; color: #6b7a64; margin-bottom: 4px; }
+  .total-amount { font-size: 18px; font-weight: 700; color: #1b2e1b; }
+  .order-ref { margin: 16px 40px 0; font-size: 11px; color: #6b7a64; }
+  .footer { margin-top: 40px; background: #eef1e3; padding: 16px 40px; text-align: center; font-size: 11px; color: #6b7a64; line-height: 1.8; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="header-brand">AgroProstir</div>
+    <div class="header-sub">agroprostir.com.ua<br>info@agroprostir.com.ua</div>
+  </div>
+  <div class="header-right">
+    <div class="invoice-title">РАХУНОК</div>
+    <div class="invoice-num"># ${invoiceNum}</div>
+  </div>
+</div>
+<div class="meta">
+  <span class="meta-date">Дата: ${dateStr}</span>
+  <span class="meta-status">● Оплачено</span>
+</div>
+<div class="parties">
+  <div class="party">
+    <div class="party-label">Від</div>
+    <div class="party-name">АгроПростір</div>
+    <div class="party-info">agroprostir.com.ua<br>info@agroprostir.com.ua</div>
+  </div>
+  <div class="party">
+    <div class="party-label">Платник</div>
+    <div class="party-name">${userName || userEmail}</div>
+    ${userName ? `<div class="party-info">${userEmail}</div>` : ''}
+  </div>
+</div>
+<div class="table">
+  <div class="table-head">
+    <span class="col-service">Послуга</span>
+    <span class="col-qty">К-ть</span>
+    <span class="col-sum">Сума</span>
+  </div>
+  <div class="table-row">
+    <span class="col-service">Передплата: ${planLabel(p.plan)}</span>
+    <span class="col-qty">1</span>
+    <span class="col-sum">${amountStr}</span>
+  </div>
+</div>
+<div class="total">
+  <div class="total-box">
+    <div class="total-label">Разом до сплати:</div>
+    <div class="total-amount">${amountStr}</div>
+  </div>
+</div>
+<div class="order-ref">Номер замовлення: ${p.order_reference || '—'}</div>
+<div class="footer">
+  АгроПростір — платформа для агрономів і фермерів України<br>
+  agroprostir.com.ua · info@agroprostir.com.ua
+</div>
+<script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`
 
-  // Таблиця послуг
-  doc.setFillColor(...light as [number,number,number])
-  doc.rect(14, 93, 182, 9, 'F')
-
-  doc.setTextColor(...gray as [number,number,number])
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'bold')
-  doc.text('ПОСЛУГА', 18, 99)
-  doc.text('К-ТЬ', 140, 99)
-  doc.text('СУМА', 188, 99, { align: 'right' })
-
-  doc.setTextColor(...dark as [number,number,number])
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Передплата: ${planLabel(p.plan)}`, 18, 110)
-  doc.text('1', 140, 110)
-  doc.text(amountStr, 188, 110, { align: 'right' })
-
-  doc.setDrawColor(...light as [number,number,number])
-  doc.setLineWidth(0.2)
-  doc.line(14, 115, 196, 115)
-
-  // Підсумок
-  doc.setDrawColor(...gray as [number,number,number])
-  doc.setLineWidth(0.3)
-  doc.line(130, 120, 196, 120)
-
-  doc.setFontSize(9)
-  doc.setTextColor(...gray as [number,number,number])
-  doc.text('Разом до сплати:', 132, 127)
-  doc.setTextColor(...dark as [number,number,number])
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(12)
-  doc.text(amountStr, 188, 127, { align: 'right' })
-
-  // Номер замовлення
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(...gray as [number,number,number])
-  doc.text(`Номер замовлення: ${p.order_reference || '—'}`, 14, 145)
-
-  // Футер
-  doc.setFillColor(...light as [number,number,number])
-  doc.rect(0, 272, 210, 25, 'F')
-  doc.setTextColor(...gray as [number,number,number])
-  doc.setFontSize(8)
-  doc.text('АгроПростір — платформа для агрономів і фермерів України', 105, 281, { align: 'center' })
-  doc.text('agroprostir.com.ua  ·  info@agroprostir.com.ua', 105, 287, { align: 'center' })
-
-  doc.save(`invoice-${invoiceNum}.pdf`)
+  const win = window.open('', '_blank')
+  if (win) {
+    win.document.write(html)
+    win.document.close()
+  }
 }
 </script>
