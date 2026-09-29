@@ -19,7 +19,7 @@
         <thead>
           <tr class="border-b border-agro-border bg-agro-bg">
             <th class="text-left px-4 py-3.5 text-agro-light font-semibold text-xs uppercase tracking-wide">Тариф</th>
-            <th class="text-left px-4 py-3.5 text-agro-light font-semibold text-xs uppercase tracking-wide w-32">База (грн/міс)</th>
+            <th class="text-left px-4 py-3.5 text-agro-light font-semibold text-xs uppercase tracking-wide w-32">База (грн)</th>
             <th class="text-left px-4 py-3.5 text-agro-light font-semibold text-xs uppercase tracking-wide w-32">Ставка за га</th>
             <th class="px-4 py-3.5 text-agro-light font-semibold text-xs uppercase tracking-wide text-center w-24">Активний</th>
             <th class="px-4 py-3.5 w-24"></th>
@@ -94,7 +94,7 @@ const loading = ref(true)
 const saving = ref('')
 const savedMsg = ref(false)
 
-const { data } = await supabase.from('plans').select('*').in('id', ['business', 'business_pro']).order('base_price')
+const { data } = await supabase.from('plans').select('*').in('id', ['business', 'business_pro', 'business_year', 'business_pro_year']).order('period').order('base_price')
 plans.value = data || []
 loading.value = false
 
