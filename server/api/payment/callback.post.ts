@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
   if (Array.isArray(body)) body = body[0]
   if (typeof body === 'string') { try { body = JSON.parse(body) } catch {} }
 
-  console.log('[WFP callback] merchantAccount:', body?.merchantAccount, 'status:', body?.transactionStatus)
 
   const secretKey = process.env.WFP_SECRET_KEY!
 
@@ -102,7 +101,6 @@ export default defineEventHandler(async (event) => {
         const { data: { users: authUsers } } = await supabaseTmp.auth.admin.listUsers({ perPage: 1000 })
         const found = authUsers?.find(u => u.id.startsWith(userId8))
         userId = found?.id || null
-        console.log('[WFP callback] userId lookup:', userId8, '→', userId)
       }
       console.log('[WFP callback] Parsed from orderReference:', { plan, userId8, timestamp })
     }
