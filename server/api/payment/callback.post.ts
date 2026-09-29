@@ -11,24 +11,28 @@ function wfpSign(fields: string[], secretKey: string): string {
 
 export default defineEventHandler(async (event) => {
   const contentType = getHeader(event, 'content-type') || ''
+  const raw = await readRawBody(event) || ''
   let body: any
 
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    const raw = await readRawBody(event)
-    body = Object.fromEntries(new URLSearchParams(raw || ''))
-  } else {
-    body = await readBody(event)
+  // Спробуємо розпарсити як JSON (WFP надсилає JSON-рядок навіть з urlencoded content-type)
+  try {
+    const decoded = decodeURIComponent(raw).replace(/^\[?/, '').replace(/\]?$/, '')
+    body = JSON.parse(decoded)
+  } catch {
+    // Fallback: URLSearchParams → беремо перше значення
+    const params = new URLSearchParams(raw)
+    const firstVal = [...params.values()][0]
+    if (firstVal) {
+      try { body = JSON.parse(decodeURIComponent(firstVal)) } catch { body = Object.fromEntries(params) }
+    } else {
+      body = Object.fromEntries(params)
+    }
   }
 
-  // WayForPay надсилає масив [{}] або масив ["{...}"], розпаковуємо
   if (Array.isArray(body)) body = body[0]
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body) } catch {}
-  }
-  // Якщо після парсингу знову масив
-  if (Array.isArray(body)) body = body[0]
+  if (typeof body === 'string') { try { body = JSON.parse(body) } catch {} }
 
-  console.log('[WFP callback] content-type:', contentType, 'body keys:', Object.keys(body || {}))
+  console.log('[WFP callback] merchantAccount:', body?.merchantAccount, 'status:', body?.transactionStatus)
 
   const secretKey = process.env.WFP_SECRET_KEY!
 
