@@ -20,7 +20,12 @@ export default defineEventHandler(async (event) => {
     body = await readBody(event)
   }
 
-  // WayForPay надсилає масив [{}], беремо перший елемент
+  // WayForPay надсилає масив [{}] або масив ["{...}"], розпаковуємо
+  if (Array.isArray(body)) body = body[0]
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body) } catch {}
+  }
+  // Якщо після парсингу знову масив
   if (Array.isArray(body)) body = body[0]
 
   console.log('[WFP callback] content-type:', contentType, 'body keys:', Object.keys(body || {}))
