@@ -20,6 +20,9 @@ export default defineEventHandler(async (event) => {
     body = await readBody(event)
   }
 
+  // WayForPay надсилає масив [{}], беремо перший елемент
+  if (Array.isArray(body)) body = body[0]
+
   console.log('[WFP callback] content-type:', contentType, 'body keys:', Object.keys(body || {}))
 
   const secretKey = process.env.WFP_SECRET_KEY!
