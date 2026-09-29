@@ -1,10 +1,6 @@
 <template>
   <div class="min-h-screen bg-agro-bg">
-    <!-- Тестовий режим -->
-    <div class="bg-amber-400 text-amber-900 text-center text-xs font-semibold py-1.5 px-4 tracking-wide">
-      ⚠️ Сайт працює в тестовому режимі — платежі не є реальними
-    </div>
-    <header
+<header
       class="sticky top-0 z-50 bg-[#FAF6EC] border-b border-[#e2ddd0] shadow-sm"
     >
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
