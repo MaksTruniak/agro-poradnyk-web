@@ -39,6 +39,21 @@
         <span v-if="currentPlan !== 'basic'" class="px-3 py-1 bg-agro text-white rounded-full text-xs font-bold">Активний</span>
       </div>
 
+      <!-- Перемикач місяць / рік -->
+      <div class="flex items-center justify-center gap-3 mb-6">
+        <span :class="billingPeriod === 'month' ? 'text-agro-dark font-semibold' : 'text-agro-light'" class="text-sm">Щомісяця</span>
+        <button @click="billingPeriod = billingPeriod === 'month' ? 'year' : 'month'"
+          class="relative w-12 h-6 rounded-full transition-colors duration-200"
+          :class="billingPeriod === 'year' ? 'bg-agro' : 'bg-agro-border'">
+          <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+            :class="billingPeriod === 'year' ? 'translate-x-6' : 'translate-x-0'" />
+        </button>
+        <span :class="billingPeriod === 'year' ? 'text-agro-dark font-semibold' : 'text-agro-light'" class="text-sm">
+          Щорічно
+          <span class="ml-1 text-xs bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full">-17%</span>
+        </span>
+      </div>
+
       <!-- Плани — сітка 3 колонки -->
       <div class="grid md:grid-cols-3 gap-4 mb-8 items-stretch">
 
@@ -80,14 +95,14 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             Бізнес
           </h2>
-          <p class="text-2xl font-extrabold text-agro-dark mb-0.5">{{ getBase('business') }} <span class="text-base font-semibold">грн</span></p>
-          <p class="text-agro-light text-xs mb-4">+ {{ getRate('business') }} грн/га · 2–50 га · / місяць</p>
+          <p class="text-2xl font-extrabold text-agro-dark mb-0.5">{{ getBase(billingPeriod === 'year' ? 'business_year' : 'business') }} <span class="text-base font-semibold">грн</span></p>
+          <p class="text-agro-light text-xs mb-4">+ {{ getRate(billingPeriod === 'year' ? 'business_year' : 'business') }} грн/га · 2–50 га · {{ billingPeriod === 'year' ? '/ рік' : '/ місяць' }}</p>
           <ul class="space-y-2 mb-4 flex-1">
             <li v-for="f in BUSINESS_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-agro shrink-0 mt-0.5">✓</span> {{ f }}
             </li>
           </ul>
-          <button v-if="currentPlan !== 'business'" @click="openPayment('business')" class="btn-primary w-full py-2.5 justify-center mt-auto">
+          <button v-if="currentPlan !== 'business'" @click="openPayment(billingPeriod === 'year' ? 'business_year' : 'business')" class="btn-primary w-full py-2.5 justify-center mt-auto">
             Перейти на Бізнес →
           </button>
           <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-agro text-agro font-semibold text-sm cursor-default mt-auto">Активний</button>
@@ -104,14 +119,14 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.4" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             Бізнес Про
           </h2>
-          <p class="text-2xl font-extrabold text-amber-600 mb-0.5">{{ getBase('business_pro') }} <span class="text-base font-semibold">грн</span></p>
-          <p class="text-agro-light text-xs mb-4">+ {{ getRate('business_pro') }} грн/га · 50+ га · / місяць</p>
+          <p class="text-2xl font-extrabold text-amber-600 mb-0.5">{{ getBase(billingPeriod === 'year' ? 'business_pro_year' : 'business_pro') }} <span class="text-base font-semibold">грн</span></p>
+          <p class="text-agro-light text-xs mb-4">+ {{ getRate(billingPeriod === 'year' ? 'business_pro_year' : 'business_pro') }} грн/га · 50+ га · {{ billingPeriod === 'year' ? '/ рік' : '/ місяць' }}</p>
           <ul class="space-y-2 mb-4 flex-1">
             <li v-for="f in BUSINESS_PRO_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-amber-500 shrink-0 mt-0.5">✓</span> {{ f }}
             </li>
           </ul>
-          <button v-if="currentPlan !== 'business_pro'" @click="openPayment('business_pro')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors mt-auto">
+          <button v-if="currentPlan !== 'business_pro'" @click="openPayment(billingPeriod === 'year' ? 'business_pro_year' : 'business_pro')" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors mt-auto">
             Перейти на Бізнес Про →
           </button>
           <button v-else disabled class="w-full py-2.5 rounded-xl border-2 border-amber-400 text-amber-600 font-semibold text-sm cursor-default mt-auto">Активний</button>
@@ -234,6 +249,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const supabase = useSupabaseClient()
 const showPayment = ref(false)
 const selectedPlan = ref('business')
+const billingPeriod = ref<'month' | 'year'>('month')
 const loading = ref(true)
 const currentPlan = ref('basic')
 const expiresAt = ref<string | null>(null)
@@ -311,7 +327,7 @@ const couponChecking = ref(false)
 // Ціни з БД
 const plansDb = ref<Record<string, { base_price: number; ha_rate: number; label: string }>>({})
 
-const { data: plansData } = await supabase.from('plans').select('id, label, base_price, ha_rate').in('id', ['business', 'business_pro'])
+const { data: plansData } = await supabase.from('plans').select('id, label, base_price, ha_rate').in('id', ['business', 'business_pro', 'business_year', 'business_pro_year'])
 for (const p of plansData || []) {
   plansDb.value[p.id] = { base_price: p.base_price ?? 0, ha_rate: p.ha_rate ?? 0, label: p.label }
 }

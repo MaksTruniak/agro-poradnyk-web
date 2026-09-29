@@ -142,7 +142,7 @@ export default defineEventHandler(async (event) => {
     if (plan === 'agronomist_pro_month') {
       expiresAt.setMonth(expiresAt.getMonth() + 1)
     } else {
-      expiresAt.setMonth(expiresAt.getMonth() + 16) // 12 + 4 бонусних
+      expiresAt.setMonth(expiresAt.getMonth() + 12)
     }
     await supabase.from('subscriptions').upsert({
       user_id:       userId,
@@ -164,10 +164,9 @@ export default defineEventHandler(async (event) => {
     if (isMonth) {
       expiresAt.setMonth(expiresAt.getMonth() + 1)
     } else {
-      // Рік (12 місяців) + 4 бонусних за річну оплату = 16
-      expiresAt.setMonth(expiresAt.getMonth() + 16)
+      expiresAt.setMonth(expiresAt.getMonth() + 12)
     }
-    const basePlan = plan === 'business_pro' ? 'business_pro' : plan.startsWith('premium') ? 'premium' : plan.startsWith('pro') ? 'pro' : 'business'
+    const basePlan = (plan === 'business_pro' || plan === 'business_pro_year') ? 'business_pro' : plan.startsWith('premium') ? 'premium' : plan.startsWith('pro') ? 'pro' : 'business'
     const { error } = await supabase.from('subscriptions').upsert({
       user_id:       userId,
       plan:          basePlan,
