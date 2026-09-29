@@ -32,12 +32,13 @@ export default defineEventHandler(async (event) => {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('first_name, last_name, name')
+    .select('first_name, last_name, name, email')
     .eq('id', user.id)
     .maybeSingle()
 
   const clientFirstName = profile?.first_name || profile?.name?.split(' ')[0] || ''
   const clientLastName  = profile?.last_name  || profile?.name?.split(' ').slice(1).join(' ') || ''
+  const clientEmail     = profile?.email || user.email || ''
 
   // Беремо план з БД
   const { data: planData } = await supabase
@@ -141,7 +142,7 @@ export default defineEventHandler(async (event) => {
     productName,
     productCount,
     productPrice,
-    clientEmail: user.email,
+    clientEmail,
     clientFirstName,
     clientLastName,
     clientPhone: user.phone || '',
