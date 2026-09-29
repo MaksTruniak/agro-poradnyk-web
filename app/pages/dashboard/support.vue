@@ -114,13 +114,13 @@
         <div class="card mt-5">
           <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-4">Стандартна підтримка</p>
           <div class="space-y-3">
-            <a href="mailto:support@agroporadnyk.ua" class="flex items-center gap-3 p-3 rounded-xl hover:bg-agro-hover transition-colors">
+            <a href="mailto:support@agroprostir.com.ua" class="flex items-center gap-3 p-3 rounded-xl hover:bg-agro-hover transition-colors">
               <div class="w-9 h-9 rounded-full bg-agro-hover flex items-center justify-center flex-shrink-0">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
               </div>
               <div>
                 <p class="font-medium text-agro-dark text-sm">Email підтримка</p>
-                <p class="text-xs text-agro-light">support@agroporadnyk.ua · відповідь до 24 год</p>
+                <p class="text-xs text-agro-light">support@agroprostir.com.ua · відповідь до 24 год</p>
               </div>
             </a>
             <a href="https://t.me/agroporadnyk_support" target="_blank" class="flex items-center gap-3 p-3 rounded-xl hover:bg-agro-hover transition-colors">
