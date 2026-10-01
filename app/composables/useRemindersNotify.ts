@@ -33,10 +33,10 @@ export const useRemindersNotify = () => {
         icon: '/icon-192.png',
         tag: `reminder-${r.id}`,
       })
-
-      // Позначаємо як показане
-      await supabase.from('reminders').update({ notified_at: new Date().toISOString() }).eq('id', r.id)
     }
+
+    // Позначаємо як показані — одним запитом
+    await supabase.from('reminders').update({ notified_at: new Date().toISOString() }).in('id', due.map(r => r.id))
   }
 
   return { checkAndNotify }

@@ -92,10 +92,14 @@ export default defineEventHandler(async (event) => {
     plan = parts.slice(1, parts.length - 2).join('-')
     if (typeof opts.userId === 'string' && opts.userId.startsWith(userId8)) {
       userId = opts.userId
-    } else {
+    } else if (/^[0-9a-f]{8}$/i.test(userId8)) {
+      // UUID з префіксом userId8 лежать у діапазоні [prefix-0000…, prefix-ffff…] — пошук за первинним ключем
       const supabaseTmp = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-      const { data: { users: authUsers } } = await supabaseTmp.auth.admin.listUsers({ perPage: 1000 })
-      userId = authUsers?.find(u => u.id.startsWith(userId8))?.id || null
+      const { data: found } = await supabaseTmp.from('users').select('id')
+        .gte('id', `${userId8}-0000-0000-0000-000000000000`)
+        .lte('id', `${userId8}-ffff-ffff-ffff-ffffffffffff`)
+        .limit(2)
+      userId = found?.length === 1 ? found[0]!.id : null  // два збіги префікса — неоднозначно, не вгадуємо
     }
     if (typeof opts.couponId === 'string') couponId = opts.couponId
   }

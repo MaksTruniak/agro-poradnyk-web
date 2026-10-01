@@ -564,21 +564,20 @@ const generateCard = async () => {
       await supabase.from('program_treatments').delete().in('id', ids)
     }
 
-    // Додаємо нові фази і обробки
-    const newPhaseKeys: string[] = []
-    for (const phase of result.phases) {
-      newPhaseKeys.push(phase.name)
-      for (const t of phase.treatments) {
-        await supabase.from('program_treatments').insert({
-          program_id: program.value.id,
-          phase: phase.name,
-          type: t.type,
-          product_name: t.product_name,
-          dosage: t.dosage || null,
-          notes: t.notes || null,
-          status: 'planned',
-        })
-      }
+    // Додаємо нові фази і обробки — однією пакетною вставкою
+    const newPhaseKeys = result.phases.map(phase => phase.name)
+    const rows = result.phases.flatMap(phase => phase.treatments.map(t => ({
+      program_id: program.value.id,
+      phase: phase.name,
+      type: t.type,
+      product_name: t.product_name,
+      dosage: t.dosage || null,
+      notes: t.notes || null,
+      status: 'planned',
+    })))
+    if (rows.length) {
+      const { error: insErr } = await supabase.from('program_treatments').insert(rows)
+      if (insErr) throw insErr
     }
 
     // Оновлюємо активні фази

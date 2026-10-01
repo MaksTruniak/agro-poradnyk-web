@@ -1,30 +1,14 @@
 export default defineEventHandler(async (event) => {
   const { supabase } = await requireAdmin(event)
 
-  // Fetch all users (up to 10000)
-  const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 10000 })
+  // Підрахунок у базі (admin_user_stats) — без завантаження всіх акаунтів
+  const { data: stats, error } = await supabase.rpc('admin_user_stats')
   if (error) throw createError({ statusCode: 500, message: error.message })
 
-  const users = data.users || []
-
-  // Monthly stats for current year and previous year
   const now = new Date()
-  const currentYear = now.getFullYear()
-
-  const byMonth: Record<string, number> = {}
-  const byYear: Record<string, number> = {}
-  const byRole: Record<string, number> = {}
-
-  for (const u of users) {
-    const d = new Date(u.created_at)
-    const year = d.getFullYear()
-    const month = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`
-
-    byMonth[month] = (byMonth[month] || 0) + 1
-    byYear[String(year)] = (byYear[String(year)] || 0) + 1
-    const role = u.user_metadata?.role || 'unknown'
-    byRole[role] = (byRole[role] || 0) + 1
-  }
+  const byMonth: Record<string, number> = stats?.by_month || {}
+  const byYear: Record<string, number> = stats?.by_year || {}
+  const byRole: Record<string, number> = stats?.by_role || {}
 
   // Build last 12 months array
   const months = []
@@ -45,5 +29,5 @@ export default defineEventHandler(async (event) => {
     .sort(([a], [b]) => roleOrder.indexOf(a) - roleOrder.indexOf(b))
     .map(([role, count]) => ({ role, count }))
 
-  return { months, years, roles, total: users.length }
+  return { months, years, roles, total: stats?.total ?? 0 }
 })

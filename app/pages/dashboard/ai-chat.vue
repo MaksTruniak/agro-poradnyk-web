@@ -847,13 +847,16 @@ const generateSeasonReport = async () => {
   if (!uid.value || generatingReport.value) return
   generatingReport.value = true
   try {
-    // Збираємо всі повідомлення з усіх сесій
+    // Збираємо всі повідомлення з усіх сесій — одним запитом, далі групуємо по сесіях
     const allMsgs: string[] = []
+    const sessionIds = chatSessions.value.map((s: any) => s.id)
+    const { data: allSessionMsgs } = sessionIds.length
+      ? await supabase.from('ai_messages').select('chat_id, role, content, created_at')
+          .in('chat_id', sessionIds).order('created_at', { ascending: true })
+      : { data: [] as any[] }
     for (const session of chatSessions.value) {
-      const { data: msgs } = await supabase.from('ai_messages')
-        .select('role, content, created_at').eq('chat_id', session.id)
-        .order('created_at', { ascending: true })
-      if (msgs?.length) {
+      const msgs = (allSessionMsgs || []).filter((m: any) => m.chat_id === session.id)
+      if (msgs.length) {
         allMsgs.push(`--- Розмова "${session.title}" (${session.date}) ---`)
         msgs.forEach((m: any) => allMsgs.push(`${m.role === 'user' ? 'Фермер' : 'AI'}: ${m.content.replace(/SCHEME_DETECTED/g, '').replace(/REMINDER:[^\n]+/g, '').trim()}`))
       }
