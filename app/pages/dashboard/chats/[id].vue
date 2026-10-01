@@ -1007,7 +1007,7 @@ const respondDeal = async (dealId: string, status: 'confirmed' | 'cancelled') =>
         cropRow = data
       } else {
         const { data } = await supabase
-          .from('farm_crops').select('id, stock_quantity, stock_unit, farms!inner(user_id)')
+          .from('farm_crops').select('id, stock_quantity, stock_unit, farms:public_farms!inner(user_id)')
           .eq('farms.user_id', deal.farmer_id).eq('crop_type', deal.crop_type)
           .not('stock_quantity', 'is', null).limit(1).single()
         cropRow = data

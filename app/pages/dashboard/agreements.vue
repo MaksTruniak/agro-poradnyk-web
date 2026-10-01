@@ -187,7 +187,7 @@ if (isAgronomist.value) {
     const farmIds = data.filter((a: any) => a.farm_id).map((a: any) => a.farm_id)
     const [usersRes, farmsRes] = await Promise.all([
       supabase.from('public_profiles').select('id, name').in('id', ids),
-      farmIds.length ? supabase.from('farms').select('id, name').in('id', farmIds) : Promise.resolve({ data: [] }),
+      farmIds.length ? supabase.from('public_farms').select('id, name').in('id', farmIds) : Promise.resolve({ data: [] }),
     ])
     const map = Object.fromEntries((usersRes.data || []).map((u: any) => [u.id, u.name]))
     const farmMap = Object.fromEntries((farmsRes.data || []).map((f: any) => [f.id, f.name]))
@@ -202,7 +202,7 @@ if (isAgronomist.value) {
     const farmIds = data.filter((a: any) => a.farm_id).map((a: any) => a.farm_id)
     const [usersRes, farmsRes] = await Promise.all([
       supabase.from('public_profiles').select('id, name').in('id', ids),
-      farmIds.length ? supabase.from('farms').select('id, name').in('id', farmIds) : Promise.resolve({ data: [] }),
+      farmIds.length ? supabase.from('public_farms').select('id, name').in('id', farmIds) : Promise.resolve({ data: [] }),
     ])
     const map = Object.fromEntries((usersRes.data || []).map((u: any) => [u.id, u.name]))
     const farmMap = Object.fromEntries((farmsRes.data || []).map((f: any) => [f.id, f.name]))
