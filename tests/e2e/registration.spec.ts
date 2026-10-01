@@ -3,6 +3,9 @@ import { test, expect, type Page } from '@playwright/test'
 const uid = () => Date.now()
 const STRONG_PASSWORD = 'TestPass1!'
 
+// Тести створюють нові акаунти в базі — лише з E2E_WRITE=1
+test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест реєструє нові акаунти)')
+
 // Очищаємо cookies і localStorage перед кожним тестом без навігації
 test.beforeEach(async ({ context }) => {
   await context.clearCookies()
