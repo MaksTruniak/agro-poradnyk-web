@@ -382,23 +382,7 @@ const submitReview = async () => {
     rating: reviewModal.rating,
   })
 
-  // Перерахувати рейтинг
-  const { data: allReviews } = await supabase
-    .from('deal_reviews')
-    .select('rating')
-    .eq('reviewee_id', reviewModal.revieweeId)
-
-  if (allReviews?.length) {
-    const avg = allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length
-    const rounded = Math.round(avg * 10) / 10
-    const count = allReviews.length
-    // Оновлюємо відповідний рейтинг залежно від ролі того кого оцінюють
-    const revieweeRole = isFarmer ? 'buyer' : 'farmer'
-    await supabase.from('users').update({
-      [`${revieweeRole}_rating`]: rounded,
-      [`${revieweeRole}_reviews_count`]: count,
-    }).eq('id', reviewModal.revieweeId)
-  }
+  // Рейтинг перераховує база (тригер deal_reviews_recalc)
 
   myReviews.value.add(reviewModal.dealId)
   reviewModal.saving = false
@@ -683,12 +667,10 @@ const confirmReceived = async (deal: any) => {
 }
 
 const generateInvoice = async (deal: any) => {
-  const [farmerRes, buyerRes] = await Promise.all([
-    supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', deal.farmer_id).single(),
-    supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', deal.buyer_id).single(),
-  ])
-  const farmer = farmerRes.data || {}
-  const buyer = buyerRes.data || {}
+  // Реквізити обох сторін — лише учасникам угоди (функція deal_party_details)
+  const { data: parties } = await supabase.rpc('deal_party_details', { p_deal_id: deal.id })
+  const farmer: any = (parties || []).find((p: any) => p.user_id === deal.farmer_id) || {}
+  const buyer: any = (parties || []).find((p: any) => p.user_id === deal.buyer_id) || {}
 
   // Перевірка: у поточного користувача мають бути заповнені дані для накладної
   const myData = uid === deal.farmer_id ? farmer : buyer
@@ -800,7 +782,7 @@ onMounted(async () => {
   if (!dealsData.length) { loading.value = false; return }
 
   const otherIds = [...new Set(dealsData.map((d: any) => isFarmer ? d.buyer_id : d.farmer_id))]
-  const { data: usersData } = await supabase.from('users').select('id, name').in('id', otherIds)
+  const { data: usersData } = await supabase.from('public_profiles').select('id, name').in('id', otherIds)
   const nameMap = Object.fromEntries((usersData || []).map((u: any) => [u.id, u.name]))
 
   const chatIds = [...new Set(dealsData.map((d: any) => d.chat_id))]

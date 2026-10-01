@@ -167,7 +167,7 @@ const startChat = async (buyer: any) => {
 }
 
 const { data } = await supabase
-  .from('users')
+  .from('public_profiles')
   .select('id, name, region, city, buyer_rating, buyer_reviews_count, is_verified_buyer, is_verified, buyer_crops(id, crop_type, min_qty, max_qty, unit)')
   .eq('role', 'buyer')
   .order('name')

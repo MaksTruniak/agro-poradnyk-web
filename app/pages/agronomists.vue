@@ -166,7 +166,7 @@ const uid = session?.user?.id
 // Завантажуємо агрономів
 const { data: profiles } = await supabase
   .from('agronomist_profiles')
-  .select('*, users!inner(id, name, role, is_verified_agronomist)')
+  .select('*, users:public_profiles!inner(id, name, role, is_verified_agronomist)')
   .eq('users.role', 'agronomist')
 
 const mapped = (profiles || []).map((p: any) => ({

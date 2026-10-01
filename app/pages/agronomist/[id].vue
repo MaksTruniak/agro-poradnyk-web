@@ -285,7 +285,7 @@ const reviews = ref<any[]>([])
 
 const { data: pageData, pending } = useLazyAsyncData(`agronomist-${agronomistId}`, async () => {
   const [userRes, profileRes, reviewsRes] = await Promise.all([
-    supabase.from('users').select('id, name, avatar_url, region, city, created_at, is_verified_agronomist').eq('id', agronomistId).single(),
+    supabase.from('public_profiles').select('id, name, avatar_url, region, city, created_at, is_verified_agronomist').eq('id', agronomistId).single(),
     supabase.from('agronomist_profiles').select('*').eq('user_id', agronomistId).single(),
     supabase.from('agronomist_reviews').select('id, farmer_id, rating, text, problem_solved, created_at').eq('agronomist_id', agronomistId).order('created_at', { ascending: false }),
   ])
@@ -293,7 +293,7 @@ const { data: pageData, pending } = useLazyAsyncData(`agronomist-${agronomistId}
   const revData = reviewsRes.data || []
   if (revData.length) {
     const fids = [...new Set(revData.map((r: any) => r.farmer_id))]
-    const { data: fUsers } = await supabase.from('users').select('id, name').in('id', fids)
+    const { data: fUsers } = await supabase.from('public_profiles').select('id, name').in('id', fids)
     const fMap = Object.fromEntries((fUsers || []).map((u: any) => [u.id, u.name]))
     reviews.value = revData.map((r: any) => ({ ...r, farmer_name: fMap[r.farmer_id] || 'Фермер' }))
   }

@@ -439,7 +439,7 @@ onMounted(async () => {
 
     const [lastMsgsRes, farmersRes, unreadRes] = await Promise.all([
       chatIds.length ? supabase.from('messages').select('chat_id, content').in('chat_id', chatIds).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
-      farmerIds.length ? supabase.from('users').select('id, name').in('id', farmerIds) : Promise.resolve({ data: [] }),
+      farmerIds.length ? supabase.from('public_profiles').select('id, name').in('id', farmerIds) : Promise.resolve({ data: [] }),
       chatIds.length ? supabase.from('messages').select('chat_id', { count: 'exact' }).in('chat_id', chatIds).eq('role', 'user').eq('is_read', false) : Promise.resolve({ data: [] }),
     ])
 
@@ -475,7 +475,7 @@ onMounted(async () => {
       .order('created_at', { ascending: false })
     if (pendingAgrData?.length) {
       const fIds = [...new Set(pendingAgrData.map((a: any) => a.farmer_id))]
-      const { data: fUsers } = await supabase.from('users').select('id, name').in('id', fIds)
+      const { data: fUsers } = await supabase.from('public_profiles').select('id, name').in('id', fIds)
       const fMap = Object.fromEntries((fUsers || []).map((u: any) => [u.id, u.name]))
       pendingAgreements.value = pendingAgrData.map((a: any) => ({ ...a, farmer_name: fMap[a.farmer_id] || 'Фермер' }))
     }
@@ -490,9 +490,9 @@ onMounted(async () => {
 
     const [lastMsgsRes, farmersRes, unreadRes, farmersCountRes] = await Promise.all([
       chatIds.length ? supabase.from('messages').select('chat_id, content').in('chat_id', chatIds).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
-      farmerIds.length ? supabase.from('users').select('id, name').in('id', farmerIds as string[]) : Promise.resolve({ data: [] }),
+      farmerIds.length ? supabase.from('public_profiles').select('id, name').in('id', farmerIds as string[]) : Promise.resolve({ data: [] }),
       chatIds.length ? supabase.from('messages').select('chat_id', { count: 'exact' }).in('chat_id', chatIds).eq('role', 'user').eq('is_read', false) : Promise.resolve({ data: [], count: 0 }),
-      supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'farmer'),
+      supabase.from('public_profiles').select('id', { count: 'exact', head: true }).eq('role', 'farmer'),
     ])
 
     const lastMsgByChat: Record<string, string> = {}

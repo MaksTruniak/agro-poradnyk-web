@@ -379,7 +379,7 @@ stats.value = {
 const reviewsData = reviewsRes.data || []
 if (reviewsData.length) {
   const fids = [...new Set(reviewsData.map((r: any) => r.farmer_id))]
-  const { data: fUsers } = await supabase.from('users').select('id, name').in('id', fids)
+  const { data: fUsers } = await supabase.from('public_profiles').select('id, name').in('id', fids)
   const fMap = Object.fromEntries((fUsers || []).map((u: any) => [u.id, u.name]))
   myReviews.value = reviewsData.map((r: any) => ({ ...r, farmer_name: fMap[r.farmer_id] || 'Фермер' }))
 }

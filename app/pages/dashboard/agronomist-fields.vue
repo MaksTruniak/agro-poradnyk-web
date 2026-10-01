@@ -103,7 +103,7 @@ onMounted(async () => {
 
   const [farmsRes, farmersRes] = await Promise.all([
     supabase.from('farms').select('*, farm_crops(id, crop_type, area_ha)').in('id', specificFarmIds),
-    supabase.from('users').select('id, name').in('id', farmerIds),
+    supabase.from('public_profiles').select('id, name').in('id', farmerIds),
   ])
 
   const farmerMap = Object.fromEntries((farmersRes.data || []).map((f: any) => [f.id, f.name]))

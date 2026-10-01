@@ -187,7 +187,7 @@ const uid = session?.user?.id
 const formatDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long' })
 
 const [userRes, dealsRes, buyerCropsRes] = await Promise.all([
-  supabase.from('users').select('id, name, region, city, created_at, buyer_rating, buyer_reviews_count, is_verified_buyer, is_verified').eq('id', buyerId).single(),
+  supabase.from('public_profiles').select('id, name, region, city, created_at, buyer_rating, buyer_reviews_count, is_verified_buyer, is_verified').eq('id', buyerId).single(),
   supabase.from('deals').select('crop_type, quantity_tons').eq('buyer_id', buyerId).eq('status', 'confirmed'),
   supabase.from('buyer_crops').select('*').eq('user_id', buyerId).order('created_at'),
 ])

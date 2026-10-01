@@ -186,7 +186,7 @@ if (isAgronomist.value) {
     const ids = [...new Set(data.map((a: any) => a.farmer_id))]
     const farmIds = data.filter((a: any) => a.farm_id).map((a: any) => a.farm_id)
     const [usersRes, farmsRes] = await Promise.all([
-      supabase.from('users').select('id, name').in('id', ids),
+      supabase.from('public_profiles').select('id, name').in('id', ids),
       farmIds.length ? supabase.from('farms').select('id, name').in('id', farmIds) : Promise.resolve({ data: [] }),
     ])
     const map = Object.fromEntries((usersRes.data || []).map((u: any) => [u.id, u.name]))
@@ -201,7 +201,7 @@ if (isAgronomist.value) {
     const ids = [...new Set(data.map((a: any) => a.agronomist_id))]
     const farmIds = data.filter((a: any) => a.farm_id).map((a: any) => a.farm_id)
     const [usersRes, farmsRes] = await Promise.all([
-      supabase.from('users').select('id, name').in('id', ids),
+      supabase.from('public_profiles').select('id, name').in('id', ids),
       farmIds.length ? supabase.from('farms').select('id, name').in('id', farmIds) : Promise.resolve({ data: [] }),
     ])
     const map = Object.fromEntries((usersRes.data || []).map((u: any) => [u.id, u.name]))
@@ -245,11 +245,7 @@ const submitReview = async () => {
     text: reviewModal.text || null,
     problem_solved: reviewModal.problem.trim(),
   })
-  const { data: revs } = await supabase.from('agronomist_reviews').select('rating').eq('agronomist_id', reviewModal.agronomistId)
-  if (revs?.length) {
-    const avg = revs.reduce((s: number, r: any) => s + r.rating, 0) / revs.length
-    await supabase.from('agronomist_profiles').update({ rating: Math.round(avg * 10) / 10, reviews_count: revs.length }).eq('user_id', reviewModal.agronomistId)
-  }
+  // Рейтинг агронома перераховує база (тригер agronomist_reviews_recalc)
   reviewModal.saving = false
   reviewModal.show = false
 }

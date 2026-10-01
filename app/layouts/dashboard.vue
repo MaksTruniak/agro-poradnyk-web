@@ -283,7 +283,7 @@ onMounted(async () => {
           .maybeSingle()
         if (rec) {
           const { data: ownerUser } = await supabase
-            .from('users').select('name').eq('id', rec.owner_id).maybeSingle()
+            .from('public_profiles').select('name').eq('id', rec.owner_id).maybeSingle()
           const name = ownerUser?.name || 'Власник'
           const label = rec.role === 'editor' ? 'Редактор' : 'Переглядач'
           localStorage.setItem('agro_team_owner_id',   rec.owner_id)
@@ -308,7 +308,7 @@ onMounted(async () => {
         .maybeSingle()
       if (rec) {
         const { data: ownerUser } = await supabase
-          .from('users').select('name').eq('id', rec.owner_id).maybeSingle()
+          .from('public_profiles').select('name').eq('id', rec.owner_id).maybeSingle()
         const ownerName = ownerUser?.name || 'Власник'
         const roleLabel = rec.role === 'editor' ? 'Редактор' : 'Переглядач'
         localStorage.setItem('agro_team_owner_id',    rec.owner_id)

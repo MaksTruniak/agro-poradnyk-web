@@ -698,7 +698,7 @@ const chatFarmerId = chatData?.farmer_id
 const chatAgronomistId = chatData?.agronomist_id
 
 const [interlocutorRes, myProfileRes] = await Promise.all([
-  supabase.from('users').select('name, role').eq('id', interlocutorId).single(),
+  supabase.from('public_profiles').select('name, role').eq('id', interlocutorId).single(),
   supabase.from('users').select('address, city').eq('id', uid).single(),
 ])
 interlocutorName.value = interlocutorRes.data?.name || 'Користувач'

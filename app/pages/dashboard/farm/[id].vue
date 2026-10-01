@@ -761,7 +761,7 @@ const load = async () => {
       .select('agronomist_id').eq('farmer_id', uid).eq('status', 'active')
     const agrIds = (agrData || []).map((a: any) => a.agronomist_id)
     if (agrIds.length) {
-      const { data: agrUsers } = await supabase.from('users').select('id, name').in('id', agrIds)
+      const { data: agrUsers } = await supabase.from('public_profiles').select('id, name').in('id', agrIds)
       activeAgronomists.value = agrUsers || []
     } else {
       activeAgronomists.value = []
