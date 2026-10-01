@@ -9,7 +9,7 @@ export default defineCachedEventHandler(async (event) => {
 
   // Products list
   if (path === '/v1/products') {
-    const limit = Number(query.limit) || 20
+    const limit = Math.min(Number(query.limit) || 20, 100)
     const page = Number(query.page) || 1
     const from = (page - 1) * limit
     const includeTypes = query.include_types ? String(query.include_types).split(',') : null
@@ -90,7 +90,7 @@ export default defineCachedEventHandler(async (event) => {
 
   // Active ingredients list
   if (path === '/v1/active-ingredients') {
-    const limit = Number(query.limit) || 50
+    const limit = Math.min(Number(query.limit) || 50, 100)
     const offset = Number(query.offset) || 0
 
     let q = supabase.from('agro_active_ingredients').select('*', { count: 'exact' })
@@ -136,7 +136,7 @@ export default defineCachedEventHandler(async (event) => {
 
   // Weeds list
   if (path === '/v1/weeds') {
-    const limit = Number(query.limit) || 50
+    const limit = Math.min(Number(query.limit) || 50, 100)
     const offset = Number(query.offset) || 0
 
     let q = supabase.from('agro_weeds').select('*', { count: 'exact' })
@@ -174,7 +174,7 @@ export default defineCachedEventHandler(async (event) => {
 
   // Diseases list
   if (path === '/v1/diseases') {
-    const limit = Number(query.limit) || 50
+    const limit = Math.min(Number(query.limit) || 50, 100)
     const offset = Number(query.offset) || 0
 
     let q = supabase.from('agro_diseases').select('*', { count: 'exact' })
@@ -208,7 +208,7 @@ export default defineCachedEventHandler(async (event) => {
 
   // Fertilizers list
   if (path === '/v1/fertilizers') {
-    const limit = Number(query.limit) || 50
+    const limit = Math.min(Number(query.limit) || 50, 100)
     const offset = Number(query.offset) || 0
 
     let q = supabase.from('agro_fertilizers').select('*', { count: 'exact' })

@@ -19,7 +19,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
-          <h2 style="margin:0 0 16px">Вітаємо, ${name}!</h2>
+          <h2 style="margin:0 0 16px">Вітаємо, ${escapeHtml(name)}!</h2>
           <p style="color:#5B6B53;line-height:1.6;margin:0 0 24px">
             Ваш акаунт на платформі <strong>АгроПростір</strong> успішно створено.
             Тепер ви можете керувати полями, консультуватись з агрономами та продавати врожай напряму.
@@ -66,7 +66,7 @@ export async function sendPaymentConfirmEmail(
           <p style="color:#a8c5a0;margin:8px 0 0;font-size:14px">agroprostir.com.ua</p>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
-          <h2 style="margin:0 0 8px">Дякуємо, ${name}!</h2>
+          <h2 style="margin:0 0 8px">Дякуємо, ${escapeHtml(name)}!</h2>
           <p style="color:#5B6B53;margin:0 0 28px">Оплата успішно прийнята. Підписку активовано.</p>
 
           <div style="background:#fff;border:1px solid #e2ddd0;border-radius:12px;overflow:hidden;margin:0 0 28px">
@@ -122,7 +122,7 @@ export async function sendSubscriptionReminderEmail(to: string, name: string, pl
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
-          <h2 style="margin:0 0 16px">Привіт, ${name}!</h2>
+          <h2 style="margin:0 0 16px">Привіт, ${escapeHtml(name)}!</h2>
           <p style="color:#5B6B53;line-height:1.6;margin:0 0 8px">
             Ваша підписка <strong>${planLabel}</strong> закінчується <strong>${expDate}</strong>.
           </p>
@@ -146,19 +146,19 @@ export async function sendNewMessageEmail(to: string, recipientName: string, sen
   return getResend().emails.send({
     from: FROM,
     to,
-    subject: `Нове повідомлення від ${senderName}`,
+    subject: `Нове повідомлення від ${senderName.replace(/[\r\n]/g, ' ')}`,
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
-          <p style="color:#5B6B53;margin:0 0 8px">Привіт, <strong>${recipientName}</strong>!</p>
+          <p style="color:#5B6B53;margin:0 0 8px">Привіт, <strong>${escapeHtml(recipientName)}</strong>!</p>
           <p style="color:#5B6B53;line-height:1.6;margin:0 0 20px">
-            У вас нове повідомлення від <strong>${senderName}</strong>:
+            У вас нове повідомлення від <strong>${escapeHtml(senderName)}</strong>:
           </p>
           <div style="background:#fff;border:1px solid #e2ddd0;border-radius:12px;padding:20px;color:#3d4f3c;font-style:italic;margin:0 0 24px">
-            "${preview}"
+            "${escapeHtml(preview)}"
           </div>
           <a href="https://agroprostir.com.ua/dashboard"
             style="display:inline-block;background:#2F5233;color:#fff;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;font-size:15px">
@@ -180,9 +180,9 @@ export async function sendLowStockEmail(
 ) {
   const resend = getResend()
   const rows = items.map(i =>
-    `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#1b2e1b;font-weight:600">${i.name}</td>
-     <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#b3452f;font-weight:700">${i.quantity} ${i.unit}</td>
-     <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#9aaa8e">мін: ${i.min_quantity} ${i.unit}</td></tr>`
+    `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#1b2e1b;font-weight:600">${escapeHtml(i.name)}</td>
+     <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#b3452f;font-weight:700">${escapeHtml(i.quantity)} ${escapeHtml(i.unit)}</td>
+     <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#9aaa8e">мін: ${escapeHtml(i.min_quantity)} ${escapeHtml(i.unit)}</td></tr>`
   ).join('')
 
   await resend.emails.send({
@@ -195,7 +195,7 @@ export async function sendLowStockEmail(
           <span style="font-size:28px;font-weight:900;color:#1b2e1b">🌿 АгроПростір</span>
         </div>
         <div style="background:#fff;border-radius:12px;padding:28px">
-          <p style="color:#1b2e1b;font-size:16px;margin:0 0 8px">Привіт, <strong>${name}</strong>!</p>
+          <p style="color:#1b2e1b;font-size:16px;margin:0 0 8px">Привіт, <strong>${escapeHtml(name)}</strong>!</p>
           <p style="color:#6b7a64;font-size:14px;margin:0 0 20px">На складі закінчуються запаси препаратів. Будь ласка, поповніть вчасно.</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <thead>
@@ -231,8 +231,8 @@ export async function sendReminderEmail(to: string, name: string, reminders: { d
       <tr>
         <td style="padding:12px 16px;border-bottom:1px solid #eee;font-size:20px;width:36px">${icon}</td>
         <td style="padding:12px 16px;border-bottom:1px solid #eee">
-          <div style="font-weight:600;color:#1B2E1B;font-size:15px">${r.description}</div>
-          <div style="color:#7a8a72;font-size:13px;margin-top:2px">${r.type} · ${timeStr}</div>
+          <div style="font-weight:600;color:#1B2E1B;font-size:15px">${escapeHtml(r.description)}</div>
+          <div style="color:#7a8a72;font-size:13px;margin-top:2px">${escapeHtml(r.type)} · ${timeStr}</div>
         </td>
       </tr>`
   }).join('')
@@ -247,7 +247,7 @@ export async function sendReminderEmail(to: string, name: string, reminders: { d
           <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
-          <h2 style="margin:0 0 8px;font-size:20px">Привіт, ${name}!</h2>
+          <h2 style="margin:0 0 8px;font-size:20px">Привіт, ${escapeHtml(name)}!</h2>
           <p style="color:#5B6B53;margin:0 0 24px;font-size:14px">
             Сьогодні у вас заплановані наступні події:
           </p>

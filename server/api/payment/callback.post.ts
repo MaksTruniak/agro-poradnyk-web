@@ -78,32 +78,26 @@ export default defineEventHandler(async (event) => {
     return wfpResponse(orderReference, secretKey, 'accept')
   }
 
-  // Витягуємо userId та план з merchantOptions або з orderReference
+  // План і користувача беремо з orderReference — він входить у підпис WFP.
+  // merchantOptions НЕ підписані, тому лише підказка для повного userId (має збігатися з префіксом).
+  // Формат: agro-{plan}-{userId8}-{timestamp}
   const opts = merchantOptions || {}
-  let userId   = opts.userId
-  let plan     = opts.plan
-  const couponId = opts.couponId || null
+  let userId: string | null = null
+  let plan: string | null = null
+  let couponId: string | null = null
 
-  // Fallback: парсимо orderReference = agro-{plan}-{userId8}-{timestamp}
-  if ((!userId || !plan) && orderReference) {
-    const parts = orderReference.split('-')
-    // agro | plan | userId8 | timestamp  (plan може бути з '_' тому беремо частини)
-    if (parts.length >= 4 && parts[0] === 'agro') {
-      // userId8 — це передостання частина перед timestamp
-      const timestamp = parts[parts.length - 1]
-      const userId8   = parts[parts.length - 2]
-      const planParts = parts.slice(1, parts.length - 2)
-      if (!plan) plan = planParts.join('_')
-      // userId8 — лише перші 8 символів, потрібно знайти юзера в БД
-      if (!userId) {
-        const supabaseTmp = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-        // UUID треба шукати через auth.admin або через rpc
-        const { data: { users: authUsers } } = await supabaseTmp.auth.admin.listUsers({ perPage: 1000 })
-        const found = authUsers?.find(u => u.id.startsWith(userId8))
-        userId = found?.id || null
-      }
-      console.log('[WFP callback] Parsed from orderReference:', { plan, userId8, timestamp })
+  const parts = String(orderReference || '').split('-')
+  if (parts.length >= 4 && parts[0] === 'agro') {
+    const userId8 = parts[parts.length - 2]
+    plan = parts.slice(1, parts.length - 2).join('-')
+    if (typeof opts.userId === 'string' && opts.userId.startsWith(userId8)) {
+      userId = opts.userId
+    } else {
+      const supabaseTmp = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+      const { data: { users: authUsers } } = await supabaseTmp.auth.admin.listUsers({ perPage: 1000 })
+      userId = authUsers?.find(u => u.id.startsWith(userId8))?.id || null
     }
+    if (typeof opts.couponId === 'string') couponId = opts.couponId
   }
 
   if (!userId || !plan) {
@@ -115,6 +109,12 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Повторний callback того самого замовлення не продовжує підписку вдруге
+  const { data: alreadyPaid } = await supabase.from('payments').select('id').eq('order_reference', orderReference).maybeSingle()
+  if (alreadyPaid) {
+    return wfpResponse(orderReference, secretKey, 'accept')
+  }
 
   if (plan === 'top_agronomist') {
     const expiresAt = new Date()
@@ -191,7 +191,7 @@ export default defineEventHandler(async (event) => {
 
   // Позначити купон як використаний
   if (couponId) {
-    await supabase.from('coupons').update({ is_used: true, used_at: new Date().toISOString() }).eq('id', couponId)
+    await supabase.from('coupons').update({ is_used: true, used_at: new Date().toISOString() }).eq('id', couponId).eq('user_id', userId)
   }
 
   // Відправляємо email підтвердження з чеком

@@ -475,7 +475,8 @@ const handleRegister = async () => {
       // Welcome email (fire-and-forget)
       $fetch('/api/email/welcome', {
         method: 'POST',
-        body: { email: email.value, name: fullName },
+        headers: data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {},
+        body: { name: fullName },
       }).catch(() => {})
     }
     router.push('/dashboard')

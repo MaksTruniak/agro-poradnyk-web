@@ -1,18 +1,15 @@
 import { Resend } from 'resend'
-import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
+  const { user, supabase } = await requireUser(event)
   const body = await readBody(event)
-  const { email, role, ownerName, memberId } = body
+  const { email, role } = body
+  // Запрошувати може лише власник команди — від свого імені
+  const memberId = user.id
 
-  if (!email || !role || !memberId) {
-    throw createError({ statusCode: 400, message: 'email, role, memberId required' })
+  if (!email || !role) {
+    throw createError({ statusCode: 400, message: 'email, role required' })
   }
-
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 
   // Отримуємо токен з team_members і ім'я власника з users
   const [memberRes, ownerRes] = await Promise.all([
@@ -25,7 +22,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Team member record not found' })
   }
 
-  const resolvedOwnerName = ownerRes.data?.name || ownerName
+  const resolvedOwnerName = escapeHtml(ownerRes.data?.name || 'Господарство')
 
   const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://agroprostir.com.ua'
   const inviteUrl = `${siteUrl}/invite?token=${member.token}`

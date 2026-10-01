@@ -6,6 +6,12 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/payment/create':   { max: 10, windowMs: 60_000 },   // 10 per minute
   '/api/calendar-explain': { max: 20, windowMs: 60_000 },   // 20 per minute
   '/api/ai-chat':          { max: 30, windowMs: 60_000 },   // 30 per minute
+  '/api/upload-image':          { max: 20, windowMs: 60_000 },
+  '/api/deals/send-invoice':    { max: 5,  windowMs: 60_000 },
+  '/api/email/welcome':         { max: 3,  windowMs: 60_000 },
+  '/api/team/invite':           { max: 5,  windowMs: 60_000 },
+  '/api/harvest/create-worker': { max: 10, windowMs: 60_000 },
+  '/api/ai-generate-card':      { max: 10, windowMs: 60_000 },
 }
 
 const store = new Map<string, { count: number; resetAt: number }>()

@@ -1034,7 +1034,8 @@ const addReminderFromAi = async (reminder: { text: string; days: number }) => {
 
 const renderMessage = (text: string) => {
   const clean = fixLanguage(text).replace(/SCHEME_DETECTED/g, '').replace(/REMINDER:[^\n]+/g, '').trim()
-  return clean.replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
+  // Відповідь AI може містити HTML (зокрема через підказки користувача) — спершу екрануємо
+  return escapeHtml(clean).replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
     `<a href="/pesticides?q=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${name}</a>`
   )
 }

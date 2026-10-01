@@ -1,7 +1,5 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 export default defineEventHandler(async (event) => {
-  const supabase = serverSupabaseServiceRole(event)
+  const { supabase } = await requireAdmin(event)
 
   const query = getQuery(event)
   const page = Number(query.page) || 1

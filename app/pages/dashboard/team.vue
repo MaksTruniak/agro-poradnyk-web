@@ -240,10 +240,11 @@ async function sendInvite() {
 
   if (!insertErr) {
     // Відправляємо email через API
-    const ownerName = currentUser.value?.user_metadata?.full_name || currentUser.value?.email || ''
+    const { data: { session: inviteSession } } = await supabase.auth.getSession()
     const res = await $fetch('/api/team/invite', {
       method: 'POST',
-      body: { email, role: inviteRole.value, ownerName, memberId: currentUser.value?.id },
+      headers: { Authorization: `Bearer ${inviteSession?.access_token}` },
+      body: { email, role: inviteRole.value },
     }).catch(() => null) as any
 
     if (res?.manual) {

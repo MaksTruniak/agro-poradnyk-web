@@ -838,7 +838,8 @@ const sendMessage = async () => {
     const fd = new FormData()
     fd.append('file', imageFile.value)
     fd.append('chatId', chatId)
-    const res = await $fetch<{ url: string }>('/api/upload-image', { method: 'POST', body: fd }).catch(() => null)
+    const { data: { session: upSession } } = await supabase.auth.getSession()
+    const res = await $fetch<{ url: string }>('/api/upload-image', { method: 'POST', body: fd, headers: { Authorization: `Bearer ${upSession?.access_token}` } }).catch(() => null)
     if (res?.url) image_url = res.url
     clearImage()
   }
@@ -887,8 +888,9 @@ const openProduct = async (name: string) => {
   }
 }
 
+// Текст повідомлення спершу екрануємо (його пише співрозмовник), потім робимо посилання на @препарати
 const renderMessage = (text: string) => {
-  return text.replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
+  return escapeHtml(text).replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
     `<a href="/catalog?q=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${name}</a>`
   )
 }

@@ -1,7 +1,5 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 export default defineEventHandler(async (event) => {
-  const supabase = serverSupabaseServiceRole(event)
+  const { supabase } = await requireAdmin(event)
 
   // Fetch all users (up to 10000)
   const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 10000 })

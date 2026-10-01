@@ -164,6 +164,7 @@ useHead({ title: 'Користувачі — Адмін' })
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const supabase = useSupabaseClient()
+const authHeader = useAuthHeader()
 
 const LIMIT = 50
 const page = ref(1)
@@ -213,7 +214,7 @@ const filtered = computed(() => {
 
 const load = async () => {
   loading.value = true
-  const data = await $fetch('/api/admin/users', { query: { page: page.value, limit: LIMIT } }) as any
+  const data = await $fetch('/api/admin/users', { query: { page: page.value, limit: LIMIT }, headers: await authHeader() }) as any
   users.value = data.users || []
   total.value = data.total || 0
   loading.value = false

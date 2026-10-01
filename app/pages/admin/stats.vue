@@ -108,7 +108,7 @@ const roleColor = (role: string) => {
 }
 
 onMounted(async () => {
-  stats.value = await $fetch('/api/admin/user-stats') as any
+  stats.value = await $fetch('/api/admin/user-stats', { headers: await useAuthHeader()() }) as any
   loading.value = false
 })
 </script>

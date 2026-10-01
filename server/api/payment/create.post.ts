@@ -54,8 +54,13 @@ export default defineEventHandler(async (event) => {
 
   if (planData.ha_rate > 0) {
     // Ціна з гектарами
-    const ha = Number(hectares) || 0
+    const ha = Math.floor(Number(hectares) || 0)
     if (ha < 1) throw createError({ statusCode: 400, message: 'Hectares required' })
+    // Межі тарифів (як на сторінці підписки): Бізнес — 2–50 га, Бізнес Про — від 50 га
+    const isPro = plan === 'business_pro' || plan === 'business_pro_year'
+    const isBusiness = plan === 'business' || plan === 'business_year'
+    if (isBusiness && (ha < 2 || ha > 50)) throw createError({ statusCode: 400, message: 'Для плану Бізнес — від 2 до 50 га' })
+    if (isPro && ha < 50) throw createError({ statusCode: 400, message: 'Для плану Бізнес Про — мінімум 50 га' })
     basePrice = (planData.base_price || 0) + ha * planData.ha_rate
     planLabel = `${planData.label} (${ha} га)`
   } else {

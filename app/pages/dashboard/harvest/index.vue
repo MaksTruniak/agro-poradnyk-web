@@ -295,6 +295,7 @@ const createWorker = async () => {
   try {
     await $fetch('/api/harvest/create-worker', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${session!.access_token}` },
       body: { owner_id: session!.user.id, ...wForm2 },
     })
     showCreateWorker.value = false

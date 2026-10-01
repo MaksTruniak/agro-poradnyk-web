@@ -398,14 +398,7 @@ const isFarmer = role === 'farmer' || role === 'dacha'
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
-const parseDealMessage = (content: string) => {
-  const match = content?.match(/\[deal:[^:\]]+(?::([^:\]]+))?(?::([^:\]]+))?(?::([^:\]]+))?\]/)
-  return {
-    unit: match?.[1] || 'т',
-    displayQty: match?.[2] ? parseFloat(match[2]) : null,
-    displayPrice: match?.[3] ? parseFloat(match[3]) : null,
-  }
-}
+const authHeader = useAuthHeader()
 
 const summary = computed(() => {
   const map: Record<string, { tons: number; total: number }> = {}
@@ -530,6 +523,8 @@ const invoiceActionModal = reactive({
   show: false,
   html: '',
   invoiceNum: '',
+  kind: 'deal' as 'deal' | 'manual',
+  sourceId: '',
   email: '',
   sending: false,
   sent: false,
@@ -551,12 +546,14 @@ async function doEmailInvoice() {
   invoiceActionModal.sent = false
   invoiceActionModal.sendError = ''
   try {
+    // Сервер сам складає накладну з даних угоди / продажу — HTML з браузера не передаємо
     await $fetch('/api/deals/send-invoice', {
       method: 'POST',
+      headers: await authHeader(),
       body: {
-        html: invoiceActionModal.html,
+        kind: invoiceActionModal.kind,
+        id: invoiceActionModal.sourceId,
         email: invoiceActionModal.email,
-        invoiceNum: invoiceActionModal.invoiceNum,
       },
     })
     invoiceActionModal.sent = true
@@ -569,81 +566,22 @@ async function doEmailInvoice() {
 const generateManualInvoice = async (sale: any) => {
   const { data: farmer } = await supabase.from('users').select('name, phone, city, region, company_name, edrpou, iban, bank_name, legal_address').eq('id', uid).single()
   const f = farmer || {}
-  if (!f.edrpou || !f.iban || !(f.company_name || f.name)) {
+  if (!hasInvoiceRequisites(f)) {
     invoiceProfileAlert.value = true
     return
   }
-  const buyer = {
-    name: sale.buyer_name || '—',
-    phone: sale.buyer_phone || '',
-    edrpou: sale.buyer_edrpou || '',
-    iban: sale.buyer_iban || '',
-    company_name: sale.buyer_name || '',
-  }
-  const invoiceNum = sale.id.slice(0, 8).toUpperCase()
-  const dateStr = sale.sold_at ? new Date(sale.sold_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
-  const qty = `${sale.quantity_tons} т`
-  const pricePerUnit = sale.price_per_ton ? `${sale.price_per_ton.toLocaleString('uk-UA')} грн/т` : '—'
-  const totalPrice = sale.total_price ? `${sale.total_price.toLocaleString('uk-UA')} грн` : '—'
+  const data = manualSaleInvoiceData(sale, f)
+  await openInvoiceModal(buildInvoiceHtml(data), data.invoiceNum, { kind: 'manual', id: sale.id })
+}
 
-  const partyBlock = (label: string, u: any) => `
-    <div class="party">
-      <div class="party-label">${label}</div>
-      <div class="party-name">${u.company_name || u.name || '—'}</div>
-      ${u.edrpou ? `<div class="party-row">ЄДРПОУ / ІПН: <b>${u.edrpou}</b></div>` : ''}
-      ${u.city ? `<div class="party-row">Адреса: ${u.legal_address || u.city + (u.region ? ', ' + u.region : '')}</div>` : ''}
-      ${u.phone ? `<div class="party-row">Телефон: ${u.phone}</div>` : ''}
-      ${u.iban ? `<div class="party-row">IBAN: <b>${u.iban}</b></div>` : ''}
-      ${u.bank_name ? `<div class="party-row">Банк: ${u.bank_name}</div>` : ''}
-    </div>`
-
-  const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Накладна №${invoiceNum}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 40px; max-width: 800px; margin: auto; }
-    h1 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-    .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 28px; }
-    .parties { display: flex; gap: 24px; margin-bottom: 24px; }
-    .party { flex: 1; border: 1px solid #ccc; border-radius: 6px; padding: 12px; }
-    .party-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 4px; }
-    .party-name { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
-    .party-row { font-size: 12px; color: #444; margin-top: 2px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-    th { background: #f4f4f4; border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-size: 12px; }
-    td { border: 1px solid #ddd; padding: 8px 10px; font-size: 13px; }
-    .total-row td { font-weight: 700; background: #f9f9f9; }
-    .delivery { margin-bottom: 20px; font-size: 12px; color: #555; }
-    .signatures { display: flex; gap: 40px; margin-top: 40px; }
-    .sig { flex: 1; border-top: 1px solid #999; padding-top: 8px; font-size: 12px; color: #555; }
-    .footer { margin-top: 20px; font-size: 11px; color: #aaa; text-align: center; }
-    @media print { body { padding: 20px; } }
-  </style></head><body>
-  <h1>Видаткова накладна №${invoiceNum}</h1>
-  <div class="subtitle">від ${dateStr}</div>
-  <div class="parties">
-    ${partyBlock('Постачальник (Продавець)', f)}
-    ${partyBlock('Покупець', buyer)}
-  </div>
-  <table>
-    <thead><tr><th>№</th><th>Найменування товару</th><th>Кількість</th><th>Ціна за од.</th><th>Сума</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>${sale.crop_type}</td><td>${qty}</td><td>${pricePerUnit}</td><td>${totalPrice}</td></tr>
-      <tr class="total-row"><td colspan="4" style="text-align:right">Всього:</td><td>${totalPrice}</td></tr>
-    </tbody>
-  </table>
-  ${sale.notes ? `<div class="delivery">Примітка: <b>${sale.notes}</b></div>` : ''}
-  <div class="signatures">
-    <div class="sig">Здав (Продавець): _______________________<br><span style="font-size:11px;color:#888">${f.name || ''}</span></div>
-    <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name}</span></div>
-  </div>
-  <div class="footer">Сформовано через АгроПростір</div>
-  </body></html>`
-
-  // Показуємо модалку вибору дії
-  const { data: { session: _sess } } = await supabase.auth.getSession()
+// Показуємо модалку вибору дії (друк / email)
+const openInvoiceModal = async (html: string, invoiceNum: string, source: { kind: 'deal' | 'manual'; id: string }) => {
+  const { data: { session: sess } } = await supabase.auth.getSession()
   invoiceActionModal.html = html
   invoiceActionModal.invoiceNum = invoiceNum
-  invoiceActionModal.email = _sess?.user?.email || ''
+  invoiceActionModal.kind = source.kind
+  invoiceActionModal.sourceId = source.id
+  invoiceActionModal.email = sess?.user?.email || ''
   invoiceActionModal.sent = false
   invoiceActionModal.sendError = ''
   invoiceActionModal.show = true
@@ -673,79 +611,13 @@ const generateInvoice = async (deal: any) => {
   const buyer: any = (parties || []).find((p: any) => p.user_id === deal.buyer_id) || {}
 
   // Перевірка: у поточного користувача мають бути заповнені дані для накладної
-  const myData = uid === deal.farmer_id ? farmer : buyer
-  if (!myData.edrpou || !myData.iban || !(myData.company_name || myData.name)) {
+  if (!hasInvoiceRequisites(uid === deal.farmer_id ? farmer : buyer)) {
     invoiceProfileAlert.value = true
     return
   }
 
-  const deliveryName = deal.delivery_type_id === 1 ? 'Самовивіз' : 'Доставка'
-  const totalPrice = deal.total_price ? deal.total_price.toLocaleString('uk-UA') + ' грн' : '—'
-  const pricePerUnit = deal.display_price ? deal.display_price.toLocaleString('uk-UA') + ' грн/' + deal.unit : '—'
-  const qty = deal.display_quantity ? deal.display_quantity + ' ' + deal.unit : '—'
-  const dateStr = deal.confirmed_at ? new Date(deal.confirmed_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
-  const invoiceNum = deal.id.slice(0, 8).toUpperCase()
-
-  const partyBlock = (label: string, u: any) => `
-    <div class="party">
-      <div class="party-label">${label}</div>
-      <div class="party-name">${u.company_name || u.name || '—'}</div>
-      ${u.edrpou ? `<div class="party-row">ЄДРПОУ / ІПН: <b>${u.edrpou}</b></div>` : ''}
-      ${u.city ? `<div class="party-row">Адреса: ${u.legal_address || u.city + (u.region ? ', ' + u.region : '')}</div>` : ''}
-      ${u.phone ? `<div class="party-row">Телефон: ${u.phone}</div>` : ''}
-      ${u.iban ? `<div class="party-row">IBAN: <b>${u.iban}</b></div>` : ''}
-      ${u.bank_name ? `<div class="party-row">Банк: ${u.bank_name}</div>` : ''}
-    </div>`
-
-  const html = `<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"><title>Накладна №${invoiceNum}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 40px; max-width: 800px; margin: auto; }
-    h1 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; }
-    .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 28px; }
-    .parties { display: flex; gap: 24px; margin-bottom: 24px; }
-    .party { flex: 1; border: 1px solid #ccc; border-radius: 6px; padding: 12px; }
-    .party-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 4px; }
-    .party-name { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
-    .party-row { font-size: 12px; color: #444; margin-top: 2px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-    th { background: #f4f4f4; border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-size: 12px; }
-    td { border: 1px solid #ddd; padding: 8px 10px; font-size: 13px; }
-    .total-row td { font-weight: 700; background: #f9f9f9; }
-    .delivery { margin-bottom: 20px; font-size: 12px; color: #555; }
-    .signatures { display: flex; gap: 40px; margin-top: 40px; }
-    .sig { flex: 1; border-top: 1px solid #999; padding-top: 8px; font-size: 12px; color: #555; }
-    .footer { margin-top: 20px; font-size: 11px; color: #aaa; text-align: center; }
-    @media print { body { padding: 20px; } }
-  </style></head><body>
-  <h1>Видаткова накладна №${invoiceNum}</h1>
-  <div class="subtitle">від ${dateStr}</div>
-  <div class="parties">
-    ${partyBlock('Постачальник (Продавець)', farmer)}
-    ${partyBlock('Покупець', buyer)}
-  </div>
-  <table>
-    <thead><tr><th>№</th><th>Найменування товару</th><th>Кількість</th><th>Ціна за од.</th><th>Сума</th></tr></thead>
-    <tbody>
-      <tr><td>1</td><td>${deal.crop_type}</td><td>${qty}</td><td>${pricePerUnit}</td><td>${totalPrice}</td></tr>
-      <tr class="total-row"><td colspan="4" style="text-align:right">Всього:</td><td>${totalPrice}</td></tr>
-    </tbody>
-  </table>
-  <div class="delivery">Спосіб доставки: <b>${deliveryName}</b></div>
-  <div class="signatures">
-    <div class="sig">Здав (Продавець): _______________________<br><span style="font-size:11px;color:#888">${farmer.name || ''}</span></div>
-    <div class="sig">Прийняв (Покупець): _______________________<br><span style="font-size:11px;color:#888">${buyer.name || ''}</span></div>
-  </div>
-  <div class="footer">Сформовано через АгроПростір</div>
-  </body></html>`
-
-  const { data: { session: _sess2 } } = await supabase.auth.getSession()
-  invoiceActionModal.html = html
-  invoiceActionModal.invoiceNum = invoiceNum
-  invoiceActionModal.email = _sess2?.user?.email || ''
-  invoiceActionModal.sent = false
-  invoiceActionModal.sendError = ''
-  invoiceActionModal.show = true
+  const data = dealInvoiceData(deal, farmer, buyer, deal.deal_message)
+  await openInvoiceModal(buildInvoiceHtml(data), data.invoiceNum, { kind: 'deal', id: deal.id })
 }
 
 onMounted(async () => {
@@ -797,16 +669,14 @@ onMounted(async () => {
 
   deals.value = dealsData.map((d: any) => {
     const { unit, displayQty, displayPrice } = parseDealMessage(dealMsgMap[d.id])
-    const cleanCrop = (d.crop_type || '')
-      .replace('Пропозиція продажу: ', '')
-      .replace('Запит на купівлю: ', '')
-      .trim()
+    const cleanCrop = cleanDealCrop(d.crop_type)
     return {
       ...d,
       crop_type: cleanCrop,
       unit,
       display_quantity: displayQty ?? d.quantity_tons,
       display_price: displayPrice ?? d.price_per_ton,
+      deal_message: dealMsgMap[d.id] || null,
       farmer_name: nameMap[d.farmer_id] || 'Фермер',
       buyer_name: nameMap[d.buyer_id] || 'Заготівельник',
     }
