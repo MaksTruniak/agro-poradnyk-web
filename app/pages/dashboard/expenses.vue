@@ -143,18 +143,32 @@
       </div>
     </template>
 
-    <!-- Модальне вікно додавання витрати -->
+    <!-- Модальне вікно додавання витрати / доходу -->
     <UiAppModal v-model="modal.open">
       <div class="p-6">
         <div class="flex items-center justify-between mb-5">
-          <p class="font-bold text-agro-dark text-lg">Нова витрата</p>
+          <p class="font-bold text-agro-dark text-lg">{{ modal.type === 'income' ? 'Новий дохід' : 'Нова витрата' }}</p>
           <button @click="modal.open = false" class="p-1.5 rounded-lg hover:bg-agro-hover text-agro-light">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
-        <div class="space-y-4">
-          <!-- Категорія -->
+        <!-- Перемикач витрата/дохід -->
+        <div class="flex bg-[rgb(241,239,227)] rounded-[12px] p-[4px] mb-5">
+          <button @click="modal.type = 'expense'"
+            class="flex-1 text-center py-2 rounded-[9px] font-semibold text-[13.5px] transition-all"
+            :class="modal.type === 'expense' ? 'bg-white text-[#2F5233] shadow-sm' : 'text-agro-light'">
+            Витрата
+          </button>
+          <button @click="modal.type = 'income'"
+            class="flex-1 text-center py-2 rounded-[9px] font-semibold text-[13.5px] transition-all"
+            :class="modal.type === 'income' ? 'bg-white text-[#2F5233] shadow-sm' : 'text-agro-light'">
+            Дохід
+          </button>
+        </div>
+
+        <!-- ФОРМА ВИТРАТИ -->
+        <div v-if="modal.type === 'expense'" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-2">Категорія</label>
             <div class="grid grid-cols-3 gap-2">
@@ -167,33 +181,23 @@
               </button>
             </div>
           </div>
-
-          <!-- Опис -->
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Опис (необов'язково)</label>
             <input v-model="modal.description" type="text" class="input" placeholder="Наприклад: Дизель для трактора">
           </div>
-
-          <!-- Сума -->
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Сума, грн</label>
             <input v-model="modal.amount" type="number" min="0" step="0.01" class="input" placeholder="0.00">
           </div>
-
-          <!-- Дата -->
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Дата</label>
             <input v-model="modal.date" type="date" class="input">
           </div>
-
-          <!-- Поле -->
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1">Поле (необов'язково)</label>
             <UiAppSelect v-model="modal.farm_id" :drop-up="true"
               :options="[{ value: '', label: 'Загальна витрата' }, ...farms.map(f => ({ value: f.id, label: f.name }))]" />
           </div>
-
-          <!-- Культура -->
           <div v-if="modal.farm_id">
             <label class="block text-sm font-medium text-agro-dark mb-1">Культура (необов'язково)</label>
             <UiAppSelect v-model="modal.crop_type" :drop-up="true"
@@ -201,9 +205,45 @@
           </div>
         </div>
 
+        <!-- ФОРМА ДОХОДУ -->
+        <div v-else class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1">Культура</label>
+            <input v-model="income.crop_type" type="text" class="input" placeholder="Наприклад: Пшениця">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1">Де продали (необов'язково)</label>
+            <input v-model="income.description" type="text" class="input" placeholder="Наприклад: Базар, сусід">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Кількість, т</label>
+              <input v-model="income.quantity_tons" type="number" min="0" step="0.001" class="input" placeholder="0.000">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Ціна, грн/т</label>
+              <input v-model="income.price_per_ton" type="number" min="0" step="1" class="input" placeholder="0">
+            </div>
+          </div>
+          <div class="p-3 rounded-xl bg-agro-hover flex items-center justify-between">
+            <span class="text-sm text-agro-light">Сума</span>
+            <span class="font-bold text-agro-dark">{{ incomeTotal.toLocaleString('uk-UA') }} грн</span>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-agro-dark mb-1">Дата продажу</label>
+            <input v-model="income.date" type="date" class="input">
+          </div>
+        </div>
+
         <div class="flex gap-3 mt-6">
           <button @click="modal.open = false" class="btn-outline flex-1">Скасувати</button>
-          <button @click="saveExpense" :disabled="!modal.amount || !modal.category || modal.saving"
+          <button v-if="modal.type === 'expense'" @click="saveExpense"
+            :disabled="!modal.amount || !modal.category || modal.saving"
+            class="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center">
+            {{ modal.saving ? 'Збереження...' : 'Зберегти' }}
+          </button>
+          <button v-else @click="saveIncome"
+            :disabled="!income.crop_type || !income.quantity_tons || !income.price_per_ton || modal.saving"
             class="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center">
             {{ modal.saving ? 'Збереження...' : 'Зберегти' }}
           </button>
@@ -302,6 +342,7 @@ const categoryTotals = computed(() => {
 // Модальне вікно
 const modal = reactive({
   open: false,
+  type: 'expense' as 'expense' | 'income',
   category: 'fuel',
   description: '',
   amount: '',
@@ -311,14 +352,34 @@ const modal = reactive({
   saving: false,
 })
 
+const income = reactive({
+  crop_type: '',
+  description: '',
+  quantity_tons: '',
+  price_per_ton: '',
+  date: new Date().toISOString().slice(0, 10),
+})
+
+const incomeTotal = computed(() => {
+  const q = parseFloat(income.quantity_tons) || 0
+  const p = parseFloat(income.price_per_ton) || 0
+  return Math.round(q * p)
+})
+
 function openAddModal() {
   modal.open = true
+  modal.type = 'expense'
   modal.category = 'fuel'
   modal.description = ''
   modal.amount = ''
   modal.date = new Date().toISOString().slice(0, 10)
   modal.farm_id = ''
   modal.crop_type = ''
+  income.crop_type = ''
+  income.description = ''
+  income.quantity_tons = ''
+  income.price_per_ton = ''
+  income.date = new Date().toISOString().slice(0, 10)
 }
 
 async function saveExpense() {
@@ -341,6 +402,30 @@ async function saveExpense() {
 
   if (!error && data) {
     expenses.value.unshift({ ...data, farm_name: farmName })
+  }
+  modal.saving = false
+  modal.open = false
+}
+
+async function saveIncome() {
+  if (!income.crop_type || !income.quantity_tons || !income.price_per_ton || modal.saving) return
+  modal.saving = true
+  const { data: { session } } = await supabase.auth.getSession()
+  const qty = parseFloat(income.quantity_tons)
+  const price = parseFloat(income.price_per_ton)
+  const total = Math.round(qty * price)
+  const insertData: any = {
+    farmer_id: session?.user?.id,
+    crop_type: income.crop_type + (income.description ? ` (${income.description})` : ''),
+    quantity_tons: qty,
+    price_per_ton: price,
+    total_price: total,
+    sold_at: income.date,
+    status: 'completed',
+  }
+  const { data, error } = await supabase.from('manual_sales').insert(insertData).select().single()
+  if (!error && data) {
+    sales.value.unshift({ ...data, source: 'manual' })
   }
   modal.saving = false
   modal.open = false

@@ -1,33 +1,11 @@
 import { describe, it, expect } from 'vitest'
+import { formatPhone, isPhoneValid } from '../../app/utils/phone'
+import { validatePassword } from '../../app/utils/password'
 
 // --- Логіка з auth.vue ---
 
 const isEmailValid = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
-const isPhoneValid = (phone: string) => /^\+38 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone)
-
-const validatePassword = (p: string) => {
-  if (p.length < 8) return 'Пароль має бути не менше 8 символів'
-  if (!/[a-z]/.test(p)) return 'Пароль має містити хоча б одну малу латинську літеру'
-  if (!/[A-Z]/.test(p)) return 'Пароль має містити хоча б одну велику латинську літеру'
-  if (!/[0-9]/.test(p)) return 'Пароль має містити хоча б одну цифру'
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(p)) return 'Пароль має містити хоча б один спеціальний символ'
-  return null
-}
-
-const formatPhone = (raw: string): string => {
-  let digits = raw.replace(/\D/g, '')
-  if (digits.startsWith('38')) digits = digits.slice(2)
-  digits = digits.slice(0, 10)
-
-  if (!digits) return ''
-
-  let masked = '+38 (' + digits.slice(0, 3)
-  if (digits.length > 3) masked += ') ' + digits.slice(3, 6)
-  if (digits.length > 6) masked += '-' + digits.slice(6, 8)
-  if (digits.length > 8) masked += '-' + digits.slice(8, 10)
-  return masked
-}
 
 // --- Email ---
 

@@ -153,7 +153,7 @@
           <div>
             <label class="auth-label">Телефон</label>
             <input data-testid="reg-phone" :value="phone" @input="onPhoneInput" type="tel" inputmode="tel"
-              class="auth-input" :class="phone && !isPhoneValid ? 'border-red-400' : ''"
+              class="auth-input" :class="phone && !isPhoneOk ? 'border-red-400' : ''"
               placeholder="+38 (0__) ___-__-__" autocomplete="tel" />
           </div>
 
@@ -289,7 +289,7 @@ const REGIONS = [
 ]
 
 const isEmailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
-const isPhoneValid = computed(() => /^\+38 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone.value))
+const isPhoneOk = computed(() => isPhoneValid(phone.value))
 
 const onEmailInput = (e: Event) => {
   const val = (e.target as HTMLInputElement).value
@@ -299,23 +299,8 @@ const onEmailInput = (e: Event) => {
 
 const onPhoneInput = (e: Event) => {
   const input = e.target as HTMLInputElement
-  // Витягуємо тільки цифри
-  let digits = input.value.replace(/\D/g, '')
-  // Прибираємо префікс 380 якщо юзер вставив повний номер
-  if (digits.startsWith('38')) digits = digits.slice(2)
-  // Обмежуємо до 10 цифр (0XX XXX XX XX)
-  digits = digits.slice(0, 10)
-
-  if (!digits) { phone.value = ''; input.value = ''; return }
-
-  // Форматуємо: +38 (0d1d2) d3d4d5-d6d7-d8d9
-  let masked = '+38 (' + digits.slice(0, 3)
-  if (digits.length > 3) masked += ') ' + digits.slice(3, 6)
-  if (digits.length > 6) masked += '-' + digits.slice(6, 8)
-  if (digits.length > 8) masked += '-' + digits.slice(8, 10)
-
-  phone.value = masked
-  input.value = masked
+  phone.value = formatPhone(input.value)
+  input.value = phone.value
 }
 
 const hasCompany = computed(() => ['farmer', 'buyer', 'seller'].includes(role.value))
@@ -414,7 +399,7 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
   if (!isEmailValid.value) { showError('Введіть коректний email'); return }
-  if (!isPhoneValid.value) { showError('Введіть коректний номер телефону'); return }
+  if (!isPhoneOk.value) { showError('Введіть коректний номер телефону'); return }
   const pwdError = validatePassword(password.value)
   if (pwdError) { showError(pwdError); return }
   if (password.value !== confirmPassword.value) { showError('Паролі не співпадають'); return }

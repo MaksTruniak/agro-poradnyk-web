@@ -180,7 +180,7 @@
             <div class="border-t border-agro-border pt-4">
               <label class="block text-sm font-semibold text-agro-dark mb-1.5">Пароль *</label>
               <div class="relative">
-                <input v-model="wForm2.password" :type="showPassword ? 'text' : 'password'" class="input pr-10" placeholder="Мінімум 6 символів" />
+                <input v-model="wForm2.password" :type="showPassword ? 'text' : 'password'" class="input pr-10" placeholder="Мінімум 8 символів" />
                 <button type="button" @click="showPassword=!showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-agro-light hover:text-agro-dark transition-colors">
                   <svg v-if="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -288,7 +288,8 @@ const createWorker = async () => {
   if (!wForm2.first_name || !wForm2.last_name || !wForm2.phone || !wForm2.password) {
     wFormError.value = 'Заповніть всі обов\'язкові поля'; return
   }
-  if (wForm2.password.length < 6) { wFormError.value = 'Пароль мінімум 6 символів'; return }
+  const pwdError = validatePassword(wForm2.password)
+  if (pwdError) { wFormError.value = pwdError; return }
   wSaving2.value = true; wFormError.value = ''
   const { data: { session } } = await supabase.auth.getSession()
   try {

@@ -61,7 +61,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Телефон</label>
-            <input v-model="form.phone" class="input" placeholder="+380..." />
+            <input :value="form.phone" @input="onPhoneInput" type="tel" inputmode="tel" class="input" :class="form.phone && !isPhoneValid(form.phone) ? 'border-red-400' : ''" placeholder="+38 (0__) ___-__-__" autocomplete="tel" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Область</label>
@@ -292,7 +292,7 @@ useHead({ title: 'Налаштування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
-const { confirm: confirmDialog } = useConfirm()
+const { error: showError } = useToast()
 const router = useRouter()
 
 const loading = ref(true)
@@ -340,16 +340,19 @@ const copyProfileUrl = async () => {
 const onAvatarPick = async (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  if (file.size > 2 * 1024 * 1024) { alert('Файл більше 2 МБ'); return }
+  if (file.size > 2 * 1024 * 1024) { showError('Файл більше 2 МБ'); return }
   uploadingAvatar.value = true
   const ext = file.name.split('.').pop()
   const path = `avatars/${uid}.${ext}`
   const { error } = await supabase.storage.from('user-avatars').upload(path, file, { upsert: true })
-  if (!error) {
+  if (error) {
+    showError('Не вдалося завантажити фото. Спробуйте ще раз.')
+  } else {
     const { data: urlData } = supabase.storage.from('user-avatars').getPublicUrl(path)
     const url = urlData.publicUrl + '?t=' + Date.now()
-    avatarUrl.value = url
-    await supabase.from('users').update({ avatar_url: url }).eq('id', uid)
+    const { error: updErr } = await supabase.from('users').update({ avatar_url: url }).eq('id', uid)
+    if (updErr) showError('Не вдалося зберегти. Спробуйте ще раз.')
+    else avatarUrl.value = url
   }
   uploadingAvatar.value = false
 }
@@ -378,7 +381,7 @@ if (profile) {
     form.last_name = parts.slice(1).join(' ') || ''
   }
   form.company_name = profile.company_name || ''
-  form.phone = profile.phone || ''
+  form.phone = formatPhone(profile.phone || '')
   form.region = profile.region || ''
   form.city = profile.city || ''
   citySearch.value = profile.city || ''
@@ -404,10 +407,11 @@ const profileAdded = ref(false)
 const addProfile = async (newRole: string) => {
   addingProfile.value = true
   const merged = [...new Set([...userRoles.value, newRole])]
-  await supabase.from('users').update({ roles: merged }).eq('id', uid)
+  const { error } = await supabase.from('users').update({ roles: merged }).eq('id', uid)
+  addingProfile.value = false
+  if (error) { showError('Не вдалося зберегти. Спробуйте ще раз.'); return }
   userRoles.value = merged
   profileAdded.value = true
-  addingProfile.value = false
   setTimeout(() => { profileAdded.value = false }, 3000)
 }
 const isSeller = computed(() => role.value === 'seller')
@@ -421,40 +425,6 @@ const companyPlaceholder = computed(() => {
   if (role.value === 'buyer') return 'Наприклад: ФОП Петренко або ТОВ "Агро"'
   return ''
 })
-
-// Buyer crops
-const buyerCrops = ref<any[]>([])
-const savingCrop = ref(false)
-const cropForm = reactive({ crop_type: '', min_qty: null as number | null, max_qty: null as number | null, unit: 'т' })
-
-if (profile?.role === 'buyer') {
-  const { data: bc } = await supabase.from('buyer_crops').select('*').eq('user_id', uid).order('created_at')
-  buyerCrops.value = bc || []
-}
-
-const addBuyerCrop = async () => {
-  if (!cropForm.crop_type.trim() || savingCrop.value) return
-  savingCrop.value = true
-  const { data } = await supabase.from('buyer_crops').insert({
-    user_id: uid,
-    crop_type: cropForm.crop_type.trim(),
-    min_qty: cropForm.min_qty || null,
-    max_qty: cropForm.max_qty || null,
-    unit: cropForm.unit,
-  }).select().single()
-  if (data) buyerCrops.value.push(data)
-  cropForm.crop_type = ''
-  cropForm.min_qty = null
-  cropForm.max_qty = null
-  cropForm.unit = 'т'
-  savingCrop.value = false
-}
-
-const deleteBuyerCrop = async (id: string) => {
-  if (!await confirmDialog('Культуру буде видалено.', { title: 'Видалити культуру?' })) return
-  await supabase.from('buyer_crops').delete().eq('id', id)
-  buyerCrops.value = buyerCrops.value.filter((c: any) => c.id !== id)
-}
 
 let sellerProfileId: string | null = null
 if (isSeller.value) {
@@ -472,8 +442,9 @@ if (isSeller.value) {
 loading.value = false
 
 const saveProfile = async () => {
+  if (form.phone && !isPhoneValid(form.phone)) { showError('Введіть коректний номер телефону'); return }
   saving.value = true
-  await supabase.from('users').update({
+  const { error } = await supabase.from('users').update({
     name: `${form.first_name} ${form.last_name}`.trim(),
     first_name: form.first_name,
     last_name: form.last_name,
@@ -488,6 +459,7 @@ const saveProfile = async () => {
     legal_address: form.legal_address || null,
   }).eq('id', uid)
   saving.value = false
+  if (error) { showError('Не вдалося зберегти. Спробуйте ще раз.'); return }
   saved.value = true
   setTimeout(() => saved.value = false, 3000)
 }
@@ -511,15 +483,24 @@ const saveShop = async () => {
     phone: shopForm.phone,
     description: shopForm.description,
   }
+  let error
   if (sellerProfileId) {
-    await supabase.from('seller_profiles').update(payload).eq('id', sellerProfileId)
+    ({ error } = await supabase.from('seller_profiles').update(payload).eq('id', sellerProfileId))
   } else {
-    const { data } = await supabase.from('seller_profiles').insert({ user_id: uid, ...payload }).select().single()
-    if (data) sellerProfileId = data.id
+    const res = await supabase.from('seller_profiles').insert({ user_id: uid, ...payload }).select().single()
+    error = res.error
+    if (res.data) sellerProfileId = res.data.id
   }
   savingShop.value = false
+  if (error) { showError('Не вдалося зберегти. Спробуйте ще раз.'); return }
   savedShop.value = true
   setTimeout(() => savedShop.value = false, 3000)
+}
+
+const onPhoneInput = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  form.phone = formatPhone(input.value)
+  input.value = form.phone
 }
 
 const onAreaChange = () => {
@@ -546,13 +527,14 @@ const selectCity = (c: any) => {
 }
 
 const saveDelivery = async () => {
-  if (!sellerProfileId) return
+  if (!sellerProfileId) { showError('Спочатку збережіть налаштування магазину'); return }
   savingDelivery.value = true
-  await supabase.from('seller_profiles').update({
+  const { error } = await supabase.from('seller_profiles').update({
     delivery_options: deliveryOptions.value,
     pickup_address: deliveryOptions.value.includes('pickup') ? pickupAddress.value : null,
   }).eq('id', sellerProfileId)
   savingDelivery.value = false
+  if (error) { showError('Не вдалося зберегти. Спробуйте ще раз.'); return }
   savedDelivery.value = true
   setTimeout(() => savedDelivery.value = false, 3000)
 }
@@ -560,13 +542,14 @@ const saveDelivery = async () => {
 const requestVerification = async () => {
   if (!form.edrpou.trim()) return
   requestingVerification.value = true
-  await supabase.from('users').update({
+  const { error } = await supabase.from('users').update({
     edrpou: form.edrpou.trim(),
     verification_requested: true,
   }).eq('id', uid)
+  requestingVerification.value = false
+  if (error) { showError('Не вдалося надіслати запит. Спробуйте ще раз.'); return }
   verificationRequested.value = true
   verificationSent.value = true
-  requestingVerification.value = false
 }
 
 const logout = async () => {
