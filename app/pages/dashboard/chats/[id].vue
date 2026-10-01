@@ -1110,18 +1110,7 @@ const submitReview = async () => {
     text: reviewModal.text.trim() || null,
     problem_solved: reviewModal.problem.trim(),
   })
-  // Оновити рейтинг агронома
-  const { data: allReviews } = await supabase
-    .from('agronomist_reviews')
-    .select('rating')
-    .eq('agronomist_id', agronomistId)
-  if (allReviews?.length) {
-    const avg = allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length
-    await supabase.from('agronomist_profiles').update({
-      rating: Math.round(avg * 10) / 10,
-      reviews_count: allReviews.length,
-    }).eq('user_id', agronomistId)
-  }
+  // Рейтинг агронома перераховує база (тригер agronomist_reviews_recalc)
   reviewModal.saving = false
   reviewModal.alreadyReviewed = true
 }
