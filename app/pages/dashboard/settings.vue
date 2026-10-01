@@ -146,7 +146,7 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Новий пароль</label>
-            <input v-model="newPassword" type="password" class="input" placeholder="Мінімум 6 символів" />
+            <input v-model="newPassword" type="password" class="input" placeholder="Мінімум 8 символів" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Повторіть пароль</label>
@@ -356,9 +356,11 @@ const onAvatarPick = async (e: Event) => {
 
 const np = useNovaPost()
 
-// Завантажуємо області першими
-const areasData = await np.getAreas().catch(() => [])
-areas.value = areasData.sort((a: any, b: any) => a.Description.localeCompare(b.Description, 'uk'))
+// Завантажуємо області асинхронно щоб не блокувати сторінку
+onMounted(async () => {
+  const areasData = await np.getAreas().catch(() => [])
+  areas.value = areasData.sort((a: any, b: any) => a.Description.localeCompare(b.Description, 'uk'))
+})
 
 const isVerified = ref(false)
 const verificationRequested = ref(false)
@@ -492,7 +494,8 @@ const saveProfile = async () => {
 
 const changePassword = async () => {
   passError.value = ''
-  if (newPassword.value.length < 6) { passError.value = 'Мінімум 6 символів'; return }
+  const pwdError = validatePassword(newPassword.value)
+  if (pwdError) { passError.value = pwdError; return }
   if (newPassword.value !== confirmPassword.value) { passError.value = 'Паролі не збігаються'; return }
   savingPass.value = true
   const { error } = await supabase.auth.updateUser({ password: newPassword.value })
