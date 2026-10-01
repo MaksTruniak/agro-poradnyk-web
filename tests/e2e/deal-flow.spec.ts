@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test'
 import { asUser, hasAccount, serviceClient } from './helpers'
 
-// Повний шлях угоди з реальними правами. Контрагент-покупець — тестовий агроном
-// (окремого заготівельника не тестуємо; база перевіряє лише, що користувач — учасник угоди).
+// Повний шлях угоди з реальними правами фермера і заготівельника; агроном — сторонній користувач.
 // ПИШЕ в базу, тому лише з E2E_WRITE=1; після тесту все прибирається сервісним ключем.
 
-test.describe('Угода: фермер ↔ покупець (тестовий агроном)', () => {
+test.describe('Угода: фермер ↔ заготівельник', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест створює і видаляє записи)')
-  test.skip(!hasAccount('farmer') || !hasAccount('agronomist'), 'потрібні E2E_FARMER_* і E2E_AGRONOMIST_*')
+  test.skip(!hasAccount('farmer') || !hasAccount('buyer'), 'потрібні E2E_FARMER_* і E2E_BUYER_*')
   test.describe.configure({ mode: 'serial' })
 
   let chatId = ''
@@ -31,7 +30,7 @@ test.describe('Угода: фермер ↔ покупець (тестовий �
 
   test('чат і повідомлення бачать лише учасники', async () => {
     const farmer = await asUser('farmer')
-    const buyer = await asUser('agronomist')
+    const buyer = await asUser('buyer')
 
     const { data: chat, error } = await farmer.client.from('chats')
       .insert({ farmer_id: farmer.userId, agronomist_id: buyer.userId, type: 'human', is_unlocked: true, title: 'E2E тест' })
@@ -45,9 +44,8 @@ test.describe('Угода: фермер ↔ покупець (тестовий �
     const { data: seen } = await buyer.client.from('messages').select('content').eq('chat_id', chatId)
     expect(seen?.length).toBe(1)
 
-    if (hasAccount('admin')) {
-      // Повідомлення чату не бачить навіть адмін — правило лише для учасників
-      const stranger = await asUser('admin')
+    if (hasAccount('agronomist')) {
+      const stranger = await asUser('agronomist')
       const { data: hidden } = await stranger.client.from('messages').select('id').eq('chat_id', chatId)
       expect(hidden ?? []).toEqual([])
     }
@@ -55,7 +53,7 @@ test.describe('Угода: фермер ↔ покупець (тестовий �
 
   test('статуси угоди контролює база', async () => {
     const farmer = await asUser('farmer')
-    const buyer = await asUser('agronomist')
+    const buyer = await asUser('buyer')
 
     // Браузер просить одразу «completed» — база ставить pending
     const { data: deal, error } = await farmer.client.from('deals').insert({
@@ -84,11 +82,16 @@ test.describe('Угода: фермер ↔ покупець (тестовий �
 
   test('реквізити й відгук лише для учасників, рейтинг рахує база', async () => {
     const farmer = await asUser('farmer')
-    const buyer = await asUser('agronomist')
+    const buyer = await asUser('buyer')
 
     const { data: parties, error } = await buyer.client.rpc('deal_party_details', { p_deal_id: dealId })
     expect(error).toBeNull()
     expect(parties?.length).toBe(2)
+    if (hasAccount('agronomist')) {
+      const stranger = await asUser('agronomist')
+      const denied = await stranger.client.rpc('deal_party_details', { p_deal_id: dealId })
+      expect(denied.error, 'сторонній отримує реквізити').not.toBeNull()
+    }
 
     const review = await buyer.client.from('deal_reviews').insert({ deal_id: dealId, reviewer_id: buyer.userId, reviewee_id: farmer.userId, rating: 5 })
     expect(review.error).toBeNull()

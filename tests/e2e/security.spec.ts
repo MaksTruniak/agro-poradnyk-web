@@ -107,6 +107,25 @@ test.describe('Фермер', () => {
   })
 })
 
+test.describe('Заготівельник', () => {
+  test.skip(!hasAccount('buyer'), 'немає E2E_BUYER_* у .env')
+
+  test('не може сам поставити собі бейдж «Перевірений»', async () => {
+    const { client, userId } = await asUser('buyer')
+    const { data: before } = await client.from('users').select('is_verified, is_verified_buyer, buyer_rating').eq('id', userId).single()
+    await client.from('users').update({ is_verified: true, is_verified_buyer: true, buyer_rating: 5 }).eq('id', userId)
+    const { data: after } = await client.from('users').select('is_verified, is_verified_buyer, buyer_rating').eq('id', userId).single()
+    expect(after).toEqual(before)
+  })
+
+  test('може подати запит на верифікацію (це дозволено)', async () => {
+    const { client, userId } = await asUser('buyer')
+    const { data: before } = await client.from('users').select('verification_requested').eq('id', userId).single()
+    const { error } = await client.from('users').update({ verification_requested: before!.verification_requested }).eq('id', userId)
+    expect(error).toBeNull()
+  })
+})
+
 test.describe('Агроном', () => {
   test.skip(!hasAccount('agronomist'), 'немає E2E_AGRONOMIST_* у .env')
 
