@@ -39,7 +39,15 @@
             <p class="font-semibold text-agro-dark truncate">{{ b.name }}</p>
             <p class="text-xs text-agro-light truncate">{{ [b.country, b.slug].filter(Boolean).join(' · ') }}</p>
           </div>
-          <span v-if="b.is_active === false" class="shrink-0 text-xs bg-gray-100 text-gray-500 border border-gray-200 rounded-full px-2 py-0.5 font-medium">Приховано</span>
+          <button @click="toggleActive(b)"
+            :title="b.is_active === false ? 'Увімкнути' : 'Вимкнути'"
+            :class="['shrink-0 w-9 h-9 rounded-xl border transition-colors inline-flex items-center justify-center',
+              b.is_active === false
+                ? 'bg-gray-100 border-gray-200 text-gray-400 hover:bg-green-50 hover:border-green-300 hover:text-green-600'
+                : 'bg-agro-hover border-agro-border text-agro hover:bg-red-50 hover:border-red-200 hover:text-red-500']">
+            <svg v-if="b.is_active !== false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
           <button @click="openModal(b)" class="shrink-0 text-xs text-agro border border-agro-border hover:bg-agro-hover rounded-xl px-3 py-1.5 transition-colors inline-flex items-center gap-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Редагувати
@@ -227,6 +235,13 @@ const save = async () => {
 
   modal.saving = false
   modal.show = false
+}
+
+const toggleActive = async (brand: any) => {
+  const newVal = brand.is_active === false ? true : false
+  await supabase.from('agro_manufacturers').update({ is_active: newVal }).eq('id', brand.id)
+  const idx = brands.value.findIndex(b => b.id === brand.id)
+  if (idx !== -1) brands.value[idx] = { ...brands.value[idx], is_active: newVal }
 }
 
 onMounted(async () => {
