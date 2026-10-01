@@ -72,6 +72,7 @@ export default defineEventHandler(async (event) => {
       .from('subscriptions')
       .select('renewal_count')
       .eq('user_id', user.id)
+      .eq('profile', plan.startsWith('agronomist') ? 'agronomist' : 'farmer')
       .maybeSingle()
     renewalCount = existingSub?.renewal_count ?? 0
 

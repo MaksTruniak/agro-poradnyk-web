@@ -54,6 +54,9 @@
               }">
               {{ user.plan === 'business' ? 'Бізнес' : user.plan === 'business_pro' ? 'Бізнес Про' : 'Basic' }}
             </span>
+            <span v-if="user.agronomist_plan === 'pro'" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+              PRO агронома
+            </span>
             <div class="text-right">
               <p class="text-xs text-agro-light">{{ formatDate(user.created_at) }}</p>
               <p class="text-[10px] mt-0.5" :class="user.confirmed_at ? 'text-green-500' : 'text-amber-500'">
@@ -100,8 +103,15 @@
 
           <!-- Підписка -->
           <div v-if="modal.tab === 'plan'">
+            <div class="flex gap-2 mb-3">
+              <button v-for="pr in PROFILES" :key="pr.value" @click="switchModalProfile(pr.value)"
+                class="flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors"
+                :class="modal.profile === pr.value ? 'bg-agro-dark text-white border-agro-dark' : 'bg-white text-agro-light border-agro-border hover:text-agro-dark'">
+                {{ pr.label }}
+              </button>
+            </div>
             <div class="grid grid-cols-2 gap-2 mb-4">
-              <button v-for="p in PLANS" :key="p.value" @click="modal.plan = p.value"
+              <button v-for="p in PLANS[modal.profile]" :key="p.value" @click="modal.plan = p.value"
                 class="py-3 px-3 rounded-xl text-sm font-semibold border transition-colors"
                 :class="modal.plan === p.value ? 'bg-agro text-white border-agro' : 'bg-white text-agro-light border-agro-border hover:border-agro hover:text-agro-dark'">
                 {{ p.label }}
@@ -165,17 +175,29 @@ const saving = ref(false)
 const saveMsg = ref('')
 const saveError = ref('')
 
-const PLANS = [
-  { value: 'basic', label: 'Basic' },
-  { value: 'business', label: 'Бізнес' },
-  { value: 'business_pro', label: 'Бізнес Про' },
-]
+// Підписки профілів окремі: у фермера — Basic / Бізнес / Бізнес Про, в агронома — Basic / PRO
+const PROFILES = [
+  { value: 'farmer', label: 'Профіль фермера' },
+  { value: 'agronomist', label: 'Профіль агронома' },
+] as const
+const PLANS: Record<SubscriptionProfile, { value: string; label: string }[]> = {
+  farmer: [
+    { value: 'basic', label: 'Basic' },
+    { value: 'business', label: 'Бізнес' },
+    { value: 'business_pro', label: 'Бізнес Про' },
+  ],
+  agronomist: [
+    { value: 'basic', label: 'Basic' },
+    { value: 'pro', label: 'PRO' },
+  ],
+}
 
 const modal = reactive({
   show: false,
   tab: 'plan' as 'plan' | 'coupon',
   userId: '',
   email: '',
+  profile: 'farmer' as SubscriptionProfile,
   plan: 'basic',
   expires_at: '',
   coupon_code: '',
@@ -203,21 +225,33 @@ const changePage = (p: number) => {
   load()
 }
 
+async function loadModalSub() {
+  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at')
+    .eq('user_id', modal.userId).eq('profile', modal.profile).maybeSingle()
+  modal.plan = sub?.plan || 'basic'
+  modal.expires_at = sub?.expires_at ? new Date(sub.expires_at).toISOString().split('T')[0] : ''
+}
+
+async function switchModalProfile(profile: SubscriptionProfile) {
+  modal.profile = profile
+  saveMsg.value = ''
+  saveError.value = ''
+  await loadModalSub()
+}
+
 async function openManage(user: any) {
   saveMsg.value = ''
   saveError.value = ''
-  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).maybeSingle()
-  const expiresDate = sub?.expires_at ? new Date(sub.expires_at).toISOString().split('T')[0] : ''
   Object.assign(modal, {
-    show: true,
     tab: 'plan',
     userId: user.id,
     email: user.email,
-    plan: sub?.plan || 'basic',
-    expires_at: expiresDate,
+    profile: 'farmer',
     coupon_code: '',
     coupon_discount: 10,
   })
+  await loadModalSub()
+  modal.show = true
 }
 
 function generateCode() {
@@ -235,10 +269,11 @@ async function savePlan() {
       : modal.plan === 'basic' ? new Date('2024-01-01').toISOString() : null
     const { error } = await supabase.from('subscriptions').upsert({
       user_id: modal.userId,
+      profile: modal.profile,
       plan: modal.plan,
       status: modal.plan === 'basic' ? 'expired' : 'active',
       expires_at: expiresAt,
-    }, { onConflict: 'user_id' })
+    }, { onConflict: 'user_id,profile' })
     if (error) throw new Error(error.message)
     saveMsg.value = 'Підписку збережено'
     setTimeout(() => { saveMsg.value = '' }, 3000)

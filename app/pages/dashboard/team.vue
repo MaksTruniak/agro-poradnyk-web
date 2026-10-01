@@ -169,7 +169,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
 const loading = ref(true)
-const currentPlan = ref<string>('basic')
+const currentPlan = ref<PlanId>('basic')
 const members = ref<any[]>([])
 
 const inviteEmail    = ref('')
@@ -189,12 +189,6 @@ const ROLE_LABELS: Record<string, string> = {
   viewer: 'Переглядач',
 }
 
-const MEMBER_LIMITS: Record<string, number> = {
-  basic:        0,
-  business:     5,
-  business_pro: Infinity,
-}
-
 const memberLimit = computed(() => MEMBER_LIMITS[currentPlan.value] ?? 0)
 const canInvite   = computed(() => memberLimit.value > 0)
 const limitReached = computed(() => memberLimit.value !== Infinity && members.value.length >= memberLimit.value)
@@ -207,10 +201,8 @@ onMounted(async () => {
   if (!user) { loading.value = false; return }
   currentUser.value = user
 
-  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).maybeSingle()
-  const plan = sub?.plan ?? 'basic'
-  const active = !sub?.expires_at || new Date(sub.expires_at) > new Date()
-  currentPlan.value = (active ? plan : 'basic') as typeof currentPlan.value
+  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).eq('profile', 'farmer').maybeSingle()
+  currentPlan.value = getActivePlan(sub)
 
   if (canInvite.value) {
     const { data } = await supabase

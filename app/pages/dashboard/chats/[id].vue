@@ -589,12 +589,10 @@ const uid = session?.user?.id
 
 const [profileRes, subRes] = await Promise.all([
   supabase.from('users').select('role').eq('id', uid).single(),
-  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle(),
+  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
 ])
 const profileData = profileRes.data
-const isPro = subRes.data?.plan === 'pro' && subRes.data?.expires_at
-  ? new Date(subRes.data.expires_at) > new Date()
-  : false
+const isPro = isPaidFarmerPlan(getActivePlan(subRes.data))
 
 // Завантаження чату — до визначення ролі в чаті
 const { data: chatData } = await supabase.from('chats').select('*, farmer_id, agronomist_id, is_unlocked, title').eq('id', chatId).single()

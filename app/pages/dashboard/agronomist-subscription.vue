@@ -188,8 +188,8 @@ const formatDate = (d: string) =>
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
-const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at, renewal_count').eq('user_id', uid).maybeSingle()
-isPro.value = sub?.plan === 'pro' && new Date(sub?.expires_at) > new Date()
+const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at, renewal_count').eq('user_id', uid).eq('profile', 'agronomist').maybeSingle()
+isPro.value = isAgronomistPro(getActivePlan(sub))
 expiresAt.value = sub?.expires_at || null
 
 const rc = sub?.renewal_count ?? 0

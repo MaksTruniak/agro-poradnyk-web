@@ -195,15 +195,12 @@ const uid = session?.user?.id
 
 const [userRes, subRes] = await Promise.all([
   supabase.from('users').select('role').eq('id', uid).single(),
-  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle(),
+  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'agronomist').maybeSingle(),
 ])
 
 const isSeller = userRes.data?.role === 'seller'
 
-if (subRes.data?.plan === 'pro') {
-  const exp = subRes.data.expires_at
-  isPro.value = !exp || new Date(exp) > new Date()
-}
+isPro.value = isAgronomistPro(getActivePlan(subRes.data))
 
 if (isSeller) {
   const { data } = await supabase.from('seller_profiles').select('promotion_plan').eq('user_id', uid).maybeSingle()

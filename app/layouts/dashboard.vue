@@ -355,9 +355,8 @@ const switchProfile = (r: string) => {
 const autoBoost = async (uid: string) => {
   try {
     const { data: sub } = await supabase
-      .from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle()
-    const isPro = sub?.plan === 'pro' && (!sub.expires_at || new Date(sub.expires_at) > new Date())
-    if (!isPro) return
+      .from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'agronomist').maybeSingle()
+    if (!isAgronomistPro(getActivePlan(sub))) return
 
     const { data: profile } = await supabase
       .from('agronomist_profiles').select('boosted_at').eq('user_id', uid).single()

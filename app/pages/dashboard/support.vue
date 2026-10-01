@@ -160,11 +160,12 @@ onMounted(async () => {
 
   const { data: sub } = await supabase
     .from('subscriptions')
-    .select('plan, manager_id')
+    .select('plan, expires_at, manager_id')
     .eq('user_id', user.id)
+    .eq('profile', 'farmer')
     .maybeSingle()
 
-  isCustom.value = sub?.plan === 'business_pro'
+  isCustom.value = getActivePlan(sub) === 'business_pro'
 
   if (isCustom.value && sub?.manager_id) {
     const { data: mgr } = await supabase

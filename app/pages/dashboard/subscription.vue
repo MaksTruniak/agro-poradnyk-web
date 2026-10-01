@@ -351,7 +351,7 @@ const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDis
 async function loadLoyaltyDiscount() {
   try {
     const uid = (await supabase.auth.getSession()).data.session?.user.id || ''
-    const { data: sub } = await supabase.from('subscriptions').select('renewal_count, first_paid_at').eq('user_id', uid).maybeSingle()
+    const { data: sub } = await supabase.from('subscriptions').select('renewal_count, first_paid_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
     const rc = sub?.renewal_count ?? 0
     // Знижка тільки починаючи з 2-ї оплати (rc >= 1)
     if (rc < 1) { loyaltyDiscount.value = 0; return }
@@ -467,11 +467,10 @@ const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
 const { data: sub } = await supabase.from('subscriptions')
-  .select('plan, expires_at').eq('user_id', uid).maybeSingle()
+  .select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
 
 if (sub) {
-  const isActive = !sub.expires_at || new Date(sub.expires_at) > new Date()
-  currentPlan.value = isActive ? (sub.plan || 'basic') : 'basic'
+  currentPlan.value = getActivePlan(sub)
   expiresAt.value = sub.expires_at || null
 }
 loading.value = false

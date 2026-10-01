@@ -739,8 +739,8 @@ const showVarietySuggestions = ref(false)
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
-const { data: subData } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle()
-const isPro = subData?.plan === 'pro' && (!subData?.expires_at || new Date(subData.expires_at) > new Date())
+const { data: subData } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
+const isPro = isPaidFarmerPlan(getActivePlan(subData))
 
 const { load: loadCrops, emojiFor } = useCropCatalog()
 const { cropToSlug } = await import('~/utils/cropSlugs')

@@ -92,12 +92,23 @@
           </button>
         </div>
 
+        <div class="flex gap-2 mb-3">
+          <button v-for="pr in (['farmer', 'agronomist'] as const)" :key="pr" @click="switchUserProfile(pr)"
+            class="flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors"
+            :class="userForm.profile === pr ? 'bg-agro-dark text-white border-agro-dark' : 'bg-white text-agro-light border-agro-border hover:text-agro-dark'">
+            {{ pr === 'farmer' ? 'Профіль фермера' : 'Профіль агронома' }}
+          </button>
+        </div>
+
         <div class="mb-4">
           <label class="block text-sm font-medium text-agro-dark mb-1">Тариф</label>
           <select v-model="userForm.plan" class="input text-sm">
             <option value="basic">Basic (безкоштовний)</option>
-            <option value="business">Business</option>
-            <option value="business_pro">Business Pro</option>
+            <template v-if="userForm.profile === 'farmer'">
+              <option value="business">Business</option>
+              <option value="business_pro">Business Pro</option>
+            </template>
+            <option v-else value="pro">PRO агронома</option>
           </select>
         </div>
 
@@ -174,7 +185,7 @@
           Немає кастомних налаштувань
         </div>
         <div v-else class="border border-agro-border rounded-xl overflow-hidden">
-          <div v-for="o in overrides" :key="o.user_id"
+          <div v-for="o in overrides" :key="`${o.id}-${o.profile}`"
             class="flex items-center gap-3 px-4 py-3 hover:bg-agro-hover transition-colors border-b border-agro-border last:border-0">
             <div class="w-8 h-8 rounded-full bg-agro-hover flex items-center justify-center text-agro font-bold text-xs shrink-0">
               {{ (o.email || '?')[0].toUpperCase() }}
@@ -182,7 +193,7 @@
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-agro-dark truncate">{{ o.email }}</p>
               <p class="text-xs text-agro-light">
-                <span class="capitalize">{{ o.plan }}</span> ·
+                {{ o.profile === 'agronomist' ? 'Агроном' : 'Фермер' }} · <span class="capitalize">{{ o.plan }}</span> ·
                 <span v-if="o.ai_text_limit">текст: {{ o.ai_text_limit }}/міс</span>
                 <span v-if="o.ai_photo_limit"> · фото: {{ o.ai_photo_limit }}/міс</span>
                 <span v-if="!o.ai_text_limit && !o.ai_photo_limit">лише план змінено</span>
@@ -247,8 +258,10 @@ const savePlanLimits = async () => {
 }
 
 const defaultForPlan = (plan: string) => {
-  const row = planLimits.value.find(r => r.plan === plan)
-  return { text: row?.text_limit ?? 10, photo: row?.photo_limit ?? 2 }
+  const key = aiLimitKey(plan as PlanId, userForm.profile)
+  const row = planLimits.value.find(r => r.plan === key)
+  const fallback = AI_LIMITS_FALLBACK[key] ?? AI_LIMITS_FALLBACK.basic
+  return { text: row?.text_limit ?? fallback.text, photo: row?.photo_limit ?? fallback.photo }
 }
 
 // ─── Пошук користувачів ──────────────────────────────────────────────────────
@@ -277,6 +290,7 @@ const savedUser    = ref(false)
 const resettingUsage = ref(false)
 
 const userForm = reactive({
+  profile: 'farmer' as SubscriptionProfile,
   plan: 'basic',
   ai_text_limit: null as number | null,
   ai_photo_limit: null as number | null,
@@ -284,25 +298,36 @@ const userForm = reactive({
 
 const currentMonth = new Date().toISOString().slice(0, 7)
 
-const selectUser = async (u: any) => {
-  selectedUser.value = u
-  searchResults.value = []
-  userSearch.value = ''
-
-  userForm.plan           = u.plan || 'basic'
-  userForm.ai_text_limit  = u.ai_text_limit  ?? null
-  userForm.ai_photo_limit = u.ai_photo_limit ?? null
-
-  const { data: usage } = await supabase
-    .from('ai_usage')
-    .select('text_count, photo_count')
-    .eq('user_id', u.id)
-    .eq('month', currentMonth)
-    .maybeSingle()
+// Підписка й використання AI — окремо для профілю фермера і агронома
+const loadUserProfileData = async () => {
+  const uid = selectedUser.value?.id
+  if (!uid) return
+  const [{ data: sub }, { data: usage }] = await Promise.all([
+    supabase.from('subscriptions').select('plan, ai_text_limit, ai_photo_limit')
+      .eq('user_id', uid).eq('profile', userForm.profile).maybeSingle(),
+    supabase.from('ai_usage').select('text_count, photo_count')
+      .eq('user_id', uid).eq('profile', userForm.profile).eq('month', currentMonth).maybeSingle(),
+  ])
+  userForm.plan           = sub?.plan || 'basic'
+  userForm.ai_text_limit  = sub?.ai_text_limit  ?? null
+  userForm.ai_photo_limit = sub?.ai_photo_limit ?? null
   userUsage.value = usage || { text_count: 0, photo_count: 0 }
 }
 
-const selectUserById = (o: any) => selectUser(o)
+const selectUser = async (u: any, profile: SubscriptionProfile = 'farmer') => {
+  selectedUser.value = u
+  searchResults.value = []
+  userSearch.value = ''
+  userForm.profile = profile
+  await loadUserProfileData()
+}
+
+const switchUserProfile = async (profile: SubscriptionProfile) => {
+  userForm.profile = profile
+  await loadUserProfileData()
+}
+
+const selectUserById = (o: any) => selectUser(o, o.profile === 'agronomist' ? 'agronomist' : 'farmer')
 
 const effectiveLimit = (plan: string, type: 'text' | 'photo') => {
   if (type === 'text' && userForm.ai_text_limit)  return userForm.ai_text_limit
@@ -316,11 +341,11 @@ const saveUserLimits = async () => {
 
   await supabase.from('subscriptions').upsert({
     user_id:        selectedUser.value.id,
+    profile:        userForm.profile,
     plan:           userForm.plan,
     ai_text_limit:  userForm.ai_text_limit  || null,
     ai_photo_limit: userForm.ai_photo_limit || null,
-    updated_at:     new Date().toISOString(),
-  }, { onConflict: 'user_id' })
+  }, { onConflict: 'user_id,profile' })
 
   savingUser.value = false
   savedUser.value  = true
@@ -334,6 +359,7 @@ const resetUsage = async () => {
   await supabase.from('ai_usage')
     .update({ text_count: 0, photo_count: 0 })
     .eq('user_id', selectedUser.value.id)
+    .eq('profile', userForm.profile)
     .eq('month', currentMonth)
   if (userUsage.value) { userUsage.value.text_count = 0; userUsage.value.photo_count = 0 }
   resettingUsage.value = false

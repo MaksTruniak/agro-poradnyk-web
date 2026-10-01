@@ -537,6 +537,8 @@ const STATUS_CYCLE: Record<string, string> = { planned: 'done', done: 'missed', 
 
 const generating = ref(false)
 
+const authHeader = useAuthHeader()
+
 const generateCard = async () => {
   if (!hasPaidPlan.value) { alert('AI генерація доступна на тарифі Бізнес'); return }
   if (!program.value || !cropType) return
@@ -549,6 +551,7 @@ const generateCard = async () => {
   try {
     const result = await $fetch('/api/ai-generate-card', {
       method: 'POST',
+      headers: await authHeader(),
       body: { cropType },
     }) as { phases: { name: string; treatments: { type: string; product_name: string; dosage: string; notes: string }[] }[] }
 
@@ -582,20 +585,9 @@ const generateCard = async () => {
     activePhasesKeys.value = newPhaseKeys
     await saveActivePhasesToDb()
     await load()
-
-    // Рахуємо як 1 текстовий запит
-    if (user.value?.id) {
-      const currentMonth = new Date().toISOString().slice(0, 7)
-      const { data: usage } = await supabase.from('ai_usage').select('text_count').eq('user_id', user.value.id).eq('month', currentMonth).maybeSingle()
-      await supabase.from('ai_usage').upsert({
-        user_id: user.value.id,
-        month: currentMonth,
-        text_count: (usage?.text_count || 0) + 1,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,month' })
-    }
+    // Запит зараховує сервер (/api/ai-generate-card)
   } catch (e: any) {
-    alert('Помилка генерації: ' + (e?.message || 'невідома'))
+    alert('Помилка генерації: ' + (e?.data?.message || e?.message || 'невідома'))
   } finally {
     generating.value = false
   }
@@ -718,9 +710,8 @@ const load = async () => {
 
   const { data: { session } } = await supabase.auth.getSession()
   if (session) {
-    const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', session.user.id).maybeSingle()
-    const active = !sub?.expires_at || new Date(sub.expires_at) > new Date()
-    hasPaidPlan.value = active && ['business', 'business_pro'].includes(sub?.plan || '')
+    const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', session.user.id).eq('profile', 'farmer').maybeSingle()
+    hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(sub))
   }
   const cropGroup = getCropGroup(cropType)
   phases.value = allPhases.value.filter((p: any) => !p.crop_groups || !cropGroup || p.crop_groups?.includes(cropGroup))

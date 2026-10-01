@@ -326,9 +326,8 @@ const load = async () => {
   if (!uid) return
 
   const { data: sub } = await supabase
-    .from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle()
-  const activePlan = (sub && (!sub.expires_at || new Date(sub.expires_at) > new Date())) ? sub.plan : 'basic'
-  hasAccess.value = activePlan === 'business' || activePlan === 'business_pro'
+    .from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
+  hasAccess.value = isPaidFarmerPlan(getActivePlan(sub))
   if (!hasAccess.value) { loading.value = false; return }
 
   const { data: seasonsData } = await supabase

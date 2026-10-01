@@ -5,6 +5,8 @@ export default defineEventHandler(async (event) => {
 
   if (!cropType) throw createError({ statusCode: 400, message: 'cropType required' })
 
+  await requireAiAccess(event, { text: 1 })
+
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) throw createError({ statusCode: 500, message: 'GROQ_API_KEY not configured' })
 

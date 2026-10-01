@@ -440,23 +440,13 @@ const uid = await getQueryUserId()
 
 const [, subRes] = await Promise.all([
   supabase.from('users').select('role').eq('id', uid).single(),
-  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', session?.user?.id).maybeSingle(),
+  // План власника даних (для члена команди — план власника)
+  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
 ])
 
-const currentPlan = computed(() => {
-  const sub = subRes.data
-  if (!sub?.plan) return 'basic'
-  const active = !sub.expires_at || new Date(sub.expires_at) > new Date()
-  return active ? sub.plan : 'basic'
-})
+const currentPlan = computed(() => getActivePlan(subRes.data))
 
-const HECTARE_LIMITS: Record<string, number> = {
-  basic:        2,
-  business:     Infinity,
-  business_pro: Infinity,
-}
-
-const hectareLimit = computed(() => HECTARE_LIMITS[currentPlan.value] ?? 2)
+const hectareLimit = computed(() => HECTARE_LIMITS[currentPlan.value])
 const totalHectares = computed(() =>
   farms.value.reduce((sum: number, f: any) => sum + (parseFloat(f.hectares) || 0), 0)
 )

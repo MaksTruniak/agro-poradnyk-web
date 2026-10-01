@@ -435,12 +435,12 @@ const load = async () => {
 
   const uid = session.user.id
   const [{ data: sub }, { data: farmsData }, { data: treatmentsData }] = await Promise.all([
-    supabase.from('subscriptions').select('plan').eq('user_id', uid).eq('status', 'active').maybeSingle(),
+    supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
     supabase.from('farms').select('*, farm_crops(*)').eq('user_id', uid).order('name'),
     supabase.from('field_treatments').select('*').eq('user_id', uid).order('treatment_date', { ascending: false }),
   ])
 
-  hasPaidPlan.value = ['business', 'business_pro'].includes(sub?.plan || '')
+  hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(sub))
   farms.value = farmsData || []
   items.value = treatmentsData || []
   loading.value = false

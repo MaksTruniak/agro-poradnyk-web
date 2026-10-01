@@ -396,12 +396,12 @@ onMounted(async () => {
   // Перевіряємо підписку фермера
   if (farmData?.user_id) {
     const [{ data: sub }, { count }] = await Promise.all([
-      supabase.from('subscriptions').select('plan, expires_at').eq('user_id', farmData.user_id).maybeSingle(),
+      supabase.from('subscriptions').select('plan, expires_at').eq('user_id', farmData.user_id).eq('profile', 'farmer').maybeSingle(),
       supabase.from('protection_programs')
         .select('id', { count: 'exact', head: true })
         .in('farm_crop_id', (farmData.farm_crops || []).map((c: any) => c.id)),
     ])
-    farmerIsPro.value = sub?.plan === 'pro' && (!sub.expires_at || new Date(sub.expires_at) > new Date())
+    farmerIsPro.value = isPaidFarmerPlan(getActivePlan(sub))
     farmerProgramCount.value = count || 0
   }
 

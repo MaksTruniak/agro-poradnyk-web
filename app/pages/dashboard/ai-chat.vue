@@ -480,7 +480,7 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
-const { getQueryUserId } = useTeamContext()
+const { getQueryUserId, isTeamMember } = useTeamContext()
 
 const { load: loadCrops, emojiFor } = useCropCatalog()
 loadCrops()
@@ -494,27 +494,18 @@ const queryPrompt = computed(() => route.query.prompt as string | undefined)
 const queryAnalyzeCard = computed(() => route.query.analyzeCard === '1')
 
 const loading = ref(true)
-const currentPlan = ref<'basic' | 'pro' | 'business' | 'enterprise'>('basic')
-const isPro = computed(() => currentPlan.value === 'business' || currentPlan.value === 'business_pro')
+const currentPlan = ref<PlanId>('basic')
+const aiProfile = ref<SubscriptionProfile>('farmer')
+// Доступ до AI визначає ліміт (ті самі правила, що на сервері): Бізнес / Бізнес Про, агроном — Базовий і PRO
+const isPro = computed(() => textLimit.value > 0)
 const isAgronomist = import.meta.client
   ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
   : false
 const proLink = isAgronomist ? '/dashboard/promotion' : '/dashboard/subscription'
 const hasOlderHistory = ref(false)
 
-const PLAN_LIMITS_FALLBACK: Record<string, { text: number; photo: number }> = {
-  basic:        { text: 0,     photo: 0    },
-  business:     { text: 3000,  photo: 300  },
-  business_pro: { text: 99999, photo: 9999 },
-}
-const planLimitsDb = ref<Record<string, { text: number; photo: number }>>({})
-
-const getPlanLimit = (plan: string) =>
-  planLimitsDb.value[plan] ?? PLAN_LIMITS_FALLBACK[plan] ?? PLAN_LIMITS_FALLBACK.basic
-const monthlyTextCount  = ref(0)
-const monthlyPhotoCount = ref(0)
-const textLimit  = ref(10)
-const photoLimit = ref(2)
+const textLimit  = ref(0)
+const photoLimit = ref(0)
 const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
 const farmName = ref('')
 const farmHectares = ref<number | null>(null)
@@ -651,27 +642,23 @@ onMounted(async () => {
   try {
   uid.value = await getQueryUserId()
 
+  // Тариф і ліміти — активного профілю; член команди працює за фермерським тарифом власника (як на сервері)
+  aiProfile.value = isTeamMember.value ? 'farmer' : subscriptionProfileFor(isAgronomist ? 'agronomist' : 'farmer')
+
   const [, subRes, planLimitsRes] = await Promise.all([
     growthPhases.load(),
-    supabase.from('subscriptions').select('plan, expires_at, ai_text_limit, ai_photo_limit').eq('user_id', uid.value).maybeSingle(),
+    supabase.from('subscriptions').select('plan, expires_at, ai_text_limit, ai_photo_limit').eq('user_id', uid.value).eq('profile', aiProfile.value).maybeSingle(),
     supabase.from('ai_plan_limits').select('plan, text_limit, photo_limit'),
   ])
 
-  // Завантажуємо ліміти з БД (якщо є)
-  if (planLimitsRes.data?.length) {
-    planLimitsDb.value = Object.fromEntries(
-      planLimitsRes.data.map((r: any) => [r.plan, { text: r.text_limit, photo: r.photo_limit }])
-    )
-  }
+  const dbLimits = Object.fromEntries(
+    (planLimitsRes.data || []).map((r: any) => [r.plan, { text: r.text_limit, photo: r.photo_limit }])
+  )
 
-  const sub = subRes.data
-  const plan = sub?.plan ?? 'basic'
-  const isActive = !sub?.expires_at || new Date(sub.expires_at) > new Date()
-  currentPlan.value = (isActive ? plan : 'basic') as typeof currentPlan.value
-
-  const limits = getPlanLimit(currentPlan.value)
-  textLimit.value  = sub?.ai_text_limit  ?? limits.text
-  photoLimit.value = sub?.ai_photo_limit ?? limits.photo
+  currentPlan.value = getActivePlan(subRes.data)
+  const limits = resolveAiLimits(aiLimitKey(currentPlan.value, aiProfile.value), dbLimits, subRes.data)
+  textLimit.value  = limits.text
+  photoLimit.value = limits.photo
 
   // Місячне використання
   if (uid.value) {
@@ -679,6 +666,7 @@ onMounted(async () => {
       .from('ai_usage')
       .select('text_count, photo_count')
       .eq('user_id', uid.value)
+      .eq('profile', aiProfile.value)
       .eq('month', currentMonth)
       .maybeSingle()
     monthlyTextCount.value  = usage?.text_count  || 0
@@ -749,12 +737,15 @@ onMounted(async () => {
   }
 })
 
+const authHeader = useAuthHeader()
+
 const startNewSession = async () => {
   if (!messages.value.length || !uid.value) return
   generatingSummary.value = true
   try {
     const { summary } = await $fetch('/api/ai-summary', {
       method: 'POST',
+      headers: await authHeader(),
       body: { messages: messages.value, prevSummary: aiMemory.value },
     }) as any
     // Зберегти summary в пам'ять
@@ -867,6 +858,7 @@ const generateSeasonReport = async () => {
     }
     const res = await $fetch('/api/ai-season-report', {
       method: 'POST',
+      headers: await authHeader(),
       body: { conversations: allMsgs.join('\n'), farmName: farmName.value, memory: aiMemory.value },
     }) as any
 
@@ -1297,17 +1289,8 @@ const send = async () => {
   if (currentChatId.value) {
     await supabase.from('ai_messages').insert({ chat_id: currentChatId.value, role: 'user', content: text })
   }
+  // Використання зараховує сервер (/api/ai-chat); тут лише оновлюємо лічильник на екрані
   monthlyTextCount.value++
-  // Інкремент у БД (upsert)
-  if (uid.value) {
-    await supabase.from('ai_usage').upsert({
-      user_id: uid.value,
-      month: currentMonth,
-      text_count: monthlyTextCount.value,
-      photo_count: monthlyPhotoCount.value,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,month' })
-  }
 
   try {
     const apiMessages = messages.value.map(m => {
@@ -1324,7 +1307,7 @@ const send = async () => {
     })
     const res = await fetch('/api/ai-chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
       body: JSON.stringify({
         messages: apiMessages,
         farmContext: farmContext.value,
@@ -1338,6 +1321,12 @@ const send = async () => {
       console.error('[ai-chat] API error', res.status, errText)
       if (res.status === 429) {
         messages.value.push({ role: 'assistant', content: '⏳ Зараз велике навантаження на AI. Спробуйте за хвилину.' })
+        streaming.value = false; streamingText.value = ''; return
+      }
+      if (res.status === 401 || res.status === 403) {
+        let msg = 'Немає доступу до AI агронома.'
+        try { msg = JSON.parse(errText).message || msg } catch {}
+        messages.value.push({ role: 'assistant', content: msg })
         streaming.value = false; streamingText.value = ''; return
       }
       throw new Error(`API error ${res.status}: ${errText}`)

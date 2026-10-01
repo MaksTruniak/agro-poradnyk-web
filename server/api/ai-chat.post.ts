@@ -46,6 +46,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { messages, farmContext, hasImage, region } = body
 
+  await requireAiAccess(event, { text: 1, photo: hasImage ? 1 : 0 })
+
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) throw createError({ statusCode: 500, message: 'GROQ_API_KEY not configured' })
 

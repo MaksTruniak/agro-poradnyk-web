@@ -79,7 +79,7 @@ const uid = session?.user?.id
 
 const [paymentsRes, subRes] = await Promise.all([
   supabase.from('payments').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle(),
+  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
 ])
 
 payments.value = paymentsRes.data || []

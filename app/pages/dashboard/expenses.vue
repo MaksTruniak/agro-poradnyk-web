@@ -446,17 +446,14 @@ onMounted(async () => {
   if (!uid) { loading.value = false; return }
 
   const [subRes, farmsRes, expRes, manualSalesRes, dealsRes] = await Promise.all([
-    supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).maybeSingle(),
+    supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
     supabase.from('farms').select('id, name, farm_crops(crop_type)').eq('user_id', uid).order('created_at'),
     supabase.from('expenses').select('*').eq('user_id', uid).order('expense_date', { ascending: false }),
     supabase.from('manual_sales').select('id, crop_type, quantity_tons, price_per_ton, total_price, sold_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('sold_at', { ascending: false }),
     supabase.from('deals').select('id, crop_type, quantity_tons, display_quantity, unit, price_per_ton, display_price, total_price, completed_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('completed_at', { ascending: false }),
   ])
 
-  const plan = subRes.data?.plan ?? 'basic'
-  const active = !subRes.data?.expires_at || new Date(subRes.data.expires_at) > new Date()
-  const currentPlan = active ? plan : 'basic'
-  hasPaidPlan.value = currentPlan === 'business' || currentPlan === 'business_pro'
+  hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
 
   farms.value = farmsRes.data || []
 

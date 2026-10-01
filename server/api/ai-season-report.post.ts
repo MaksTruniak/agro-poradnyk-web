@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk'
 
 export default defineEventHandler(async (event) => {
+  await requireAiAccess(event)
   const body = await readBody(event)
   const { conversations, farmName, memory } = body
 

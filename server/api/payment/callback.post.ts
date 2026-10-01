@@ -135,6 +135,7 @@ export default defineEventHandler(async (event) => {
       .from('subscriptions')
       .select('renewal_count')
       .eq('user_id', userId)
+      .eq('profile', 'agronomist')
       .maybeSingle()
 
     const renewalCount = existingSub?.renewal_count ?? 0
@@ -146,34 +147,35 @@ export default defineEventHandler(async (event) => {
     }
     await supabase.from('subscriptions').upsert({
       user_id:       userId,
+      profile:       'agronomist',
       plan:          'pro',
       expires_at:    expiresAt.toISOString(),
       renewal_count: renewalCount + 1,
-    }, { onConflict: 'user_id' })
+    }, { onConflict: 'user_id,profile' })
   } else {
     const { data: existingSub } = await supabase
       .from('subscriptions')
       .select('renewal_count, first_paid_at')
       .eq('user_id', userId)
+      .eq('profile', 'farmer')
       .maybeSingle()
 
     const renewalCount = existingSub?.renewal_count ?? 0
     const firstPaidAt = existingSub?.first_paid_at ?? new Date().toISOString()
     const expiresAt = new Date()
-    const isMonth = plan.endsWith('_month')
-    if (isMonth) {
-      expiresAt.setMonth(expiresAt.getMonth() + 1)
-    } else {
-      expiresAt.setMonth(expiresAt.getMonth() + 12)
-    }
-    const basePlan = (plan === 'business_pro' || plan === 'business_pro_year') ? 'business_pro' : plan.startsWith('premium') ? 'premium' : plan.startsWith('pro') ? 'pro' : 'business'
+    // Річні плани мають суфікс _year (business_year, business_pro_year, pro_year); решта — місячні (business, business_pro, pro_month)
+    const isYear = plan.endsWith('_year')
+    expiresAt.setMonth(expiresAt.getMonth() + (isYear ? 12 : 1))
+    // Фермерський профіль: Бізнес Про або Бізнес (застарілі pro_*/premium_* теж дають Бізнес — 'pro' тепер план агронома)
+    const basePlan = (plan === 'business_pro' || plan === 'business_pro_year') ? 'business_pro' : 'business'
     const { error } = await supabase.from('subscriptions').upsert({
       user_id:       userId,
+      profile:       'farmer',
       plan:          basePlan,
       expires_at:    expiresAt.toISOString(),
       renewal_count: renewalCount + 1,
       first_paid_at: firstPaidAt,
-    }, { onConflict: 'user_id' })
+    }, { onConflict: 'user_id,profile' })
     if (error) console.error('[WFP callback] Supabase error:', error)
   }
 

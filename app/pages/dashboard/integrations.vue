@@ -132,8 +132,8 @@ const sent = ref(false)
 onMounted(async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) { loading.value = false; return }
-  const { data: sub } = await supabase.from('subscriptions').select('plan').eq('user_id', user.id).maybeSingle()
-  isCustom.value = sub?.plan === 'business_pro'
+  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).eq('profile', 'farmer').maybeSingle()
+  isCustom.value = getActivePlan(sub) === 'business_pro'
   loading.value = false
 })
 

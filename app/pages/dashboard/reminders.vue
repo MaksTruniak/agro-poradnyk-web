@@ -354,6 +354,8 @@ const farmerRegion = ref('')
 const cropAreas = ref<Record<string, number>>({})
 const hasPaidPlan = ref(false)
 
+const authHeader = useAuthHeader()
+
 const explainTip = async (tip: any) => {
   if (tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
   tipLoading.value[tip.id] = true
@@ -361,6 +363,7 @@ const explainTip = async (tip: any) => {
     const area_ha = cropAreas.value[tip.crop_type.toLowerCase()] || null
     const res = await $fetch<{ explanation: string }>('/api/calendar-explain', {
       method: 'POST',
+      headers: await authHeader(),
       body: { tip, region: farmerRegion.value, area_ha },
     })
     tipExplanations.value[tip.id] = res.explanation
@@ -382,10 +385,8 @@ const loadCalendarTips = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const subRes = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).maybeSingle()
-  const plan = subRes.data?.plan ?? 'basic'
-  const active = !subRes.data?.expires_at || new Date(subRes.data.expires_at) > new Date()
-  hasPaidPlan.value = active && (plan === 'business' || plan === 'business_pro')
+  const subRes = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).eq('profile', 'farmer').maybeSingle()
+  hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
   const currentMonth = new Date().getMonth() + 1
 
   const { data: farms } = await supabase.from('farms')

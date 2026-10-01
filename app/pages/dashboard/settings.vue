@@ -212,7 +212,7 @@
       <!-- Профілі акаунту -->
       <div class="card">
         <h2 class="dash-card-title bitter mb-1">Профілі акаунту</h2>
-        <p class="text-sm text-agro-light mb-4">Підключіть додатковий профіль, щоб використовувати один акаунт і як фермер, і як агроном</p>
+        <p class="text-sm text-agro-light mb-4">Профілі вашого акаунта. У кожного профілю своя підписка.</p>
         <div class="flex flex-wrap gap-2 mb-4">
           <div
             v-for="r in userRoles"
@@ -224,19 +224,7 @@
             {{ ROLE_SHORT_MAP[r] || r }}
           </div>
         </div>
-        <div v-if="availableToAdd.length" class="flex flex-wrap gap-2">
-          <button
-            v-for="r in availableToAdd"
-            :key="r"
-            @click="addProfile(r)"
-            :disabled="addingProfile"
-            class="flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 border-agro-border text-sm font-semibold text-agro-dark hover:border-agro transition-colors"
-          >
-            + Додати профіль {{ ROLE_SHORT_MAP[r] }}
-          </button>
-        </div>
-        <p v-else class="text-xs text-agro-light">Усі доступні профілі вже підключені</p>
-        <p v-if="profileAdded" class="text-agro text-sm mt-2">✅ Профіль додано! При наступному вході оберіть потрібний.</p>
+        <p class="text-xs text-agro-light">Щоб додати профіль (наприклад, Агроном), зареєструйтесь з цим самим email і оберіть потрібну роль — профілі з'єднаються, і ви зможете перемикатися між ними.</p>
       </div>
 
       <!-- Верифікація заготівельника -->
@@ -397,23 +385,8 @@ if (profile) {
 
 const role = computed(() => profile?.role || '')
 const ROLE_SHORT_MAP: Record<string, string> = { farmer: 'Фермер', agronomist: 'Агроном', seller: 'Продавець', buyer: 'Заготівельник' }
-const ALL_ADDABLE_ROLES = ['farmer', 'agronomist']
 const userRoles = ref<string[]>(profile?.roles?.length ? profile.roles : [profile?.role || 'farmer'])
 const isAgronomist = computed(() => role.value === 'agronomist' || userRoles.value.includes('agronomist'))
-const availableToAdd = computed(() => ALL_ADDABLE_ROLES.filter(r => !userRoles.value.includes(r)))
-const addingProfile = ref(false)
-const profileAdded = ref(false)
-
-const addProfile = async (newRole: string) => {
-  addingProfile.value = true
-  const merged = [...new Set([...userRoles.value, newRole])]
-  const { error } = await supabase.from('users').update({ roles: merged }).eq('id', uid)
-  addingProfile.value = false
-  if (error) { showError('Не вдалося зберегти. Спробуйте ще раз.'); return }
-  userRoles.value = merged
-  profileAdded.value = true
-  setTimeout(() => { profileAdded.value = false }, 3000)
-}
 const isSeller = computed(() => role.value === 'seller')
 const companyLabel = computed(() => {
   if (role.value === 'farmer') return 'Назва фермерського господарства'

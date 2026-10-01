@@ -397,6 +397,40 @@ const handleLogin = async () => {
   }
 }
 
+// Пробний період (6 місяців: фермер — Бізнес, агроном — PRO) видає база тригером grant_profile_trial,
+// коли в акаунті з'являється профіль. Тут лише текст повідомлення.
+const trialMessage = (r: string) =>
+  r === 'agronomist' ? 'Перші 6 місяців PRO безкоштовно 🌾' : r === 'farmer' ? 'Перші 6 місяців Бізнес безкоштовно 🌾' : ''
+
+// Реєстрація з email, який уже має акаунт: входимо введеним паролем і додаємо обраний профіль
+const addProfileToExistingAccount = async () => {
+  const { data: signIn, error: signInErr } = await supabase.auth.signInWithPassword({ email: email.value, password: password.value })
+  if (signInErr || !signIn.user) {
+    showError('Акаунт з таким email вже існує. Щоб додати профіль, введіть пароль від цього акаунта')
+    return
+  }
+  const uid = signIn.user.id
+  const { data: userData } = await supabase.from('users').select('name, role, roles').eq('id', uid).single()
+  const roles: string[] = userData?.roles?.length ? userData.roles : [userData?.role || 'farmer']
+  const label = ROLES.find(r => r.value === role.value)?.label || role.value
+  localStorage.setItem('agro_user_name', userData?.name || '')
+
+  if (roles.includes(role.value)) {
+    // Профіль уже є — просто входимо в нього
+    showSuccess(`У вас уже є профіль ${label} — ви увійшли`)
+  } else {
+    const merged = [...new Set([...roles, role.value])]
+    const { error: updErr } = await supabase.from('users').update({ roles: merged }).eq('id', uid)
+    if (updErr) { showError('Не вдалося додати профіль. Спробуйте ще раз.'); return }
+    const trial = trialMessage(role.value)
+    showSuccess(`Профіль ${label} додано!${trial ? ' ' + trial : ''}`)
+  }
+  localStorage.setItem('agro_active_profile', role.value)
+  localStorage.setItem('agro_user_role', role.value)
+  localStorage.removeItem('agro_pending_roles')
+  router.push('/dashboard')
+}
+
 const handleRegister = async () => {
   if (!isEmailValid.value) { showError('Введіть коректний email'); return }
   if (!isPhoneOk.value) { showError('Введіть коректний номер телефону'); return }
@@ -411,6 +445,11 @@ const handleRegister = async () => {
       password: password.value,
       options: { data: { name: fullName, role: role.value } },
     })
+    // Email уже зареєстрований: Supabase повертає помилку або (з підтвердженням email) користувача без identities
+    if (e?.message === 'User already registered' || (!e && data.user && data.user.identities?.length === 0)) {
+      await addProfileToExistingAccount()
+      return
+    }
     if (e) throw e
     if (data.user) {
       const upsertPromises: Promise<any>[] = [
@@ -426,24 +465,11 @@ const handleRegister = async () => {
           role: role.value,
         } as any),
       ]
-
-      // 6 місяців Бізнес безкоштовно для фермерів і агрономів
-      if (role.value === 'farmer' || role.value === 'agronomist') {
-        const trialExpires = new Date()
-        trialExpires.setMonth(trialExpires.getMonth() + 6)
-        upsertPromises.push(
-          supabase.from('subscriptions').upsert({
-            user_id: data.user.id,
-            plan: 'business',
-            expires_at: trialExpires.toISOString(),
-          }, { onConflict: 'user_id' })
-        )
-      }
-
       await Promise.all(upsertPromises)
 
-      const successMsg = (role.value === 'farmer' || role.value === 'agronomist')
-        ? 'Акаунт створено! Перші 6 місяців Бізнес безкоштовно 🌾'
+      const trialMsg = trialMessage(role.value)
+      const successMsg = trialMsg
+        ? `Акаунт створено! ${trialMsg}`
         : 'Акаунт створено! Ласкаво просимо до АгроПростір 🌾'
       showSuccess(successMsg)
       // Welcome email (fire-and-forget)

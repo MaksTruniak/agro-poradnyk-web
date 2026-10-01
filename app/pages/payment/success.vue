@@ -83,6 +83,7 @@ const check = async () => {
       .from('subscriptions')
       .select('plan, expires_at, renewal_count')
       .eq('user_id', session.user.id)
+      .eq('profile', plan.startsWith('agronomist') ? 'agronomist' : 'farmer')
       .maybeSingle()
 
     const basePlan = plan === 'business_pro' ? 'business_pro' : plan.startsWith('agronomist') ? 'pro' : 'business'
