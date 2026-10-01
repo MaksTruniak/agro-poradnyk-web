@@ -245,7 +245,7 @@
               ? 'bg-agro text-white rounded-br-sm'
               : 'bg-white text-agro-dark shadow-sm rounded-bl-sm border border-agro-border'"
           >
-            <img v-if="msg.image_url" :src="msg.image_url" class="w-full max-h-72 object-cover cursor-pointer" @click="lightboxUrl = msg.image_url" />
+            <img v-if="msg.image_url && chatImages.src(msg.image_url)" :src="chatImages.src(msg.image_url)" class="w-full max-h-72 object-cover cursor-pointer" @click="lightboxUrl = chatImages.src(msg.image_url)" />
             <div v-if="msg.content || !msg.image_url" class="px-4 py-3">
               <!-- Повідомлення від агронома: парсимо препарати -->
               <p v-if="msg.content && !isMyMessage(msg)" v-html="renderMessage(msg.content)"></p>
@@ -570,6 +570,10 @@ const isUnlocked = ref(false)
 const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const lightboxUrl = ref<string | null>(null)
+
+// Підписані посилання на картинки чату (сховище приватне)
+const chatImages = useChatImages()
+watch(() => messages.value.map((m: any) => m.image_url), (urls) => { chatImages.resolve(urls) }, { immediate: true })
 
 const onImagePick = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]

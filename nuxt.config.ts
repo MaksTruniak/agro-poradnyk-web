@@ -1,3 +1,23 @@
+// Content-Security-Policy (лише продакшн — у dev заважала б Vite HMR).
+// 'unsafe-inline' для скриптів потрібен вбудованим скриптам Nuxt і Clarity; nonce-CSP — окрема задача (nuxt-security).
+const supabaseOrigin = (() => {
+  try { return new URL(process.env.SUPABASE_URL || '').origin } catch { return 'https://*.supabase.co' }
+})()
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://www.clarity.ms https://*.clarity.ms",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace('https://', 'wss://')} https://api.novaposhta.ua https://api.open-meteo.com https://*.clarity.ms https://c.bing.com`,
+  "frame-src 'none'",
+  "frame-ancestors 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://secure.wayforpay.com",
+  'upgrade-insecure-requests',
+].join('; ')
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   ssr: true,
@@ -85,6 +105,7 @@ export default defineNuxtConfig({
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        ...(process.env.NODE_ENV === 'production' ? { 'Content-Security-Policy': CSP } : {}),
       },
     },
   },

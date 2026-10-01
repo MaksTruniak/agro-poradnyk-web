@@ -135,9 +135,15 @@ const load = async () => {
     const { data: seller } = await supabase.from('seller_profiles').select('id').eq('user_id', user.id).single()
     if (seller) {
       const { data } = await supabase
-        .from('orders').select('*, order_items(id, quantity, price, offer_id, seller_offers!offer_id(product_name)), users!user_id(name, phone)')
+        .from('orders').select('*, order_items(id, quantity, price, offer_id, seller_offers!offer_id(product_name))')
         .eq('seller_id', seller.id).order('created_at', { ascending: false })
-      orders.value = data || []
+      // Ім'я й телефон покупця — лише продавцю його замовлень (функція seller_order_contacts)
+      const ids = (data || []).map((o: any) => o.id)
+      const { data: contacts } = ids.length
+        ? await supabase.rpc('seller_order_contacts', { p_order_ids: ids })
+        : { data: [] as any[] }
+      const contactMap = Object.fromEntries((contacts || []).map((c: any) => [c.order_id, { name: c.name, phone: c.phone }]))
+      orders.value = (data || []).map((o: any) => ({ ...o, users: contactMap[o.id] || null }))
     }
   } else {
     const { data } = await supabase
