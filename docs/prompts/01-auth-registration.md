@@ -61,7 +61,7 @@ docs/prompts/01-auth-registration.md (розділ «ТЗ»). Прочитай �
 - `app/pages/auth.vue` — вхід + реєстрація (2 кроки), валідація, маска телефону, помилки, запис у БД.
 - `app/pages/role-select.vue` — вибір профілю, якщо у користувача кілька ролей.
 - `app/pages/reset-password.vue` — відновлення пароля кодом з листа (OTP).
-- `app/utils/password.ts` — `validatePassword`, спільний для реєстрації, відновлення та зміни пароля.
+- `shared/utils/password.ts` — `validatePassword`, спільний для реєстрації, відновлення та зміни пароля.
 - `app/utils/phone.ts` — `formatPhone` (маска) і `isPhoneValid`, спільні для реєстрації та налаштувань.
 - `app/middleware/auth.ts` — захист сторінок.
 - `app/stores/auth.ts` — завантаження профілю (`users.name, role`).

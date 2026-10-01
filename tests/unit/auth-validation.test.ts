@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { formatPhone, isPhoneValid } from '../../app/utils/phone'
-import { validatePassword } from '../../app/utils/password'
+import { validatePassword } from '../../shared/utils/password'
 
 // --- Логіка з auth.vue ---
 

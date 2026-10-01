@@ -504,6 +504,8 @@ const isAgronomist = import.meta.client
 const proLink = isAgronomist ? '/dashboard/promotion' : '/dashboard/subscription'
 const hasOlderHistory = ref(false)
 
+const monthlyTextCount  = ref(0)
+const monthlyPhotoCount = ref(0)
 const textLimit  = ref(0)
 const photoLimit = ref(0)
 const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM

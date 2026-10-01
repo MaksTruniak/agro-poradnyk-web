@@ -60,7 +60,7 @@
 
 - `app/pages/dashboard/settings.vue` — **весь екран** (розмітка, логіка, запити).
 - `app/composables/useNovaPost.ts` — запити до API Нової Пошти.
-- `app/utils/password.ts` — `validatePassword`, `app/utils/phone.ts` — `formatPhone`, `isPhoneValid` (у додатку вже є з модуля 01).
+- `shared/utils/password.ts` — `validatePassword`, `app/utils/phone.ts` — `formatPhone`, `isPhoneValid` (у додатку вже є з модуля 01).
 - `app/layouts/dashboard.vue` — нижня навігація (пункт «Більше» → Налаштування) і кольори дашборду.
 - `app/assets/css/main.css` — класи `.card`, `.input`, `.btn-primary`, `.btn-outline`, `.dash-head`, `.dash-icon-box`, `.dash-title`, `.dash-subtitle`.
 - `tailwind.config.ts` — палітра `agro.*`.
