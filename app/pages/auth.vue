@@ -412,15 +412,6 @@ const handleLogin = async () => {
   }
 }
 
-const validatePassword = (p: string) => {
-  if (p.length < 8) return 'Пароль має бути не менше 8 символів'
-  if (!/[a-z]/.test(p)) return 'Пароль має містити хоча б одну малу латинську літеру'
-  if (!/[A-Z]/.test(p)) return 'Пароль має містити хоча б одну велику латинську літеру'
-  if (!/[0-9]/.test(p)) return 'Пароль має містити хоча б одну цифру'
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,./`~]/.test(p)) return 'Пароль має містити хоча б один спеціальний символ'
-  return null
-}
-
 const handleRegister = async () => {
   if (!isEmailValid.value) { showError('Введіть коректний email'); return }
   if (!isPhoneValid.value) { showError('Введіть коректний номер телефону'); return }

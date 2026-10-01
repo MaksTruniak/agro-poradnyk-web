@@ -44,7 +44,7 @@
           <div class="mb-4">
             <label class="rp-label">Новий пароль</label>
             <div class="relative">
-              <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" class="rp-input pr-12" placeholder="Мінімум 6 символів" />
+              <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" class="rp-input pr-12" placeholder="Мінімум 8 символів" />
               <button type="button" @click="showNewPassword = !showNewPassword"
                 class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[rgb(122,138,114)] hover:text-[rgb(47,82,51)] transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -75,7 +75,7 @@
           <div class="mb-4">
             <label class="rp-label">Новий пароль</label>
             <div class="relative">
-              <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" class="rp-input pr-12" placeholder="Мінімум 6 символів" />
+              <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" class="rp-input pr-12" placeholder="Мінімум 8 символів" />
               <button type="button" @click="showNewPassword = !showNewPassword"
                 class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[rgb(122,138,114)] hover:text-[rgb(47,82,51)] transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -143,7 +143,8 @@ async function sendReset() {
 
 async function verifyAndUpdate() {
   if (!otpCode.value || !newPassword.value) return
-  if (newPassword.value.length < 6) { error.value = 'Пароль має бути мінімум 6 символів'; return }
+  const pwdError = validatePassword(newPassword.value)
+  if (pwdError) { error.value = pwdError; return }
   if (newPassword.value !== confirmPassword.value) { error.value = 'Паролі не співпадають'; return }
   loading.value = true
   error.value = ''
@@ -164,7 +165,8 @@ async function verifyAndUpdate() {
 
 async function updatePassword() {
   if (!newPassword.value) return
-  if (newPassword.value.length < 6) { error.value = 'Пароль має бути мінімум 6 символів'; return }
+  const pwdError = validatePassword(newPassword.value)
+  if (pwdError) { error.value = pwdError; return }
   if (newPassword.value !== confirmPassword.value) { error.value = 'Паролі не співпадають'; return }
   loading.value = true
   error.value = ''
