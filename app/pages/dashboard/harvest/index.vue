@@ -268,7 +268,7 @@ const loadWorkers = async () => {
   const ownerId = await getQueryUserId()
   const { data } = await supabase
     .from('harvest_workers')
-    .select('*')
+    .select('id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login')
     .eq('owner_id', ownerId)
     .order('first_name')
   workers.value = (data || []).map((w: any) => ({ ...w, _seasons: 0 }))

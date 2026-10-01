@@ -452,7 +452,7 @@ const load = async () => {
   const [seasonRes, swRes] = await Promise.all([
     supabase.from('harvest_seasons').select('*').eq('id', seasonId).single(),
     supabase.from('harvest_season_workers')
-      .select('custom_price_per_kg, is_active, harvest_workers(*)')
+      .select('custom_price_per_kg, is_active, harvest_workers(id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login)')
       .eq('season_id', seasonId)
       .order('created_at'),
   ])

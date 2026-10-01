@@ -258,7 +258,7 @@ const doLogin = async () => {
   const { data: { session } } = await supabase.auth.getSession()
   const { data, error } = await supabase
     .from('harvest_workers')
-    .select('*')
+    .select('id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login')
     .eq('auth_user_id', session!.user.id)
     .single()
 
@@ -373,7 +373,7 @@ onMounted(async () => {
 
   const { data } = await supabase
     .from('harvest_workers')
-    .select('*')
+    .select('id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login')
     .eq('auth_user_id', session.user.id)
     .single()
 

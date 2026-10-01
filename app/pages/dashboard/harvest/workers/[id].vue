@@ -91,7 +91,7 @@ const formatDate = (d: string) => new Date(d).toLocaleString('uk-UA', { day: 'nu
 const load = async () => {
   const { data: workerData } = await supabase
     .from('harvest_workers')
-    .select('*')
+    .select('id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login')
     .eq('id', workerId)
     .single()
   if (!workerData) { loading.value = false; return }
