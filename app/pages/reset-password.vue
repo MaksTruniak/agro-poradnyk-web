@@ -18,14 +18,13 @@
 
         <!-- Крок 1: Email -->
         <template v-if="!sent && !newPasswordMode">
-          <p class="text-sm text-[rgb(107,122,100)] mb-5 text-center">Введіть email — надішлемо код для скидання пароля</p>
+          <p class="rp-hint">Введіть email — надішлемо код для скидання пароля</p>
           <div class="mb-4">
-            <label class="block text-sm font-medium text-[rgb(27,46,27)] mb-1.5">Email</label>
-            <input v-model="email" type="email" class="w-full px-4 py-3 rounded-xl border border-[#d4dbc8] text-sm outline-none focus:border-[#2F5233] transition-colors" placeholder="your@email.com" @keyup.enter="sendReset" />
+            <label class="rp-label">Email</label>
+            <input v-model="email" type="email" class="rp-input" placeholder="your@email.com" @keyup.enter="sendReset" />
           </div>
           <p v-if="error" class="text-xs text-red-500 mb-3">{{ error }}</p>
-          <button @click="sendReset" :disabled="loading || !email"
-            class="w-full py-3 rounded-xl bg-[#2F5233] text-white font-semibold text-sm hover:bg-[#3a6640] transition-colors disabled:opacity-50">
+          <button @click="sendReset" :disabled="loading || !email" class="rp-btn w-full">
             {{ loading ? 'Надсилаємо...' : 'Надіслати код' }}
           </button>
           <div class="mt-5 text-center">
@@ -35,25 +34,34 @@
 
         <!-- Крок 2: Код + новий пароль -->
         <template v-else-if="sent && !newPasswordMode">
-          <p class="text-sm text-[rgb(107,122,100)] mb-5 text-center">Введіть код з листа і новий пароль</p>
+          <p class="rp-hint">Введіть код з листа і новий пароль</p>
           <div class="mb-4">
-            <label class="block text-sm font-medium text-[rgb(27,46,27)] mb-1.5">Код з листа</label>
+            <label class="rp-label">Код з листа</label>
             <input v-model="otpCode" type="text" inputmode="numeric" maxlength="8"
-              class="w-full px-4 py-3 rounded-xl border border-[#d4dbc8] text-sm outline-none focus:border-[#2F5233] transition-colors font-mono tracking-widest text-center text-lg"
+              class="rp-input text-center font-mono tracking-widest text-lg"
               placeholder="00000000" />
           </div>
           <div class="mb-4">
-            <label class="block text-sm font-medium text-[rgb(27,46,27)] mb-1.5">Новий пароль</label>
-            <input v-model="newPassword" type="password" class="w-full px-4 py-3 rounded-xl border border-[#d4dbc8] text-sm outline-none focus:border-[#2F5233] transition-colors" placeholder="Мінімум 6 символів" />
+            <label class="rp-label">Новий пароль</label>
+            <div class="relative">
+              <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" class="rp-input pr-12" placeholder="Мінімум 6 символів" />
+              <button type="button" @click="showNewPassword = !showNewPassword"
+                class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[rgb(122,138,114)] hover:text-[rgb(47,82,51)] transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+                  <path v-if="showNewPassword" d="M3 3l18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="mb-5">
-            <label class="block text-sm font-medium text-[rgb(27,46,27)] mb-1.5">Повторіть пароль</label>
-            <input v-model="confirmPassword" type="password" class="w-full px-4 py-3 rounded-xl border border-[#d4dbc8] text-sm outline-none focus:border-[#2F5233] transition-colors" placeholder="Повторіть пароль" @keyup.enter="verifyAndUpdate" />
+            <label class="rp-label">Повторіть пароль</label>
+            <input v-model="confirmPassword" type="password" class="rp-input" placeholder="Повторіть пароль" @keyup.enter="verifyAndUpdate" />
           </div>
           <p v-if="error" class="text-xs text-red-500 mb-3">{{ error }}</p>
           <p v-if="successMsg" class="text-xs text-green-600 font-semibold mb-3 text-center">{{ successMsg }}</p>
-          <button @click="verifyAndUpdate" :disabled="loading || !otpCode || !newPassword || !confirmPassword"
-            class="w-full py-3 rounded-xl bg-[#2F5233] text-white font-semibold text-sm hover:bg-[#3a6640] transition-colors disabled:opacity-50">
+          <button @click="verifyAndUpdate" :disabled="loading || !otpCode || !newPassword || !confirmPassword" class="rp-btn w-full">
             {{ loading ? 'Зберігаємо...' : 'Зберегти пароль' }}
           </button>
           <div class="mt-4 text-center">
@@ -63,19 +71,28 @@
 
         <!-- Форма нового пароля (після переходу з посилання) -->
         <template v-else-if="newPasswordMode">
-          <p class="text-sm text-[rgb(107,122,100)] mb-5 text-center">Введіть новий пароль для вашого акаунту</p>
+          <p class="rp-hint">Введіть новий пароль для вашого акаунту</p>
           <div class="mb-4">
-            <label class="block text-sm font-medium text-[rgb(27,46,27)] mb-1.5">Новий пароль</label>
-            <input v-model="newPassword" type="password" class="w-full px-4 py-3 rounded-xl border border-[#d4dbc8] text-sm outline-none focus:border-[#2F5233] transition-colors" placeholder="Мінімум 6 символів" />
+            <label class="rp-label">Новий пароль</label>
+            <div class="relative">
+              <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" class="rp-input pr-12" placeholder="Мінімум 6 символів" />
+              <button type="button" @click="showNewPassword = !showNewPassword"
+                class="absolute right-[14px] top-1/2 -translate-y-1/2 text-[rgb(122,138,114)] hover:text-[rgb(47,82,51)] transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+                  <path v-if="showNewPassword" d="M3 3l18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="mb-5">
-            <label class="block text-sm font-medium text-[rgb(27,46,27)] mb-1.5">Повторіть пароль</label>
-            <input v-model="confirmPassword" type="password" class="w-full px-4 py-3 rounded-xl border border-[#d4dbc8] text-sm outline-none focus:border-[#2F5233] transition-colors" placeholder="Повторіть пароль" @keyup.enter="updatePassword" />
+            <label class="rp-label">Повторіть пароль</label>
+            <input v-model="confirmPassword" type="password" class="rp-input" placeholder="Повторіть пароль" @keyup.enter="updatePassword" />
           </div>
           <p v-if="error" class="text-xs text-red-500 mb-3">{{ error }}</p>
           <p v-if="successMsg" class="text-xs text-green-600 font-semibold mb-3 text-center">{{ successMsg }}</p>
-          <button @click="updatePassword" :disabled="loading || !newPassword || !confirmPassword"
-            class="w-full py-3 rounded-xl bg-[#2F5233] text-white font-semibold text-sm hover:bg-[#3a6640] transition-colors disabled:opacity-50">
+          <button @click="updatePassword" :disabled="loading || !newPassword || !confirmPassword" class="rp-btn w-full">
             {{ loading ? 'Зберігаємо...' : 'Зберегти пароль' }}
           </button>
         </template>
@@ -102,6 +119,7 @@ const sent = ref(false)
 const error = ref('')
 const successMsg = ref('')
 const newPasswordMode = ref(false)
+const showNewPassword = ref(false)
 
 // Якщо є токен в URL — режим зміни пароля
 onMounted(() => {
@@ -157,3 +175,39 @@ async function updatePassword() {
   setTimeout(() => router.push('/dashboard'), 1500)
 }
 </script>
+
+<style scoped>
+.rp-hint { font-size: 14px; color: rgb(107,122,100); margin-bottom: 20px; text-align: center; }
+.rp-label { display: block; font-size: 14px; font-weight: 700; color: rgb(27,46,27); margin-bottom: 8px; }
+.rp-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgb(225,219,198);
+  font-size: 15px;
+  font-family: Manrope, sans-serif;
+  color: rgb(32,48,31);
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+  appearance: none;
+}
+.rp-input:focus { border-color: #2F5233; }
+.rp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgb(47,82,51);
+  color: rgb(250,246,236);
+  font-weight: 700;
+  font-size: 15.5px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.rp-btn:hover:not(:disabled) { background: rgb(61,107,66); }
+.rp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
