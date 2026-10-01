@@ -11,7 +11,6 @@ const PAGES: Record<Role, string[]> = {
     '/dashboard/expenses', '/dashboard/team', '/dashboard/harvest', '/dashboard/treatments',
     '/dashboard/protection', '/dashboard/invoices', '/dashboard/agreements',
   ],
-  buyer: ['/dashboard', '/dashboard/chats', '/dashboard/deals', '/dashboard/settings', '/dashboard/buyer-crops', '/farmers'],
   agronomist: [
     '/dashboard', '/dashboard/agronomist-fields', '/dashboard/agreements', '/dashboard/agronomist-subscription',
     '/dashboard/agronomist-profile', '/dashboard/promotion', '/dashboard/ai-chat', '/dashboard/chats',

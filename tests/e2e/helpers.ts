@@ -12,8 +12,9 @@ if (existsSync(envPath)) {
   }
 }
 
-export type Role = 'farmer' | 'buyer' | 'agronomist' | 'admin'
-export const ROLES: Role[] = ['farmer', 'buyer', 'agronomist', 'admin']
+// Тестові акаунти: фермер, агроном, адмін (заготівельника окремо не тестуємо)
+export type Role = 'farmer' | 'agronomist' | 'admin'
+export const ROLES: Role[] = ['farmer', 'agronomist', 'admin']
 
 export const account = (role: Role) => ({
   email: process.env[`E2E_${role.toUpperCase()}_EMAIL`] || '',

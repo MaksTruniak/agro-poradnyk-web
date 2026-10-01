@@ -74,12 +74,12 @@ test.describe('Фермер', () => {
   })
 
   test('не бачить чужих даних і функцій', async () => {
-    test.skip(!hasAccount('buyer'), 'немає E2E_BUYER_*')
+    test.skip(!hasAccount('agronomist'), 'немає E2E_AGRONOMIST_*')
     const { client } = await asUser('farmer')
-    const { userId: buyerId } = await asUser('buyer')
-    const { data } = await client.from('users').select('id, phone').eq('id', buyerId)
+    const { userId: otherId } = await asUser('agronomist')
+    const { data } = await client.from('users').select('id, phone').eq('id', otherId)
     expect(data ?? []).toEqual([])
-    const { data: pub } = await client.from('public_profiles').select('id, name').eq('id', buyerId)
+    const { data: pub } = await client.from('public_profiles').select('id, name').eq('id', otherId)
     expect(pub?.length).toBe(1)
     for (const fn of ['admin_search_users_with_sub', 'admin_user_stats']) {
       const { error } = await client.rpc(fn, fn === 'admin_search_users_with_sub' ? { q: '' } : {})
@@ -88,11 +88,11 @@ test.describe('Фермер', () => {
   })
 
   test('сховище: лише свій аватар-картинка', async () => {
-    test.skip(!hasAccount('buyer'), 'немає E2E_BUYER_*')
+    test.skip(!hasAccount('agronomist'), 'немає E2E_AGRONOMIST_*')
     const { client, userId } = await asUser('farmer')
-    const { userId: buyerId } = await asUser('buyer')
+    const { userId: otherId } = await asUser('agronomist')
     const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
-    const foreign = await client.storage.from('user-avatars').upload(`avatars/${buyerId}.png`, png, { contentType: 'image/png', upsert: true })
+    const foreign = await client.storage.from('user-avatars').upload(`avatars/${otherId}.png`, png, { contentType: 'image/png', upsert: true })
     expect(foreign.error, 'чужий аватар').not.toBeNull()
     const html = await client.storage.from('user-avatars').upload(`avatars/${userId}.html`, new TextEncoder().encode('<b>x</b>'), { contentType: 'text/html', upsert: true })
     expect(html.error, 'html у сховищі').not.toBeNull()
