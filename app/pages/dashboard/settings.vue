@@ -329,8 +329,11 @@ const onAvatarPick = async (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
   if (file.size > 2 * 1024 * 1024) { showError('Файл більше 2 МБ'); return }
+  // Розширення — з типу файлу (правила сховища приймають лише зображення: avatars/<uid>.<jpg|png|webp|gif|heic|heif>)
+  const AVATAR_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/heic': 'heic', 'image/heif': 'heif' }
+  const ext = AVATAR_EXT[file.type]
+  if (!ext) { showError('Можна завантажити лише зображення (JPG, PNG, WEBP)'); return }
   uploadingAvatar.value = true
-  const ext = file.name.split('.').pop()
   const path = `avatars/${uid}.${ext}`
   const { error } = await supabase.storage.from('user-avatars').upload(path, file, { upsert: true })
   if (error) {
