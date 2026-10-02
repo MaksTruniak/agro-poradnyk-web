@@ -99,7 +99,7 @@
               <span v-else-if="myReviews.has(deal.id)" class="shrink-0 inline-flex items-center gap-1.5 text-xs text-agro-light px-3 py-1.5 border border-transparent rounded-xl">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінено
               </span>
-              <NuxtLink :to="`/dashboard/chats/${deal.chat_id}`"
+              <NuxtLink v-if="deal.chat_id" :to="`/dashboard/chats/${deal.chat_id}`"
                 class="shrink-0 text-xs border border-agro-border text-agro-light rounded-xl px-3 py-1.5 hover:border-agro hover:text-agro transition-colors">
                 Чат →
               </NuxtLink>
@@ -657,7 +657,7 @@ onMounted(async () => {
   const { data: usersData } = await supabase.from('public_profiles').select('id, name').in('id', otherIds)
   const nameMap = Object.fromEntries((usersData || []).map((u: any) => [u.id, u.name]))
 
-  const chatIds = [...new Set(dealsData.map((d: any) => d.chat_id))]
+  const chatIds = [...new Set(dealsData.map((d: any) => d.chat_id).filter(Boolean))]
   const { data: msgsData } = await supabase
     .from('messages').select('chat_id, content').in('chat_id', chatIds).like('content', '[deal:%')
 

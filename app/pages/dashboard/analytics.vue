@@ -408,8 +408,8 @@ onMounted(async () => {
     const [farmsRes, remRes, dealsRes, manualRes] = await Promise.all([
       supabase.from('farms').select('id, name, region, hectares, farm_crops(crop_type, area_ha)').eq('user_id', uid).order('created_at'),
       supabase.from('reminders').select('id').eq('user_id', uid).gte('scheduled_date', new Date().toISOString()),
-      supabase.from('deals').select('crop_type, quantity_tons, confirmed_at').eq('farmer_id', uid).eq('status', 'confirmed'),
-      supabase.from('manual_sales').select('crop_type, quantity_tons, sold_at').eq('user_id', uid),
+      supabase.from('deals').select('crop_type, quantity_tons, confirmed_at').eq('farmer_id', uid).in('status', ['confirmed', 'completed']),
+      supabase.from('manual_sales').select('crop_type, quantity_tons, sold_at').eq('user_id', uid).neq('status', 'cancelled'),
     ])
     farms.value = farmsRes.data || []
     reminders.value = remRes.data || []

@@ -507,7 +507,8 @@ const save = async () => {
     const d = new Date(`${reminderPayload.reminderDate}T${String(reminderPayload.reminderHour).padStart(2,'0')}:${String(reminderPayload.reminderMinute).padStart(2,'0')}:00`)
     await supabase.from('reminders').insert({
       user_id: session.user.id,
-      title: reminderPayload.title,
+      created_by: session.user.id,
+      description: reminderPayload.title,
       type: reminderPayload.type,
       scheduled_date: d.toISOString(),
       from_agronomist: false,

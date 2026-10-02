@@ -415,13 +415,11 @@ async function saveIncome() {
   const price = parseFloat(income.price_per_ton)
   const total = Math.round(qty * price)
   const insertData: any = {
-    farmer_id: session?.user?.id,
+    user_id: session?.user?.id,
     crop_type: income.crop_type + (income.description ? ` (${income.description})` : ''),
     quantity_tons: qty,
     price_per_ton: price,
-    total_price: total,
     sold_at: income.date,
-    status: 'completed',
   }
   const { data, error } = await supabase.from('manual_sales').insert(insertData).select().single()
   if (!error && data) {
@@ -449,8 +447,8 @@ onMounted(async () => {
     supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
     supabase.from('farms').select('id, name, farm_crops(crop_type)').eq('user_id', uid).order('created_at'),
     supabase.from('expenses').select('*').eq('user_id', uid).order('expense_date', { ascending: false }),
-    supabase.from('manual_sales').select('id, crop_type, quantity_tons, price_per_ton, total_price, sold_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('sold_at', { ascending: false }),
-    supabase.from('deals').select('id, crop_type, quantity_tons, display_quantity, unit, price_per_ton, display_price, total_price, completed_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('completed_at', { ascending: false }),
+    supabase.from('manual_sales').select('id, crop_type, quantity_tons, price_per_ton, total_price, sold_at, created_at').eq('user_id', uid).neq('status', 'cancelled').order('sold_at', { ascending: false }),
+    supabase.from('deals').select('id, crop_type, quantity_tons, price_per_ton, total_price, completed_at, created_at').eq('farmer_id', uid).eq('status', 'completed').order('completed_at', { ascending: false }),
   ])
 
   hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
@@ -467,8 +465,8 @@ onMounted(async () => {
   const platformDeals = (dealsRes.data || []).map(d => ({
     id: d.id,
     crop_type: d.crop_type,
-    quantity_tons: d.unit === 'кг' ? (d.display_quantity || 0) / 1000 : (d.display_quantity || d.quantity_tons || 0),
-    price_per_ton: d.display_price || d.price_per_ton,
+    quantity_tons: d.quantity_tons || 0,
+    price_per_ton: d.price_per_ton,
     total_price: d.total_price,
     sold_at: d.completed_at || d.created_at,
     created_at: d.created_at,
