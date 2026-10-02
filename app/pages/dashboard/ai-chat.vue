@@ -1164,7 +1164,7 @@ const saveToScheme = async () => {
     const fc = aiFarmCrops.value.find(f => f.id === schemeModal.farm_crop_id)
     const { data: created } = await supabase
       .from('protection_programs')
-      .insert({ farm_crop_id: schemeModal.farm_crop_id, user_id: userId, name: `Схема для ${fc?.crop_type || 'культури'}` })
+      .insert({ farm_crop_id: schemeModal.farm_crop_id, name: `Схема для ${fc?.crop_type || 'культури'}` })
       .select('id').single()
     prog = created
   }

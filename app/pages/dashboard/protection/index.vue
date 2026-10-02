@@ -717,10 +717,11 @@ const load = async () => {
 
   if (farmCropId) {
     const { data: farmCropRow } = await supabase
-      .from('farm_crops').select('farm_id, farms(id, name, area_ha)').eq('id', farmCropId).maybeSingle()
+      .from('farm_crops').select('farm_id, area_ha, farms(id, name, hectares)').eq('id', farmCropId).maybeSingle()
     if (farmCropRow?.farms) {
       const f = farmCropRow.farms as any
-      farmInfo.value = { id: f.id, name: f.name, area_ha: f.area_ha }
+      // Площа обробки — площа культури; якщо не вказана — площа поля
+      farmInfo.value = { id: f.id, name: f.name, area_ha: farmCropRow.area_ha || f.hectares || null }
     }
 
     const { data: programRows, error: progErr } = await supabase

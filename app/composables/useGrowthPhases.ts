@@ -12,9 +12,13 @@ export function useGrowthPhases() {
 
   const load = async () => {
     if (loaded.value) return
+    // Системні фази (created_by порожній) + власні фази користувача; чужі не показуємо
+    const { data: { session } } = await supabase.auth.getSession()
+    const uid = session?.user?.id
     const { data } = await supabase
       .from('growth_phases')
       .select('*')
+      .or(uid ? `created_by.is.null,created_by.eq.${uid}` : 'created_by.is.null')
       .order('order_num', { ascending: true })
     allPhases.value = (data || []).map((p: any) => ({
       key: p.key,
