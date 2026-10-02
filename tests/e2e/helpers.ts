@@ -80,3 +80,14 @@ export function collectErrors(page: Page) {
 export async function expectNoErrors(errors: string[], where: string) {
   expect(errors, `Помилки на ${where}:\n${errors.join('\n')}`).toEqual([])
 }
+
+/** Збирає відповіді Supabase REST з помилкою (неіснуюча колонка, заборона RLS тощо) */
+export function collectApiErrors(page: Page) {
+  const errors: string[] = []
+  page.on('response', async r => {
+    if (r.url().includes('/rest/v1/') && r.status() >= 400) {
+      errors.push(`${r.status()} ${r.request().method()} ${r.url().split('/rest/v1/')[1]?.slice(0, 120)} — ${(await r.text().catch(() => '')).slice(0, 200)}`)
+    }
+  })
+  return errors
+}

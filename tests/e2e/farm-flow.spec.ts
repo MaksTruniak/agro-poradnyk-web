@@ -1,5 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
-import { asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
+import { test, expect } from '@playwright/test'
+import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 
 // Поля, культури, сівозміна і технологічна карта фермера.
 // Сторонній користувач — заготівельник (без співпраці з фермером).
@@ -7,16 +7,7 @@ import { asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient
 
 const TAG = `E2E ${Date.now()}`
 
-/** Збирає відповіді Supabase REST з помилкою (неіснуюча колонка, заборона RLS тощо) */
-function collectApiErrors(page: Page) {
-  const errors: string[] = []
-  page.on('response', async r => {
-    if (r.url().includes('/rest/v1/') && r.status() >= 400) {
-      errors.push(`${r.status()} ${r.request().method()} ${r.url().split('/rest/v1/')[1]?.slice(0, 120)} — ${(await r.text().catch(() => '')).slice(0, 200)}`)
-    }
-  })
-  return errors
-}
+
 
 test.describe('Поля, культури, техкарта', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест створює і видаляє записи)')

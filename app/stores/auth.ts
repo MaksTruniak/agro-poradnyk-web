@@ -10,7 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const loadProfile = async () => {
     if (!user.value) return
-    const { data } = await supabase.from('users').select('name, role').eq('id', user.value.id).single()
+    const { data } = await supabase.from('users').select('name, role').eq('id', user.value.sub).single()
     profile.value = data
   }
 

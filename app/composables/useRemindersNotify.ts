@@ -3,7 +3,7 @@ export const useRemindersNotify = () => {
   const user = useSupabaseUser()
 
   const checkAndNotify = async () => {
-    if (typeof window === 'undefined' || !user.value?.id) return
+    if (typeof window === 'undefined' || !user.value?.sub) return
 
     // Запитуємо дозвіл якщо ще не дано
     if (Notification.permission === 'default') {
@@ -19,7 +19,7 @@ export const useRemindersNotify = () => {
     const { data: due } = await supabase
       .from('reminders')
       .select('id, description, scheduled_date, notified_at')
-      .eq('user_id', user.value.id)
+      .eq('user_id', user.value.sub)
       .lte('scheduled_date', tomorrow.toISOString())
       .gte('scheduled_date', today.toISOString())
       .is('notified_at', null)

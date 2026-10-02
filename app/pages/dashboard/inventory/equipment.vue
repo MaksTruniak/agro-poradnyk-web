@@ -170,7 +170,7 @@ function closeModal() { showAdd.value = false; showEdit.value = false; editId.va
 
 async function load() {
   loading.value = true
-  const uid = user.value?.id
+  const uid = user.value?.sub
   if (!uid) { loading.value = false; return }
   const { data } = await supabase.from('equipment').select('*').eq('user_id', uid).order('name')
   items.value = data || []
@@ -180,7 +180,7 @@ async function load() {
 async function saveItem() {
   if (!form.value.name) return
   saving.value = true
-  const uid = user.value?.id
+  const uid = user.value?.sub
   const payload = { name: form.value.name, type: form.value.type, year: form.value.year || null, status: form.value.status, next_service_date: form.value.next_service_date || null, notes: form.value.notes || null }
   if (showEdit.value && editId.value) {
     await supabase.from('equipment').update(payload).eq('id', editId.value)

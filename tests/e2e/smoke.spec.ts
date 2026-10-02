@@ -1,5 +1,5 @@
 import { test } from '@playwright/test'
-import { collectErrors, expectNoErrors, hasAccount, login, type Role } from './helpers'
+import { collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, type Role } from './helpers'
 
 // Кожна роль входить через форму і відкриває свої сторінки.
 // Тест падає на JS-помилках (неіснуючі змінні тощо) і порушеннях CSP. Дані не змінює.
@@ -10,6 +10,8 @@ const PAGES: Record<Role, string[]> = {
     '/dashboard/settings', '/dashboard/subscription', '/dashboard/reminders', '/dashboard/analytics',
     '/dashboard/expenses', '/dashboard/team', '/dashboard/harvest', '/dashboard/treatments',
     '/dashboard/protection', '/dashboard/invoices', '/dashboard/agreements',
+    '/dashboard/inventory', '/dashboard/inventory/chemicals', '/dashboard/inventory/equipment',
+    '/dashboard/inventory/fuel', '/dashboard/inventory/products', '/dashboard/notifications',
   ],
   buyer: ['/dashboard', '/dashboard/chats', '/dashboard/deals', '/dashboard/settings', '/dashboard/buyer-crops', '/farmers'],
   agronomist: [
@@ -26,15 +28,20 @@ for (const role of Object.keys(PAGES) as Role[]) {
     test('відкриваються без помилок', async ({ page }) => {
       test.setTimeout(30_000 + PAGES[role].length * 15_000)
       await login(page, role)
+      // Обходимо всі сторінки і показуємо всі помилки разом
+      const all: string[] = []
       for (const path of PAGES[role]) {
         const errors = collectErrors(page)
+        const apiErrors = collectApiErrors(page)
         await page.goto(path)
         await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
         await page.waitForTimeout(800)
-        await expectNoErrors(errors, `${role} ${path}`)
+        all.push(...[...errors, ...apiErrors].map(e => `${path}: ${e}`))
         page.removeAllListeners('pageerror')
         page.removeAllListeners('console')
+        page.removeAllListeners('response')
       }
+      await expectNoErrors(all, role)
     })
   })
 }

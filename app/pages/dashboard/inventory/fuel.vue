@@ -184,7 +184,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { day:
 
 async function load() {
   loading.value = true
-  const uid = user.value?.id
+  const uid = user.value?.sub
   if (!uid) { loading.value = false; return }
   const { data: fuels } = await supabase.from('fuel_inventory').select('*').eq('user_id', uid).order('fuel_type')
   const list = fuels || []
@@ -201,7 +201,7 @@ async function load() {
 async function addItem() {
   if (!form.value.fuel_type || !form.value.quantity) return
   saving.value = true
-  const uid = user.value?.id
+  const uid = user.value?.sub
   const { data } = await supabase.from('fuel_inventory').insert({ user_id: uid, fuel_type: form.value.fuel_type, quantity: form.value.quantity, unit: form.value.unit, price_per_unit: form.value.price_per_unit || null, min_quantity: form.value.min_quantity || null }).select().single()
   if (data) await supabase.from('fuel_log').insert({ fuel_id: data.id, user_id: uid, type: 'in', quantity: form.value.quantity })
   await load(); saving.value = false; showAdd.value = false
@@ -216,7 +216,7 @@ async function saveLog() {
   const delta = logForm.value.type === 'in' ? logForm.value.quantity : -logForm.value.quantity
   const newQty = Math.max(0, selectedItem.value.quantity + delta)
   await Promise.all([
-    supabase.from('fuel_log').insert({ fuel_id: selectedItem.value.id, user_id: user.value!.id, type: logForm.value.type, quantity: logForm.value.quantity, vehicle: logForm.value.vehicle || null, note: logForm.value.note || null }),
+    supabase.from('fuel_log').insert({ fuel_id: selectedItem.value.id, user_id: user.value!.sub, type: logForm.value.type, quantity: logForm.value.quantity, vehicle: logForm.value.vehicle || null, note: logForm.value.note || null }),
     supabase.from('fuel_inventory').update({ quantity: newQty }).eq('id', selectedItem.value.id),
   ])
   await load(); saving.value = false; showLog.value = false

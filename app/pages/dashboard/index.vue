@@ -415,7 +415,7 @@ onMounted(async () => {
 
     // Підтверджені угоди фермера
     const { data: dealsData } = await supabase
-      .from('deals').select('crop_type, quantity_tons, total_price').eq('farmer_id', uid.value).eq('status', 'confirmed')
+      .from('deals').select('crop_type, quantity_tons, total_price').eq('farmer_id', uid.value).in('status', ['confirmed', 'completed'])
     const cropMap: Record<string, { qty: number; total: number }> = {}
     for (const d of (dealsData || [])) {
       if (!cropMap[d.crop_type]) cropMap[d.crop_type] = { qty: 0, total: 0 }
@@ -430,7 +430,7 @@ onMounted(async () => {
   if (isAgronomist.value) {
     const [agreementsRes, chatsRes, remRes] = await Promise.all([
       supabase.from('agreements').select('id, farmer_id, status').eq('agronomist_id', uid.value).neq('status', 'cancelled'),
-      supabase.from('chats').select('id, farmer_id').eq('agronomist_id', uid.value).eq('type', 'human').order('updated_at', { ascending: false }).limit(3),
+      supabase.from('chats').select('id, farmer_id').eq('agronomist_id', uid.value).eq('type', 'human').order('created_at', { ascending: false }).limit(3),
       supabase.from('reminders').select('id').eq('user_id', uid.value).gte('scheduled_date', new Date().toISOString()),
     ])
     const agrData = agreementsRes.data || []
@@ -483,7 +483,8 @@ onMounted(async () => {
 
   if (isBuyer.value) {
     const chatsRes = await supabase.from('chats').select('id, farmer_id, title')
-      .eq('buyer_id', uid.value).eq('type', 'human').order('created_at', { ascending: false }).limit(5)
+      // заготівельник у чаті зберігається в agronomist_id (так створює чат сторінка фермера)
+      .eq('agronomist_id', uid.value).eq('type', 'human').order('created_at', { ascending: false }).limit(5)
     const chatsData = chatsRes.data || []
     const chatIds = chatsData.map((c: any) => c.id)
     const farmerIds = [...new Set(chatsData.map((c: any) => c.farmer_id).filter(Boolean))]
@@ -523,7 +524,7 @@ onMounted(async () => {
       .from('deals')
       .select('crop_type, quantity_tons, total_price')
       .eq('buyer_id', uid.value)
-      .eq('status', 'confirmed')
+      .in('status', ['confirmed', 'completed'])
     const cropMap: Record<string, { quantity: number; total: number }> = {}
     for (const d of (dealsData || [])) {
       if (!cropMap[d.crop_type]) cropMap[d.crop_type] = { quantity: 0, total: 0 }

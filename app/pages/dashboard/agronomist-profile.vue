@@ -347,7 +347,7 @@ const { data: userData } = await supabase.from('users').select('name').eq('id', 
 userName.value = userData?.name || ''
 
 // Профіль агронома
-const { data: profileData } = await supabase.from('agronomist_profiles').select('*').eq('user_id', uid).single()
+const { data: profileData } = await supabase.from('agronomist_profiles').select('*').eq('user_id', uid).maybeSingle()
 if (profileData) {
   profile.value = profileData
   form.is_available = profileData.is_available ?? true

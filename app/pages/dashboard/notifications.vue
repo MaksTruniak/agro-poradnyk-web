@@ -77,7 +77,7 @@ async function load() {
   const { data } = await supabase
     .from('farm_notifications')
     .select('*')
-    .eq('user_id', user.value!.id)
+    .eq('user_id', user.value!.sub)
     .order('created_at', { ascending: false })
     .limit(50)
   items.value = data || []
@@ -92,7 +92,7 @@ async function markRead(n: any) {
 async function markAllRead() {
   await supabase.from('farm_notifications')
     .update({ is_read: true })
-    .eq('user_id', user.value!.id)
+    .eq('user_id', user.value!.sub)
     .eq('is_read', false)
   items.value.forEach(n => n.is_read = true)
 }

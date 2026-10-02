@@ -1,5 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
-import { asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
+import { test, expect } from '@playwright/test'
+import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 
 // Журнал обробок, нагадування, економіка (витрати й ручні продажі) та аналітика фермера.
 // Запити повторюють сторінки сайту; сторонній користувач — заготівельник.
@@ -7,15 +7,6 @@ import { asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient
 
 const TAG = `E2E ${Date.now()}`
 
-function collectApiErrors(page: Page) {
-  const errors: string[] = []
-  page.on('response', async r => {
-    if (r.url().includes('/rest/v1/') && r.status() >= 400) {
-      errors.push(`${r.status()} ${r.request().method()} ${r.url().split('/rest/v1/')[1]?.slice(0, 120)} — ${(await r.text().catch(() => '')).slice(0, 200)}`)
-    }
-  })
-  return errors
-}
 
 test.describe('Обробки, нагадування, економіка', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест створює і видаляє записи)')

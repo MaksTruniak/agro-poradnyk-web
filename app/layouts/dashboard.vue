@@ -359,7 +359,7 @@ const autoBoost = async (uid: string) => {
     if (!isAgronomistPro(getActivePlan(sub))) return
 
     const { data: profile } = await supabase
-      .from('agronomist_profiles').select('boosted_at').eq('user_id', uid).single()
+      .from('agronomist_profiles').select('boosted_at').eq('user_id', uid).maybeSingle()
     const lastBoost = profile?.boosted_at ? new Date(profile.boosted_at) : null
     const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
     if (lastBoost && lastBoost >= fiveDaysAgo) return

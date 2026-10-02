@@ -262,7 +262,7 @@ async function saveLog() {
   const delta = logForm.value.type === 'in' ? logForm.value.quantity : -logForm.value.quantity
   const newQty = Math.max(0, selectedItem.value.quantity + delta)
   await Promise.all([
-    supabase.from('farm_inventory_log').insert({ inventory_id: selectedItem.value.id, user_id: user.value!.id, type: logForm.value.type, quantity: logForm.value.quantity, field_id: logForm.value.field_id || null, note: logForm.value.note || null }),
+    supabase.from('farm_inventory_log').insert({ inventory_id: selectedItem.value.id, user_id: user.value!.sub, type: logForm.value.type, quantity: logForm.value.quantity, field_id: logForm.value.field_id || null, note: logForm.value.note || null }),
     supabase.from('farm_inventory').update({ quantity: newQty }).eq('id', selectedItem.value.id),
   ])
   await load(); saving.value = false; showLog.value = false
