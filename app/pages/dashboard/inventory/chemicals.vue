@@ -39,7 +39,7 @@
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Склад порожній</p>
       <p class="text-agro-light mb-6">Додайте препарати і добрива які є у вас в наявності</p>
-      <button @click="showAdd = true" class="dash-btn-primary">
+      <button v-if="!isViewer" @click="showAdd = true" class="dash-btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати препарат
       </button>
@@ -63,7 +63,7 @@
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div v-if="!isViewer" class="flex gap-2">
           <button @click="openLog(item, 'in')" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-agro-border text-sm font-medium text-agro hover:bg-agro-hover transition-colors">
             <Plus :size="14" /> Надійшло
           </button>
@@ -80,7 +80,7 @@
         </p>
       </div>
 
-      <button @click="showAdd = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-32">
+      <button v-if="!isViewer" @click="showAdd = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-32">
         <span class="mb-2 group-hover:scale-110 transition-transform">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(122,138,114)" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </span>
@@ -175,6 +175,7 @@
             <input v-model="logForm.note" class="input" placeholder="Необов'язково..." />
           </div>
         </div>
+        <p v-if="logError" class="text-sm text-red-500 mt-3">{{ logError }}</p>
         <div class="flex gap-3 mt-6">
           <button @click="showLog = false" class="flex-1 btn-outline">Скасувати</button>
           <button @click="saveLog" :disabled="saving || !logForm.quantity" class="flex-1 btn-primary inline-flex items-center justify-center gap-1.5">
@@ -206,6 +207,7 @@ const showLog = ref(false)
 const selectedItem = ref<any>(null)
 const form = ref({ name: '', quantity: 0, unit: 'л', farm_id: '', min_quantity: null as number | null })
 const logForm = ref({ type: 'in', quantity: 0, field_id: '', note: '' })
+const logError = ref('')
 const productSuggestions = ref<any[]>([])
 let searchTimer: any = null
 
@@ -249,23 +251,26 @@ async function addItem() {
   saving.value = true
   const uid = await getQueryUserId()
   if (!uid) { saving.value = false; return }
-  const { data } = await supabase.from('farm_inventory').insert({ user_id: uid, name: form.value.name, quantity: form.value.quantity, unit: form.value.unit, farm_id: form.value.farm_id || null, min_quantity: form.value.min_quantity || null }).select().single()
-  if (data) await supabase.from('farm_inventory_log').insert({ inventory_id: data.id, user_id: uid, type: 'in', quantity: form.value.quantity })
+  // Запис створюється з 0, початковий залишок — рухом «надійшло» (залишок рахує база за журналом)
+  const { data } = await supabase.from('farm_inventory').insert({ user_id: uid, name: form.value.name, quantity: 0, unit: form.value.unit, farm_id: form.value.farm_id || null, min_quantity: form.value.min_quantity || null }).select().single()
+  if (data) await supabase.from('farm_inventory_log').insert({ inventory_id: data.id, user_id: user.value!.sub, type: 'in', quantity: form.value.quantity })
   await load(); saving.value = false; showAdd.value = false; resetForm()
 }
 
-function openLog(item: any, type: 'in' | 'out') { selectedItem.value = item; logForm.value = { type, quantity: 0, field_id: '', note: '' }; showLog.value = true }
+function openLog(item: any, type: 'in' | 'out') { selectedItem.value = item; logForm.value = { type, quantity: 0, field_id: '', note: '' }; logError.value = ''; showLog.value = true }
 
 async function saveLog() {
   if (!logForm.value.quantity || !selectedItem.value) return
+  if (logForm.value.type === 'out' && logForm.value.quantity > Number(selectedItem.value.quantity)) {
+    logError.value = `На складі лише ${selectedItem.value.quantity} ${selectedItem.value.unit}`
+    return
+  }
   saving.value = true
-  const delta = logForm.value.type === 'in' ? logForm.value.quantity : -logForm.value.quantity
-  const newQty = Math.max(0, selectedItem.value.quantity + delta)
-  await Promise.all([
-    supabase.from('farm_inventory_log').insert({ inventory_id: selectedItem.value.id, user_id: user.value!.sub, type: logForm.value.type, quantity: logForm.value.quantity, field_id: logForm.value.field_id || null, note: logForm.value.note || null }),
-    supabase.from('farm_inventory').update({ quantity: newQty }).eq('id', selectedItem.value.id),
-  ])
-  await load(); saving.value = false; showLog.value = false
+  // Залишок змінює база за записом у журналі (тригер inventory_log_apply)
+  const { error } = await supabase.from('farm_inventory_log').insert({ inventory_id: selectedItem.value.id, user_id: user.value!.sub, type: logForm.value.type, quantity: logForm.value.quantity, field_id: logForm.value.field_id || null, note: logForm.value.note || null })
+  saving.value = false
+  if (error) { logError.value = 'Не вдалося зберегти. Спробуйте ще раз.'; return }
+  await load(); showLog.value = false
 }
 
 async function deleteItem(item: any) {

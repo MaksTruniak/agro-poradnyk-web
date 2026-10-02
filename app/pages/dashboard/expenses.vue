@@ -10,7 +10,7 @@
         <h1 class="dash-title bitter">Витрати та прибуток</h1>
         <p class="dash-subtitle">Фінансовий облік господарства</p>
       </div>
-      <button v-if="hasPaidPlan" @click="openAddModal" class="btn-primary inline-flex items-center gap-1.5 shrink-0">
+      <button v-if="hasPaidPlan && !isViewer" @click="openAddModal" class="btn-primary inline-flex items-center gap-1.5 shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати
       </button>
@@ -116,7 +116,7 @@
               </p>
             </div>
             <p class="font-bold text-agro-dark shrink-0">{{ exp.amount_uah.toLocaleString('uk-UA') }} грн</p>
-            <button @click="deleteExpense(exp.id)"
+            <button v-if="!isViewer" @click="deleteExpense(exp.id)"
               class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-agro-light hover:text-red-500 transition-all">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -258,6 +258,7 @@ useHead({ title: 'Витрати та прибуток' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
 const supabase = useSupabaseClient()
+const { getQueryUserId, isViewer } = useTeamContext()
 const loading = ref(true)
 
 const CATEGORIES: Record<string, { label: string; icon: string; svg: string; color: string; bg: string }> = {
@@ -386,12 +387,12 @@ async function saveExpense() {
   if (!modal.amount || !modal.category || modal.saving) return
   modal.saving = true
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const ownerId = await getQueryUserId()
 
   const farmName = farms.value.find(f => f.id === modal.farm_id)?.name
 
   const { data, error } = await supabase.from('expenses').insert({
-    user_id: session?.user?.id,
+    user_id: ownerId,
     farm_id: modal.farm_id || null,
     crop_type: modal.crop_type || null,
     category: modal.category,
@@ -410,12 +411,11 @@ async function saveExpense() {
 async function saveIncome() {
   if (!income.crop_type || !income.quantity_tons || !income.price_per_ton || modal.saving) return
   modal.saving = true
-  const { data: { session } } = await supabase.auth.getSession()
+  const ownerId = await getQueryUserId()
   const qty = parseFloat(income.quantity_tons)
   const price = parseFloat(income.price_per_ton)
-  const total = Math.round(qty * price)
   const insertData: any = {
-    user_id: session?.user?.id,
+    user_id: ownerId,
     crop_type: income.crop_type + (income.description ? ` (${income.description})` : ''),
     quantity_tons: qty,
     price_per_ton: price,
@@ -439,8 +439,8 @@ const formatDate = (d: string) =>
 
 // Завантаження
 onMounted(async () => {
-  const { data: { session } } = await supabase.auth.getSession()
-  const uid = session?.user?.id
+  // Дані господарства: власні або власника команди (і його тариф)
+  const uid = await getQueryUserId()
   if (!uid) { loading.value = false; return }
 
   const [subRes, farmsRes, expRes, manualSalesRes, dealsRes] = await Promise.all([

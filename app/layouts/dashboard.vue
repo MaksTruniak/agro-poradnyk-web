@@ -241,7 +241,11 @@ const profileReady = ref(false)
 // Режим члена команди
 const teamOwner = ref<{ ownerId: string; ownerName: string; roleLabel: string; position?: string } | null>(null)
 
+const { resetTeamMembership, clearTeamCache } = useTeamContext()
+
 const exitTeamMode = () => {
+  sessionStorage.setItem('agro_team_exit', '1')
+  resetTeamMembership()
   localStorage.removeItem('agro_team_owner_id')
   localStorage.removeItem('agro_team_owner_name')
   localStorage.removeItem('agro_team_role_label')
@@ -263,36 +267,46 @@ if (import.meta.client) {
 }
 
 onMounted(async () => {
+  // Щойно прийняли запрошення — знову працюємо в режимі команди
+  if (import.meta.client && useRoute().query.team_accepted) sessionStorage.removeItem('agro_team_exit')
   // Відновлюємо режим члена команди з localStorage або з БД
   if (import.meta.client) {
     const ownerId   = localStorage.getItem('agro_team_owner_id')
     const ownerName = localStorage.getItem('agro_team_owner_name')
     const roleLabel = localStorage.getItem('agro_team_role_label')
     const position  = localStorage.getItem('agro_team_position') || undefined
-    if (ownerId && ownerName) {
+    const exited = sessionStorage.getItem('agro_team_exit') === '1'
+    // Кеш — щоб меню не мигало; далі завжди звіряємо з БД (власник міг змінити роль або видалити з команди)
+    if (ownerId && ownerName && !exited) {
       teamOwner.value = { ownerId, ownerName, roleLabel: roleLabel || 'Переглядач', position }
-    } else {
-      // localStorage порожній — перевіряємо БД (нова сесія / інший браузер)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: rec } = await supabase
+    }
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: rec } = user && !exited
+      ? await supabase
           .from('team_members')
           .select('owner_id, role, position')
           .eq('member_id', user.id)
           .eq('status', 'active')
           .maybeSingle()
-        if (rec) {
-          const { data: ownerUser } = await supabase
-            .from('public_profiles').select('name').eq('id', rec.owner_id).maybeSingle()
-          const name = ownerUser?.name || 'Власник'
-          const label = rec.role === 'editor' ? 'Редактор' : 'Переглядач'
-          localStorage.setItem('agro_team_owner_id',   rec.owner_id)
-          localStorage.setItem('agro_team_owner_name', name)
-          localStorage.setItem('agro_team_role_label', label)
-          if (rec.position) localStorage.setItem('agro_team_position', rec.position)
-          teamOwner.value = { ownerId: rec.owner_id, ownerName: name, roleLabel: label, position: rec.position || undefined }
-        }
-      }
+      : { data: null }
+    if (rec) {
+      const { data: ownerUser } = await supabase
+        .from('public_profiles').select('name').eq('id', rec.owner_id).maybeSingle()
+      const name = ownerUser?.name || 'Власник'
+      const label = rec.role === 'editor' ? 'Редактор' : 'Переглядач'
+      localStorage.setItem('agro_team_owner_id',   rec.owner_id)
+      localStorage.setItem('agro_team_owner_name', name)
+      localStorage.setItem('agro_team_role_label', label)
+      if (rec.position) localStorage.setItem('agro_team_position', rec.position)
+      else localStorage.removeItem('agro_team_position')
+      teamOwner.value = { ownerId: rec.owner_id, ownerName: name, roleLabel: label, position: rec.position || undefined }
+    } else if (teamOwner.value) {
+      // Більше не в команді (або вийшов з режиму) — прибираємо застарілий кеш
+      localStorage.removeItem('agro_team_owner_id')
+      localStorage.removeItem('agro_team_owner_name')
+      localStorage.removeItem('agro_team_role_label')
+      localStorage.removeItem('agro_team_position')
+      teamOwner.value = null
     }
   }
 
@@ -660,6 +674,7 @@ const bottomNavItems = computed(() => {
 
 const logout = async () => {
   await supabase.auth.signOut()
+  clearTeamCache()
   localStorage.removeItem('agro_active_profile')
   localStorage.removeItem('agro_user_role')
   localStorage.removeItem('agro_user_name')

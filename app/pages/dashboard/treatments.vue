@@ -15,7 +15,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           CSV
         </button>
-        <button v-if="hasPaidPlan" @click="openAdd" class="btn-primary inline-flex items-center gap-1.5">
+        <button v-if="hasPaidPlan && !isViewer" @click="openAdd" class="btn-primary inline-flex items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Додати
         </button>
@@ -119,10 +119,10 @@
             <p v-if="item.notes" class="text-xs text-agro-light mt-1 italic">{{ item.notes }}</p>
           </div>
           <div class="flex gap-1 shrink-0">
-            <button @click="openEdit(item)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-hover text-agro transition-colors">
+            <button v-if="!isViewer" @click="openEdit(item)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-hover text-agro transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button @click="deleteItem(item)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition-colors">
+            <button v-if="!isViewer" @click="deleteItem(item)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-400 transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
             </button>
           </div>
@@ -278,6 +278,7 @@ definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Журнал обробок — АгроПростір' })
 
 const supabase = useSupabaseClient()
+const { getQueryUserId, isViewer } = useTeamContext()
 const { confirm: confirmDialog } = useConfirm()
 
 const loading = ref(true)
@@ -433,7 +434,8 @@ const load = async () => {
   if (!session) return
   loading.value = true
 
-  const uid = session.user.id
+  // Дані господарства: власні або власника команди (і його тариф)
+  const uid = await getQueryUserId() || session.user.id
   const [{ data: sub }, { data: farmsData }, { data: treatmentsData }] = await Promise.all([
     supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
     supabase.from('farms').select('*, farm_crops(*)').eq('user_id', uid).order('name'),
@@ -470,8 +472,9 @@ const save = async () => {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
   saving.value = true
+  const ownerId = await getQueryUserId() || session.user.id
   const payload = {
-    user_id: session.user.id,
+    user_id: ownerId,
     farm_id: modal.farm_id || null,
     farm_name: modal.farm_name || null,
     crop_type: modal.crop_type || null,
@@ -506,7 +509,7 @@ const save = async () => {
   if (shouldAddReminder && reminderPayload) {
     const d = new Date(`${reminderPayload.reminderDate}T${String(reminderPayload.reminderHour).padStart(2,'0')}:${String(reminderPayload.reminderMinute).padStart(2,'0')}:00`)
     await supabase.from('reminders').insert({
-      user_id: session.user.id,
+      user_id: ownerId,
       created_by: session.user.id,
       description: reminderPayload.title,
       type: reminderPayload.type,

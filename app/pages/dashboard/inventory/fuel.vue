@@ -8,10 +8,23 @@
         <h1 class="dash-title bitter">Пальне</h1>
         <p class="dash-subtitle">Облік дизелю, бензину та витрат</p>
       </div>
-      <button @click="showAdd = true" class="dash-btn-primary shrink-0">
+      <button v-if="!isViewer" @click="showAdd = true" class="dash-btn-primary shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати
       </button>
+    </div>
+
+    <!-- Сповіщення про нестачу -->
+    <div v-if="lowStock.length" class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+      <p class="font-bold text-amber-800 mb-2 flex items-center gap-1.5">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Закінчується запас
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <span v-for="item in lowStock" :key="item.id" class="text-xs bg-amber-100 text-amber-800 px-3 py-1.5 rounded-full font-medium">
+          {{ item.fuel_type }} — {{ item.quantity }} {{ item.unit }}
+        </span>
+      </div>
     </div>
 
     <div v-if="loading" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -26,7 +39,7 @@
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Немає записів</p>
       <p class="text-agro-light mb-6">Додайте типи пального які є у господарстві</p>
-      <button @click="showAdd = true" class="dash-btn-primary">
+      <button v-if="!isViewer" @click="showAdd = true" class="dash-btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати пальне
       </button>
@@ -47,7 +60,7 @@
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div v-if="!isViewer" class="flex gap-2">
           <button @click="openLog(item, 'in')" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-agro-border text-sm font-medium text-agro hover:bg-agro-hover transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M8 11l4 4 4-4"/></svg>
             Надійшло
@@ -68,7 +81,7 @@
         </p>
       </div>
 
-      <button @click="showAdd = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-32">
+      <button v-if="!isViewer" @click="showAdd = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-32">
         <span class="mb-2 group-hover:scale-110 transition-transform">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(122,138,114)" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </span>
@@ -152,6 +165,7 @@
             <input v-model="logForm.note" class="input" placeholder="Необов'язково..." />
           </div>
         </div>
+        <p v-if="logError" class="text-sm text-red-500 mt-3">{{ logError }}</p>
         <div class="flex gap-3 mt-6">
           <button @click="showLog = false" class="flex-1 btn-outline">Скасувати</button>
           <button @click="saveLog" :disabled="saving || !logForm.quantity" class="flex-1 btn-primary inline-flex items-center justify-center">
@@ -169,6 +183,8 @@ useHead({ title: 'Пальне — Склад' })
 
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const { confirm: confirmDialog } = useConfirm()
+const { isViewer, getQueryUserId } = useTeamContext()
 
 const items = ref<any[]>([])
 const loading = ref(true)
@@ -179,12 +195,16 @@ const selectedItem = ref<any>(null)
 
 const form = ref({ fuel_type: 'Дизель', quantity: 0, unit: 'л', price_per_unit: null as number | null, min_quantity: null as number | null })
 const logForm = ref({ type: 'in', quantity: 0, vehicle: '', note: '' })
+const logError = ref('')
+
+const lowStock = computed(() => items.value.filter(i => i.min_quantity != null && Number(i.quantity) <= Number(i.min_quantity)))
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })
 
 async function load() {
   loading.value = true
-  const uid = user.value?.sub
+  // Дані господарства: власні або власника команди
+  const uid = await getQueryUserId()
   if (!uid) { loading.value = false; return }
   const { data: fuels } = await supabase.from('fuel_inventory').select('*').eq('user_id', uid).order('fuel_type')
   const list = fuels || []
@@ -201,29 +221,33 @@ async function load() {
 async function addItem() {
   if (!form.value.fuel_type || !form.value.quantity) return
   saving.value = true
-  const uid = user.value?.sub
-  const { data } = await supabase.from('fuel_inventory').insert({ user_id: uid, fuel_type: form.value.fuel_type, quantity: form.value.quantity, unit: form.value.unit, price_per_unit: form.value.price_per_unit || null, min_quantity: form.value.min_quantity || null }).select().single()
-  if (data) await supabase.from('fuel_log').insert({ fuel_id: data.id, user_id: uid, type: 'in', quantity: form.value.quantity })
+  const uid = await getQueryUserId()
+  if (!uid) { saving.value = false; return }
+  // Запис створюється з 0, початковий залишок — рухом «надійшло» (залишок рахує база за журналом)
+  const { data } = await supabase.from('fuel_inventory').insert({ user_id: uid, fuel_type: form.value.fuel_type, quantity: 0, unit: form.value.unit, price_per_unit: form.value.price_per_unit || null, min_quantity: form.value.min_quantity || null }).select().single()
+  if (data) await supabase.from('fuel_log').insert({ fuel_id: data.id, user_id: user.value!.sub, type: 'in', quantity: form.value.quantity })
   await load(); saving.value = false; showAdd.value = false
   form.value = { fuel_type: 'Дизель', quantity: 0, unit: 'л', price_per_unit: null, min_quantity: null }
 }
 
-function openLog(item: any, type: 'in' | 'out') { selectedItem.value = item; logForm.value = { type, quantity: 0, vehicle: '', note: '' }; showLog.value = true }
+function openLog(item: any, type: 'in' | 'out') { selectedItem.value = item; logForm.value = { type, quantity: 0, vehicle: '', note: '' }; logError.value = ''; showLog.value = true }
 
 async function saveLog() {
   if (!logForm.value.quantity || !selectedItem.value) return
+  if (logForm.value.type === 'out' && logForm.value.quantity > Number(selectedItem.value.quantity)) {
+    logError.value = `На складі лише ${selectedItem.value.quantity} ${selectedItem.value.unit}`
+    return
+  }
   saving.value = true
-  const delta = logForm.value.type === 'in' ? logForm.value.quantity : -logForm.value.quantity
-  const newQty = Math.max(0, selectedItem.value.quantity + delta)
-  await Promise.all([
-    supabase.from('fuel_log').insert({ fuel_id: selectedItem.value.id, user_id: user.value!.sub, type: logForm.value.type, quantity: logForm.value.quantity, vehicle: logForm.value.vehicle || null, note: logForm.value.note || null }),
-    supabase.from('fuel_inventory').update({ quantity: newQty }).eq('id', selectedItem.value.id),
-  ])
-  await load(); saving.value = false; showLog.value = false
+  // Залишок змінює база за записом у журналі (тригер inventory_log_apply)
+  const { error } = await supabase.from('fuel_log').insert({ fuel_id: selectedItem.value.id, user_id: user.value!.sub, type: logForm.value.type, quantity: logForm.value.quantity, vehicle: logForm.value.vehicle || null, note: logForm.value.note || null })
+  saving.value = false
+  if (error) { logError.value = 'Не вдалося зберегти. Спробуйте ще раз.'; return }
+  await load(); showLog.value = false
 }
 
 async function deleteItem(item: any) {
-  if (!confirm(`"${item.fuel_type}" буде видалено.`)) return
+  if (!await confirmDialog(`"${item.fuel_type}" буде видалено.`, { title: 'Видалити запис?' })) return
   await supabase.from('fuel_inventory').delete().eq('id', item.id)
   items.value = items.value.filter(i => i.id !== item.id)
 }

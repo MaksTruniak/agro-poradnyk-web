@@ -123,7 +123,7 @@
         </div>
 
         <div class="flex gap-3 mt-5">
-          <button v-if="!editing" @click="startEdit" class="farm-edit-btn">
+          <button v-if="!editing && !isViewer" @click="startEdit" class="farm-edit-btn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
@@ -147,7 +147,7 @@
             </div>
             <h2 class="farm-section-title bitter">Культури</h2>
           </div>
-          <button @click="isPro || crops.length === 0 ? showAddCrop = true : showPaywall = true" class="farm-add-btn">
+          <button v-if="!isViewer" @click="isPro || crops.length === 0 ? showAddCrop = true : showPaywall = true" class="farm-add-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Додати
           </button>
@@ -190,7 +190,7 @@
               class="btn-outline text-sm py-1.5 px-3 flex items-center gap-1.5"
               :class="{ 'opacity-40 pointer-events-none': farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) }"
             ><ShieldCheck :size="14" /> Тех. карта</NuxtLink>
-            <button @click="toggleCatalog(crop)"
+            <button v-if="!isViewer" @click="toggleCatalog(crop)"
               :title="crop.show_in_catalog !== false ? 'Сховати з каталогу фермерів' : 'Показати у каталозі фермерів'"
               class="text-sm py-1.5 px-3 inline-flex items-center gap-1.5 rounded-[10px] border-2 font-bold transition-colors shrink-0"
               :class="crop.show_in_catalog !== false
@@ -199,10 +199,10 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" v-html="crop.show_in_catalog !== false ? '<path d=\'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\'/><circle cx=\'12\' cy=\'12\' r=\'3\'/>' : '<path d=\'M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22\'/>'"/>
               {{ crop.show_in_catalog !== false ? 'Каталог' : 'Приховано' }}
             </button>
-            <button @click="openEditCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-hover transition-colors text-agro" title="Редагувати культуру">
+            <button v-if="!isViewer" @click="openEditCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-hover transition-colors text-agro" title="Редагувати культуру">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button @click="deleteCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400">
+            <button v-if="!isViewer" @click="deleteCrop(crop)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400">
               <Trash2 :size="16" />
             </button>
           </div>
@@ -216,7 +216,7 @@
             <h2 class="font-bold text-agro-dark text-lg flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10"/></svg> Сівозміна та врожайність</h2>
             <p class="text-agro-light text-sm mt-0.5">Облік культур і врожаю по роках</p>
           </div>
-          <button @click="showAddRotation = true" class="btn-primary text-sm py-2">➕ Додати рік</button>
+          <button v-if="!isViewer" @click="showAddRotation = true" class="btn-primary text-sm py-2">➕ Додати рік</button>
         </div>
 
         <div v-if="rotation.length === 0" class="text-center py-8 text-agro-light text-sm">
@@ -256,8 +256,8 @@
                 </td>
                 <td class="py-3 pl-2">
                   <div class="flex gap-1 justify-end">
-                    <button @click="editRotationRow(r)" class="w-7 h-7 rounded-lg hover:bg-agro-hover flex items-center justify-center text-agro-light hover:text-agro transition-colors">✏️</button>
-                    <button @click="deleteRotation(r.id)" class="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-red-300 hover:text-red-500 transition-colors">🗑</button>
+                    <button v-if="!isViewer" @click="editRotationRow(r)" class="w-7 h-7 rounded-lg hover:bg-agro-hover flex items-center justify-center text-agro-light hover:text-agro transition-colors">✏️</button>
+                    <button v-if="!isViewer" @click="deleteRotation(r.id)" class="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-red-300 hover:text-red-500 transition-colors">🗑</button>
                   </div>
                 </td>
               </tr>
@@ -736,8 +736,9 @@ const newShowInCatalog = ref(true)
 const varietySuggestions = ref<string[]>([])
 const showVarietySuggestions = ref(false)
 
-const { data: { session } } = await supabase.auth.getSession()
-const uid = session?.user?.id
+// Дані господарства: власні або власника команди (його тариф і агрономи)
+const { getQueryUserId, isViewer } = useTeamContext()
+const uid = await getQueryUserId()
 
 const { data: subData } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
 const isPro = isPaidFarmerPlan(getActivePlan(subData))

@@ -39,7 +39,7 @@
             {{ crop.stock_quantity }} {{ crop.stock_unit || 'т' }}
           </span>
           <span v-else class="text-xs text-agro-light">не вказано</span>
-          <button @click="startEdit(crop)"
+          <button v-if="!isViewer" @click="startEdit(crop)"
             class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-agro-hover transition-colors text-agro">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
@@ -97,7 +97,8 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Продукція — Склад' })
 
 const supabase = useSupabaseClient()
-const { getQueryUserId } = useTeamContext()
+const { error: showError } = useToast()
+const { getQueryUserId, isViewer } = useTeamContext()
 
 const crops = ref<any[]>([])
 const loading = ref(true)
@@ -118,11 +119,13 @@ async function save() {
   if (!editingCrop.value) return
   saving.value = true
   const qty = editQty.value !== '' ? parseFloat(editQty.value) : null
-  await supabase.from('farm_crops').update({ stock_quantity: qty, stock_unit: editUnit.value }).eq('id', editingCrop.value.id)
-  editingCrop.value.stock_quantity = qty
-  editingCrop.value.stock_unit = editUnit.value
-  editingCrop.value = null
+  const { data } = await supabase.from('farm_crops').update({ stock_quantity: qty, stock_unit: editUnit.value })
+    .eq('id', editingCrop.value.id).select('stock_quantity, stock_unit')
   saving.value = false
+  if (!data?.length) { showError('Не вдалося зберегти залишок'); return }
+  editingCrop.value.stock_quantity = data[0].stock_quantity
+  editingCrop.value.stock_unit = data[0].stock_unit
+  editingCrop.value = null
 }
 
 async function load() {

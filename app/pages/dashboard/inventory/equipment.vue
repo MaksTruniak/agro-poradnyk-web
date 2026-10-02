@@ -8,7 +8,7 @@
         <h1 class="dash-title bitter">Техніка</h1>
         <p class="dash-subtitle">Трактори, комбайни та інша техніка</p>
       </div>
-      <button @click="showAdd = true" class="dash-btn-primary shrink-0">
+      <button v-if="!isViewer" @click="showAdd = true" class="dash-btn-primary shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати
       </button>
@@ -27,7 +27,7 @@
       </div>
       <p class="font-bold text-agro-dark text-lg mb-2">Техніки не додано</p>
       <p class="text-agro-light mb-6">Додайте трактори, комбайни та іншу техніку господарства</p>
-      <button @click="showAdd = true" class="dash-btn-primary">
+      <button v-if="!isViewer" @click="showAdd = true" class="dash-btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати техніку
       </button>
@@ -55,17 +55,17 @@
         <p v-if="item.notes" class="text-xs text-agro-light italic truncate">{{ item.notes }}</p>
 
         <div class="flex gap-2 mt-auto">
-          <button @click="openEdit(item)" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-agro-border text-sm font-medium text-agro hover:bg-agro-hover transition-colors">
+          <button v-if="!isViewer" @click="openEdit(item)" class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-agro-border text-sm font-medium text-agro hover:bg-agro-hover transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Редагувати
           </button>
-          <button @click="deleteItem(item)" class="w-9 h-9 flex items-center justify-center rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-colors">
+          <button v-if="!isViewer" @click="deleteItem(item)" class="w-9 h-9 flex items-center justify-center rounded-xl border border-red-200 text-red-400 hover:bg-red-50 transition-colors">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
           </button>
         </div>
       </div>
 
-      <button @click="showAdd = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-36">
+      <button v-if="!isViewer" @click="showAdd = true" class="card border-2 border-dashed border-agro-border hover:border-agro flex flex-col items-center justify-center py-10 transition-colors group min-h-36">
         <span class="mb-2 group-hover:scale-110 transition-transform">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(122,138,114)" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </span>
@@ -138,7 +138,8 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Техніка — Склад' })
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
+const { confirm: confirmDialog } = useConfirm()
+const { isViewer, getQueryUserId } = useTeamContext()
 
 const items = ref<any[]>([])
 const loading = ref(true)
@@ -170,7 +171,8 @@ function closeModal() { showAdd.value = false; showEdit.value = false; editId.va
 
 async function load() {
   loading.value = true
-  const uid = user.value?.sub
+  // Дані господарства: власні або власника команди
+  const uid = await getQueryUserId()
   if (!uid) { loading.value = false; return }
   const { data } = await supabase.from('equipment').select('*').eq('user_id', uid).order('name')
   items.value = data || []
@@ -180,7 +182,7 @@ async function load() {
 async function saveItem() {
   if (!form.value.name) return
   saving.value = true
-  const uid = user.value?.sub
+  const uid = await getQueryUserId()
   const payload = { name: form.value.name, type: form.value.type, year: form.value.year || null, status: form.value.status, next_service_date: form.value.next_service_date || null, notes: form.value.notes || null }
   if (showEdit.value && editId.value) {
     await supabase.from('equipment').update(payload).eq('id', editId.value)
@@ -191,7 +193,7 @@ async function saveItem() {
 }
 
 async function deleteItem(item: any) {
-  if (!confirm(`"${item.name}" буде видалено.`)) return
+  if (!await confirmDialog(`"${item.name}" буде видалено.`, { title: 'Видалити запис?' })) return
   await supabase.from('equipment').delete().eq('id', item.id)
   items.value = items.value.filter(i => i.id !== item.id)
 }

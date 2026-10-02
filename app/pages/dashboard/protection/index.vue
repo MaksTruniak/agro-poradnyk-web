@@ -8,7 +8,7 @@
         <h1 class="dash-title bitter">Технічна карта</h1>
         <p class="dash-subtitle">{{ cropType || 'Програми захисту культур' }}</p>
       </div>
-      <button v-if="program" @click="generateCard" :disabled="generating || !hasPaidPlan" class="dash-btn-outline shrink-0 flex items-center gap-1.5" :title="!hasPaidPlan ? 'Доступно на тарифі Бізнес' : ''" :class="!hasPaidPlan ? 'opacity-40 cursor-not-allowed' : ''">
+      <button v-if="program && !isViewer" @click="generateCard" :disabled="generating || !hasPaidPlan" class="dash-btn-outline shrink-0 flex items-center gap-1.5" :title="!hasPaidPlan ? 'Доступно на тарифі Бізнес' : ''" :class="!hasPaidPlan ? 'opacity-40 cursor-not-allowed' : ''">
         <svg v-if="!generating" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
           <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
@@ -43,7 +43,7 @@
         <p class="font-bold text-agro-dark text-lg">Програму ще не створено</p>
         <p class="text-agro-light mt-1 mb-6">Створіть технологічну карту для цієї культури</p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button v-if="hasPaidPlan" @click="createAndGenerate" :disabled="saving || generating" class="btn-primary inline-flex items-center gap-1.5">
+          <button v-if="hasPaidPlan && !isViewer" @click="createAndGenerate" :disabled="saving || generating" class="btn-primary inline-flex items-center gap-1.5">
             <svg v-if="!generating" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
               <path d="M19 17l.9 2.1L22 20l-2.1.9L19 23l-.9-2.1L16 20l2.1-.9L19 17z"/>
@@ -54,7 +54,7 @@
           <NuxtLink v-else to="/dashboard/subscription" class="btn-primary inline-flex items-center gap-1.5">
             ✦ AI генерація — тариф Бізнес
           </NuxtLink>
-          <button @click="createProgram" :disabled="saving || generating" class="dash-btn-outline inline-block">
+          <button v-if="!isViewer" @click="createProgram" :disabled="saving || generating" class="dash-btn-outline inline-block">
             {{ saving ? '...' : 'Створити порожню' }}
           </button>
         </div>
@@ -76,7 +76,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="text-agro shrink-0" v-html="phaseIcon(phase.key)" />
               <span class="font-bold text-agro-dark">{{ phase.key }}</span>
               <span class="ml-auto text-xs text-agro-light mr-2">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
-              <button @click="removePhase(phase)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-agro-light hover:text-red-400">
+              <button v-if="!isViewer" @click="removePhase(phase)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-agro-light hover:text-red-400">
                 <X :size="13" />
               </button>
             </div>
@@ -93,7 +93,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-medium px-2 py-0.5 rounded-full border" :class="TYPE_BADGE[t.type] || 'bg-agro-bg border-agro-border text-agro-light'">{{ t.type }}</span>
-                    <button @click="cycleStatus(t)"
+                    <button @click="cycleStatus(t)" :disabled="isViewer"
                       :class="['text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors', t.status === 'done' ? 'bg-green-50 border-green-200 text-green-700' : t.status === 'missed' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-gray-50 border-gray-200 text-gray-500']">
                       {{ t.status === 'done' ? '✓ Виконано' : t.status === 'missed' ? '✕ Пропущено' : '· Заплановано' }}
                     </button>
@@ -138,14 +138,14 @@
                     </div>
                   </div>
                 </div>
-                <button @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
+                <button v-if="!isViewer" @click="deleteTreatment(t)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-red-400 shrink-0">
                   <Trash2 :size="14" />
                 </button>
               </div>
             </div>
 
             <!-- Форма додавання в цю фазу (collapsed) -->
-            <div class="border-t border-agro-border">
+            <div v-if="!isViewer" class="border-t border-agro-border">
               <button
                 @click="openFormPhase = openFormPhase === phase.key ? null : phase.key"
                 class="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-agro-light hover:text-agro hover:bg-agro-hover transition-colors">
@@ -197,7 +197,7 @@
         </div>
 
         <!-- Кнопка / панель вибору фази -->
-        <div class="relative" ref="phasePickerRef">
+        <div v-if="!isViewer" class="relative" ref="phasePickerRef">
           <button
             @click="showPhasePicker = !showPhasePicker"
             class="btn-outline w-full text-sm py-3"
@@ -401,6 +401,7 @@ const route = useRoute()
 const farmCropId = route.query.farmCropId as string
 const cropType = route.query.cropType as string
 const supabase = useSupabaseClient()
+const { getQueryUserId, isViewer } = useTeamContext()
 const user = useSupabaseUser()
 
 const CROP_GROUPS: Record<string, string> = {
@@ -707,9 +708,10 @@ const load = async () => {
   loading.value = true
   await growthPhases.load()
 
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) {
-    const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', session.user.id).eq('profile', 'farmer').maybeSingle()
+  // Тариф господарства: власний або власника команди
+  const ownerId = await getQueryUserId()
+  if (ownerId) {
+    const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', ownerId).eq('profile', 'farmer').maybeSingle()
     hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(sub))
   }
   const cropGroup = getCropGroup(cropType)
@@ -1004,7 +1006,7 @@ const saveReminder = async () => {
   const iso = new Date(y, m-1, d, Number(rHour.value), Number(rMinute.value), 0).toISOString()
   const t = reminderTreatment.value
   await supabase.from('reminders').insert({
-    user_id: session.user.id,
+    user_id: (await getQueryUserId()) || session.user.id,
     created_by: session.user.id,
     treatment_id: t.id,
     description: t.product_name,

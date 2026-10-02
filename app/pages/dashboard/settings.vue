@@ -528,8 +528,10 @@ const requestVerification = async () => {
   verificationSent.value = true
 }
 
+const { clearTeamCache } = useTeamContext()
 const logout = async () => {
   await supabase.auth.signOut()
+  clearTeamCache()
   router.push('/auth')
 }
 </script>

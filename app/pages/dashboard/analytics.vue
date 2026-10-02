@@ -293,11 +293,14 @@ const formatDate = (dt: string) => new Date(dt).toLocaleDateString('uk-UA', { da
 
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
+// Дані господарства: власні або власника команди (і його тариф)
+const { getQueryUserId } = useTeamContext()
+const ownerId = (await getQueryUserId()) || uid
 
 const { data: userData } = await supabase.from('users').select('role').eq('id', uid).single()
 const isSeller = userData?.role === 'seller'
 
-const { data: subData } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
+const { data: subData } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', ownerId).eq('profile', 'farmer').maybeSingle()
 const hasPaidPlan = isPaidFarmerPlan(getActivePlan(subData))
 
 // Фермер computed
@@ -406,10 +409,10 @@ onMounted(async () => {
     recentOrders.value = orders.slice(0, 5)
   } else {
     const [farmsRes, remRes, dealsRes, manualRes] = await Promise.all([
-      supabase.from('farms').select('id, name, region, hectares, farm_crops(crop_type, area_ha)').eq('user_id', uid).order('created_at'),
-      supabase.from('reminders').select('id').eq('user_id', uid).gte('scheduled_date', new Date().toISOString()),
-      supabase.from('deals').select('crop_type, quantity_tons, confirmed_at').eq('farmer_id', uid).in('status', ['confirmed', 'completed']),
-      supabase.from('manual_sales').select('crop_type, quantity_tons, sold_at').eq('user_id', uid).neq('status', 'cancelled'),
+      supabase.from('farms').select('id, name, region, hectares, farm_crops(crop_type, area_ha)').eq('user_id', ownerId).order('created_at'),
+      supabase.from('reminders').select('id').eq('user_id', ownerId).gte('scheduled_date', new Date().toISOString()),
+      supabase.from('deals').select('crop_type, quantity_tons, confirmed_at').eq('farmer_id', ownerId).in('status', ['confirmed', 'completed']),
+      supabase.from('manual_sales').select('crop_type, quantity_tons, sold_at').eq('user_id', ownerId).neq('status', 'cancelled'),
     ])
     farms.value = farmsRes.data || []
     reminders.value = remRes.data || []

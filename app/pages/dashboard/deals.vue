@@ -484,6 +484,13 @@ const saveManual = async () => {
     ? (manualModal.unit === 'кг' ? manualModal.price_per_ton * 1000 : manualModal.price_per_ton)
     : null
 
+  // «Додатково зібрано» — спершу додаємо на склад; сам продаж списує база (тригер manual_sales_stock)
+  const extraHarvested = parseFloat(String(manualModal.extra_harvested)) || 0
+  if (manualModal.deduct_from_stock && cropObj?.id && cropObj.stock_quantity != null && extraHarvested > 0) {
+    const extra = cropObj.stock_unit === 'кг' ? extraHarvested * 1000 : extraHarvested
+    await supabase.from('farm_crops').update({ stock_quantity: cropObj.stock_quantity + extra }).eq('id', cropObj.id)
+  }
+
   const { data } = await supabase.from('manual_sales').insert({
     user_id: uid,
     crop_type: cropType,
@@ -499,15 +506,10 @@ const saveManual = async () => {
     deduct_from_stock: manualModal.deduct_from_stock,
   }).select().single()
 
-  // Відняти зі складу якщо галочка стоїть
-  if (data && manualModal.deduct_from_stock && cropObj?.id && cropObj.stock_quantity != null) {
-    const extraHarvested = parseFloat(String(manualModal.extra_harvested)) || 0
-    const currentTons = cropObj.stock_unit === 'кг' ? cropObj.stock_quantity / 1000 : cropObj.stock_quantity
-    const afterHarvest = currentTons + extraHarvested
-    const newTons = Math.max(0, afterHarvest - quantityTons)
-    const newQty = cropObj.stock_unit === 'кг' ? newTons * 1000 : newTons
-    await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', cropObj.id)
-    cropObj.stock_quantity = newQty
+  // Новий залишок культури (списала база)
+  if (data && cropObj?.id) {
+    const { data: fresh } = await supabase.from('farm_crops').select('stock_quantity').eq('id', cropObj.id).single()
+    if (fresh) cropObj.stock_quantity = fresh.stock_quantity
   }
 
   if (data) manualSales.value.unshift(data)
@@ -595,6 +597,7 @@ const cancelDeal = async (deal: any) => {
 
 const cancelManual = async (s: any) => {
   if (!await confirmDialog('Запис буде позначено як скасований.', { title: 'Скасувати продаж?' })) return
+  // Списане зі складу повертає база (тригер manual_sales_stock)
   const { error } = await supabase.from('manual_sales').update({ status: 'cancelled' }).eq('id', s.id)
   if (!error) s.status = 'cancelled'
 }
