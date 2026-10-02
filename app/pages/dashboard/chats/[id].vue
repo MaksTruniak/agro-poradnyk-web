@@ -1004,28 +1004,7 @@ const respondDeal = async (dealId: string, status: 'confirmed' | 'cancelled') =>
   if (status === 'confirmed') {
     const deal = deals.value.find(d => d.id === dealId)
 
-    // Відняти кількість зі складу фермера
-    if (deal?.quantity_tons && (deal?.farm_crop_id || (deal?.farmer_id && deal?.crop_type))) {
-      let cropRow: any = null
-      if (deal.farm_crop_id) {
-        const { data } = await supabase
-          .from('farm_crops').select('id, stock_quantity, stock_unit').eq('id', deal.farm_crop_id).single()
-        cropRow = data
-      } else {
-        const { data } = await supabase
-          .from('farm_crops').select('id, stock_quantity, stock_unit, farms:public_farms!inner(user_id)')
-          .eq('farms.user_id', deal.farmer_id).eq('crop_type', deal.crop_type)
-          .not('stock_quantity', 'is', null).limit(1).single()
-        cropRow = data
-      }
-      if (cropRow?.stock_quantity != null) {
-        const deductTons = deal.quantity_tons
-        const currentTons = cropRow.stock_unit === 'кг' ? cropRow.stock_quantity / 1000 : cropRow.stock_quantity
-        const newTons = Math.max(0, currentTons - deductTons)
-        const newQty = cropRow.stock_unit === 'кг' ? newTons * 1000 : newTons
-        await supabase.from('farm_crops').update({ stock_quantity: newQty }).eq('id', cropRow.id)
-      }
-    }
+    // Залишок культури фермера списує база (тригер deals_take_stock)
     // Самовивіз (id=1): заготівельник їде до фермера → потрібна адреса фермера
     // Доставка (id=2): фермер везе до заготівельника → потрібна адреса заготівельника
     const isSamovyviz = (deal?.delivery_types?.name || '').toLowerCase().includes('самовивіз') || deal?.delivery_type_id === 1

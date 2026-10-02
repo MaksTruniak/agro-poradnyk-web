@@ -12,28 +12,33 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // PostgREST не порівнює дві колонки між собою (quantity <= min_quantity), тому фільтруємо тут
+  const isLow = (i: { quantity: number | null; min_quantity: number | null }) => Number(i.quantity ?? 0) <= Number(i.min_quantity)
+
   // Препарати з нестачею
-  const { data: lowChemicals } = await supabase
+  const { data: chemicals, error: chemErr } = await supabase
     .from('farm_inventory')
     .select('user_id, name, quantity, unit, min_quantity')
     .not('min_quantity', 'is', null)
-    .filter('quantity', 'lte', 'min_quantity')
+  if (chemErr) throw createError({ statusCode: 500, message: chemErr.message })
+  const lowChemicals = (chemicals || []).filter(isLow)
 
   // Пальне з нестачею
-  const { data: lowFuel } = await supabase
+  const { data: fuels, error: fuelErr } = await supabase
     .from('fuel_inventory')
     .select('user_id, fuel_type, quantity, unit, min_quantity')
     .not('min_quantity', 'is', null)
-    .filter('quantity', 'lte', 'min_quantity')
+  if (fuelErr) throw createError({ statusCode: 500, message: fuelErr.message })
+  const lowFuel = (fuels || []).filter(isLow)
 
   // Об'єднуємо по user_id
   const byUser: Record<string, { name: string; quantity: number; unit: string; min_quantity: number }[]> = {}
 
-  for (const item of lowChemicals || []) {
+  for (const item of lowChemicals) {
     if (!byUser[item.user_id]) byUser[item.user_id] = []
     byUser[item.user_id].push({ name: item.name, quantity: item.quantity, unit: item.unit, min_quantity: item.min_quantity })
   }
-  for (const item of lowFuel || []) {
+  for (const item of lowFuel) {
     if (!byUser[item.user_id]) byUser[item.user_id] = []
     byUser[item.user_id].push({ name: `⛽ ${item.fuel_type}`, quantity: item.quantity, unit: item.unit, min_quantity: item.min_quantity })
   }
@@ -45,7 +50,8 @@ export default defineEventHandler(async (event) => {
     try {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue
-      const name = userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
+      // При реєстрації ім'я зберігається в user_metadata.name
+      const name = userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
       await sendLowStockEmail(userData.user.email, name, items)
       sent++
     } catch (e) {

@@ -11,6 +11,8 @@ test.describe('Угода: фермер ↔ заготівельник', () => {
 
   let chatId = ''
   let dealId = ''
+  let farmId = ''
+  let cropId = ''
 
   test.afterAll(async () => {
     const admin = serviceClient()
@@ -21,6 +23,10 @@ test.describe('Угода: фермер ↔ заготівельник', () => {
     if (chatId) {
       await admin.from('messages').delete().eq('chat_id', chatId)
       await admin.from('chats').delete().eq('id', chatId)
+    }
+    if (farmId) {
+      await admin.from('farm_crops').delete().eq('farm_id', farmId)
+      await admin.from('farms').delete().eq('id', farmId)
     }
     if (hasAccount('farmer')) {
       const { userId } = await asUser('farmer')
@@ -55,9 +61,16 @@ test.describe('Угода: фермер ↔ заготівельник', () => {
     const farmer = await asUser('farmer')
     const buyer = await asUser('buyer')
 
+    // Культура зі складом: 50 т, угода на 10 т
+    const { data: farm } = await farmer.client.from('farms').insert({ user_id: farmer.userId, name: 'E2E угода', hectares: 10 }).select('id').single()
+    farmId = farm!.id
+    const { data: crop } = await farmer.client.from('farm_crops')
+      .insert({ farm_id: farmId, crop_type: 'Пшениця озима', area_ha: 10, stock_quantity: 50, stock_unit: 'т' }).select('id').single()
+    cropId = crop!.id
+
     // Браузер просить одразу «completed» — база ставить pending
     const { data: deal, error } = await farmer.client.from('deals').insert({
-      chat_id: chatId, farmer_id: farmer.userId, buyer_id: buyer.userId, proposed_by: farmer.userId,
+      chat_id: chatId, farmer_id: farmer.userId, buyer_id: buyer.userId, proposed_by: farmer.userId, farm_crop_id: cropId,
       crop_type: 'Пшениця озима', quantity_tons: 10, price_per_ton: 8000, status: 'completed',
     }).select('id, status, total_price').single()
     expect(error).toBeNull()
@@ -72,6 +85,10 @@ test.describe('Угода: фермер ↔ заготівельник', () => {
     expect(confirm.error).toBeNull()
     expect(confirm.data).toMatchObject({ status: 'confirmed', price_per_ton: 8000 })
     expect(confirm.data!.confirmed_at).toBeTruthy()
+
+    // Підтвердив заготівельник — залишок фермера списує база
+    const { data: stock } = await farmer.client.from('farm_crops').select('stock_quantity').eq('id', cropId).single()
+    expect(Number(stock!.stock_quantity), 'склад не списався при підтвердженні угоди').toBe(40)
 
     const farmerComplete = await farmer.client.from('deals').update({ status: 'completed' }).eq('id', dealId)
     expect(farmerComplete.error, 'фермер завершує замість заготівельника').not.toBeNull()
