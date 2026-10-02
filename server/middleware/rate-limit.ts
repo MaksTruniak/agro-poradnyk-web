@@ -13,6 +13,8 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/team/invite':           { max: 5,  windowMs: 60_000 },
   '/api/harvest/create-worker': { max: 10, windowMs: 60_000 },
   '/api/ai-generate-card':      { max: 10, windowMs: 60_000 },
+  '/api/ai-summary':            { max: 10, windowMs: 60_000 },
+  '/api/ai-season-report':      { max: 5,  windowMs: 60_000 },
 }
 
 const memory = new Map<string, { count: number; resetAt: number }>()
