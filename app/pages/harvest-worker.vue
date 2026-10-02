@@ -367,20 +367,24 @@ const logout = async () => {
 }
 
 onMounted(async () => {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return
-  if (session.user.user_metadata?.role !== 'harvest_worker') return
+  // Без сесії чи не працівник — показуємо форму входу (checking скидається завжди)
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    if (session.user.user_metadata?.role !== 'harvest_worker') return
 
-  const { data } = await supabase
-    .from('harvest_workers')
-    .select('id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login')
-    .eq('auth_user_id', session.user.id)
-    .single()
+    const { data } = await supabase
+      .from('harvest_workers')
+      .select('id, owner_id, first_name, last_name, phone, email, login, created_at, auth_user_id, email_login')
+      .eq('auth_user_id', session.user.id)
+      .single()
 
-  if (data) {
-    worker.value = data
-    await loadSeasons()
+    if (data) {
+      worker.value = data
+      await loadSeasons()
+    }
+  } finally {
+    checking.value = false
   }
-  checking.value = false
 })
 </script>

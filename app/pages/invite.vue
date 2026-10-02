@@ -103,13 +103,10 @@ const roleLabel = computed(() =>
 onMounted(async () => {
   if (!token) { loading.value = false; return }
 
-  const { data } = await supabase
-    .from('team_members')
-    .select('id, email, role, status, owner_id')
-    .eq('token', token)
-    .maybeSingle()
+  // Запрошення за токеном читає функція БД (сторінку відкривають і без входу)
+  const { data } = await supabase.rpc('team_invite_by_token', { p_token: token })
 
-  invite.value = data
+  invite.value = data?.[0] ?? null
   loading.value = false
 })
 
@@ -154,20 +151,25 @@ const submit = async () => {
 
   if (!userId) { authError.value = 'Помилка авторизації'; submitting.value = false; return }
 
-  const updateData: any = { member_id: userId, status: 'active' }
-  if (!isExistingUser.value && fullName.value.trim()) updateData.name = fullName.value.trim()
-  await supabase.from('team_members').update(updateData).eq('token', token)
-
-  // Створюємо запис у users щоб пройти перевірку onboarding в middleware
-  const userData: any = {
-    id: userId,
-    email: invite.value.email,
-    role: 'farmer',
-    onboarded_at: new Date().toISOString(),
+  // Новому користувачу створюємо запис у users, щоб пройти перевірку onboarding в middleware
+  if (!isExistingUser.value) {
+    const userData: any = {
+      id: userId,
+      email: invite.value.email,
+      role: 'farmer',
+      onboarded_at: new Date().toISOString(),
+    }
+    if (fullName.value.trim()) userData.name = fullName.value.trim()
+    if (phone.value.trim()) userData.phone = phone.value.trim()
+    await supabase.from('users').upsert(userData, { onConflict: 'id', ignoreDuplicates: false })
   }
-  if (!isExistingUser.value && fullName.value.trim()) userData.name = fullName.value.trim()
-  if (!isExistingUser.value && phone.value.trim()) userData.phone = phone.value.trim()
-  await supabase.from('users').upsert(userData, { onConflict: 'id', ignoreDuplicates: false })
+
+  // Приймає запрошення функція БД (перевіряє, що пошта збігається)
+  const { error: acceptErr } = await supabase.rpc('accept_team_invite', {
+    p_token: token,
+    p_name: !isExistingUser.value ? fullName.value.trim() || null : null,
+  })
+  if (acceptErr) { authError.value = acceptErr.message; submitting.value = false; return }
 
   submitting.value = false
   await navigateTo('/dashboard?team_accepted=1')

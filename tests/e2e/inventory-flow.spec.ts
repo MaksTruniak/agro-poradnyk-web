@@ -78,7 +78,7 @@ test.describe('Склад: хімія, пальне, техніка', () => {
     const { data: logHidden } = await stranger.client.from('fuel_log').select('id').eq('fuel_id', fuelId)
     expect(logHidden ?? [], 'сторонній бачить журнал пального').toEqual([])
     const forgedLog = await stranger.client.from('fuel_log').insert({ fuel_id: fuelId, user_id: stranger.userId, type: 'out', quantity: 800 })
-    expect.soft(forgedLog.error, 'сторонній дописав журнал пального фермера (міграція 20261002_fuel_log_owner.sql)').not.toBeNull()
+    expect(forgedLog.error, 'сторонній дописав журнал пального фермера').not.toBeNull()
   })
 
   test('техніка: бачить і змінює лише власник', async () => {
