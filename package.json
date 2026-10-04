@@ -17,6 +17,7 @@
     "test": "vitest run tests/unit && playwright test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@aws-sdk/client-s3": "^3.1072.0",
     "@aws-sdk/s3-request-presigner": "^3.1072.0",
     "@nuxtjs/supabase": "^2.0.9",

@@ -8,13 +8,31 @@
         </svg>
         AI Ліміти
       </h1>
-      <p class="text-agro-light mt-1">Дефолтні ліміти по тарифах і кастомні налаштування для окремих користувачів</p>
+      <p class="text-agro-light mt-1">Кредити AI по тарифах, витрати на AI і налаштування для окремих користувачів</p>
+    </div>
+
+    <!-- Витрати на AI цього місяця (з журналу ai_requests) -->
+    <div class="card mb-8">
+      <p class="font-bold text-agro-dark mb-4">Витрати на AI цього місяця</p>
+      <div v-if="spend" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="p-4 bg-agro-bg rounded-xl"><p class="text-xs text-agro-light">Собівартість</p><p class="text-2xl font-extrabold text-agro-dark">${{ spend.cost.toFixed(2) }}</p></div>
+        <div class="p-4 bg-agro-bg rounded-xl"><p class="text-xs text-agro-light">Запитів</p><p class="text-2xl font-extrabold text-agro-dark">{{ spend.requests }}</p></div>
+        <div class="p-4 bg-agro-bg rounded-xl"><p class="text-xs text-agro-light">Списано кредитів</p><p class="text-2xl font-extrabold text-agro-dark">{{ spend.credits }}</p></div>
+        <div class="p-4 bg-agro-bg rounded-xl"><p class="text-xs text-agro-light">$ за кредит</p><p class="text-2xl font-extrabold text-agro-dark">{{ spend.credits ? (spend.cost / spend.credits).toFixed(4) : '—' }}</p></div>
+      </div>
+      <div v-if="spend?.byAction.length" class="text-sm space-y-1">
+        <div v-for="a in spend.byAction" :key="a.action" class="flex justify-between text-agro-dark">
+          <span>{{ a.action }} <span class="text-agro-light">· {{ a.requests }} запитів</span></span>
+          <span class="font-semibold">${{ a.cost.toFixed(3) }}</span>
+        </div>
+      </div>
+      <p v-if="spend && !spend.requests" class="text-sm text-agro-light">Цього місяця ще не було запитів.</p>
     </div>
 
     <!-- Дефолтні ліміти по планах -->
     <div class="card mb-8">
       <div class="flex items-center justify-between mb-5">
-        <p class="font-bold text-agro-dark">Дефолтні ліміти по тарифах</p>
+        <p class="font-bold text-agro-dark">Кредити AI по тарифах <span class="font-normal text-agro-light text-sm">· питання 1, фото 3, техкарта 5, звіт 5</span></p>
         <button @click="savePlanLimits" :disabled="savingPlans"
           class="btn-primary text-sm py-2 px-4 disabled:opacity-50">
           {{ savingPlans ? 'Збереження...' : 'Зберегти' }}
@@ -27,18 +45,23 @@
 
       <div v-else class="space-y-3">
         <div v-for="row in planLimits" :key="row.plan"
-          class="grid grid-cols-[120px_1fr_1fr] gap-4 items-center p-4 bg-agro-bg rounded-xl">
+          class="grid grid-cols-[140px_1fr_1fr_1fr] gap-4 items-center p-4 bg-agro-bg rounded-xl">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full" :class="planDot(row.plan)"></span>
             <span class="font-semibold text-agro-dark capitalize text-sm">{{ PLAN_LABELS[row.plan] }}</span>
           </div>
           <div>
-            <label class="block text-xs text-agro-light mb-1">Текстових запитів / міс</label>
-            <input v-model.number="row.text_limit" type="number" min="0" class="input text-sm py-1.5 w-full" />
+            <label class="block text-xs text-agro-light mb-1">Базових кредитів / міс</label>
+            <input v-model.number="row.credits_base" type="number" min="0" class="input text-sm py-1.5 w-full" />
           </div>
           <div>
-            <label class="block text-xs text-agro-light mb-1">Фото / міс</label>
-            <input v-model.number="row.photo_limit" type="number" min="0" class="input text-sm py-1.5 w-full" />
+            <label class="block text-xs text-agro-light mb-1">+ кредитів за гектар</label>
+            <input v-model.number="row.credits_per_ha" type="number" min="0" step="0.1" class="input text-sm py-1.5 w-full" />
+          </div>
+          <div>
+            <label class="block text-xs text-agro-light mb-1">Максимум гектарів</label>
+            <input v-model.number="row.credits_ha_cap" type="number" min="0" class="input text-sm py-1.5 w-full" />
+            <p class="text-[11px] text-agro-light mt-1">10 га: {{ creditsFor(row, 10) }} · 100 га: {{ creditsFor(row, 100) }}</p>
           </div>
         </div>
       </div>
@@ -113,19 +136,21 @@
         </div>
 
         <div class="bg-white rounded-xl p-4 mb-4 border border-agro-border">
-          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">Кастомні AI ліміти (override)</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">Індивідуальний ліміт кредитів</p>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Текстових запитів / міс</label>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Кредитів / міс</label>
               <input v-model.number="userForm.ai_text_limit" type="number" min="0" class="input text-sm"
-                :placeholder="`Дефолт: ${defaultForPlan(userForm.plan).text}`" />
-              <p class="text-xs text-agro-light mt-1">Залиш порожнім — буде дефолт плану</p>
+                :placeholder="`За тарифом: ${defaultCredits}`" />
+              <p class="text-xs text-agro-light mt-1">Порожнє — за тарифом (з урахуванням гектарів)</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Фото / міс</label>
-              <input v-model.number="userForm.ai_photo_limit" type="number" min="0" class="input text-sm"
-                :placeholder="`Дефолт: ${defaultForPlan(userForm.plan).photo}`" />
-              <p class="text-xs text-agro-light mt-1">Залиш порожнім — буде дефолт плану</p>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Видати пакет кредитів (цей місяць)</label>
+              <div class="flex gap-2">
+                <input v-model.number="topupCredits" type="number" min="1" class="input text-sm" placeholder="напр. 50" />
+                <button @click="grantTopup" :disabled="!topupCredits || grantingTopup" class="btn-outline text-sm px-3 disabled:opacity-50">Видати</button>
+              </div>
+              <p class="text-xs text-agro-light mt-1">Пакети цього місяця: {{ topupsThisMonth }}</p>
             </div>
           </div>
         </div>
@@ -133,30 +158,15 @@
         <!-- Поточне використання -->
         <div v-if="userUsage" class="bg-white rounded-xl p-4 mb-4 border border-agro-border">
           <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">Використання цього місяця</p>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-xs text-agro-light mb-1">Текстові запити</p>
-              <div class="flex items-end gap-2">
-                <span class="text-2xl font-bold text-agro-dark">{{ userUsage.text_count }}</span>
-                <span class="text-sm text-agro-light mb-0.5">/ {{ effectiveLimit(userForm.plan, 'text') }}</span>
-              </div>
-              <div class="h-1.5 bg-agro-bg rounded-full mt-2 overflow-hidden">
-                <div class="h-full bg-agro rounded-full transition-all"
-                  :style="`width: ${Math.min(100, (userUsage.text_count / effectiveLimit(userForm.plan, 'text')) * 100)}%`"></div>
-              </div>
-            </div>
-            <div>
-              <p class="text-xs text-agro-light mb-1">Фото</p>
-              <div class="flex items-end gap-2">
-                <span class="text-2xl font-bold text-agro-dark">{{ userUsage.photo_count }}</span>
-                <span class="text-sm text-agro-light mb-0.5">/ {{ effectiveLimit(userForm.plan, 'photo') }}</span>
-              </div>
-              <div class="h-1.5 bg-agro-bg rounded-full mt-2 overflow-hidden">
-                <div class="h-full bg-agro rounded-full transition-all"
-                  :style="`width: ${Math.min(100, (userUsage.photo_count / effectiveLimit(userForm.plan, 'photo')) * 100)}%`"></div>
-              </div>
-            </div>
+          <div class="flex items-end gap-2">
+            <span class="text-2xl font-bold text-agro-dark">{{ userUsage.credits_used }}</span>
+            <span class="text-sm text-agro-light mb-0.5">/ {{ effectiveCredits }} кредитів</span>
           </div>
+          <div class="h-1.5 bg-agro-bg rounded-full mt-2 overflow-hidden">
+            <div class="h-full bg-agro rounded-full transition-all"
+              :style="`width: ${Math.min(100, (userUsage.credits_used / Math.max(1, effectiveCredits)) * 100)}%`"></div>
+          </div>
+          <p class="text-xs text-agro-light mt-2">Собівартість цього місяця: ${{ (userUsage.cost || 0).toFixed(3) }}</p>
           <button @click="resetUsage" :disabled="resettingUsage"
             class="mt-3 text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50">
             {{ resettingUsage ? 'Скидання...' : '↺ Скинути використання цього місяця' }}
@@ -194,9 +204,8 @@
               <p class="text-sm font-medium text-agro-dark truncate">{{ o.email }}</p>
               <p class="text-xs text-agro-light">
                 {{ o.profile === 'agronomist' ? 'Агроном' : 'Фермер' }} · <span class="capitalize">{{ o.plan }}</span> ·
-                <span v-if="o.ai_text_limit">текст: {{ o.ai_text_limit }}/міс</span>
-                <span v-if="o.ai_photo_limit"> · фото: {{ o.ai_photo_limit }}/міс</span>
-                <span v-if="!o.ai_text_limit && !o.ai_photo_limit">лише план змінено</span>
+                <span v-if="o.ai_text_limit">кредитів: {{ o.ai_text_limit }}/міс</span>
+                <span v-else>лише план змінено</span>
               </p>
             </div>
             <button @click="selectUserById(o)" class="text-xs text-agro hover:underline shrink-0">Редагувати</button>
@@ -214,7 +223,7 @@ useHead({ title: 'AI Ліміти — Адмін' })
 const supabase = useSupabaseClient()
 
 const PLAN_LABELS: Record<string, string> = {
-  basic: 'Basic', business: 'Business', business_pro: 'Business Pro',
+  basic: 'Basic', business: 'Business', business_pro: 'Business Pro', pro: 'Агроном PRO', agronomist_basic: 'Агроном Basic',
 }
 
 const planDot = (plan: string) => ({
@@ -229,17 +238,34 @@ const loadingPlans = ref(true)
 const savingPlans  = ref(false)
 const savedPlans   = ref(false)
 
-const planLimits = ref([
-  { plan: 'basic',        text_limit: 10,   photo_limit: 1   },
-  { plan: 'business',     text_limit: 3000, photo_limit: 300 },
-  { plan: 'business_pro', text_limit: 500,  photo_limit: 60  },
-])
+interface PlanCredits { plan: string; credits_base: number; credits_per_ha: number; credits_ha_cap: number }
+const PLAN_ORDER = ['basic', 'business', 'business_pro', 'agronomist_basic', 'pro']
+const planLimits = ref<PlanCredits[]>([])
+
+const creditsFor = (row: PlanCredits | undefined, ha: number) =>
+  row ? Math.floor((row.credits_base || 0) + (Number(row.credits_per_ha) || 0) * Math.min(ha, row.credits_ha_cap || 0)) : 0
+
+// Зведення витрат місяця з журналу ai_requests
+const spend = ref<{ cost: number; requests: number; credits: number; byAction: { action: string; requests: number; cost: number }[] } | null>(null)
+const loadSpend = async () => {
+  const from = new Date(); from.setDate(1); from.setHours(0, 0, 0, 0)
+  const { data } = await supabase.from('ai_requests').select('action, cost_usd, credits').gte('created_at', from.toISOString()).limit(10000)
+  const rows = data || []
+  const by: Record<string, { requests: number; cost: number }> = {}
+  for (const r of rows) { (by[r.action] ||= { requests: 0, cost: 0 }); by[r.action].requests++; by[r.action].cost += Number(r.cost_usd) }
+  spend.value = {
+    cost: rows.reduce((a, r) => a + Number(r.cost_usd), 0),
+    requests: rows.length,
+    credits: rows.reduce((a, r) => a + (r.credits || 0), 0),
+    byAction: Object.entries(by).map(([action, v]) => ({ action, ...v })).sort((a, b) => b.cost - a.cost),
+  }
+}
 
 onMounted(async () => {
-  const { data } = await supabase.from('ai_plan_limits').select('*')
-  if (data?.length) planLimits.value = data
+  const { data } = await supabase.from('ai_plan_limits').select('plan, credits_base, credits_per_ha, credits_ha_cap')
+  planLimits.value = PLAN_ORDER.map(plan => data?.find(r => r.plan === plan) || { plan, credits_base: 0, credits_per_ha: 0, credits_ha_cap: 0 })
   loadingPlans.value = false
-  await loadOverrides()
+  await Promise.all([loadOverrides(), loadSpend()])
 })
 
 const savePlanLimits = async () => {
@@ -247,8 +273,9 @@ const savePlanLimits = async () => {
   for (const row of planLimits.value) {
     await supabase.from('ai_plan_limits').upsert({
       plan: row.plan,
-      text_limit: row.text_limit,
-      photo_limit: row.photo_limit,
+      credits_base: row.credits_base || 0,
+      credits_per_ha: row.credits_per_ha || 0,
+      credits_ha_cap: row.credits_ha_cap || 0,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'plan' })
   }
@@ -257,12 +284,6 @@ const savePlanLimits = async () => {
   setTimeout(() => savedPlans.value = false, 3000)
 }
 
-const defaultForPlan = (plan: string) => {
-  const key = aiLimitKey(plan as PlanId, userForm.profile)
-  const row = planLimits.value.find(r => r.plan === key)
-  const fallback = AI_LIMITS_FALLBACK[key] ?? AI_LIMITS_FALLBACK.basic
-  return { text: row?.text_limit ?? fallback.text, photo: row?.photo_limit ?? fallback.photo }
-}
 
 // ─── Пошук користувачів ──────────────────────────────────────────────────────
 
@@ -292,9 +313,16 @@ const resettingUsage = ref(false)
 const userForm = reactive({
   profile: 'farmer' as SubscriptionProfile,
   plan: 'basic',
-  ai_text_limit: null as number | null,
-  ai_photo_limit: null as number | null,
+  ai_text_limit: null as number | null,  // індивідуальний ліміт кредитів
 })
+const userHectares = ref(0)
+const topupsThisMonth = ref(0)
+const topupCredits = ref<number | null>(null)
+const grantingTopup = ref(false)
+
+// Кредити за тарифом (з гектарами господарства) і з урахуванням індивідуального ліміту та пакетів
+const defaultCredits = computed(() => creditsFor(planLimits.value.find(r => r.plan === aiLimitKey(userForm.plan as PlanId, userForm.profile)), userForm.profile === 'farmer' ? userHectares.value : 0))
+const effectiveCredits = computed(() => (userForm.ai_text_limit ?? defaultCredits.value) + topupsThisMonth.value)
 
 const currentMonth = new Date().toISOString().slice(0, 7)
 
@@ -302,16 +330,21 @@ const currentMonth = new Date().toISOString().slice(0, 7)
 const loadUserProfileData = async () => {
   const uid = selectedUser.value?.id
   if (!uid) return
-  const [{ data: sub }, { data: usage }] = await Promise.all([
-    supabase.from('subscriptions').select('plan, ai_text_limit, ai_photo_limit')
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+  const [{ data: sub }, { data: usage }, { data: farms }, { data: topups }, { data: reqs }] = await Promise.all([
+    supabase.from('subscriptions').select('plan, ai_text_limit')
       .eq('user_id', uid).eq('profile', userForm.profile).maybeSingle(),
-    supabase.from('ai_usage').select('text_count, photo_count')
+    supabase.from('ai_usage').select('credits_used')
       .eq('user_id', uid).eq('profile', userForm.profile).eq('month', currentMonth).maybeSingle(),
+    supabase.from('farms').select('hectares').eq('user_id', uid),
+    supabase.from('ai_credit_topups').select('credits').eq('owner_id', uid).eq('profile', userForm.profile).eq('month', currentMonth),
+    supabase.from('ai_requests').select('cost_usd').eq('owner_id', uid).gte('created_at', monthStart.toISOString()),
   ])
-  userForm.plan           = sub?.plan || 'basic'
-  userForm.ai_text_limit  = sub?.ai_text_limit  ?? null
-  userForm.ai_photo_limit = sub?.ai_photo_limit ?? null
-  userUsage.value = usage || { text_count: 0, photo_count: 0 }
+  userForm.plan          = sub?.plan || 'basic'
+  userForm.ai_text_limit = sub?.ai_text_limit ?? null
+  userHectares.value = (farms || []).reduce((a: number, f: any) => a + (Number(f.hectares) || 0), 0)
+  topupsThisMonth.value = (topups || []).reduce((a: number, t: any) => a + (t.credits || 0), 0)
+  userUsage.value = { credits_used: usage?.credits_used || 0, cost: (reqs || []).reduce((a: number, r: any) => a + Number(r.cost_usd), 0) }
 }
 
 const selectUser = async (u: any, profile: SubscriptionProfile = 'farmer') => {
@@ -329,10 +362,15 @@ const switchUserProfile = async (profile: SubscriptionProfile) => {
 
 const selectUserById = (o: any) => selectUser(o, o.profile === 'agronomist' ? 'agronomist' : 'farmer')
 
-const effectiveLimit = (plan: string, type: 'text' | 'photo') => {
-  if (type === 'text' && userForm.ai_text_limit)  return userForm.ai_text_limit
-  if (type === 'photo' && userForm.ai_photo_limit) return userForm.ai_photo_limit
-  return type === 'text' ? defaultForPlan(plan).text : defaultForPlan(plan).photo
+const grantTopup = async () => {
+  if (!selectedUser.value || !topupCredits.value) return
+  grantingTopup.value = true
+  await supabase.from('ai_credit_topups').insert({
+    owner_id: selectedUser.value.id, profile: userForm.profile, credits: topupCredits.value, month: currentMonth, source: 'admin',
+  })
+  topupCredits.value = null
+  grantingTopup.value = false
+  await loadUserProfileData()
 }
 
 const saveUserLimits = async () => {
@@ -343,8 +381,7 @@ const saveUserLimits = async () => {
     user_id:        selectedUser.value.id,
     profile:        userForm.profile,
     plan:           userForm.plan,
-    ai_text_limit:  userForm.ai_text_limit  || null,
-    ai_photo_limit: userForm.ai_photo_limit || null,
+    ai_text_limit:  userForm.ai_text_limit ?? null,
   }, { onConflict: 'user_id,profile' })
 
   savingUser.value = false
@@ -357,11 +394,11 @@ const resetUsage = async () => {
   if (!selectedUser.value || !confirm('Скинути використання цього місяця для цього користувача?')) return
   resettingUsage.value = true
   await supabase.from('ai_usage')
-    .update({ text_count: 0, photo_count: 0 })
+    .update({ credits_used: 0 })
     .eq('user_id', selectedUser.value.id)
     .eq('profile', userForm.profile)
     .eq('month', currentMonth)
-  if (userUsage.value) { userUsage.value.text_count = 0; userUsage.value.photo_count = 0 }
+  if (userUsage.value) userUsage.value.credits_used = 0
   resettingUsage.value = false
 }
 

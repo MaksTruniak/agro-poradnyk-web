@@ -34,8 +34,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'cropType required' })
   }
 
-  const usage = { text: 1 }
-  const access = await requireAiAccess(event, usage)
+  const access = await requireAiAccess(event, 'card')
 
   const cropFull = variety ? `${cropType} (${variety})` : cropType
   const areaNote = areaHa ? `, площа ${areaHa} га` : ''
@@ -78,23 +77,23 @@ export default defineEventHandler(async (event) => {
 
   let card: ReturnType<typeof parseCard> = null
   try {
-    // Міркування моделі (<think>) прибирає groqText — інакше дужки з них ламали пошук JSON
-    const text = await groqText('ai-generate-card', {
+    // Міркування моделі (<think>) прибирає провайдерний шар — інакше дужки з них ламали пошук JSON
+    const res = await aiComplete(access.route!, {
+      system: 'Ти агроном-експерт. Відповідаєш лише валідним JSON без пояснень.',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
-      max_tokens: 1000,  // OTPM Groq; компактний JSON уміщається
-      effort: 'none',
-    })
-    card = parseCard(text)
+    }, 'ai-generate-card')
+    card = parseCard(res.text)
+    await recordAiRequest(access, res.usage, card ? 'ok' : res.refused ? 'refused' : 'error')
   } catch (err) {
-    await releaseAiUsage(access, usage)
+    await releaseAiUsage(access)
+    await recordAiRequest(access, null, 'error')
     throw err
   }
   if (!card) {
-    await releaseAiUsage(access, usage)
+    await releaseAiUsage(access)
     throw createError({ statusCode: 502, message: 'AI повернув некоректну карту. Спробуйте ще раз.' })
   }
-  return await verifyCard(card)
+  return { ...(await verifyCard(card)), credits: access.credits }
 })
 
 /**
@@ -105,7 +104,7 @@ export default defineEventHandler(async (event) => {
 async function verifyCard(card: NonNullable<ReturnType<typeof parseCard>>) {
   const catalog = await getCatalog()
   const stats = { catalog: 0, replaced: 0, generic: 0, missing: 0 }
-  const phases = card.phases.map(phase => ({
+  const phases = card.phases.map((phase: { name: string; treatments: any[] }) => ({
     name: phase.name,
     treatments: phase.treatments.map((t: any) => {
       // catalog_product_id у program_treatments посилається на іншу таблицю (не agro_products) — зберігаємо лише slug

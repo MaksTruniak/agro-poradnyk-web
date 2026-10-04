@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { asUser, hasAccount, serviceClient } from './helpers'
 
-// Ліміти AI рахує сервер. Тест не звертається до моделі: лічильник фермера на поточний місяць
-// ставиться на межу ліміту, і сервер має відмовити ДО виклику AI. Після тесту лічильник відновлюється.
+// Кредити AI рахує сервер. Тест не звертається до моделі: кредити фермера на поточний місяць
+// ставляться на межу, і сервер має відмовити ДО виклику AI. Після тесту лічильник відновлюється.
 // ПИШЕ в базу (ai_usage), тому лише з E2E_WRITE=1.
 
 const month = new Date().toISOString().slice(0, 7)
@@ -11,49 +11,65 @@ test.describe('Ліміти AI', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест змінює лічильник ai_usage)')
   test.skip(!hasAccount('farmer'), 'потрібні E2E_FARMER_*')
 
-  let original: { text_count: number; photo_count: number } | null = null
+  let original: { credits_used: number } | null = null
   let userId = ''
+  const fallbackRowIds: string[] = []
 
   test.afterAll(async () => {
     if (!userId) return
-    const q = serviceClient().from('ai_usage')
+    const admin = serviceClient()
+    const q = admin.from('ai_usage')
     if (original) await q.update(original).eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
     else await q.delete().eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
+    if (fallbackRowIds.length) await admin.from('ai_requests').delete().in('id', fallbackRowIds)
   })
 
-  test('вичерпаний ліміт: сервер відмовляє і не рахує запит', async ({ request }) => {
+  test('вичерпані кредити: сервер відмовляє до виклику AI і не списує кредити', async ({ request }) => {
     const farmer = await asUser('farmer')
     userId = farmer.userId
     const admin = serviceClient()
+    const headers = { Authorization: `Bearer ${farmer.token}`, 'X-Agro-Profile': 'farmer' }
 
-    const { data: sub } = await admin.from('subscriptions').select('plan, expires_at, ai_text_limit, ai_photo_limit')
-      .eq('user_id', userId).eq('profile', 'farmer').maybeSingle()
-    const { data: limitsRows } = await admin.from('ai_plan_limits').select('plan, text_limit, photo_limit')
-    const dbLimits = Object.fromEntries((limitsRows ?? []).map(r => [r.plan, { text: r.text_limit, photo: r.photo_limit }]))
-    const plan = sub?.plan && (!sub.expires_at || new Date(sub.expires_at) > new Date()) ? sub.plan : 'basic'
-    const textLimit: number = sub?.ai_text_limit ?? dbLimits[plan]?.text ?? 0
-    test.skip(textLimit <= 0, 'у тестового фермера немає доступу до AI')
+    const credits = await (await request.get('/api/ai-credits', { headers })).json()
+    test.skip(!credits.allowance, 'у тестового фермера немає кредитів AI')
+    expect(credits.costs?.card?.credits).toBeGreaterThan(0)
 
-    const { data: usage } = await admin.from('ai_usage').select('text_count, photo_count')
+    const { data: usage } = await admin.from('ai_usage').select('credits_used')
       .eq('user_id', userId).eq('profile', 'farmer').eq('month', month).maybeSingle()
     original = usage ?? null
-    await admin.from('ai_usage').upsert({ user_id: userId, profile: 'farmer', month, text_count: textLimit, photo_count: 0 },
+    await admin.from('ai_usage').upsert({ user_id: userId, profile: 'farmer', month, text_count: 0, photo_count: 0, credits_used: credits.allowance },
       { onConflict: 'user_id,profile,month' })
 
-    for (const [path, body] of [
-      ['/api/ai-generate-card', { cropType: 'Пшениця озима' }],
-      ['/api/ai-chat', { messages: [{ role: 'user', content: 'тест' }] }],
-    ] as const) {
-      const res = await request.post(path, {
-        headers: { Authorization: `Bearer ${farmer.token}`, 'X-Agro-Profile': 'farmer' },
-        data: body,
-      })
-      expect(res.status(), `${path} пропустив запит понад ліміт`).toBe(403)
-    }
+    // Техкарта — лише за кредити, запасної моделі немає
+    const card = await request.post('/api/ai-generate-card', { headers, data: { cropType: 'Пшениця озима' } })
+    expect(card.status(), 'техкарта без кредитів').toBe(403)
 
-    const { data: after } = await admin.from('ai_usage').select('text_count')
+    // Чат без кредитів іде на запасну дешеву модель — вичерпуємо її денний ліміт, щоб не викликати AI
+    const daily = credits.fallbackDaily || 0
+    if (daily > 0) {
+      const { data: rows } = await admin.from('ai_requests').insert(Array.from({ length: daily }, () => ({
+        user_id: userId, owner_id: userId, profile: 'farmer', action: 'chat', provider: 'groq', model: 'qwen/qwen3.8-27b', fallback: true,
+      }))).select('id')
+      fallbackRowIds.push(...(rows ?? []).map(r => r.id))
+    }
+    const chat = await request.post('/api/ai-chat', { headers, data: { messages: [{ role: 'user', content: 'тест' }] } })
+    expect(chat.status(), 'чат без кредитів і запасних питань').toBe(403)
+
+    const { data: after } = await admin.from('ai_usage').select('credits_used')
       .eq('user_id', userId).eq('profile', 'farmer').eq('month', month).single()
-    expect(after!.text_count, 'відхилений запит зарахувався').toBe(textLimit)
+    expect(after!.credits_used, 'відхилений запит списав кредити').toBe(credits.allowance)
+  })
+
+  test('клієнт не може дати собі кредити', async () => {
+    const farmer = await asUser('farmer')
+    const c = farmer.client
+    expect((await c.from('ai_credit_topups').insert({ owner_id: farmer.userId, profile: 'farmer', credits: 1000, month })).error, 'сам видав пакет').not.toBeNull()
+    expect((await c.from('ai_requests').insert({ user_id: farmer.userId, owner_id: farmer.userId, profile: 'farmer', action: 'chat', provider: 'groq', model: 'x' })).error, 'сам записав журнал').not.toBeNull()
+    const charge = await c.rpc('ai_release_credits', { p_owner: farmer.userId, p_profile: 'farmer', p_month: month, p_credits: 1000 })
+    expect(charge.error, 'сам повернув собі кредити').not.toBeNull()
+    await c.from('ai_usage').update({ credits_used: 0 }).eq('user_id', farmer.userId)
+    const { data: plan } = await c.from('ai_plan_limits').update({ credits_base: 99999 }).eq('plan', 'business').select('plan')
+    expect(plan ?? [], 'змінив кредити тарифу').toEqual([])
   })
 
   test('без входу AI недоступний', async ({ request }) => {

@@ -55,9 +55,8 @@ export default defineEventHandler(async (event) => {
   const farmContext = clampText(body?.farmContext, AI_LIMITS.contextChars)
   const region = clampText(body?.region, 100)
 
-  const usage = { text: 1, photo: hasImage ? 1 : 0 }
-  const access = await requireAiAccess(event, usage)
-  const groq = getGroq()
+  // Фото — окрема дія (3 кредити); без кредитів просте питання отримає запасну дешеву модель
+  const access = await requireAiAccess(event, hasImage ? 'photo' : 'chat')
 
   const weatherInfo = region ? await getWeather(region) : null
 
@@ -67,7 +66,53 @@ export default defineEventHandler(async (event) => {
   const currentYear = now.getFullYear()
   const season = now.getMonth() >= 2 && now.getMonth() <= 4 ? 'весна' : now.getMonth() >= 5 && now.getMonth() <= 7 ? 'літо' : now.getMonth() >= 8 && now.getMonth() <= 10 ? 'осінь' : 'зима'
 
-  const systemPrompt = `Ти AI агроном платформи АгроПростір — спеціалізованої агрономічної платформи для українських фермерів.
+  // Незмінна частина інструкцій (кешується); дата, погода й дані господарства — окремо, після неї
+  const context = [
+    `КОНТЕКСТ ЧАСУ: зараз ${currentMonth} ${currentYear} року, ${season}. Враховуй це у рекомендаціях — які фази вегетації зараз актуальні, які роботи типові для цього сезону.`,
+    weatherInfo ? `ПОТОЧНА ПОГОДА (${region}):\n${weatherInfo}\nВраховуй погодні умови у рекомендаціях.` : '',
+    farmContext ? `ДАНІ ГОСПОДАРСТВА ФЕРМЕРА:\n${farmContext}\nВикористовуй цей контекст для персоналізованих порад.` : '',
+  ].filter(Boolean).join('\n\n')
+
+  let result: Awaited<ReturnType<typeof aiStream>>
+  try {
+    result = await aiStream(access.route!, { system: SYSTEM_PROMPT, context, messages }, 'ai-chat')
+  } catch (err) {
+    // AI не відповів — кредити повертаємо
+    await releaseAiUsage(access)
+    await recordAiRequest(access, null, 'error')
+    throw err
+  }
+
+  setHeader(event, 'Content-Type', 'text/event-stream')
+  setHeader(event, 'Cache-Control', 'no-cache')
+  setHeader(event, 'Connection', 'keep-alive')
+
+  const encoder = new TextEncoder()
+  const send = (controller: ReadableStreamDefaultController, data: unknown) =>
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+  const readable = new ReadableStream({
+    async start(controller) {
+      // Спершу — скільки кредитів лишилось і чи відповідає запасна модель (для лічильника на екрані)
+      send(controller, { meta: { credits: access.credits, fallback: access.fallback, charged: access.charged } })
+      let ok = true
+      try {
+        for await (const text of result.text) if (text) send(controller, { text })
+      } catch (streamErr) {
+        ok = false
+        console.error('[ai-chat] stream error:', streamErr)
+      } finally {
+        const fin = result.finish()
+        await recordAiRequest(access, fin.usage, !ok ? 'error' : fin.refused ? 'refused' : 'ok')
+        if (!ok || fin.refused) await releaseAiUsage(access)
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      }
+    },
+  })
+  return sendStream(event, readable)
+})
+
+const SYSTEM_PROMPT = `Ти AI агроном платформи АгроПростір — спеціалізованої агрономічної платформи для українських фермерів.
 Відповідаєш ВИКЛЮЧНО українською мовою. Жодного слова по-російськи, навіть якщо питання задане по-російськи — відповідай українською.
 
 ТВОЯ СПЕЦІАЛІЗАЦІЯ — виключно сільське господарство та агрономія:
@@ -78,8 +123,6 @@ export default defineEventHandler(async (event) => {
 - насінництво, сорти, гібриди культур
 
 КАТЕГОРИЧНО не відповідаєш на теми поза агрономією (погода загального характеру, політика, фінанси, IT, медицина тощо). Якщо питання не про агро — одне речення: "Я агрономічний асистент і можу допомогти лише з питаннями сільського господарства. Запитайте про ваші культури, захист або живлення."
-
-КОНТЕКСТ ЧАСУ: зараз ${currentMonth} ${currentYear} року, ${season}. Враховуй це у рекомендаціях — які фази вегетації зараз актуальні, які роботи типові для цього сезону.
 
 ВИМОГИ ДО ВІДПОВІДІ:
 - Коротке просте питання → коротка конкретна відповідь (3-7 речень)
@@ -95,51 +138,4 @@ export default defineEventHandler(async (event) => {
 
 СПЕЦІАЛЬНІ МАРКЕРИ (лише якщо умова виконана):
 1. Якщо відповідь містить схему обробки або живлення з кількома препаратами і фазами → додай окремим рядком в кінці: SCHEME_DETECTED
-2. Якщо рекомендуєш конкретну дію через N днів → додай: REMINDER:Назва дії|кількість_днів (наприклад: REMINDER:Повторна обробка @Децисом|10). Тільки якщо є чіткий строк.
-${weatherInfo ? `\nПОТОЧНА ПОГОДА (${region}):\n${weatherInfo}\nВраховуй погодні умови у рекомендаціях.` : ''}
-${farmContext ? `\nДАНІ ГОСПОДАРСТВА ФЕРМЕРА:\n${farmContext}\nВикористовуй цей контекст для персоналізованих порад.` : ''}`
-
-  const model = hasImage ? AI_VISION_MODEL : AI_TEXT_MODEL
-  const groqMessages = [{ role: 'system', content: systemPrompt }, ...messages]
-
-  let stream: any
-  try {
-    stream = await groqWithRetry(() => groq.chat.completions.create({
-      model,
-      max_tokens: 900,  // OTPM Groq — див. AI_MAX_OUTPUT_TOKENS
-      stream: true,
-      messages: groqMessages as any,
-      ...reasoningParams('none'),
-    } as any), 'ai-chat')
-  } catch (err) {
-    // AI не відповів — запит не зараховуємо
-    await releaseAiUsage(access, usage)
-    throw err
-  }
-
-  setHeader(event, 'Content-Type', 'text/event-stream')
-  setHeader(event, 'Cache-Control', 'no-cache')
-  setHeader(event, 'Connection', 'keep-alive')
-
-  const encoder = new TextEncoder()
-  const think = createThinkFilter()
-  const send = (controller: ReadableStreamDefaultController, text: string) => {
-    if (text) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
-  }
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          send(controller, think.push(chunk.choices[0]?.delta?.content || ''))
-        }
-        send(controller, think.flush())
-      } catch (streamErr) {
-        console.error('[ai-chat] stream error:', streamErr)
-      } finally {
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-        controller.close()
-      }
-    },
-  })
-  return sendStream(event, readable)
-})
+2. Якщо рекомендуєш конкретну дію через N днів → додай: REMINDER:Назва дії|кількість_днів (наприклад: REMINDER:Повторна обробка @Децисом|10). Тільки якщо є чіткий строк.`

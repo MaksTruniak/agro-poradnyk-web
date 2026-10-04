@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 // Звіт сезону за консультаціями користувача. Консультації й пам'ять сервер бере з БД сам —
 // довільний текст з браузера не приймається (інакше ендпоінт був би безкоштовним універсальним чат-ботом).
 export default defineEventHandler(async (event) => {
-  const access = await requireAiAccess(event)
+  const access = await requireAiAccess(event, 'report')
   const body = await readBody(event).catch(() => ({}))
   const farmName = clampText(body?.farmName, 100)
 
@@ -32,7 +32,10 @@ export default defineEventHandler(async (event) => {
   }
   // Найновіші консультації важливіші — обрізаємо початок
   const conversations = lines.join('\n').slice(-AI_LIMITS.reportChars)
-  if (!conversations) throw createError({ statusCode: 400, message: 'Немає консультацій для звіту' })
+  if (!conversations) {
+    await releaseAiUsage(access)
+    throw createError({ statusCode: 400, message: 'Немає консультацій для звіту' })
+  }
   const memory = clampText(mem?.summary, AI_LIMITS.contextChars)
 
   const year = new Date().getFullYear()
@@ -61,6 +64,14 @@ ${conversations}
 ## Рекомендації на сезон ${year + 1}
 Конкретні агрономічні поради: що змінити у сівозміні, захисті, живленні на основі досвіду цього сезону.`
 
-  const report = await groqText('ai-season-report', { messages: [{ role: 'user', content: prompt }], max_tokens: 1000 })
-  return { report }
+  try {
+    const res = await aiComplete(access.route!, { system: 'Ти агроном-аналітик платформи АгроПростір. Відповідаєш українською.', messages: [{ role: 'user', content: prompt }] }, 'ai-season-report')
+    await recordAiRequest(access, res.usage, res.refused ? 'refused' : 'ok')
+    if (res.refused) await releaseAiUsage(access)
+    return { report: res.text, credits: access.credits }
+  } catch (err) {
+    await releaseAiUsage(access)
+    await recordAiRequest(access, null, 'error')
+    throw err
+  }
 })

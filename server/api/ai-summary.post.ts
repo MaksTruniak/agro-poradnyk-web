@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 // Підсумок розмови для «пам'яті» AI. Повідомлення й попередній підсумок сервер бере з БД
 // (чат має належати користувачу) — довільний текст з браузера не приймається.
 export default defineEventHandler(async (event) => {
-  const access = await requireAiAccess(event)
+  const access = await requireAiAccess(event, 'summary')
   const body = await readBody(event).catch(() => ({}))
   const chatId = clampText(body?.chatId, 64)
   if (!chatId) throw createError({ statusCode: 400, message: 'chatId required' })
@@ -40,6 +40,7 @@ ${dialog}
 
 Відповідай тільки підсумком без зайвих слів і вступу.`
 
-  const summary = await groqText('ai-summary', { messages: [{ role: 'user', content: prompt }], max_tokens: 600 })
-  return { summary }
+  const res = await aiComplete(access.route!, { system: 'Ти агрономічний асистент. Відповідаєш українською.', messages: [{ role: 'user', content: prompt }] }, 'ai-summary')
+  await recordAiRequest(access, res.usage, res.refused ? 'refused' : 'ok')
+  return { summary: res.text }
 })

@@ -257,9 +257,9 @@
       </div>
 
       <!-- Ліміт вичерпано -->
-      <div v-else-if="monthlyTextCount >= textLimit" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center">
-        <p class="font-semibold text-agro-dark mb-1">🔒 Місячний ліміт вичерпано</p>
-        <p class="text-sm text-agro-light mb-3">Ліміт запитів на цей місяць: {{ textLimit }}. Оновіть тариф для збільшення.</p>
+      <div v-else-if="creditsBlocked" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center">
+        <p class="font-semibold text-agro-dark mb-1">🔒 Кредити AI на цей місяць вичерпано</p>
+        <p class="text-sm text-agro-light mb-3">У тарифі {{ credits.allowance }} кредитів на місяць. Нові — з початку місяця.</p>
         <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           Переглянути тарифи
@@ -295,10 +295,10 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17h7M17.5 14v7"/></svg>
           </button>
           <!-- Кнопка фото -->
-          <label :class="['relative w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border cursor-pointer transition-colors', monthlyPhotoCount >= photoLimit ? 'opacity-40 cursor-not-allowed border-agro-border' : 'border-agro-border hover:bg-agro-hover text-agro-light hover:text-agro']">
+          <label :class="['relative w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border cursor-pointer transition-colors', credits.remaining < photoCost ? 'opacity-40 cursor-not-allowed border-agro-border' : 'border-agro-border hover:bg-agro-hover text-agro-light hover:text-agro']" :title="`Діагностика за фото — ${photoCost} кредити`">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-            <span class="absolute -top-1.5 -right-1.5 text-[9px] font-bold bg-agro-hover border border-agro-border rounded-full px-1 leading-4 text-agro-light">{{ monthlyPhotoCount }}/{{ photoLimit }}</span>
-            <input type="file" accept="image/*" class="hidden" @change="onImagePick" ref="fileInputEl" :disabled="monthlyPhotoCount >= photoLimit" />
+            <span class="absolute -top-1.5 -right-1.5 text-[9px] font-bold bg-agro-hover border border-agro-border rounded-full px-1 leading-4 text-agro-light">{{ photoCost }}</span>
+            <input type="file" accept="image/*" class="hidden" @change="onImagePick" ref="fileInputEl" :disabled="credits.remaining < photoCost" />
           </label>
           <textarea
             v-model="input"
@@ -323,7 +323,8 @@
           </button>
         </div>
         <p class="text-xs text-agro-light mt-2 text-center">
-          <span>{{ textLimit - monthlyTextCount }} з {{ textLimit }} запитів цього місяця · </span>Відповіді є рекомендаційними. Завжди консультуйтесь з агрономом.
+          <span v-if="credits.remaining > 0">{{ credits.remaining }} з {{ credits.allowance }} кредитів AI · питання — {{ chatCost }}, фото — {{ photoCost }} · </span>
+          <span v-else>Кредити вичерпано — відповідає економ-модель (до {{ fallbackDaily }} питань на день) · </span>Відповіді є рекомендаційними. Завжди консультуйтесь з агрономом.
         </p>
       </div>
     </template>
@@ -497,17 +498,19 @@ const loading = ref(true)
 const currentPlan = ref<PlanId>('basic')
 const aiProfile = ref<SubscriptionProfile>('farmer')
 // Доступ до AI визначає ліміт (ті самі правила, що на сервері): Бізнес / Бізнес Про, агроном — Базовий і PRO
-const isPro = computed(() => textLimit.value > 0)
+const isPro = computed(() => credits.value.allowance > 0)
 const isAgronomist = import.meta.client
   ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
   : false
 const proLink = isAgronomist ? '/dashboard/promotion' : '/dashboard/subscription'
 const hasOlderHistory = ref(false)
 
-const monthlyTextCount  = ref(0)
-const monthlyPhotoCount = ref(0)
-const textLimit  = ref(0)
-const photoLimit = ref(0)
+// Кредити AI (рахує сервер: /api/ai-credits і метадані відповіді чату)
+const credits = ref({ allowance: 0, used: 0, remaining: 0 })
+const chatCost = ref(1)
+const photoCost = ref(3)
+const fallbackDaily = ref(0)
+const creditsBlocked = ref(false)
 const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
 const farmName = ref('')
 const farmHectares = ref<number | null>(null)
@@ -647,32 +650,17 @@ onMounted(async () => {
   // Тариф і ліміти — активного профілю; член команди працює за фермерським тарифом власника (як на сервері)
   aiProfile.value = isTeamMember.value ? 'farmer' : subscriptionProfileFor(isAgronomist ? 'agronomist' : 'farmer')
 
-  const [, subRes, planLimitsRes] = await Promise.all([
+  const [, subRes, creditsRes] = await Promise.all([
     growthPhases.load(),
-    supabase.from('subscriptions').select('plan, expires_at, ai_text_limit, ai_photo_limit').eq('user_id', uid.value).eq('profile', aiProfile.value).maybeSingle(),
-    supabase.from('ai_plan_limits').select('plan, text_limit, photo_limit'),
+    supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid.value).eq('profile', aiProfile.value).maybeSingle(),
+    $fetch('/api/ai-credits', { headers: await authHeader() }).catch(() => null) as Promise<any>,
   ])
-
-  const dbLimits = Object.fromEntries(
-    (planLimitsRes.data || []).map((r: any) => [r.plan, { text: r.text_limit, photo: r.photo_limit }])
-  )
-
   currentPlan.value = getActivePlan(subRes.data)
-  const limits = resolveAiLimits(aiLimitKey(currentPlan.value, aiProfile.value), dbLimits, subRes.data)
-  textLimit.value  = limits.text
-  photoLimit.value = limits.photo
-
-  // Місячне використання
-  if (uid.value) {
-    const { data: usage } = await supabase
-      .from('ai_usage')
-      .select('text_count, photo_count')
-      .eq('user_id', uid.value)
-      .eq('profile', aiProfile.value)
-      .eq('month', currentMonth)
-      .maybeSingle()
-    monthlyTextCount.value  = usage?.text_count  || 0
-    monthlyPhotoCount.value = usage?.photo_count || 0
+  if (creditsRes) {
+    credits.value = { allowance: creditsRes.allowance, used: creditsRes.used, remaining: creditsRes.remaining }
+    chatCost.value = creditsRes.costs?.chat?.credits ?? 1
+    photoCost.value = creditsRes.costs?.photo?.credits ?? 3
+    fallbackDaily.value = creditsRes.fallbackDaily ?? 0
   }
 
   if (farmId.value) {
@@ -1206,8 +1194,8 @@ const clearImage = () => {
 }
 
 const setImageFile = (file: File) => {
-  if (monthlyPhotoCount.value >= photoLimit.value) {
-    alert(`Ліміт фото на місяць вичерпано (${photoLimit.value} шт.). Оновіть тариф для збільшення ліміту.`)
+  if (credits.value.remaining < photoCost.value) {
+    alert(`Для діагностики за фото потрібно ${photoCost.value} кредити, лишилось ${credits.value.remaining}.`)
     return
   }
   imageFile.value = file
@@ -1252,11 +1240,9 @@ const send = async () => {
   const text = input.value.trim()
   if ((!text && !imageFile.value) || streaming.value) return
 
-  if (monthlyTextCount.value >= textLimit.value) return
-  if (imagePreview.value && monthlyPhotoCount.value >= photoLimit.value) return
+  if (imagePreview.value && credits.value.remaining < photoCost.value) return
 
   const imageDataUrl = imagePreview.value || undefined
-  if (imageDataUrl) monthlyPhotoCount.value++
   messages.value.push({ role: 'user', content: text || ' ', image_url: imageDataUrl })
   input.value = ''
   imageFile.value = null
@@ -1283,8 +1269,7 @@ const send = async () => {
   if (currentChatId.value) {
     await supabase.from('ai_messages').insert({ chat_id: currentChatId.value, role: 'user', content: text })
   }
-  // Використання зараховує сервер (/api/ai-chat); тут лише оновлюємо лічильник на екрані
-  monthlyTextCount.value++
+  // Кредити списує сервер (/api/ai-chat); лічильник оновлюється з метаданих відповіді
 
   try {
     const apiMessages = messages.value.map(m => {
@@ -1319,6 +1304,7 @@ const send = async () => {
       if (res.status === 401 || res.status === 403) {
         let msg = 'Немає доступу до AI агронома.'
         try { msg = JSON.parse(errText).message || msg } catch {}
+        if (/вичерпано/.test(msg)) creditsBlocked.value = true
         messages.value.push({ role: 'assistant', content: msg })
         streaming.value = false; streamingText.value = ''; return
       }
@@ -1342,6 +1328,7 @@ const send = async () => {
         if (data === '[DONE]') continue
         try {
           const parsed = JSON.parse(data)
+          if (parsed.meta?.credits) credits.value = parsed.meta.credits
           if (parsed.text) { streamingText.value += parsed.text; await scrollToBottom() }
         } catch {}
       }
