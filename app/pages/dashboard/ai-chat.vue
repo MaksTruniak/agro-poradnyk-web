@@ -18,6 +18,15 @@
           {{ showSessionsList ? 'Оберіть розмову або почніть нову' : (selectedCrop ? `${farmName} · ${emojiFor(selectedCrop.crop_type)} ${selectedCrop.crop_type}${selectedCrop.variety ? ` · ${selectedCrop.variety}` : ''}` : (farmName || 'Загальна консультація')) }}
         </p>
       </div>
+      <!-- Залишок AI-кредитів місяця; деталі — на сторінці підписки -->
+      <NuxtLink v-if="isPro" :to="proLink" data-testid="ai-credits-badge"
+        class="shrink-0 flex items-center gap-1 text-xs rounded-xl px-3 py-1.5 border transition-colors"
+        :class="credits.remaining > 0 ? 'text-agro-dark bg-agro-hover border-agro-border hover:border-agro' : 'text-red-600 bg-red-50 border-red-200'"
+        :title="`AI-кредити: ${credits.remaining} з ${credits.allowance} цього місяця`">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4L12 3z"/></svg>
+        <span class="font-semibold">{{ credits.remaining }}</span>
+        <span class="text-agro-light">/ {{ credits.allowance }}<span class="hidden sm:inline"> кредитів</span></span>
+      </NuxtLink>
       <div v-if="weatherInfo" class="shrink-0 flex items-center gap-1 text-xs text-agro-light bg-agro-hover rounded-xl px-3 py-1.5 border border-agro-border">
         <span>{{ weatherInfo.icon }}</span>
         <span class="font-medium text-agro-dark">{{ weatherInfo.temp }}°</span>
