@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { asUser, hasAccount, serviceClient } from './helpers'
+import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 
 // Кредити AI рахує сервер. Тест не звертається до моделі: кредити фермера на поточний місяць
 // ставляться на межу, і сервер має відмовити ДО виклику AI. Після тесту лічильник відновлюється.
@@ -129,5 +129,21 @@ test.describe('Ліміти AI', () => {
       data: { tipId: '00000000-0000-0000-0000-000000000000' },
     })
     expect([404, 429], `calendar-explain неіснуюча підказка: ${res2.status()}`).toContain(res2.status())
+  })
+
+  test('сторінки підписки показують AI-кредити', async ({ page, request }) => {
+    test.setTimeout(90_000)
+    const farmer = await asUser('farmer')
+    const credits = await (await request.get('/api/ai-credits', { headers: { Authorization: `Bearer ${farmer.token}`, 'X-Agro-Profile': 'farmer' } })).json()
+    await login(page, 'farmer')
+    const errors = collectErrors(page)
+    const apiErrors = collectApiErrors(page)
+    await page.goto('/dashboard/subscription')
+    const card = page.getByTestId('ai-credits-card')
+    await expect(card).toBeVisible({ timeout: 15_000 })
+    await expect(card).toContainText(`/ ${credits.allowance}`)
+    await expect(card).toContainText('Питання AI агроному')
+    await expect(page.getByText('без обмежень')).toHaveCount(0)  // «AI без обмежень» більше не обіцяємо
+    await expectNoErrors([...errors, ...apiErrors], 'підписка фермера')
   })
 })

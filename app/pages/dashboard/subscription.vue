@@ -39,6 +39,9 @@
         <span v-if="currentPlan !== 'basic'" class="px-3 py-1 bg-agro text-white rounded-full text-xs font-bold">Активний</span>
       </div>
 
+      <!-- AI-кредити поточного місяця -->
+      <DashboardAiCreditsCard profile="farmer" />
+
       <!-- Перемикач місяць / рік -->
       <div class="flex items-center justify-center gap-3 mb-6">
         <span :class="billingPeriod === 'month' ? 'text-agro-dark font-semibold' : 'text-agro-light'" class="text-sm">Щомісяця</span>
@@ -268,7 +271,17 @@ const planIconBg = computed(() => {
   return 'background: rgb(238,241,227)'
 })
 
-const BASIC_FEATURES = [
+// Кредити AI в тарифах — з налаштувань адмінки (ai_plan_limits)
+const { data: aiLimitsData } = await supabase.from('ai_plan_limits').select('plan, credits_base, credits_per_ha')
+const aiCreditsLine = (plan: string) => {
+  const row = (aiLimitsData || []).find((r: any) => r.plan === plan)
+  if (!row?.credits_base) return 'AI агроном'
+  const perHa = Number(row.credits_per_ha) ? ` + ${String(row.credits_per_ha).replace('.', ',')} за кожен га` : ''
+  return `AI агроном — ${row.credits_base} кредитів${perHa} на місяць`
+}
+
+const BASIC_FEATURES = computed(() => [
+  aiCreditsLine('basic').replace('на місяць', 'на пробу щомісяця'),
   'До 2 га полів',
   '1 культура',
   '1 технологічна карта',
@@ -277,40 +290,40 @@ const BASIC_FEATURES = [
   'Чати',
   'Угоди з агрономом',
   'Угоди із заготівельником',
-]
+])
 
 const BASIC_DISABLED = [
-  'AI агроном',
   'Аналітика',
   'Співробітники',
   'Інтеграції',
 ]
 
-const BUSINESS_FEATURES = [
+const BUSINESS_FEATURES = computed(() => [
   'Все що у Звичайному',
   'Поля — необмежено (2–50 га)',
   'Культури — необмежено',
   '1 технологічна карта на культуру',
-  'AI агроном — повний доступ',
+  aiCreditsLine('business'),
   'Аналітика',
   'Облік збору врожаю',
   'Співробітники до 5 осіб (поля, склад, нагадування, збір)',
-]
+])
 
-const BUSINESS_PRO_FEATURES = [
+const BUSINESS_PRO_FEATURES = computed(() => [
   'Все що в Бізнес',
   'Поля — необмежено (50+ га)',
-  'AI агроном — без обмежень',
+  aiCreditsLine('business_pro'),
   'Співробітники — необмежено (поля, склад, нагадування, збір)',
   'Інтеграції',
   'Пріоритетна підтримка',
-]
+])
 
 const FAQ = [
   { q: 'Чи можна скасувати підписку?', a: 'Так, підписка не продовжується автоматично. Ви платите раз на місяць або рік.' },
   { q: 'Що буде після закінчення плану?', a: 'Ваші дані збережуться, але доступ до платних функцій буде обмежено до Звичайного.' },
   { q: 'Як відбувається оплата?', a: 'Оплата через WayForPay — безпечний український платіжний сервіс.' },
-  { q: 'Що таке Бізнес Про?', a: 'Для господарств 50+ га — всі функції без обмежень, інтеграції та пріоритетна підтримка.' },
+  { q: 'Що таке Бізнес Про?', a: 'Для господарств 50+ га — необмежені поля й співробітники, більше AI-кредитів, інтеграції та пріоритетна підтримка.' },
+  { q: 'Що таке AI-кредити?', a: 'Кожна дія AI агронома коштує кредити: питання — 1, діагностика за фото — 3, AI техкарта — 5, звіт за сезон — 5. Кредити оновлюються 1-го числа щомісяця, їх кількість залежить від тарифу й площі полів. Коли кредити закінчуються, прості питання працюють в економ-режимі.' },
 ]
 
 const faqPriceEntry = computed(() =>

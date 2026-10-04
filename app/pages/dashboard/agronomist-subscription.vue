@@ -35,6 +35,9 @@
         <span v-if="isPro" class="px-3 py-1 bg-agro text-white rounded-full text-xs font-bold">Активний</span>
       </div>
 
+      <!-- AI-кредити поточного місяця (профіль агронома) -->
+      <DashboardAiCreditsCard profile="agronomist" />
+
       <!-- Плани -->
       <div class="grid md:grid-cols-2 gap-4 mb-8">
 
@@ -159,23 +162,27 @@ const paying = ref(false)
 const payError = ref('')
 const loyaltyDiscount = ref(0)
 
-const BASIC_FEATURES = [
+// Кредити AI в тарифах — з налаштувань адмінки (ai_plan_limits)
+const { data: aiLimitsData } = await supabase.from('ai_plan_limits').select('plan, credits_base')
+const aiCredits = (plan: string) => (aiLimitsData || []).find((r: any) => r.plan === plan)?.credits_base || 0
+
+const BASIC_FEATURES = computed(() => [
   'Профіль у каталозі агрономів',
   'До 2 клієнтів',
   'Чати з фермерами',
-  'AI агроном (10 запитів/міс, до 2 фото)',
-]
+  `AI агроном — ${aiCredits('agronomist_basic')} кредитів на місяць`,
+])
 const BASIC_NEGATIVE = [
   'Без автопідняття в пошуку',
   'Без виділення профілю',
 ]
-const PRO_FEATURES = [
+const PRO_FEATURES = computed(() => [
   'Необмежена кількість клієнтів',
-  'AI агроном (500 запитів/міс + 60 фото)',
+  `AI агроном — ${aiCredits('pro')} кредитів на місяць`,
   'Автопідняття вгору кожні 5 днів',
   'Виділена картка профілю',
   'Пріоритетна підтримка',
-]
+])
 const FAQ = [
   { q: 'Чи продовжується підписка автоматично?', a: 'Ні — ви платите вручну раз на місяць або рік.' },
   { q: 'Що буде після закінчення PRO?', a: 'Акаунт переходить на Базовий. Дані і клієнти залишаються.' },
