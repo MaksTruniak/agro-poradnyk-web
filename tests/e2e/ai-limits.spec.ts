@@ -58,6 +58,11 @@ test.describe('Ліміти AI', () => {
     const { data: after } = await admin.from('ai_usage').select('credits_used')
       .eq('user_id', userId).eq('profile', 'farmer').eq('month', month).single()
     expect(after!.credits_used, 'відхилений запит списав кредити').toBe(credits.allowance)
+
+    // Повертаємо кредити одразу — наступні тести користуються ними
+    if (original) await admin.from('ai_usage').update(original).eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
+    else await admin.from('ai_usage').delete().eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
+    if (fallbackRowIds.length) await admin.from('ai_requests').delete().in('id', fallbackRowIds.splice(0))
   })
 
   test('клієнт не може дати собі кредити', async () => {
