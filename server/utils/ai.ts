@@ -2,8 +2,19 @@ import Groq from 'groq-sdk'
 
 // Спільне для AI-ендпоінтів: моделі, очищення вхідних даних, фільтр <think>, повтори при 429.
 
+// qwen3.8-27b приймає й зображення (llama-4-scout Groq вимкнув 17.07.2026)
 export const AI_TEXT_MODEL = 'qwen/qwen3.8-27b'
-export const AI_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
+export const AI_VISION_MODEL = 'qwen/qwen3.8-27b'
+
+// qwen3.8 — модель з міркуваннями: за замовчуванням пише їх у відповідь (<think>) і витрачає на них токени.
+// 'hidden' — міркування не потрапляють у текст; effort 'none' — без міркувань (коротко, дешево, без русизмів у тесті);
+// 'low' і вище — для задач, де міркування окупаються (більший max_tokens: приховані міркування теж рахуються).
+export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high'
+export const reasoningParams = (effort: ReasoningEffort = 'none') => ({ reasoning_format: 'hidden', reasoning_effort: effort })
+
+// Groq (безкоштовний тариф, на всю організацію): 1000 запитів/день, 8000 токенів/хв, 200 тис. токенів/день
+// і 1000 вихідних токенів/хв (OTPM) — запит з max_tokens понад цей ліміт Groq відхиляє одразу.
+export const AI_MAX_OUTPUT_TOKENS = 1000
 
 // Межі вхідних даних (захист від довільних запитів за рахунок платформи)
 export const AI_LIMITS = {
@@ -123,8 +134,12 @@ export async function groqWithRetry<T>(call: () => Promise<T>, tag: string, retr
 }
 
 /** Текстова відповідь моделі без міркувань */
-export async function groqText(tag: string, params: { messages: any[]; max_tokens: number; temperature?: number; model?: string }) {
+export async function groqText(tag: string, params: { messages: any[]; max_tokens: number; temperature?: number; model?: string; effort?: ReasoningEffort }) {
   const groq = getGroq()
-  const res: any = await groqWithRetry(() => groq.chat.completions.create({ model: params.model || AI_TEXT_MODEL, ...params, stream: false }), tag)
+  const { effort, ...rest } = params
+  const res: any = await groqWithRetry(() => groq.chat.completions.create({
+    model: params.model || AI_TEXT_MODEL, ...rest, max_tokens: Math.min(params.max_tokens, AI_MAX_OUTPUT_TOKENS),
+    ...reasoningParams(effort), stream: false,
+  } as any), tag)
   return stripThink(res.choices[0]?.message?.content || '')
 }

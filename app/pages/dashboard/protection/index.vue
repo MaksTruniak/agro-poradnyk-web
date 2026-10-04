@@ -553,8 +553,11 @@ const generateCard = async () => {
     const result = await $fetch('/api/ai-generate-card', {
       method: 'POST',
       headers: await authHeader(),
-      body: { cropType },
-    }) as { phases: { name: string; treatments: { type: string; product_name: string; dosage: string; notes: string }[] }[] }
+      body: { cropType, areaHa: farmInfo.value?.area_ha || null },
+    }) as {
+      phases: { name: string; treatments: { type: string; product_name: string; dosage: string; notes: string; catalog_product_slug: string | null }[] }[]
+      verification?: { catalog: number; replaced: number; generic: number; missing: number }
+    }
 
     if (!result?.phases?.length) throw new Error('Порожня відповідь')
 
@@ -574,6 +577,7 @@ const generateCard = async () => {
       product_name: t.product_name,
       dosage: t.dosage || null,
       notes: t.notes || null,
+      catalog_product_slug: t.catalog_product_slug || null,
       status: 'planned',
     })))
     if (rows.length) {
@@ -586,6 +590,14 @@ const generateCard = async () => {
     await saveActivePhasesToDb()
     await load()
     // Запит зараховує сервер (/api/ai-generate-card)
+    // Підсумок звірки препаратів з каталогом
+    const v = result.verification
+    if (v) {
+      const parts = [`з каталогу: ${v.catalog + v.generic}`]
+      if (v.replaced) parts.push(`замінено на аналоги: ${v.replaced}`)
+      if (v.missing) parts.push(`немає в каталозі: ${v.missing} (позначено ⚠)`)
+      ;(v.missing ? showError : showSuccess)(`Карту згенеровано — ${parts.join(', ')}`)
+    }
   } catch (e: any) {
     alert('Помилка генерації: ' + (e?.data?.message || e?.message || 'невідома'))
   } finally {

@@ -106,10 +106,11 @@ ${farmContext ? `\nДАНІ ГОСПОДАРСТВА ФЕРМЕРА:\n${farmCont
   try {
     stream = await groqWithRetry(() => groq.chat.completions.create({
       model,
-      max_tokens: 1024,
+      max_tokens: 900,  // OTPM Groq — див. AI_MAX_OUTPUT_TOKENS
       stream: true,
       messages: groqMessages as any,
-    }), 'ai-chat')
+      ...reasoningParams('none'),
+    } as any), 'ai-chat')
   } catch (err) {
     // AI не відповів — запит не зараховуємо
     await releaseAiUsage(access, usage)
