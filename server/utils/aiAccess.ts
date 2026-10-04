@@ -83,3 +83,24 @@ export async function requireAiAccess(event: H3Event, opts: AiAccessOptions = {}
 
   return { userId: user.id, ownerId, profile, plan, limits }
 }
+
+/** Повернути зараховане використання, якщо AI не відповів (помилка моделі чи мережі) */
+export async function releaseAiUsage(access: { ownerId: string; profile: SubscriptionProfile }, opts: AiAccessOptions) {
+  const addText = opts.text || 0
+  const addPhoto = opts.photo || 0
+  if (!addText && !addPhoto) return
+  try {
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    const month = currentUsageMonth()
+    const { data } = await supabase.from('ai_usage').select('text_count, photo_count')
+      .eq('user_id', access.ownerId).eq('profile', access.profile).eq('month', month).maybeSingle()
+    if (!data) return
+    await supabase.from('ai_usage').update({
+      text_count: Math.max(0, (data.text_count || 0) - addText),
+      photo_count: Math.max(0, (data.photo_count || 0) - addPhoto),
+      updated_at: new Date().toISOString(),
+    }).eq('user_id', access.ownerId).eq('profile', access.profile).eq('month', month)
+  } catch (e) {
+    console.error('[ai-usage] release failed:', e)
+  }
+}

@@ -364,7 +364,7 @@ const explainTip = async (tip: any) => {
     const res = await $fetch<{ explanation: string }>('/api/calendar-explain', {
       method: 'POST',
       headers: await authHeader(),
-      body: { tip, region: farmerRegion.value, area_ha },
+      body: { tipId: tip.id, region: farmerRegion.value, area_ha },  // текст підказки сервер бере з agro_calendar
     })
     tipExplanations.value[tip.id] = res.explanation
   } finally {

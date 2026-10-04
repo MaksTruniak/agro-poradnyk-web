@@ -1,16 +1,38 @@
-import Groq from 'groq-sdk'
+const TREATMENT_TYPES = ['захист', 'підживлення', 'обробка', 'полив']
+
+/** Відповідь моделі → перевірена структура техкарти (браузер вставляє її в базу як є) */
+function parseCard(text: string) {
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) return null
+  let parsed: any
+  try { parsed = JSON.parse(jsonMatch[0]) } catch { return null }
+  if (!Array.isArray(parsed?.phases)) return null
+  const phases = parsed.phases.slice(0, 8).map((p: any) => ({
+    name: clampText(p?.name, 100).trim(),
+    treatments: (Array.isArray(p?.treatments) ? p.treatments : []).slice(0, 6).map((t: any) => ({
+      type: TREATMENT_TYPES.includes(t?.type) ? t.type : 'обробка',
+      product_name: clampText(t?.product_name, 150).trim(),
+      dosage: clampText(t?.dosage, 100).trim(),
+      notes: clampText(t?.notes, 300).trim(),
+    })).filter((t: any) => t.product_name),
+  })).filter((p: any) => p.name && p.treatments.length)
+  return phases.length ? { phases } : null
+}
 
 export default defineEventHandler(async (event) => {
-  const { cropType, variety, region, areaHa } = await readBody(event)
+  const body = await readBody(event)
+  const cropType = clampText(body?.cropType, 100).trim()
+  const variety = clampText(body?.variety, 100).trim()
+  const region = clampText(body?.region, 100).trim()
+  const areaHa = Number(body?.areaHa) > 0 ? Number(body.areaHa) : null
 
-  if (!cropType) throw createError({ statusCode: 400, message: 'cropType required' })
+  if (!cropType) {
+    await requireAiAccess(event)  // без входу — 401, а не 400
+    throw createError({ statusCode: 400, message: 'cropType required' })
+  }
 
-  await requireAiAccess(event, { text: 1 })
-
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) throw createError({ statusCode: 500, message: 'GROQ_API_KEY not configured' })
-
-  const groq = new Groq({ apiKey })
+  const usage = { text: 1 }
+  const access = await requireAiAccess(event, usage)
 
   const cropFull = variety ? `${cropType} (${variety})` : cropType
   const areaNote = areaHa ? `, площа ${areaHa} га` : ''
@@ -49,37 +71,22 @@ export default defineEventHandler(async (event) => {
 
 Значення поля "type" — ТІЛЬКИ одне з: "захист", "підживлення", "обробка", "полив"`
 
-  let completion: any
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      completion = await groq.chat.completions.create({
-        model: 'qwen/qwen3.8-27b',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.4,
-        max_tokens: 2000,
-      })
-      break
-    } catch (err: any) {
-      const isRateLimit = err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
-      if (isRateLimit && attempt < 3) {
-        await new Promise(r => setTimeout(r, 2000 * attempt))
-        continue
-      }
-      if (isRateLimit) throw createError({ statusCode: 429, message: 'Зараз велике навантаження на AI. Спробуйте за хвилину.' })
-      throw err
-    }
-  }
-
-  const text = completion.choices[0]?.message?.content?.trim() || ''
-
-  // Витягуємо JSON навіть якщо модель додала зайвий текст
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw createError({ statusCode: 500, message: 'AI не повернув JSON' })
-
+  let card: ReturnType<typeof parseCard> = null
   try {
-    const parsed = JSON.parse(jsonMatch[0])
-    return parsed
-  } catch {
-    throw createError({ statusCode: 500, message: 'Помилка парсингу відповіді AI' })
+    // Міркування моделі (<think>) прибирає groqText — інакше дужки з них ламали пошук JSON
+    const text = await groqText('ai-generate-card', {
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.4,
+      max_tokens: 2000,
+    })
+    card = parseCard(text)
+  } catch (err) {
+    await releaseAiUsage(access, usage)
+    throw err
   }
+  if (!card) {
+    await releaseAiUsage(access, usage)
+    throw createError({ statusCode: 502, message: 'AI повернув некоректну карту. Спробуйте ще раз.' })
+  }
+  return card
 })

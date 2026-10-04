@@ -1,20 +1,22 @@
-import Groq from 'groq-sdk'
+import { createClient } from '@supabase/supabase-js'
 
+// Пояснення підказки агрокалендаря. Саму підказку сервер бере з таблиці agro_calendar за id —
+// довільний текст з браузера не приймається.
 export default defineEventHandler(async (event) => {
   await requireAiAccess(event)
-  const body = await readBody(event)
-  const { tip, region } = body as {
-    tip: { crop_type: string; title: string; description: string; category: string; month: number }
-    region?: string
-  }
+  const body = await readBody(event).catch(() => ({}))
+  const tipId = body?.tipId ?? body?.tip?.id
+  if (!tipId) throw createError({ statusCode: 400, message: 'tipId required' })
+  const region = clampText(body?.region, 100)
+  const areaHa = Number(body?.area_ha) > 0 ? Number(body.area_ha) : null
 
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) throw createError({ statusCode: 500, message: 'GROQ_API_KEY not configured' })
+  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  const { data: tip } = await supabase.from('agro_calendar').select('crop_type, title, description, month').eq('id', tipId).maybeSingle()
+  if (!tip) throw createError({ statusCode: 404, message: 'Підказку не знайдено' })
 
   const monthNames = ['', 'січні', 'лютому', 'березні', 'квітні', 'травні', 'червні', 'липні', 'серпні', 'вересні', 'жовтні', 'листопаді', 'грудні']
   const monthName = monthNames[tip.month] || ''
-
-  const areaInfo = body.area_ha ? ` на площі ${body.area_ha} га` : ''
+  const areaInfo = areaHa ? ` на площі ${areaHa} га` : ''
   const prompt = `Ти агроном-консультант для фермерських господарств. Фермер вирощує ${tip.crop_type}${areaInfo}${region ? ` в ${region} області` : ''} у промисловому масштабі.
 Зараз ${monthName}. Підказка агрокалендаря: "${tip.title}" — ${tip.description}
 
@@ -25,17 +27,6 @@ export default defineEventHandler(async (event) => {
 
 Відповідай українською, без зайвих вступів, одразу по суті. Не давай поради для домашнього саду.`
 
-  const groq = new Groq({ apiKey })
-  const completion = await groq.chat.completions.create({
-    model: 'qwen/qwen3.8-27b',
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 300,
-    temperature: 0.5,
-  })
-
-  const text = completion.choices[0]?.message?.content?.trim() || ''
-  // Remove <think>...</think> blocks if present
-  const clean = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
-
-  return { explanation: clean }
+  const explanation = await groqText('calendar-explain', { messages: [{ role: 'user', content: prompt }], max_tokens: 400, temperature: 0.5 })
+  return { explanation }
 })

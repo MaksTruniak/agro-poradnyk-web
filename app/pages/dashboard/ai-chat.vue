@@ -748,7 +748,8 @@ const startNewSession = async () => {
     const { summary } = await $fetch('/api/ai-summary', {
       method: 'POST',
       headers: await authHeader(),
-      body: { messages: messages.value, prevSummary: aiMemory.value },
+      // Повідомлення й попередній підсумок сервер бере з БД за id розмови
+      body: { chatId: currentChatId.value },
     }) as any
     // Зберегти summary в пам'ять
     await supabase.from('ai_memory').upsert({
@@ -847,28 +848,15 @@ const generateSeasonReport = async () => {
   if (!uid.value || generatingReport.value) return
   generatingReport.value = true
   try {
-    // Збираємо всі повідомлення з усіх сесій — одним запитом, далі групуємо по сесіях
-    const allMsgs: string[] = []
-    const sessionIds = chatSessions.value.map((s: any) => s.id)
-    const { data: allSessionMsgs } = sessionIds.length
-      ? await supabase.from('ai_messages').select('chat_id, role, content, created_at')
-          .in('chat_id', sessionIds).order('created_at', { ascending: true })
-      : { data: [] as any[] }
-    for (const session of chatSessions.value) {
-      const msgs = (allSessionMsgs || []).filter((m: any) => m.chat_id === session.id)
-      if (msgs.length) {
-        allMsgs.push(`--- Розмова "${session.title}" (${session.date}) ---`)
-        msgs.forEach((m: any) => allMsgs.push(`${m.role === 'user' ? 'Фермер' : 'AI'}: ${m.content.replace(/SCHEME_DETECTED/g, '').replace(/REMINDER:[^\n]+/g, '').trim()}`))
-      }
-    }
     const res = await $fetch('/api/ai-season-report', {
       method: 'POST',
       headers: await authHeader(),
-      body: { conversations: allMsgs.join('\n'), farmName: farmName.value, memory: aiMemory.value },
+      // Консультації й пам'ять сервер бере з БД сам
+      body: { farmName: farmName.value },
     }) as any
 
-    // Прибираємо <think>...</think> теги що може вставляти qwen
-    const rawReport = (res.report || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+    // Текст моделі — екрануємо: вікно друку має той самий origin, що й сайт
+    const rawReport = escapeHtml(res.report || '')
 
     const date = new Date().toLocaleDateString('uk-UA')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Звіт сезону — ${farmName.value || 'Господарство'}</title>
@@ -879,7 +867,7 @@ const generateSeasonReport = async () => {
     .meta{color:#888;margin-bottom:28px}
     footer{margin-top:48px;text-align:center;color:#aaa;font-size:12px;border-top:1px solid #e0edcc;padding-top:16px}</style></head>
     <body><h1>Звіт сезону</h1>
-    <p class="meta">${farmName.value || 'Загальна консультація'} · Сформовано ${date}</p>
+    <p class="meta">${escapeHtml(farmName.value || 'Загальна консультація')} · Сформовано ${date}</p>
     <div>${rawReport.replace(/\n/g, '<br>')}</div>
     <footer>Сформовано через АгроПростір · agroprostir.com.ua</footer></body></html>`
 
@@ -1317,7 +1305,6 @@ const send = async () => {
       body: JSON.stringify({
         messages: apiMessages,
         farmContext: farmContext.value,
-        hasImage: !!imageDataUrl,
         region: farmRegion.value || null,
       }),
     })
@@ -1341,14 +1328,18 @@ const send = async () => {
     const reader = res.body!.getReader()
     const decoder = new TextDecoder()
 
+    // Рядок SSE може розірватися між шматками — недочитаний хвіст тримаємо в буфері
+    let pending = ''
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      const chunk = decoder.decode(value)
-      for (const line of chunk.split('\n')) {
+      pending += decoder.decode(value, { stream: true })
+      const lines = pending.split('\n')
+      pending = lines.pop() || ''
+      for (const line of lines) {
         if (!line.startsWith('data: ')) continue
         const data = line.slice(6)
-        if (data === '[DONE]') break
+        if (data === '[DONE]') continue
         try {
           const parsed = JSON.parse(data)
           if (parsed.text) { streamingText.value += parsed.text; await scrollToBottom() }

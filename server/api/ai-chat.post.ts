@@ -1,5 +1,3 @@
-import Groq from 'groq-sdk'
-
 const REGION_COORDS: Record<string, { lat: number; lon: number }> = {
   'Вінницька': { lat: 49.23, lon: 28.47 },
   'Волинська': { lat: 50.74, lon: 25.32 },
@@ -44,12 +42,22 @@ async function getWeather(region: string): Promise<string | null> {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { messages, farmContext, hasImage, region } = body
+  // Історію чату очищає сервер: лише user/assistant, обмежена довжина, фото — лише в останньому повідомленні.
+  // Чи є фото, визначає сервер (не прапорець з браузера) — від цього залежать модель і ліміт фото.
+  let sanitized: ReturnType<typeof sanitizeChatMessages>
+  try {
+    sanitized = sanitizeChatMessages(body?.messages)
+  } catch (e) {
+    await requireAiAccess(event)  // без входу — 401, а не 400
+    throw e
+  }
+  const { messages, hasImage } = sanitized
+  const farmContext = clampText(body?.farmContext, AI_LIMITS.contextChars)
+  const region = clampText(body?.region, 100)
 
-  await requireAiAccess(event, { text: 1, photo: hasImage ? 1 : 0 })
-
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) throw createError({ statusCode: 500, message: 'GROQ_API_KEY not configured' })
+  const usage = { text: 1, photo: hasImage ? 1 : 0 }
+  const access = await requireAiAccess(event, usage)
+  const groq = getGroq()
 
   const weatherInfo = region ? await getWeather(region) : null
 
@@ -91,71 +99,46 @@ export default defineEventHandler(async (event) => {
 ${weatherInfo ? `\nПОТОЧНА ПОГОДА (${region}):\n${weatherInfo}\nВраховуй погодні умови у рекомендаціях.` : ''}
 ${farmContext ? `\nДАНІ ГОСПОДАРСТВА ФЕРМЕРА:\n${farmContext}\nВикористовуй цей контекст для персоналізованих порад.` : ''}`
 
-  setHeader(event, 'Content-Type', 'text/event-stream')
-  setHeader(event, 'Cache-Control', 'no-cache')
-  setHeader(event, 'Connection', 'keep-alive')
-
-  const groq = new Groq({ apiKey })
-  const model = hasImage ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'qwen/qwen3.8-27b'
-
+  const model = hasImage ? AI_VISION_MODEL : AI_TEXT_MODEL
   const groqMessages = [{ role: 'system', content: systemPrompt }, ...messages]
 
-  // Retry з backoff при 429 (rate limit)
-  async function createStreamWithRetry(retries = 3, delayMs = 2000) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        return await groq.chat.completions.create({
-          model,
-          max_tokens: 1024,
-          stream: true,
-          messages: groqMessages,
-        })
-      } catch (err: any) {
-        const isRateLimit = err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
-        if (isRateLimit && attempt < retries) {
-          console.warn(`[ai-chat] rate limit, retry ${attempt}/${retries} after ${delayMs}ms`)
-          await new Promise(r => setTimeout(r, delayMs * attempt))
-          continue
-        }
-        throw err
-      }
-    }
+  let stream: any
+  try {
+    stream = await groqWithRetry(() => groq.chat.completions.create({
+      model,
+      max_tokens: 1024,
+      stream: true,
+      messages: groqMessages as any,
+    }), 'ai-chat')
+  } catch (err) {
+    // AI не відповів — запит не зараховуємо
+    await releaseAiUsage(access, usage)
+    throw err
   }
 
   setHeader(event, 'Content-Type', 'text/event-stream')
   setHeader(event, 'Cache-Control', 'no-cache')
   setHeader(event, 'Connection', 'keep-alive')
 
-  try {
-    const stream = await createStreamWithRetry()
-
-    const encoder = new TextEncoder()
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of (stream as any)) {
-            const text = chunk.choices[0]?.delta?.content
-            if (text) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
-          }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-        } catch (streamErr) {
-          console.error('[ai-chat] stream error:', streamErr)
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-        } finally {
-          controller.close()
-        }
-      },
-    })
-    return sendStream(event, readable)
-  } catch (err: any) {
-    const isRateLimit = err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
-    console.error('[ai-chat] groq error:', err?.message, err?.status)
-    if (isRateLimit) {
-      throw createError({
-        statusCode: 429,
-        message: 'Зараз велике навантаження на AI. Спробуйте за хвилину.',
-      })
-    }
-    throw createError({ statusCode: err?.status || 500, message: err?.message || 'Groq API error' })
+  const encoder = new TextEncoder()
+  const think = createThinkFilter()
+  const send = (controller: ReadableStreamDefaultController, text: string) => {
+    if (text) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
   }
+  const readable = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of stream) {
+          send(controller, think.push(chunk.choices[0]?.delta?.content || ''))
+        }
+        send(controller, think.flush())
+      } catch (streamErr) {
+        console.error('[ai-chat] stream error:', streamErr)
+      } finally {
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      }
+    },
+  })
+  return sendStream(event, readable)
 })
