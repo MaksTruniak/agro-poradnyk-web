@@ -29,7 +29,6 @@ test.describe('Склад через інтерфейс', () => {
     await login(page, 'farmer')
     const errors = collectErrors(page)
     const apiErrors = collectApiErrors(page)
-    page.on('dialog', d => d.accept())  // пальне й техніка видаляють через confirm()
 
     // ── Хімія: додати → витратити нижче мінімуму → видалити ──
     await page.goto('/dashboard/inventory/chemicals')
@@ -71,6 +70,7 @@ test.describe('Склад через інтерфейс', () => {
     const { data: fuel } = await admin.from('fuel_inventory').select('id, quantity').eq('user_id', farmer.userId).eq('price_per_unit', FUEL_PRICE).single()
     expect(Number(fuel!.quantity)).toBe(380)
     await fuelCard.locator('button.border-red-200').click()
+    await page.getByRole('button', { name: 'Видалити' }).last().click()
     await expect(fuelCard).toHaveCount(0)
 
     // ── Техніка: додати → змінити стан → видалити ──
@@ -83,6 +83,7 @@ test.describe('Склад через інтерфейс', () => {
     const { data: eq } = await admin.from('equipment').select('id, year, status').eq('user_id', farmer.userId).eq('name', `${TAG} МТЗ`).single()
     expect(eq).toMatchObject({ year: 2015, status: 'ok' })
     await card(page, `${TAG} МТЗ`).locator('button.border-red-200').click()
+    await page.getByRole('button', { name: 'Видалити' }).last().click()
     await expect(card(page, `${TAG} МТЗ`)).toHaveCount(0)
 
     await expectNoErrors([...errors, ...apiErrors], 'склад через інтерфейс')
