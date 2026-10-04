@@ -22,7 +22,8 @@ const GROQ = 'qwen/qwen3.8-27b'
 
 export const AI_ACTIONS: Record<AiAction, AiActionConfig> = {
   // Відповіді фермеру — Claude (у тесті Groq-модель вигадувала назви хвороб і вставляла русизми)
-  chat:     { label: 'Питання AI агроному', credits: 1, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 4000 },
+  // maxTokens — запобіжник від надто довгих (дорогих) відповідей; стислість задає промпт чату
+  chat:     { label: 'Питання AI агроному', credits: 1, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 1500 },
   photo:    { label: 'Діагностика за фото', credits: 3, provider: 'anthropic', model: CLAUDE, effort: 'medium', maxTokens: 4000 },
   card:     { label: 'AI техкарта',         credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'medium', maxTokens: 8000 },
   report:   { label: 'Звіт за сезон',       credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 6000 },
