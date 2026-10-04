@@ -10,7 +10,7 @@
         <h1 class="dash-title bitter">Угоди</h1>
         <p class="dash-subtitle">Продаж та купівля врожаю</p>
       </div>
-      <button v-if="isFarmer" @click="openManualModal" class="dash-btn-primary shrink-0">
+      <button v-if="isFarmer && !isViewer" @click="openManualModal" class="dash-btn-primary shrink-0">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         Додати вручну
       </button>
@@ -76,30 +76,31 @@
               <span v-if="deal.status === 'cancelled'" class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-red-50 border border-red-200 text-red-500 rounded-xl px-3 py-1.5 font-medium">
                 Скасовано
               </span>
-              <template v-else>
+              <!-- Накладна, скасування, оцінка, чат — дії сторони угоди; співробітнику команди не показуємо -->
+              <template v-else-if="!inTeam">
                 <button @click="generateInvoice(deal)"
                   class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                   Накладна
                 </button>
-                <button @click="cancelDeal(deal)"
+                <button v-if="deal.status === 'confirmed'" @click="cancelDeal(deal)"
                   class="shrink-0 inline-flex items-center gap-1.5 text-xs border border-red-200 text-red-400 rounded-xl px-3 py-1.5 hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
                   Скасувати
                 </button>
               </template>
-              <button v-if="!isFarmer && deal.status === 'confirmed'" @click="confirmReceived(deal)"
+              <button v-if="!inTeam && !isFarmer && deal.status === 'confirmed'" @click="confirmReceived(deal)"
                 class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro text-white rounded-xl px-3 py-1.5 hover:bg-agro-dark transition-colors font-medium">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 Підтвердити отримання
               </button>
-              <button v-if="!myReviews.has(deal.id) && deal.status === 'completed'" @click="openReview(deal)"
+              <button v-if="!inTeam && !myReviews.has(deal.id) && deal.status === 'completed'" @click="openReview(deal)"
                 class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-amber-50 border border-amber-200 text-amber-600 rounded-xl px-3 py-1.5 hover:bg-amber-100 transition-colors font-medium">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінити
               </button>
-              <span v-else-if="myReviews.has(deal.id)" class="shrink-0 inline-flex items-center gap-1.5 text-xs text-agro-light px-3 py-1.5 border border-transparent rounded-xl">
+              <span v-else-if="!inTeam && myReviews.has(deal.id)" class="shrink-0 inline-flex items-center gap-1.5 text-xs text-agro-light px-3 py-1.5 border border-transparent rounded-xl">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Оцінено
               </span>
-              <NuxtLink v-if="deal.chat_id" :to="`/dashboard/chats/${deal.chat_id}`"
+              <NuxtLink v-if="deal.chat_id && !inTeam" :to="`/dashboard/chats/${deal.chat_id}`"
                 class="shrink-0 text-xs border border-agro-border text-agro-light rounded-xl px-3 py-1.5 hover:border-agro hover:text-agro transition-colors">
                 Чат →
               </NuxtLink>
@@ -132,12 +133,12 @@
                 Скасовано
               </span>
               <template v-else>
-                <button @click="generateManualInvoice(s)"
+                <button v-if="!inTeam" @click="generateManualInvoice(s)"
                   class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-agro-hover border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors font-medium">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                   Накладна
                 </button>
-                <button @click="cancelManual(s)"
+                <button v-if="!isViewer" @click="cancelManual(s)"
                   class="shrink-0 inline-flex items-center gap-1.5 text-xs border border-red-200 text-red-400 rounded-xl px-3 py-1.5 hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
                   Скасувати
                 </button>
@@ -392,8 +393,13 @@ const submitReview = async () => {
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
+// Співробітник команди бачить угоди господарства власника (як фермер); особисті дії сторони угоди — лише власнику
+const { getQueryUserId, isViewer } = useTeamContext()
+const ownerId = (await getQueryUserId()) || uid
+const inTeam = ownerId !== uid
+
 const { data: profileData } = await supabase.from('users').select('role').eq('id', uid).single()
-const role = profileData?.role || 'farmer'
+const role = inTeam ? 'farmer' : (profileData?.role || 'farmer')
 const isFarmer = role === 'farmer' || role === 'dacha'
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
@@ -492,7 +498,7 @@ const saveManual = async () => {
   }
 
   const { data } = await supabase.from('manual_sales').insert({
-    user_id: uid,
+    user_id: ownerId,
     crop_type: cropType,
     quantity_tons: quantityTons,
     price_per_ton: pricePerTon || null,
@@ -518,6 +524,7 @@ const saveManual = async () => {
 }
 
 const { confirm: confirmDialog } = useConfirm()
+const { error: showError } = useToast()
 
 const invoiceProfileAlert = ref(false)
 
@@ -592,14 +599,16 @@ const openInvoiceModal = async (html: string, invoiceNum: string, source: { kind
 const cancelDeal = async (deal: any) => {
   if (!await confirmDialog('Угоду буде позначено як скасовану.', { title: 'Скасувати угоду?' })) return
   const { error } = await supabase.from('deals').update({ status: 'cancelled', cancelled_at: new Date().toISOString() }).eq('id', deal.id)
-  if (!error) deal.status = 'cancelled'
+  if (error) { showError('Не вдалося скасувати угоду'); return }
+  deal.status = 'cancelled'
 }
 
 const cancelManual = async (s: any) => {
   if (!await confirmDialog('Запис буде позначено як скасований.', { title: 'Скасувати продаж?' })) return
   // Списане зі складу повертає база (тригер manual_sales_stock)
   const { error } = await supabase.from('manual_sales').update({ status: 'cancelled' }).eq('id', s.id)
-  if (!error) s.status = 'cancelled'
+  if (error) { showError('Не вдалося скасувати продаж'); return }
+  s.status = 'cancelled'
 }
 
 const confirmReceived = async (deal: any) => {
@@ -626,9 +635,9 @@ const generateInvoice = async (deal: any) => {
 onMounted(async () => {
   const field = isFarmer ? 'farmer_id' : 'buyer_id'
   const [dealsRes, manualRes, farmsRes] = await Promise.all([
-    supabase.from('deals').select('*').eq(field, uid).in('status', ['confirmed', 'completed']).order('confirmed_at', { ascending: false }),
-    isFarmer ? supabase.from('manual_sales').select('*').eq('user_id', uid).order('sold_at', { ascending: false }) : Promise.resolve({ data: [] }),
-    isFarmer ? supabase.from('farms').select('farm_crops(id, crop_type, variety, stock_quantity, stock_unit)').eq('user_id', uid) : Promise.resolve({ data: [] }),
+    supabase.from('deals').select('*').eq(field, ownerId).in('status', ['confirmed', 'completed']).order('confirmed_at', { ascending: false }),
+    isFarmer ? supabase.from('manual_sales').select('*').eq('user_id', ownerId).order('sold_at', { ascending: false }) : Promise.resolve({ data: [] }),
+    isFarmer ? supabase.from('farms').select('farm_crops(id, crop_type, variety, stock_quantity, stock_unit)').eq('user_id', ownerId) : Promise.resolve({ data: [] }),
   ])
 
   if (isFarmer) {

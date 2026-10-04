@@ -15,6 +15,7 @@ test.describe('Команда: доступ до даних господарст
   const email = account('buyer').email.toLowerCase()
   let farmId = ''
   let chemId = ''
+  const dealIds: string[] = []
 
   const setRole = async (role: 'editor' | 'viewer') => {
     const farmer = await asUser('farmer')
@@ -44,6 +45,8 @@ test.describe('Команда: доступ до даних господарст
     const admin = serviceClient()
     const { userId } = await asUser('farmer')
     await admin.from('team_members').delete().eq('owner_id', userId).eq('email', email)
+    if (dealIds.length) await admin.from('deals').delete().in('id', dealIds)
+    await admin.from('manual_sales').delete().eq('user_id', userId).like('crop_type', `${TAG}%`)
     await admin.from('farm_inventory').delete().eq('user_id', userId).like('name', `${TAG}%`)
     const fuels = (await admin.from('fuel_inventory').select('id').eq('user_id', userId).like('fuel_type', `${TAG}%`)).data ?? []
     if (fuels.length) await admin.from('fuel_log').delete().in('fuel_id', fuels.map(f => f.id))
@@ -91,6 +94,59 @@ test.describe('Команда: доступ до даних господарст
     await m.from('team_members').update({ role: 'editor' }).eq('owner_id', owner).neq('email', email)
     const sub = await m.from('subscriptions').update({ plan: 'business_pro' }).eq('user_id', owner).select('id')
     expect(sub.data ?? [], 'редактор змінив підписку власника').toEqual([])
+  })
+
+  test('угоди господарства: редактор бачить і веде ручні продажі, особистих дій немає', async ({ page, browser }) => {
+    test.setTimeout(120_000)
+    test.skip(!hasAccount('agronomist'), 'потрібен E2E_AGRONOMIST_* як сторонній покупець')
+    const farmer = await asUser('farmer')
+    const member = await asUser('buyer')
+    const counterparty = await asUser('agronomist')
+    const admin = serviceClient()
+
+    // Угоди фермера з іншим покупцем (співробітник не є стороною угоди)
+    for (const [status, crop] of [['confirmed', `${TAG} Пшениця`], ['completed', `${TAG} Соняшник`]] as const) {
+      const { data } = await admin.from('deals').insert({
+        farmer_id: farmer.userId, buyer_id: counterparty.userId, proposed_by: counterparty.userId,
+        crop_type: crop, quantity_tons: 5, price_per_ton: 9000, status,
+        confirmed_at: new Date().toISOString(), completed_at: status === 'completed' ? new Date().toISOString() : null,
+      }).select('id').single()
+      dealIds.push(data!.id)
+    }
+    const { data: seen } = await member.client.from('deals').select('id').in('id', dealIds)
+    expect(seen?.length, 'співробітник не бачить угод господарства').toBe(2)
+    const cancel = await member.client.from('deals').update({ status: 'cancelled' }).eq('id', dealIds[0]!).select('id')
+    expect(cancel.data ?? [], 'співробітник скасував угоду власника').toEqual([])
+
+    // deals.vue → saveManual від імені господарства
+    const { data: sale, error } = await member.client.from('manual_sales').insert({
+      user_id: farmer.userId, crop_type: `${TAG} Кукурудза`, quantity_tons: 2, sold_at: '2026-10-01',
+    }).select('id').single()
+    expect(error, 'редактор не може додати ручний продаж').toBeNull()
+
+    await login(page, 'buyer')
+    const errors = collectErrors(page)
+    const apiErrors = collectApiErrors(page)
+    await page.goto('/dashboard/deals')
+    await expect(page.getByText(`${TAG} Пшениця`).first(), 'угоди господарства не показано').toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText(`${TAG} Кукурудза`).first(), 'ручні продажі господарства не показано').toBeVisible()
+    await expect(page.getByRole('button', { name: /Накладна/ }), 'співробітнику показано накладну').toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Оцінити/ })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Додати вручну/ })).toBeVisible()
+    await expectNoErrors([...errors, ...apiErrors], 'угоди співробітника')
+
+    // Власник: завершену угоду скасувати не можна — кнопки немає
+    const ownerCtx = await browser.newContext()
+    const ownerPage = await ownerCtx.newPage()
+    await login(ownerPage, 'farmer')
+    await ownerPage.goto('/dashboard/deals')
+    const completedRow = ownerPage.locator('div.flex.items-center.gap-4', { hasText: `${TAG} Соняшник` })
+    await expect(completedRow).toBeVisible({ timeout: 15_000 })
+    await expect(completedRow.getByRole('button', { name: 'Скасувати' }), 'скасування завершеної угоди').toHaveCount(0)
+    const confirmedRow = ownerPage.locator('div.flex.items-center.gap-4', { hasText: `${TAG} Пшениця` })
+    await expect(confirmedRow.getByRole('button', { name: 'Скасувати' })).toBeVisible()
+    await ownerCtx.close()
+    await admin.from('manual_sales').delete().eq('id', sale!.id)
   })
 
   test('переглядач лише читає', async () => {
