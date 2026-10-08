@@ -217,7 +217,7 @@
           </template>
 
           <!-- Системне повідомлення (адреса) -->
-          <template v-else-if="(msg.role === 'system' || msg.role === 'assistant') && (msg.content.startsWith('[for_farmer]') || msg.content.startsWith('[for_buyer]')) && (
+          <template v-else-if="(msg.content?.startsWith('[for_farmer]') || msg.content?.startsWith('[for_buyer]')) && (
             (msg.content.startsWith('[for_farmer]') && !iAmAgronomist) ||
             (msg.content.startsWith('[for_buyer]') && iAmAgronomist)
           )">
@@ -800,9 +800,8 @@ await supabase.from('messages')
   .eq('role', iAmAgronomist ? 'user' : 'assistant')
   .eq('is_read', false)
 const unreadChats = useState<number>('unread-chats', () => 0)
-if ((unreadCount ?? 0) > 0) {
-  unreadChats.value = Math.max(0, unreadChats.value - 1)
-}
+// Лічильник у меню — кількість непрочитаних повідомлень
+unreadChats.value = Math.max(0, unreadChats.value - (unreadCount ?? 0))
 
 // Realtime
 const channel = supabase.channel(`chat-${chatId}`)
@@ -991,7 +990,7 @@ const confirmReceived = async (dealId: string) => {
   await supabase.from('deals').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', dealId)
   const deal = deals.value.find(d => d.id === dealId)
   if (deal) deal.status = 'completed'
-  await supabase.from('messages').insert({ chat_id: chatId, role: 'assistant', content: '✅ Отримання підтверджено. Угоду завершено.', is_read: false })
+  await supabase.from('messages').insert({ chat_id: chatId, role: iAmAgronomist ? 'assistant' : 'user', content: '✅ Отримання підтверджено. Угоду завершено.', is_read: false })
 }
 
 const respondDeal = async (dealId: string, status: 'confirmed' | 'cancelled') => {
@@ -1023,8 +1022,8 @@ const respondDeal = async (dealId: string, status: 'confirmed' | 'cancelled') =>
       messages.value.push(tempMsg)
       scrollToBottom()
     }
-    // Зберігаємо як assistant щоб не блокувалось RLS
-    await supabase.from('messages').insert({ chat_id: chatId, role: 'assistant', content, is_read: false })
+    // role ставить база за тим, хто пише; показ визначає префікс [for_farmer] / [for_buyer]
+    await supabase.from('messages').insert({ chat_id: chatId, role: iAmAgronomist ? 'assistant' : 'user', content, is_read: false })
   }
 }
 

@@ -242,7 +242,7 @@ const submitOffer = async () => {
     if (deal) {
       await supabase.from('messages').insert({
         chat_id: nc.id,
-        role: 'assistant',
+        role: 'user',  // фермер — farmer_id чату
         content: `[deal:${deal.id}:${offerModal.unit}:${offerModal.quantity}:${offerModal.price}]`,
         is_read: false,
       })

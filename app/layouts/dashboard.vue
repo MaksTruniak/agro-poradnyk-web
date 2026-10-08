@@ -421,16 +421,20 @@ const loadUnread = async () => {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
   const uid = session.user.id
-  const isAgro = profile.value?.role === 'agronomist'
-  const field = isAgro ? 'agronomist_id' : 'farmer_id'
-  const { data: chatsData } = await supabase.from('chats').select('id').eq(field, uid).eq('type', 'human')
+  // Сторона в чаті — за id: у чатах купівлі заготівельник і фермер-покупець стоять в agronomist_id
+  const { data: chatsData } = await supabase.from('chats').select('id, agronomist_id')
+    .or(`farmer_id.eq.${uid},agronomist_id.eq.${uid}`).eq('type', 'human')
   if (!chatsData?.length) return
-  const chatIds = chatsData.map(c => c.id)
-  const { count } = await supabase.from('messages').select('*', { count: 'exact', head: true })
-    .in('chat_id', chatIds)
-    .eq('role', isAgro ? 'user' : 'assistant')
-    .eq('is_read', false)
-  unreadChats.value = count || 0
+  const asAgronomist = chatsData.filter((c: any) => c.agronomist_id === uid).map((c: any) => c.id)
+  const asFarmer = chatsData.filter((c: any) => c.agronomist_id !== uid).map((c: any) => c.id)
+  const countUnread = async (ids: string[], role: string) => {
+    if (!ids.length) return 0
+    const { count } = await supabase.from('messages').select('*', { count: 'exact', head: true })
+      .in('chat_id', ids).eq('role', role).eq('is_read', false)
+    return count || 0
+  }
+  const [a, f] = await Promise.all([countUnread(asAgronomist, 'user'), countUnread(asFarmer, 'assistant')])
+  unreadChats.value = a + f
 }
 
 const loadPendingAgreements = async () => {

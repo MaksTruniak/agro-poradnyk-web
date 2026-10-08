@@ -10,6 +10,8 @@ const month = new Date().toISOString().slice(0, 7)
 test.describe('Ліміти AI', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест змінює лічильник ai_usage)')
   test.skip(!hasAccount('farmer'), 'потрібні E2E_FARMER_*')
+  // Тести ділять кредити одного фермера (один вичерпує їх, інший показує) — лише по черзі
+  test.describe.configure({ mode: 'serial' })
 
   let original: { credits_used: number } | null = null
   let userId = ''
@@ -37,7 +39,9 @@ test.describe('Ліміти AI', () => {
     const { data: usage } = await admin.from('ai_usage').select('credits_used')
       .eq('user_id', userId).eq('profile', 'farmer').eq('month', month).maybeSingle()
     original = usage ?? null
-    await admin.from('ai_usage').upsert({ user_id: userId, profile: 'farmer', month, text_count: 0, photo_count: 0, credits_used: credits.allowance },
+    // Свідомо більше за будь-який тариф: паралельні тести змінюють гектари фермера, а з ними й кредити
+    const exhausted = credits.allowance + 1_000_000
+    await admin.from('ai_usage').upsert({ user_id: userId, profile: 'farmer', month, text_count: 0, photo_count: 0, credits_used: exhausted },
       { onConflict: 'user_id,profile,month' })
 
     // Техкарта — лише за кредити, запасної моделі немає
@@ -57,7 +61,7 @@ test.describe('Ліміти AI', () => {
 
     const { data: after } = await admin.from('ai_usage').select('credits_used')
       .eq('user_id', userId).eq('profile', 'farmer').eq('month', month).single()
-    expect(after!.credits_used, 'відхилений запит списав кредити').toBe(credits.allowance)
+    expect(after!.credits_used, 'відхилений запит списав кредити').toBe(exhausted)
 
     // Повертаємо кредити одразу — наступні тести користуються ними
     if (original) await admin.from('ai_usage').update(original).eq('user_id', userId).eq('profile', 'farmer').eq('month', month)

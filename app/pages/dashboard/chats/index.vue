@@ -102,7 +102,7 @@ const load = async () => {
     const [userRes, lastMsgRes, unreadRes, dealRes] = await Promise.all([
       supabase.from('public_profiles').select('name').eq('id', interlocutorId).single(),
       supabase.from('messages').select('content, created_at').eq('chat_id', chat.id).order('created_at', { ascending: false }).limit(1).single(),
-      supabase.from('messages').select('*', { count: 'exact', head: true }).eq('chat_id', chat.id).eq('role', isAgronomist ? 'user' : 'assistant').eq('is_read', false),
+      supabase.from('messages').select('*', { count: 'exact', head: true }).eq('chat_id', chat.id).eq('role', chat.agronomist_id === uid ? 'user' : 'assistant').eq('is_read', false),
       supabase.from('deals').select('id', { count: 'exact', head: true }).eq('chat_id', chat.id).eq('status', 'confirmed'),
     ])
 
