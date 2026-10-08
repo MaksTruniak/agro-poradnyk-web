@@ -10,7 +10,7 @@
         <h1 class="dash-title bitter">Сповіщення</h1>
         <p class="dash-subtitle">Системні повідомлення</p>
       </div>
-      <button v-if="items.length" @click="markAllRead" class="shrink-0 text-sm text-agro hover:underline font-medium">
+      <button v-if="items.some(n => !n.is_read)" @click="markAllRead" class="shrink-0 text-sm text-agro hover:underline font-medium">
         Позначити всі прочитаними
       </button>
     </div>
@@ -34,7 +34,7 @@
         class="card flex items-start gap-4 transition-all"
         :class="!n.is_read ? 'border-l-4 border-l-amber-400' : 'opacity-70'">
         <div class="text-2xl shrink-0 mt-0.5">
-          {{ n.type === 'inventory_low' ? '🧪' : '📋' }}
+          {{ n.type === 'inventory_low' ? '🧪' : n.type === 'treatment_soon' ? '🔔' : '📋' }}
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-agro-dark text-sm">{{ n.title }}</p>
@@ -45,6 +45,10 @@
           <NuxtLink v-if="n.type === 'inventory_low'" to="/dashboard/inventory"
             class="text-xs text-agro hover:underline font-medium">
             До складу →
+          </NuxtLink>
+          <NuxtLink v-else-if="n.type === 'treatment_soon'" to="/dashboard/reminders"
+            class="text-xs text-agro hover:underline font-medium">
+            До нагадувань →
           </NuxtLink>
           <button v-if="!n.is_read" @click="markRead(n)"
             class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-agro-hover text-agro-light hover:text-agro transition-colors"
@@ -67,6 +71,7 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const items = ref<any[]>([])
 const loading = ref(true)
+const unreadNotifications = useState('unread-notifications', () => 0)  // дзвіночок у меню
 
 const formatDate = (d: string) => new Date(d).toLocaleString('uk-UA', {
   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -85,16 +90,20 @@ async function load() {
 }
 
 async function markRead(n: any) {
-  await supabase.from('farm_notifications').update({ is_read: true }).eq('id', n.id)
+  const { error } = await supabase.from('farm_notifications').update({ is_read: true }).eq('id', n.id)
+  if (error) return
   n.is_read = true
+  unreadNotifications.value = Math.max(0, unreadNotifications.value - 1)
 }
 
 async function markAllRead() {
-  await supabase.from('farm_notifications')
+  const { error } = await supabase.from('farm_notifications')
     .update({ is_read: true })
     .eq('user_id', user.value!.sub)
     .eq('is_read', false)
+  if (error) return
   items.value.forEach(n => n.is_read = true)
+  unreadNotifications.value = 0
 }
 
 onMounted(load)

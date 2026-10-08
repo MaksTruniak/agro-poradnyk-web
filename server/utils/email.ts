@@ -51,8 +51,8 @@ export async function sendPaymentConfirmEmail(
   const planLabel = PLAN_LABELS[plan] || plan
   const amount = opts?.amount ? `${opts.amount} ${opts?.currency || 'UAH'}` : ''
   const paidAt = opts?.paidAt
-    ? new Date(opts.paidAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    : new Date().toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
+    ? new Date(opts.paidAt).toLocaleDateString('uk-UA', { timeZone: 'Europe/Kyiv', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleDateString('uk-UA', { timeZone: 'Europe/Kyiv', day: 'numeric', month: 'long', year: 'numeric' })
   const orderRef = opts?.orderReference || ''
 
   return getResend().emails.send({
@@ -111,7 +111,7 @@ export async function sendPaymentConfirmEmail(
 
 export async function sendSubscriptionReminderEmail(to: string, name: string, plan: string, expiresAt: string) {
   const planLabel = plan === 'pro' ? 'PRO' : plan === 'business' ? 'Business' : plan
-  const expDate = new Date(expiresAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
+  const expDate = new Date(expiresAt).toLocaleDateString('uk-UA', { timeZone: 'Europe/Kyiv', day: 'numeric', month: 'long', year: 'numeric' })
   return getResend().emails.send({
     from: FROM,
     to,
@@ -225,7 +225,7 @@ export async function sendReminderEmail(to: string, name: string, reminders: { d
   }
   const rows = reminders.map(r => {
     const date = new Date(r.scheduled_date)
-    const timeStr = date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', hour12: false })
+    const timeStr = date.toLocaleTimeString('uk-UA', { timeZone: 'Europe/Kyiv', hour: '2-digit', minute: '2-digit', hour12: false })
     const icon = UK_TYPES[r.type] || '🔔'
     return `
       <tr>

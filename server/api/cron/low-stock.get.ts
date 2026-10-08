@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendLowStockEmail } from '../../utils/email'
+import { notifyUser } from '../../utils/notify'
 
 export default defineEventHandler(async (event) => {
   const authHeader = getHeader(event, 'authorization')
@@ -47,6 +48,16 @@ export default defineEventHandler(async (event) => {
 
   let sent = 0
   for (const [userId, items] of Object.entries(byUser)) {
+    // Сповіщення в кабінеті — навіть якщо лист не дійде
+    try {
+      await notifyUser(supabase, userId, {
+        type: 'inventory_low',
+        title: items.length === 1 ? 'Закінчується запас на складі' : `Закінчуються запаси на складі: ${items.length}`,
+        body: items.map(i => `${i.name}: ${i.quantity} ${i.unit} (мін. ${i.min_quantity})`).join(', '),
+      })
+    } catch (e) {
+      console.error(`[low-stock cron] Notification error for user ${userId}:`, e)
+    }
     try {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue

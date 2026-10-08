@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendReminderEmail } from '../../utils/email'
+import { KYIV_TZ, kyivDayBounds, notifyUser } from '../../utils/notify'
 
 export default defineEventHandler(async (event) => {
   const authHeader = getHeader(event, 'authorization')
@@ -13,10 +14,8 @@ export default defineEventHandler(async (event) => {
   )
 
   // Нагадування на сьогодні (весь день)
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todayEnd = new Date()
-  todayEnd.setHours(23, 59, 59, 999)
+  // День — за Києвом: сервер працює в UTC, і нагадування на 00:00–03:00 потрапляли б у вчорашній лист
+  const { start: todayStart, end: todayEnd } = kyivDayBounds()
 
   const { data: reminders } = await supabase
     .from('reminders')
@@ -36,11 +35,22 @@ export default defineEventHandler(async (event) => {
   }
 
   let sent = 0
+  const kyivTime = (d: string) => new Date(d).toLocaleTimeString('uk-UA', { timeZone: KYIV_TZ, hour: '2-digit', minute: '2-digit', hour12: false })
   for (const [userId, userReminders] of Object.entries(byUser)) {
+    try {
+      await notifyUser(supabase, userId, {
+        type: 'treatment_soon',
+        title: userReminders.length === 1 ? 'Нагадування на сьогодні' : `Нагадування на сьогодні: ${userReminders.length}`,
+        body: userReminders.map(r => `${kyivTime(r.scheduled_date)} — ${r.description}`).join(', '),
+      })
+    } catch (e) {
+      console.error('[cron] reminder notification (cabinet) error', userId, e)
+    }
     try {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue
-      const name = userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
+      // При реєстрації ім'я зберігається в user_metadata.name
+      const name = userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
       await sendReminderEmail(userData.user.email, name, userReminders)
       sent++
     } catch (e) {

@@ -86,8 +86,9 @@
                 </svg>
                 <span class="flex-1">{{ item.label }}</span>
                 <span v-if="item.to === '/dashboard/chats' && unreadChats > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#2F5233; font-size:11px;">{{ unreadChats }}</span>
+                <span v-if="item.to === '/dashboard/notifications' && unreadNotifications > 0" class="w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ unreadNotifications }}</span>
                 <span v-if="item.to === '/cart' && cartCount > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#2F5233; font-size:11px;">{{ cartCount }}</span>
-                <span v-if="item.to === '/dashboard/inventory' && unreadNotifications > 0" class="w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ unreadNotifications }}</span>
+                <span v-if="item.to === '/dashboard/inventory' && lowStockCount > 0" class="w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ lowStockCount }}</span>
                 <span v-if="item.to === '/dashboard/agronomist-fields' && pendingShares > 0" class="w-5 h-5 bg-yellow-500 rounded-full text-white text-xs font-bold flex items-center justify-center" style="font-size:11px;">{{ pendingShares }}</span>
                 <span v-if="item.to === '/dashboard/agreements' && pendingAgreementsCount > 0" class="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style="background:#B3452F; font-size:11px;">{{ pendingAgreementsCount }}</span>
               </NuxtLink>
@@ -195,6 +196,7 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/dashboard/ai-chat':           { paths: [{ d: 'M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z', sw: 1.4, lj: 'round' }] },
   '/dashboard/reminders':         { paths: [{ d: 'M6 20V13a6 6 0 0112 0v7', sw: 1.6, lj: 'round' }, { d: 'M4 20h16', sw: 1.6, lc: 'round' }] },
   '/dashboard/chats':             { paths: [{ d: 'M4 5h16v11H8l-4 4V5z', sw: 1.6, lj: 'round' }] },
+  '/dashboard/notifications':     { paths: [{ d: 'M22 12h-6l-2 3h-4l-2-3H2', sw: 1.6, lc: 'round', lj: 'round' }, { d: 'M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z', sw: 1.6, lj: 'round' }] },
   '/dashboard/agreements':        { paths: [{ d: 'M9 12l2 2 4-4', sw: 1.6, lc: 'round', lj: 'round' }, { d: 'M12 2l8 4v6c0 5-4 9-8 10-4-1-8-5-8-10V6l8-4z', sw: 1.6, lj: 'round' }] },
   '/dashboard/deals':             { paths: [{ d: 'M4 12l4-8h8l4 8-4 8H8l-4-8z', sw: 1.6, lj: 'round' }, { d: 'M9 12l2 2 4-4', sw: 1.6, lc: 'round', lj: 'round' }] },
   '/dashboard/subscription':      { paths: [{ d: 'M6 3h12l3 6-9 12L3 9l3-6z', sw: 1.6, lj: 'round' }, { d: 'M3 9h18M9 3l3 18M15 3l-3 18', sw: 1.3, lj: 'round' }] },
@@ -387,7 +389,7 @@ const autoBoost = async (uid: string) => {
 
 const cartCount = ref(0)
 const unreadChats = useState('unread-chats', () => 0)
-const unreadNotifications = ref(0)
+const unreadNotifications = useState('unread-notifications', () => 0)
 const lowStockCount = ref(0)
 const pendingShares = ref(0)
 const pendingAgreementsCount = ref(0)
@@ -403,7 +405,7 @@ const loadNotifications = async () => {
   const lowChemicals = invData?.filter(i => i.quantity <= i.min_quantity).length || 0
   const lowFuel = fuelData?.filter(i => i.quantity <= i.min_quantity).length || 0
   lowStockCount.value = lowChemicals + lowFuel
-  unreadNotifications.value = (notifCount || 0) + lowStockCount.value
+  unreadNotifications.value = notifCount || 0  // дзвіночок — сповіщення; склад має власний лічильник
 }
 
 const loadPendingShares = async () => {
@@ -618,6 +620,7 @@ const navItems = computed(() => {
     ]},
     { label: 'Комунікація', items: [
       { to: '/dashboard/chats', label: 'Чати' },
+      { to: '/dashboard/notifications', label: 'Сповіщення' },
       { to: '/dashboard/agreements', label: 'Угоди з агрономами' },
       { to: '/dashboard/deals', label: 'Угоди із закупівельником' },
     ]},
