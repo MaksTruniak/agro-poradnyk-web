@@ -393,15 +393,15 @@ onMounted(async () => {
   farmName.value = farmData?.name || ''
   crops.value = farmData?.farm_crops || []
 
-  // Перевіряємо підписку фермера
+  // Перевіряємо тариф фермера (підписку клієнта агроном не читає — лише так/ні з бази)
   if (farmData?.user_id) {
-    const [{ data: sub }, { count }] = await Promise.all([
-      supabase.from('subscriptions').select('plan, expires_at').eq('user_id', farmData.user_id).eq('profile', 'farmer').maybeSingle(),
+    const [{ data: paid }, { count }] = await Promise.all([
+      supabase.rpc('client_has_paid_plan', { p_farmer: farmData.user_id }),
       supabase.from('protection_programs')
         .select('id', { count: 'exact', head: true })
         .in('farm_crop_id', (farmData.farm_crops || []).map((c: any) => c.id)),
     ])
-    farmerIsPro.value = isPaidFarmerPlan(getActivePlan(sub))
+    farmerIsPro.value = paid === true
     farmerProgramCount.value = count || 0
   }
 

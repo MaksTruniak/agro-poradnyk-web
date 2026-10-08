@@ -38,7 +38,7 @@
             {{ group.farmer_name?.[0]?.toUpperCase() || '?' }}
           </div>
           <p class="font-bold text-agro-dark">{{ group.farmer_name }}</p>
-          <span class="text-xs text-agro-light">{{ group.farms.length }} {{ group.farms.length === 1 ? 'поле' : 'поля' }}</span>
+          <span class="text-xs text-agro-light">{{ group.farms.length }} {{ fieldsWord(group.farms.length) }}</span>
         </div>
         <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           <div v-for="farm in group.farms" :key="farm.id" class="card hover:shadow-md transition-all">
@@ -83,6 +83,13 @@ const supabase = useSupabaseClient()
 const loading = ref(true)
 const groups = ref<any[]>([])
 
+const fieldsWord = (n: number) => {
+  const d = n % 10, dd = n % 100
+  if (d === 1 && dd !== 11) return 'поле'
+  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return 'поля'
+  return 'полів'
+}
+
 onMounted(async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) { loading.value = false; return }
@@ -96,20 +103,20 @@ onMounted(async () => {
   if (!agreements?.length) { loading.value = false; return }
 
   const farmerIds = [...new Set(agreements.map((a: any) => a.farmer_id))]
-  // farm_id з угод (якщо вказано)
-  const specificFarmIds = agreements.filter((a: any) => a.farm_id).map((a: any) => a.farm_id)
-
-  if (!specificFarmIds.length) { loading.value = false; return }
+  // Угода з конкретним полем — лише це поле; без поля (запит з чату) — усі поля фермера
+  const allFieldsFarmers = new Set(agreements.filter((a: any) => !a.farm_id).map((a: any) => a.farmer_id))
+  const specificFarmIds = new Set(agreements.filter((a: any) => a.farm_id).map((a: any) => a.farm_id))
 
   const [farmsRes, farmersRes] = await Promise.all([
-    supabase.from('farms').select('*, farm_crops(id, crop_type, area_ha)').in('id', specificFarmIds),
+    supabase.from('farms').select('*, farm_crops(id, crop_type, area_ha)').in('user_id', farmerIds).order('name'),
     supabase.from('public_profiles').select('id, name').in('id', farmerIds),
   ])
+  const farms = (farmsRes.data || []).filter((f: any) => allFieldsFarmers.has(f.user_id) || specificFarmIds.has(f.id))
 
   const farmerMap = Object.fromEntries((farmersRes.data || []).map((f: any) => [f.id, f.name]))
 
   const grouped: Record<string, any> = {}
-  for (const farm of farmsRes.data || []) {
+  for (const farm of farms) {
     const fid = farm.user_id
     if (!grouped[fid]) grouped[fid] = { farmer_id: fid, farmer_name: farmerMap[fid] || 'Фермер', farms: [] }
     grouped[fid].farms.push(farm)

@@ -440,14 +440,13 @@ const saveProfile = async () => {
     crops_expertise: selectedCrops.value,
   }
 
-  if (profile.value) {
-    await supabase.from('agronomist_profiles').update(payload).eq('id', profile.value.id)
-  } else {
-    const { data } = await supabase.from('agronomist_profiles').insert(payload).select().single()
-    profile.value = data
-  }
+  const { data, error } = profile.value
+    ? await supabase.from('agronomist_profiles').update(payload).eq('id', profile.value.id).select().single()
+    : await supabase.from('agronomist_profiles').insert(payload).select().single()
 
   saving.value = false
+  if (error) { useToast().error('Не вдалося зберегти профіль: ' + error.message); return }
+  profile.value = data
   saved.value = true
   setTimeout(() => saved.value = false, 3000)
 }

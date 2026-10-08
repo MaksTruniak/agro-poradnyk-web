@@ -553,7 +553,8 @@ onMounted(async () => {
 })
 
 const acceptDashAgreement = async (ag: any) => {
-  await supabase.from('agreements').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', ag.id)
+  const { error } = await supabase.from('agreements').update({ status: 'active' }).eq('id', ag.id)
+  if (error) { useToast().error(error.message); return }
   pendingAgreements.value = pendingAgreements.value.filter((a: any) => a.id !== ag.id)
 }
 

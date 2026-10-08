@@ -146,6 +146,7 @@ const supabase = useSupabaseClient()
 const loading = ref(true)
 const agreements = ref<any[]>([])
 const respondingId = ref('')
+const toast = useToast()
 
 const isAgronomist = ref(
   import.meta.client
@@ -270,10 +271,10 @@ const goToChat = async (ag: any) => {
 // Дії агронома
 const accept = async (ag: any) => {
   respondingId.value = ag.id
-  await supabase.from('agreements').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', ag.id)
-  ag.status = 'active'
-  ag.started_at = new Date().toISOString()
+  const { data, error } = await supabase.from('agreements').update({ status: 'active' }).eq('id', ag.id).select('status, started_at').single()
   respondingId.value = ''
+  if (error) { toast.error(error.message); return }
+  Object.assign(ag, data)
 }
 const decline = async (ag: any) => {
   respondingId.value = ag.id
