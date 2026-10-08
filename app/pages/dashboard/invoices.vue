@@ -72,18 +72,20 @@ definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 const supabase = useSupabaseClient()
 const loading = ref(true)
 const payments = ref<any[]>([])
-const subscription = ref<any>(null)
 
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
-const [paymentsRes, subRes] = await Promise.all([
+// Назви тарифів — з таблиці plans (як у формі оплати); ім'я платника — з профілю
+const [paymentsRes, plansRes, userRes] = await Promise.all([
   supabase.from('payments').select('*').eq('user_id', uid).order('created_at', { ascending: false }),
-  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
+  supabase.from('plans').select('id, label'),
+  supabase.from('users').select('name').eq('id', uid).maybeSingle(),
 ])
 
 payments.value = paymentsRes.data || []
-subscription.value = subRes.data
+const planNames: Record<string, string> = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p.label]))
+const payerName: string = (userRes.data as any)?.name || ''
 loading.value = false
 
 const formatDate = (d: string) =>
@@ -99,14 +101,14 @@ const PLAN_LABELS: Record<string, string> = {
   top_agronomist:  'Топ агронома',
   top_seller:      'Топ продавця',
 }
-const planLabel = (p: string) => PLAN_LABELS[p] || p
+const planLabel = (p: string) => planNames[p] || PLAN_LABELS[p] || p
 
 const downloadInvoice = (p: any) => {
   const invoiceNum = p.id.slice(0, 8).toUpperCase()
   const dateStr = formatDate(p.created_at)
-  const amountStr = `${p.amount.toLocaleString('uk-UA')} ${p.currency}`
-  const userEmail = session?.user?.email || ''
-  const userName = session?.user?.user_metadata?.full_name || ''
+  const amountStr = escapeHtml(`${p.amount.toLocaleString('uk-UA')} ${p.currency}`)
+  const userEmail = escapeHtml(session?.user?.email || '')
+  const userName = escapeHtml(payerName)
 
   const html = `<!DOCTYPE html>
 <html lang="uk">
@@ -183,7 +185,7 @@ const downloadInvoice = (p: any) => {
     <span class="col-sum">Сума</span>
   </div>
   <div class="table-row">
-    <span class="col-service">Передплата: ${planLabel(p.plan)}</span>
+    <span class="col-service">Передплата: ${escapeHtml(planLabel(p.plan))}</span>
     <span class="col-qty">1</span>
     <span class="col-sum">${amountStr}</span>
   </div>
@@ -194,7 +196,7 @@ const downloadInvoice = (p: any) => {
     <div class="total-amount">${amountStr}</div>
   </div>
 </div>
-<div class="order-ref">Номер замовлення: ${p.order_reference || '—'}</div>
+<div class="order-ref">Номер замовлення: ${escapeHtml(p.order_reference || '—')}</div>
 <div class="footer">
   АгроПростір — платформа для агрономів і фермерів України<br>
   agroprostir.com.ua · info@agroprostir.com.ua
