@@ -219,7 +219,9 @@ const startChat = async (agro: any) => {
     .eq('farmer_id', uid)
     .eq('agronomist_id', agro.user_id)
     .eq('type', 'human')
-    .single()
+    .is('title', null)
+    .limit(1)
+    .maybeSingle()
 
   if (existing) {
     router.push(`/dashboard/chats/${existing.id}`)

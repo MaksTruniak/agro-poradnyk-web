@@ -174,7 +174,7 @@ const addCrop = async () => {
     form.notes = ''
     showModal.value = false
   } catch (e: any) {
-    alert('Помилка: ' + (e.data?.statusMessage || e.message))
+    useToast().error(e.data?.message || e.data?.statusMessage || 'Не вдалося додати культуру')
   }
   saving.value = false
 }

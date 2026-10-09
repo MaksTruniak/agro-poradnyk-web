@@ -256,7 +256,7 @@ const goToChat = async (ag: any) => {
   const farmerId = isAgronomist.value ? ag.other_id : uid
   const agronomistId = isAgronomist.value ? uid : ag.other_id
   const { data } = await supabase.from('chats').select('id')
-    .eq('farmer_id', farmerId).eq('agronomist_id', agronomistId).eq('type', 'human').maybeSingle()
+    .eq('farmer_id', farmerId).eq('agronomist_id', agronomistId).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (data?.id) {
     router.push(`/dashboard/chats/${data.id}`)
   } else {

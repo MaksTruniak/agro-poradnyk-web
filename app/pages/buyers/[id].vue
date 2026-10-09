@@ -80,7 +80,7 @@
             <span v-if="c.min_qty || c.max_qty" class="text-sm text-agro-light shrink-0">
               {{ c.min_qty || '—' }} – {{ c.max_qty || '—' }} {{ c.unit }}
             </span>
-            <button v-if="uid !== buyerId" @click="openOfferModal(c)"
+            <button v-if="uid !== buyerId && canOffer" @click="openOfferModal(c)"
               class="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold border-2 border-agro text-agro rounded-xl px-3 py-1.5 hover:bg-agro hover:text-white transition-colors whitespace-nowrap">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Запропонувати
@@ -186,21 +186,28 @@ const uid = session?.user?.id
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long' })
 
-const [userRes, dealsRes, buyerCropsRes] = await Promise.all([
+// Угоди бачать лише їх учасники — статистику для сторінки рахує база (без сум і контрагентів)
+const [userRes, statsRes, buyerCropsRes, meRes] = await Promise.all([
   supabase.from('public_profiles').select('id, name, region, city, created_at, buyer_rating, buyer_reviews_count, is_verified_buyer, is_verified').eq('id', buyerId).single(),
-  supabase.from('deals').select('crop_type, quantity_tons').eq('buyer_id', buyerId).eq('status', 'confirmed'),
+  supabase.rpc('buyer_public_stats', { p_buyer: buyerId }),
   supabase.from('buyer_crops').select('*').eq('user_id', buyerId).order('created_at'),
+  uid ? supabase.from('users').select('role, roles').eq('id', uid).maybeSingle() : Promise.resolve({ data: null }),
 ])
 
 buyer.value = userRes.data
 buyerCrops.value = buyerCropsRes.data || []
 useHead({ title: buyer.value?.name || 'Заготівельник' })
 
-if (dealsRes.data?.length) {
-  dealsCount.value = dealsRes.data.length
-  totalTons.value = parseFloat(dealsRes.data.reduce((s: number, d: any) => s + (d.quantity_tons || 0), 0).toFixed(1).replace(/\.0$/, ''))
-  crops.value = [...new Set(dealsRes.data.map((d: any) => d.crop_type))].sort((a, b) => a.localeCompare(b, 'uk'))
+const stats = statsRes.data as { deals: number; tons: number; crops: string[] } | null
+if (stats?.deals) {
+  dealsCount.value = stats.deals
+  totalTons.value = Number(stats.tons) || 0
+  crops.value = [...stats.crops].sort((a, b) => a.localeCompare(b, 'uk'))
 }
+
+// Запропонувати продаж може фермер (угода записується з ним як продавцем)
+const me = meRes.data as { role?: string; roles?: string[] } | null
+const canOffer = !uid || me?.role === 'farmer' || !!me?.roles?.includes('farmer')
 
 loading.value = false
 
@@ -257,12 +264,13 @@ const startChat = async () => {
   if (!uid) { navigateTo('/auth'); return }
   starting.value = true
 
+  // Звичайний чат (без назви); чати пропозицій і запитів купівлі мають назву і окремі
   const { data: existing } = await supabase.from('chats').select('id')
-    .eq('farmer_id', uid).eq('agronomist_id', buyerId).eq('type', 'human').maybeSingle()
+    .eq('farmer_id', uid).eq('agronomist_id', buyerId).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (existing) { router.push(`/dashboard/chats/${existing.id}`); return }
 
   const { data: existing2 } = await supabase.from('chats').select('id')
-    .eq('farmer_id', buyerId).eq('agronomist_id', uid).eq('type', 'human').maybeSingle()
+    .eq('farmer_id', buyerId).eq('agronomist_id', uid).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (existing2) { router.push(`/dashboard/chats/${existing2.id}`); return }
 
   const { data: newChat } = await supabase.from('chats')

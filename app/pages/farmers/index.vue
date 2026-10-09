@@ -162,7 +162,9 @@ const startChat = async (farmer: any) => {
     .eq('farmer_id', farmer.id)
     .eq('agronomist_id', uid)
     .eq('type', 'human')
-    .single()
+    .is('title', null)
+    .limit(1)
+    .maybeSingle()
 
   if (existing) { router.push(`/dashboard/chats/${existing.id}`); return }
 
@@ -173,7 +175,9 @@ const startChat = async (farmer: any) => {
     .eq('farmer_id', uid)
     .eq('agronomist_id', farmer.id)
     .eq('type', 'human')
-    .single()
+    .is('title', null)
+    .limit(1)
+    .maybeSingle()
 
   if (existing2) { router.push(`/dashboard/chats/${existing2.id}`); return }
 

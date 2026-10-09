@@ -148,11 +148,11 @@ const startChat = async (farmer: any) => {
   starting.value = farmer.id
 
   const { data: existing } = await supabase.from('chats').select('id')
-    .eq('farmer_id', farmer.id).eq('agronomist_id', uid).eq('type', 'human').single()
+    .eq('farmer_id', farmer.id).eq('agronomist_id', uid).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (existing) { router.push(`/dashboard/chats/${existing.id}`); return }
 
   const { data: existing2 } = await supabase.from('chats').select('id')
-    .eq('farmer_id', uid).eq('agronomist_id', farmer.id).eq('type', 'human').single()
+    .eq('farmer_id', uid).eq('agronomist_id', farmer.id).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (existing2) { router.push(`/dashboard/chats/${existing2.id}`); return }
 
   const { data: newChat } = await supabase.from('chats')

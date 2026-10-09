@@ -153,11 +153,12 @@ const startChat = async (buyer: any) => {
   const uid = session.user.id
   if (uid === buyer.id) return
   starting.value = buyer.id
+  // Звичайний чат (без назви); чати пропозицій і запитів купівлі мають назву і окремі
   const { data: existing } = await supabase.from('chats').select('id')
-    .eq('farmer_id', uid).eq('agronomist_id', buyer.id).eq('type', 'human').single()
+    .eq('farmer_id', uid).eq('agronomist_id', buyer.id).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (existing) { router.push(`/dashboard/chats/${existing.id}`); return }
   const { data: existing2 } = await supabase.from('chats').select('id')
-    .eq('farmer_id', buyer.id).eq('agronomist_id', uid).eq('type', 'human').single()
+    .eq('farmer_id', buyer.id).eq('agronomist_id', uid).eq('type', 'human').is('title', null).limit(1).maybeSingle()
   if (existing2) { router.push(`/dashboard/chats/${existing2.id}`); return }
   const { data: newChat } = await supabase.from('chats')
     .insert({ farmer_id: uid, agronomist_id: buyer.id, type: 'human', is_unlocked: true })
