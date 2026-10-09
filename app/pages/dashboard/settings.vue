@@ -44,16 +44,16 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1.5">Ім'я</label>
-              <input v-model="form.first_name" class="input" placeholder="Іван" />
+              <input v-model="form.first_name" class="input" placeholder="Іван" maxlength="60" />
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1.5">Прізвище</label>
-              <input v-model="form.last_name" class="input" placeholder="Петренко" />
+              <input v-model="form.last_name" class="input" placeholder="Петренко" maxlength="60" />
             </div>
           </div>
           <div v-if="companyLabel">
             <label class="block text-sm font-medium text-agro-dark mb-1.5">{{ companyLabel }}</label>
-            <input v-model="form.company_name" class="input" :placeholder="companyPlaceholder" />
+            <input v-model="form.company_name" class="input" :placeholder="companyPlaceholder" maxlength="200" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Email</label>
@@ -83,7 +83,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Адреса (вулиця, будинок)</label>
-            <input v-model="form.address" class="input" placeholder="Наприклад: вул. Шевченка 12" />
+            <input v-model="form.address" class="input" placeholder="Наприклад: вул. Шевченка 12" maxlength="300" />
             <p class="text-xs text-agro-light mt-1">Використовується при угодах для самовивозу або доставки</p>
           </div>
         </div>
@@ -118,20 +118,20 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1.5">ЄДРПОУ / ІПН</label>
-              <input v-model="form.edrpou" class="input" placeholder="12345678" />
+              <input v-model="form.edrpou" class="input" placeholder="12345678" inputmode="numeric" maxlength="10" />
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1.5">Назва банку</label>
-              <input v-model="form.bank_name" class="input" placeholder="АТ КБ «ПриватБанк»" />
+              <input v-model="form.bank_name" class="input" placeholder="АТ КБ «ПриватБанк»" maxlength="200" />
             </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">IBAN</label>
-            <input v-model="form.iban" class="input" placeholder="UA213996220000026007233566001" />
+            <input v-model="form.iban" class="input" placeholder="UA213996220000026007233566001" maxlength="40" />
           </div>
           <div>
             <label class="block text-sm font-medium text-agro-dark mb-1.5">Юридична адреса</label>
-            <input v-model="form.legal_address" class="input" placeholder="49000, Дніпропетровська обл., м. Дніпро, вул. Шевченка 1" />
+            <input v-model="form.legal_address" class="input" placeholder="49000, Дніпропетровська обл., м. Дніпро, вул. Шевченка 1" maxlength="300" />
           </div>
         </div>
         <button @click="saveProfile" :disabled="saving" class="btn-primary mt-5">
@@ -417,8 +417,19 @@ if (isSeller.value) {
 }
 loading.value = false
 
+// Ті самі правила перевіряє база (users_validate_profile)
+const EDRPOU_RE = /^(\d{8}|\d{10})$/
+const normalizeIban = (v: string) => v.replace(/\s/g, '').toUpperCase()
+// Помилки перевірок бази — зрозумілі українські повідомлення; решта — загальне
+const profileError = (error: { code?: string; message: string }) =>
+  ['22023', '22001', '42501'].includes(error.code || '') ? error.message : 'Не вдалося зберегти. Спробуйте ще раз.'
+
 const saveProfile = async () => {
   if (form.phone && !isPhoneValid(form.phone)) { showError('Введіть коректний номер телефону'); return }
+  form.edrpou = form.edrpou.trim()
+  form.iban = normalizeIban(form.iban)
+  if (form.edrpou && !EDRPOU_RE.test(form.edrpou)) { showError('ЄДРПОУ — 8 цифр (ІПН — 10 цифр)'); return }
+  if (form.iban && !/^UA\d{27}$/.test(form.iban)) { showError('IBAN — UA і 27 цифр'); return }
   saving.value = true
   const { error } = await supabase.from('users').update({
     name: `${form.first_name} ${form.last_name}`.trim(),
@@ -435,7 +446,7 @@ const saveProfile = async () => {
     legal_address: form.legal_address || null,
   }).eq('id', uid)
   saving.value = false
-  if (error) { showError('Не вдалося зберегти. Спробуйте ще раз.'); return }
+  if (error) { showError(profileError(error)); return }
   saved.value = true
   setTimeout(() => saved.value = false, 3000)
 }
@@ -448,7 +459,7 @@ const changePassword = async () => {
   savingPass.value = true
   const { error } = await supabase.auth.updateUser({ password: newPassword.value })
   savingPass.value = false
-  if (error) { passError.value = error.message } else { newPassword.value = ''; confirmPassword.value = ''; alert('✅ Пароль змінено!') }
+  if (error) { passError.value = error.message } else { newPassword.value = ''; confirmPassword.value = ''; useToast().success('Пароль змінено') }
 }
 
 const saveShop = async () => {
@@ -517,13 +528,14 @@ const saveDelivery = async () => {
 
 const requestVerification = async () => {
   if (!form.edrpou.trim()) return
+  if (!EDRPOU_RE.test(form.edrpou.trim())) { showError('ЄДРПОУ — 8 цифр (ІПН — 10 цифр)'); return }
   requestingVerification.value = true
   const { error } = await supabase.from('users').update({
     edrpou: form.edrpou.trim(),
     verification_requested: true,
   }).eq('id', uid)
   requestingVerification.value = false
-  if (error) { showError('Не вдалося надіслати запит. Спробуйте ще раз.'); return }
+  if (error) { showError(error.code === '22023' ? error.message : 'Не вдалося надіслати запит. Спробуйте ще раз.'); return }
   verificationRequested.value = true
   verificationSent.value = true
 }
