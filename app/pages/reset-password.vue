@@ -121,15 +121,30 @@ const successMsg = ref('')
 const newPasswordMode = ref(false)
 const showNewPassword = ref(false)
 
-// Якщо є токен в URL — режим зміни пароля
-onMounted(() => {
-  const hash = window.location.hash
-  if (hash.includes('type=recovery')) {
-    newPasswordMode.value = true
+// Перехід за посиланням з листа. Сайт працює в PKCE: посилання приходить як ?code=…, клієнт Supabase
+// сам обмінює код на сесію (detectSessionInUrl) і повідомляє PASSWORD_RECOVERY. Старий формат — #type=recovery.
+onMounted(async () => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') newPasswordMode.value = true
+  })
+  onBeforeUnmount(() => subscription.unsubscribe())
+
+  if (window.location.hash.includes('type=recovery')) { newPasswordMode.value = true; return }
+  if (!route.query.code) return
+  // Даємо клієнту обміняти код; якщо сесії немає — посилання відкрите в іншому браузері або прострочене
+  for (let i = 0; i < 20 && !newPasswordMode.value; i++) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) { newPasswordMode.value = true; break }
+    await new Promise(r => setTimeout(r, 250))
   }
+  if (!newPasswordMode.value) {
+    error.value = 'Посилання не спрацювало (відкрите в іншому браузері або застаріле). Введіть email — надішлемо код.'
+  }
+  router.replace({ query: {} })
 })
 
 async function sendReset() {
+  email.value = email.value.trim().toLowerCase()
   if (!email.value) return
   loading.value = true
   error.value = ''

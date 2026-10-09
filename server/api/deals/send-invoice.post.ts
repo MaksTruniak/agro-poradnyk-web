@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY)
-  await resend.emails.send({
+  const { error: sendErr } = await resend.emails.send({
     from: 'АгроПростір <info@agroprostir.com.ua>',
     to: email,
     subject: `Видаткова накладна №${data.invoiceNum} — АгроПростір`,
@@ -59,6 +59,12 @@ export default defineEventHandler(async (event) => {
       </div>
     `,
   })
+
+  // Resend повертає помилку, а не кидає — інакше сайт казав би «надіслано»
+  if (sendErr) {
+    console.error('[send-invoice] email failed', sendErr)
+    throw createError({ statusCode: 502, message: 'Не вдалося надіслати накладну. Спробуйте ще раз.' })
+  }
 
   return { ok: true }
 })

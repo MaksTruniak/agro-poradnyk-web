@@ -13,9 +13,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY)
-  await resend.emails.send({
+  const { error: sendErr } = await resend.emails.send({
     from: 'АгроПростір <info@agroprostir.com.ua>',
-    to: 'maks-935@ukr.net',
+    to: SUPPORT_INBOX,
     replyTo: email,
     subject: `Нове повідомлення з сайту від ${name.replace(/[\r\n]/g, ' ')}`,
     html: `
@@ -33,5 +33,10 @@ export default defineEventHandler(async (event) => {
     `,
   })
 
+  // Resend повертає помилку, а не кидає — інакше користувач бачив би «надіслано», а лист не дійшов
+  if (sendErr) {
+    console.error('[contact] email failed', sendErr)
+    throw createError({ statusCode: 502, message: 'Не вдалося надіслати повідомлення. Напишіть нам на пошту.' })
+  }
   return { ok: true }
 })

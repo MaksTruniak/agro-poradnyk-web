@@ -84,7 +84,7 @@
             <p class="font-bold text-agro-dark mb-1">Потрібна конкретна інтеграція?</p>
             <p class="text-sm text-agro-light mb-4">Напишіть нам — розглянемо пріоритетно для вашого плану</p>
             <div class="flex gap-2">
-              <input v-model="requestText" type="text" class="input flex-1" placeholder="Назва системи або опис потреби">
+              <input v-model="requestText" type="text" class="input flex-1" placeholder="Назва системи або опис потреби" maxlength="200">
               <button @click="submitRequest" :disabled="submitting || !requestText.trim()"
                 class="btn-primary px-5 disabled:opacity-50 flex-shrink-0">
                 {{ submitting ? '...' : 'Надіслати' }}
@@ -137,18 +137,25 @@ onMounted(async () => {
   loading.value = false
 })
 
+const authHeader = useAuthHeader()
+
+// Сервер записує запит і надсилає його в скриньку підтримки
 async function submitRequest() {
   if (!requestText.value.trim()) return
   submitting.value = true
-  const { data: { user } } = await supabase.auth.getUser()
-  await supabase.from('support_tickets').insert({
-    user_id: user?.id,
-    subject: `Запит на інтеграцію: ${requestText.value.trim()}`,
-    priority: 'high',
-  })
-  submitting.value = false
-  sent.value = true
-  requestText.value = ''
+  try {
+    await $fetch('/api/support-ticket', {
+      method: 'POST',
+      headers: await authHeader(),
+      body: { kind: 'integration', subject: requestText.value.trim() },
+    })
+    sent.value = true
+    requestText.value = ''
+  } catch (e: any) {
+    useToast().error(e?.data?.message || 'Не вдалося надіслати запит. Напишіть нам на пошту.')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

@@ -4,6 +4,7 @@
 
 const LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/contact':               { max: 5,  windowMs: 60_000 },
+  '/api/support-ticket':        { max: 5,  windowMs: 60_000 },
   '/api/payment/create':        { max: 10, windowMs: 60_000 },
   '/api/calendar-explain':      { max: 20, windowMs: 60_000 },
   '/api/ai-chat':               { max: 30, windowMs: 60_000 },

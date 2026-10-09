@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
 const FROM = 'АгроПростір <info@agroprostir.com.ua>'
+// Куди приходять звернення з сайту (форма контактів, підтримка, запити на інтеграцію)
+export const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || 'maks-935@ukr.net'
 
 let _resend: Resend | null = null
 function getResend() {
@@ -185,7 +187,7 @@ export async function sendLowStockEmail(
      <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#9aaa8e">мін: ${escapeHtml(i.min_quantity)} ${escapeHtml(i.unit)}</td></tr>`
   ).join('')
 
-  await resend.emails.send({
+  return resend.emails.send({
     from: FROM,
     to,
     subject: `⚠️ Закінчується запас на складі — ${items.length} позицій`,
@@ -263,6 +265,33 @@ export async function sendReminderEmail(to: string, name: string, reminders: { d
           <p style="color:#aaa;font-size:12px;text-align:center;margin-top:20px">
             АгроПростір · <a href="https://agroprostir.com.ua/dashboard/reminders" style="color:#aaa">Керувати нагадуваннями</a>
           </p>
+        </div>
+      </div>
+    `,
+  })
+}
+
+export async function sendSupportTicketEmail(opts: {
+  ticketId: string; kind: 'support' | 'integration'; priority: string
+  subject: string; body: string; userEmail: string; userName: string; plan: string
+}) {
+  const kindLabel = opts.kind === 'integration' ? 'Запит на інтеграцію' : 'Звернення в підтримку'
+  return getResend().emails.send({
+    from: FROM,
+    to: SUPPORT_INBOX,
+    replyTo: opts.userEmail || undefined,
+    subject: `${opts.priority === 'high' ? '[Пріоритет] ' : ''}${kindLabel}: ${opts.subject.replace(/[\r\n]/g, ' ').slice(0, 120)}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
+        <div style="background:#2F5233;padding:24px 32px;border-radius:12px 12px 0 0">
+          <h2 style="color:#fff;margin:0;font-size:20px">${escapeHtml(kindLabel)}</h2>
+        </div>
+        <div style="background:#FAF6EC;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e2ddd0;border-top:none">
+          <p style="margin:0 0 8px"><strong>Від:</strong> ${escapeHtml(opts.userName || '—')} · <a href="mailto:${escapeHtml(opts.userEmail)}">${escapeHtml(opts.userEmail)}</a></p>
+          <p style="margin:0 0 8px"><strong>Тариф:</strong> ${escapeHtml(opts.plan)} · <strong>Пріоритет:</strong> ${escapeHtml(opts.priority)}</p>
+          <p style="margin:16px 0 8px"><strong>${escapeHtml(opts.subject)}</strong></p>
+          ${opts.body ? `<p style="background:#fff;padding:16px;border-radius:8px;border:1px solid #e2ddd0;white-space:pre-wrap;margin:0">${escapeHtml(opts.body)}</p>` : ''}
+          <p style="color:#9aaa8e;font-size:12px;margin:24px 0 0">Звернення № ${escapeHtml(opts.ticketId)} · відповідайте на цей лист — відповідь піде користувачу</p>
         </div>
       </div>
     `,

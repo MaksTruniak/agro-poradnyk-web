@@ -79,11 +79,11 @@
           <div class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Тема</label>
-              <input v-model="ticketSubject" type="text" class="input" placeholder="Опишіть коротко проблему">
+              <input v-model="ticketSubject" type="text" class="input" placeholder="Опишіть коротко проблему" maxlength="200">
             </div>
             <div>
               <label class="block text-sm font-medium text-agro-dark mb-1">Повідомлення</label>
-              <textarea v-model="ticketBody" rows="4" class="input resize-none" placeholder="Деталі звернення..."></textarea>
+              <textarea v-model="ticketBody" rows="4" class="input resize-none" placeholder="Деталі звернення..." maxlength="5000"></textarea>
             </div>
             <button @click="submitTicket" :disabled="submitting || !ticketSubject.trim()"
               class="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50">
@@ -179,20 +179,26 @@ onMounted(async () => {
   loading.value = false
 })
 
+const authHeader = useAuthHeader()
+
+// Сервер записує звернення і надсилає його в скриньку підтримки
 async function submitTicket() {
   if (!ticketSubject.value.trim()) return
   submitting.value = true
-  const { data: { user } } = await supabase.auth.getUser()
-  await supabase.from('support_tickets').insert({
-    user_id: user?.id,
-    subject: ticketSubject.value.trim(),
-    body: ticketBody.value.trim(),
-    priority: 'high',
-  })
-  submitting.value = false
-  submitted.value = true
-  ticketSubject.value = ''
-  ticketBody.value = ''
+  try {
+    await $fetch('/api/support-ticket', {
+      method: 'POST',
+      headers: await authHeader(),
+      body: { kind: 'support', subject: ticketSubject.value.trim(), body: ticketBody.value.trim() },
+    })
+    submitted.value = true
+    ticketSubject.value = ''
+    ticketBody.value = ''
+  } catch (e: any) {
+    useToast().error(e?.data?.message || 'Не вдалося надіслати звернення. Напишіть нам на пошту.')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

@@ -36,8 +36,9 @@ export default defineEventHandler(async (event) => {
 
   const resend = new Resend(resendKey)
 
-  await resend.emails.send({
-    from: 'АгроПростір <onboarding@resend.dev>',
+  // Відправник — підтверджений домен (тестова адреса onboarding@resend.dev доставляє лише власнику акаунта Resend)
+  const { error: sendErr } = await resend.emails.send({
+    from: 'АгроПростір <info@agroprostir.com.ua>',
     to: email,
     subject: `${resolvedOwnerName || 'Господарство'} запрошує вас до АгроПростір`,
     html: `
@@ -68,5 +69,10 @@ export default defineEventHandler(async (event) => {
     `,
   })
 
+  // Лист не пішов — віддаємо посилання, щоб власник надіслав його сам
+  if (sendErr) {
+    console.error('[team/invite] email failed', sendErr)
+    return { ok: true, inviteUrl, manual: true }
+  }
   return { ok: true, inviteUrl, manual: false }
 })
