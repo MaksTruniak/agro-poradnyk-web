@@ -92,7 +92,6 @@ export default defineNuxtConfig({
     '/admin/**':        { ssr: false },
     '/auth':            { ssr: false },
     '/role-select':     { ssr: false },
-    '/onboarding':      { ssr: false },
     '/invite':          { ssr: false },
     '/payment/**':      { ssr: false },
     '/cart':            { ssr: false },

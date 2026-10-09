@@ -151,7 +151,7 @@ const submit = async () => {
 
   if (!userId) { authError.value = 'Помилка авторизації'; submitting.value = false; return }
 
-  // Новому користувачу створюємо запис у users, щоб пройти перевірку onboarding в middleware
+  // Новому користувачу створюємо запис у users (профіль, роль; onboarded_at — щоб не вважався новим)
   if (!isExistingUser.value) {
     const userData: any = {
       id: userId,

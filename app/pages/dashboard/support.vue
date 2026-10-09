@@ -123,15 +123,6 @@
                 <p class="text-xs text-agro-light">support@agroprostir.com.ua · відповідь до 24 год</p>
               </div>
             </a>
-            <a href="https://t.me/agroporadnyk_support" target="_blank" class="flex items-center gap-3 p-3 rounded-xl hover:bg-agro-hover transition-colors">
-              <div class="w-9 h-9 rounded-full bg-agro-hover flex items-center justify-center flex-shrink-0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 4.5L2.5 10l7 2.5M21.5 4.5L14 19l-4.5-6.5M21.5 4.5L9.5 12.5"/></svg>
-              </div>
-              <div>
-                <p class="font-medium text-agro-dark text-sm">Telegram</p>
-                <p class="text-xs text-agro-light">@agroporadnyk_support</p>
-              </div>
-            </a>
           </div>
         </div>
       </template>

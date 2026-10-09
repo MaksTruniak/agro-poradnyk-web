@@ -1,6 +1,6 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   // Публічні сторінки без авторизації
-  const publicPaths = ['/harvest-worker', '/onboarding', '/auth', '/invite']
+  const publicPaths = ['/harvest-worker', '/auth', '/invite']
   if (publicPaths.some(p => to.path.startsWith(p))) return
 
   const supabase = useSupabaseClient()
