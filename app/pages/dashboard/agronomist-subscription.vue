@@ -183,11 +183,14 @@ const PRO_FEATURES = computed(() => [
   'Виділена картка профілю',
   'Пріоритетна підтримка',
 ])
-const FAQ = [
-  { q: 'Чи продовжується підписка автоматично?', a: 'Ні — ви платите вручну раз на місяць або рік.' },
+// Знижки лояльності агронома — з таблиці loyalty_discounts (2-й рік, 3-й і далі)
+const { data: loyaltyRows } = await supabase.from('loyalty_discounts').select('renewal_year, discount_percent').eq('role', 'agronomist')
+const loyaltyFor = (year: number) => (loyaltyRows || []).find((r: any) => r.renewal_year === year)?.discount_percent || 0
+const FAQ = computed(() => [
+  { q: 'Чи продовжується підписка автоматично?', a: 'Ні — ви платите вручну раз на місяць або рік. Якщо продовжити раніше, нові дні додаються до поточного терміну.' },
   { q: 'Що буде після закінчення PRO?', a: 'Акаунт переходить на Базовий. Дані і клієнти залишаються.' },
-  { q: 'Чи є знижки?', a: 'Так — з другого року -15%, з третього і далі -30% автоматично.' },
-]
+  { q: 'Чи є знижки?', a: loyaltyFor(2) ? `Так — з другого року від першої оплати -${loyaltyFor(2)}%, з третього і далі -${loyaltyFor(3)}% автоматично.` : 'Знижки за лояльність зараз немає.' },
+])
 
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -195,12 +198,17 @@ const formatDate = (d: string) =>
 const { data: { session } } = await supabase.auth.getSession()
 const uid = session?.user?.id
 
-const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at, renewal_count').eq('user_id', uid).eq('profile', 'agronomist').maybeSingle()
+const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'agronomist').maybeSingle()
 isPro.value = isAgronomistPro(getActivePlan(sub))
 expiresAt.value = sub?.expires_at || null
 
-const rc = sub?.renewal_count ?? 0
-loyaltyDiscount.value = rc === 1 ? 15 : rc >= 2 ? 30 : 0
+// Знижку лояльності рахує сервер — та сама, що застосує оплата
+if (session?.access_token) {
+  const res = await $fetch<{ percent: number }>('/api/payment/loyalty', {
+    query: { profile: 'agronomist' }, headers: { Authorization: `Bearer ${session.access_token}` },
+  }).catch(() => ({ percent: 0 }))
+  loyaltyDiscount.value = res.percent || 0
+}
 
 loading.value = false
 

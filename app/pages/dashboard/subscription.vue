@@ -361,14 +361,14 @@ const calculatedPrice = computed(() => {
 
 const effectiveDiscount = computed(() => couponResult.value === 'ok' ? couponDiscount.value : loyaltyDiscount.value)
 
+// Знижку лояльності рахує сервер — та сама, що застосує оплата (за роками з першої оплати)
 async function loadLoyaltyDiscount() {
   try {
-    const uid = (await supabase.auth.getSession()).data.session?.user.id || ''
-    const { data: sub } = await supabase.from('subscriptions').select('renewal_count, first_paid_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle()
-    const rc = sub?.renewal_count ?? 0
-    // Знижка тільки починаючи з 2-ї оплати (rc >= 1)
-    if (rc < 1) { loyaltyDiscount.value = 0; return }
-    loyaltyDiscount.value = rc === 1 ? 15 : rc >= 2 ? 30 : 0
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await $fetch<{ percent: number }>('/api/payment/loyalty', {
+      query: { profile: 'farmer' }, headers: { Authorization: `Bearer ${session?.access_token}` },
+    })
+    loyaltyDiscount.value = res.percent || 0
   } catch { loyaltyDiscount.value = 0 }
 }
 

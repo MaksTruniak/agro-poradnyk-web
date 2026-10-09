@@ -114,12 +114,22 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Повторний callback того самого замовлення не продовжує підписку вдруге
-  const { data: alreadyPaid } = await supabase.from('payments').select('id').eq('order_reference', orderReference).maybeSingle()
-  if (alreadyPaid) {
+  // Платіж записуємо ПЕРШИМ: order_reference унікальний (20261009_payments_unique_order), тож повторний
+  // або паралельний callback того самого замовлення не продовжить підписку вдруге
+  const { error: payErr } = await supabase.from('payments').insert({
+    user_id:         userId,
+    plan,
+    amount:          Number(amount),
+    currency:        currency || 'UAH',
+    status:          'paid',
+    order_reference: orderReference,
+  })
+  if (payErr) {
+    if (payErr.code !== '23505') console.error('[WFP callback] payment insert error:', payErr)
     return wfpResponse(orderReference, secretKey, 'accept')
   }
 
+  const subPlan = SUBSCRIPTION_PLANS[plan]
   if (plan === 'top_agronomist') {
     const expiresAt = new Date()
     expiresAt.setMonth(expiresAt.getMonth() + 1)
@@ -134,64 +144,29 @@ export default defineEventHandler(async (event) => {
       promotion_plan: 'top',
       promotion_expires_at: expiresAt.toISOString(),
     }).eq('user_id', userId)
-  } else if (plan === 'agronomist_pro_month' || plan === 'agronomist_pro_year') {
+  } else if (subPlan) {
     const { data: existingSub } = await supabase
       .from('subscriptions')
-      .select('renewal_count')
+      .select('plan, expires_at, renewal_count, first_paid_at')
       .eq('user_id', userId)
-      .eq('profile', 'agronomist')
+      .eq('profile', subPlan.profile)
       .maybeSingle()
 
-    const renewalCount = existingSub?.renewal_count ?? 0
-    const expiresAt = new Date()
-    if (plan === 'agronomist_pro_month') {
-      expiresAt.setMonth(expiresAt.getMonth() + 1)
-    } else {
-      expiresAt.setMonth(expiresAt.getMonth() + 12)
-    }
-    await supabase.from('subscriptions').upsert({
-      user_id:       userId,
-      profile:       'agronomist',
-      plan:          'pro',
-      expires_at:    expiresAt.toISOString(),
-      renewal_count: renewalCount + 1,
-    }, { onConflict: 'user_id,profile' })
-  } else {
-    const { data: existingSub } = await supabase
-      .from('subscriptions')
-      .select('renewal_count, first_paid_at')
-      .eq('user_id', userId)
-      .eq('profile', 'farmer')
-      .maybeSingle()
-
-    const renewalCount = existingSub?.renewal_count ?? 0
-    const firstPaidAt = existingSub?.first_paid_at ?? new Date().toISOString()
-    const expiresAt = new Date()
-    // Річні плани мають суфікс _year (business_year, business_pro_year, pro_year); решта — місячні (business, business_pro, pro_month)
-    const isYear = plan.endsWith('_year')
-    expiresAt.setMonth(expiresAt.getMonth() + (isYear ? 12 : 1))
-    // Фермерський профіль: Бізнес Про або Бізнес (застарілі pro_*/premium_* теж дають Бізнес — 'pro' тепер план агронома)
-    const basePlan = (plan === 'business_pro' || plan === 'business_pro_year') ? 'business_pro' : 'business'
+    // Продовження до кінця терміну — від дати закінчення, інакше від сьогодні
+    const expiresAt = nextExpiry(existingSub, subPlan.plan, subPlan.months)
     const { error } = await supabase.from('subscriptions').upsert({
       user_id:       userId,
-      profile:       'farmer',
-      plan:          basePlan,
+      profile:       subPlan.profile,
+      plan:          subPlan.plan,
       expires_at:    expiresAt.toISOString(),
-      renewal_count: renewalCount + 1,
-      first_paid_at: firstPaidAt,
+      renewal_count: (existingSub?.renewal_count ?? 0) + 1,
+      first_paid_at: existingSub?.first_paid_at ?? new Date().toISOString(),  // від неї рахується знижка лояльності
     }, { onConflict: 'user_id,profile' })
     if (error) console.error('[WFP callback] Supabase error:', error)
+  } else {
+    // Такий тариф не продається (create.post.ts його не пропустить) — гроші отримано, але нічого не видаємо автоматично
+    console.error('[WFP callback] Unknown plan, payment saved without subscription', { plan, orderReference, userId })
   }
-
-  // Зберігаємо платіж як інвойс
-  await supabase.from('payments').insert({
-    user_id:         userId,
-    plan,
-    amount:          Number(amount),
-    currency:        currency || 'UAH',
-    status:          'paid',
-    order_reference: orderReference,
-  })
 
   // Позначити купон як використаний
   if (couponId) {

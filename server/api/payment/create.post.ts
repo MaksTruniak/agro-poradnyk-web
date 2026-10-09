@@ -12,7 +12,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { plan, couponCode, hectares } = body
 
-  if (!plan) throw createError({ statusCode: 400, message: 'Invalid plan' })
+  // Лише тарифи, які продаються на сайті (кастомні плани з ціною 0 оформлює адмін, а не оплата)
+  if (!plan || !(plan in SUBSCRIPTION_PLANS || PROMO_PLANS.includes(plan))) throw createError({ statusCode: 400, message: 'Invalid plan' })
 
   const merchantAccount = process.env.WFP_MERCHANT_ACCOUNT!
   const merchantDomain  = process.env.WFP_MERCHANT_DOMAIN!
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
   // Беремо план з БД
   const { data: planData } = await supabase
     .from('plans')
-    .select('label, base_price, ha_rate, is_active')
+    .select('label, base_price, price_uah, ha_rate, is_active')
     .eq('id', plan)
     .single()
 
@@ -64,38 +65,13 @@ export default defineEventHandler(async (event) => {
     basePrice = (planData.base_price || 0) + ha * planData.ha_rate
     planLabel = `${planData.label} (${ha} га)`
   } else {
-    basePrice = planData.base_price || 0
+    // Тарифи без гектарів (Агроном PRO) мають ціну в price_uah, base_price у них 0
+    basePrice = planData.base_price || planData.price_uah || 0
   }
 
-  // Знижка за лояльністю з БД
-  const isSubscription = ['business','business_pro','agronomist_pro_month','agronomist_pro_year'].includes(plan)
-  let discountPercent = 0
-  let renewalCount = 0
-
-  if (isSubscription) {
-    const { data: existingSub } = await supabase
-      .from('subscriptions')
-      .select('renewal_count')
-      .eq('user_id', user.id)
-      .eq('profile', plan.startsWith('agronomist') ? 'agronomist' : 'farmer')
-      .maybeSingle()
-    renewalCount = existingSub?.renewal_count ?? 0
-
-    // Знижка тільки починаючи з 2-ї оплати (renewal_count >= 1)
-    if (renewalCount >= 1) {
-      const discountRole = plan.startsWith('agronomist') ? 'agronomist' : 'farmer'
-      const discountYear = renewalCount >= 3 ? 3 : renewalCount + 1
-
-      const { data: discountData } = await supabase
-        .from('loyalty_discounts')
-        .select('discount_percent')
-        .eq('role', discountRole)
-        .eq('renewal_year', discountYear)
-        .single()
-
-      discountPercent = discountData?.discount_percent ?? 0
-    }
-  }
+  // Знижка за лояльністю — за роками з першої оплати (не за кількістю оплат), для місячних і річних тарифів
+  const subPlan = SUBSCRIPTION_PLANS[plan]
+  let discountPercent = subPlan ? await loyaltyDiscount(supabase, user.id, subPlan.profile) : 0
 
   // Купон
   let couponId: string | null = null
@@ -112,6 +88,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const amount      = discountPercent > 0 ? Math.round(basePrice * (1 - discountPercent / 100)) : basePrice
+  if (!(amount > 0)) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
   const labelSuffix = discountPercent > 0 ? ` (знижка ${discountPercent}%)` : ''
 
   const orderReference = `agro-${plan}-${user.id.slice(0, 8)}-${Date.now()}`
