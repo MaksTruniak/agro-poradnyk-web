@@ -246,44 +246,6 @@
       </div>
     </div>
 
-    <!-- placeholder -->
-    <div v-else>
-      <div class="flex items-center justify-between mb-4">
-        <div class="relative flex-1 max-w-sm">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-agro-light"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input v-model="brandSearch" class="input pl-9 text-sm" placeholder="Пошук бренду..." />
-        </div>
-        <button @click="openBrandModal(null)" class="btn-primary text-sm py-2 px-4 inline-flex items-center gap-1.5 ml-3 shrink-0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Додати бренд
-        </button>
-      </div>
-
-      <div v-if="brandsLoading" class="space-y-2">
-        <div v-for="i in 6" :key="i" class="card animate-pulse h-16 p-0"></div>
-      </div>
-
-      <div v-else class="card overflow-hidden p-0">
-        <div class="divide-y divide-agro-border">
-          <div v-for="b in filteredBrands" :key="b.id" class="flex items-center gap-4 px-5 py-3.5 hover:bg-agro-bg transition-colors">
-            <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 overflow-hidden">
-              <img v-if="b.logo_url" :src="b.logo_url" :alt="b.name" class="w-full h-full object-contain p-1" />
-              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-agro-dark truncate">{{ b.name }}</p>
-              <p class="text-xs text-agro-light truncate">{{ [b.country, b.slug].filter(Boolean).join(' · ') }}</p>
-            </div>
-            <a v-if="b.website_url" :href="b.website_url" target="_blank" class="text-xs text-agro-light hover:text-agro transition-colors shrink-0 hidden sm:block truncate max-w-[160px]">{{ b.website_url }}</a>
-            <button @click="openBrandModal(b)" class="shrink-0 text-xs text-agro border border-agro-border hover:bg-agro-hover rounded-xl px-3 py-1.5 transition-colors inline-flex items-center gap-1">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Редагувати
-            </button>
-          </div>
-        </div>
-        <div v-if="!filteredBrands.length" class="text-center py-12 text-agro-light text-sm">Нічого не знайдено</div>
-      </div>
-    </div>
   </div>
 
 </template>
