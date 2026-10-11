@@ -33,7 +33,7 @@
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-agro-dark truncate text-sm">{{ user.email }}</p>
             <p class="text-xs text-agro-light truncate">
-              {{ user.user_metadata?.full_name || user.user_metadata?.name || '' }}
+              {{ user.user_metadata?.name || user.user_metadata?.full_name || '' }}
               <span v-if="user.user_metadata?.role" class="ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold"
                 :class="user.user_metadata.role === 'agronomist' ? 'bg-agro-hover text-agro' : 'bg-agro-bg text-agro-light'">
                 {{ roleLabel(user.user_metadata.role) }}
@@ -209,7 +209,7 @@ const totalPages = computed(() => Math.ceil(total.value / LIMIT))
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
   if (!q) return users.value
-  return users.value.filter(u => u.email?.toLowerCase().includes(q) || u.user_metadata?.full_name?.toLowerCase().includes(q))
+  return users.value.filter(u => u.email?.toLowerCase().includes(q) || (u.user_metadata?.name || u.user_metadata?.full_name || '').toLowerCase().includes(q))
 })
 
 const load = async () => {
@@ -306,7 +306,7 @@ async function saveCoupon() {
 }
 
 const roleLabel = (role: string) => {
-  const map: Record<string, string> = { agronomist: 'Агроном', farmer: 'Фермер', seller: 'Продавець', admin: 'Адмін' }
+  const map: Record<string, string> = { agronomist: 'Агроном', farmer: 'Фермер', buyer: 'Заготівельник', seller: 'Продавець', admin: 'Адмін' }
   return map[role] || role
 }
 

@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Тарифи — Адмін' })
 
 const supabase = useSupabaseClient()

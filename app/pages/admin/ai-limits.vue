@@ -217,7 +217,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'AI Ліміти — Адмін' })
 
 const supabase = useSupabaseClient()

@@ -315,11 +315,13 @@ const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { 
 
 const verify = async (agronomist: any, approve: boolean) => {
   agronomist.saving = approve ? 'approve' : 'reject'
-  const { error } = await supabase.from('agronomist_profiles')
-    .update({ is_verified: approve })
-    .eq('id', agronomist.id)
-  if (error) {
-    alert('Помилка: ' + error.message)
+  // Значок «Перевірений агроном» на сайті читає users.is_verified_agronomist (public_profiles) — оновлюємо обидва
+  const [{ error }, { error: userErr }] = await Promise.all([
+    supabase.from('agronomist_profiles').update({ is_verified: approve }).eq('id', agronomist.id),
+    supabase.from('users').update({ is_verified_agronomist: approve }).eq('id', agronomist.user_id),
+  ])
+  if (error || userErr) {
+    useToast().error('Помилка: ' + (error || userErr)!.message)
     agronomist.saving = false
     return
   }
@@ -353,11 +355,14 @@ onMounted(async () => {
 
 const verifyBuyer = async (buyer: any, approve: boolean) => {
   buyer.saving = approve ? 'approve' : 'reject'
-  await supabase.from('users').update({
+  const { error } = await supabase.from('users').update({
     is_verified: approve,
+    is_verified_buyer: approve,
     verification_requested: approve ? true : false,
   }).eq('id', buyer.id)
+  if (error) { useToast().error('Помилка: ' + error.message); buyer.saving = false; return }
   buyer.is_verified = approve
+  buyer.verification_requested = approve
   buyer.saving = false
 }
 </script>

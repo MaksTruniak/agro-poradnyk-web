@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'auth' })
+definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Культури — Адмін' })
 
 const supabase = useSupabaseClient()

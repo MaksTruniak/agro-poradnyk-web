@@ -18,7 +18,11 @@ const PAGES: Record<Role, string[]> = {
     '/dashboard', '/dashboard/agronomist-fields', '/dashboard/agreements', '/dashboard/agronomist-subscription',
     '/dashboard/agronomist-profile', '/dashboard/promotion', '/dashboard/ai-chat', '/dashboard/chats',
   ],
-  admin: ['/admin', '/admin/users', '/admin/stats', '/admin/plans', '/admin/ai-limits', '/admin/brands', '/admin/products'],
+  admin: [
+    '/admin', '/admin/users', '/admin/stats', '/admin/plans', '/admin/ai-limits', '/admin/brands', '/admin/products',
+    '/admin/agro-calendar', '/admin/categories', '/admin/crop-types', '/admin/diseases', '/admin/ingredients',
+    '/admin/loyalty-discounts', '/admin/pests', '/admin/weeds',
+  ],
 }
 
 for (const role of Object.keys(PAGES) as Role[]) {
