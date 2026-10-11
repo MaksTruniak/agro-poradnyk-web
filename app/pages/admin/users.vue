@@ -265,9 +265,12 @@ async function savePlan() {
   saveMsg.value = ''
   saveError.value = ''
   try {
-    const expiresAt = modal.plan !== 'basic' && modal.expires_at
-      ? new Date(modal.expires_at).toISOString()
-      : modal.plan === 'basic' ? new Date('2024-01-01').toISOString() : null
+    if (modal.plan !== 'basic' && !modal.expires_at) throw new Error('Вкажіть, до якої дати діє підписка')
+    // «Дійсна до 31.12» — включно з цим днем (кінець дня за Києвом), а не з півночі UTC
+    const expiresAt = modal.plan === 'basic'
+      ? new Date('2024-01-01').toISOString()
+      : new Date(`${modal.expires_at}T23:59:59+03:00`).toISOString()
+    if (modal.plan !== 'basic' && new Date(expiresAt) <= new Date()) throw new Error('Дата має бути в майбутньому')
     const { error } = await supabase.from('subscriptions').upsert({
       user_id: modal.userId,
       profile: modal.profile,
@@ -276,6 +279,9 @@ async function savePlan() {
       expires_at: expiresAt,
     }, { onConflict: 'user_id,profile' })
     if (error) throw new Error(error.message)
+    // Оновлюємо значок тарифу в списку
+    const u = users.value.find(x => x.id === modal.userId)
+    if (u) u[modal.profile === 'farmer' ? 'plan' : 'agronomist_plan'] = modal.plan === 'basic' ? 'basic' : modal.plan
     saveMsg.value = 'Підписку збережено'
     setTimeout(() => { saveMsg.value = '' }, 3000)
   } catch (e: any) {
@@ -289,14 +295,21 @@ async function saveCoupon() {
   saveMsg.value = ''
   saveError.value = ''
   try {
+    const pct = Number(modal.coupon_discount)
+    // 100% не можна: оплата на 0 грн не проходить — безкоштовний тариф призначається у вкладці «Підписка»
+    if (!Number.isInteger(pct) || pct < 1 || pct > 99) throw new Error('Знижка — від 1 до 99%. Безкоштовно — призначте тариф у вкладці «Підписка»')
+    const code = modal.coupon_code.trim().toUpperCase()
+    if (!/^[A-Z0-9_-]{3,32}$/.test(code)) throw new Error('Код — 3–32 латинські літери або цифри')
     const { error } = await supabase.from('coupons').insert({
       user_id: modal.userId,
-      code: modal.coupon_code.trim().toUpperCase(),
-      discount_percent: modal.coupon_discount,
+      code,
+      discount_percent: pct,
       expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
     })
-    if (error) throw new Error(error.message)
-    saveMsg.value = `Купон ${modal.coupon_code} збережено`
+    if (error) throw new Error(error.code === '23505' ? 'Такий код уже існує' : error.message)
+    const u = users.value.find(x => x.id === modal.userId)
+    if (u) u.coupons = [...(u.coupons || []), { code, discount_percent: pct }]
+    saveMsg.value = `Купон ${code} збережено`
     modal.coupon_code = ''
     setTimeout(() => { saveMsg.value = '' }, 3000)
   } catch (e: any) {

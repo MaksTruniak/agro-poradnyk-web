@@ -135,5 +135,47 @@ test.describe('Адмінка', () => {
     const { data: p } = await client.from('agro_products').select('id, name').limit(1).single()
     const updP = await client.from('agro_products').update({ name: p!.name }).eq('id', p!.id).select('id')
     expect(updP.data?.length, 'товар не зберігається').toBe(1)
+
+    // Решта довідників адмінки — те саме значення назад, нічого не змінюється
+    const checks: [string, string, string][] = [
+      ['plans', 'id', 'label'], ['loyalty_discounts', 'role', 'discount_percent'], ['crop_catalog', 'id', 'name'],
+      ['varieties', 'id', 'name'], ['agro_diseases', 'id', 'name'], ['agro_pests', 'id', 'name'],
+      ['agro_weeds', 'id', 'name'], ['agro_active_ingredients', 'id', 'name'], ['agro_calendar', 'id', 'title'],
+      ['agro_product_details', 'id', 'dosage'],
+    ]
+    for (const [table, key, field] of checks) {
+      const { data: row } = await client.from(table).select('*').limit(1).single()
+      let q = client.from(table).update({ [field]: row[field] }).eq(key, row[key])
+      if (table === 'loyalty_discounts') q = q.eq('renewal_year', row.renewal_year)
+      const res = await q.select(key)
+      expect(res.error, table).toBeNull()
+      expect(res.data?.length, `адмін не може змінити ${table}`).toBeGreaterThan(0)
+    }
+  })
+
+  test('товар: збереження з адмінки не стирає дані', async ({ page }) => {
+    const admin = serviceClient()
+    const { data: prod } = await admin.from('agro_products').select('*').eq('type', 'seed').not('manufacturer_id', 'is', null).limit(1).single()
+    const { data: det } = await admin.from('agro_product_details').select('*').eq('id', prod!.id).maybeSingle()
+    try {
+      await login(page, 'admin')
+      const errors = collectErrors(page)
+      await page.goto('/admin/products')
+      await page.getByPlaceholder(/Пошук/).fill(prod!.name)
+      const row = page.locator('div.flex.items-center.gap-4', { hasText: prod!.slug }).first()
+      await row.getByRole('button', { name: 'Редагувати' }).click()
+      await page.getByRole('button', { name: /Зберегти/ }).click()
+      await expect(page.getByText('Збережено')).toBeVisible({ timeout: 15000 })
+      const { data: after } = await admin.from('agro_products').select('*').eq('id', prod!.id).single()
+      expect(after).toEqual(prod)
+      const { data: detAfter } = await admin.from('agro_product_details').select('*').eq('id', prod!.id).maybeSingle()
+      expect(detAfter?.description ?? null).toBe(det?.description ?? null)
+      expect(detAfter?.content_sections ?? null).toEqual(det?.content_sections ?? null)
+      await expectNoErrors(errors, 'товарах')
+    } finally {
+      await admin.from('agro_products').update(prod!).eq('id', prod!.id)
+      if (det) await admin.from('agro_product_details').update(det).eq('id', prod!.id)
+      else await admin.from('agro_product_details').delete().eq('id', prod!.id)
+    }
   })
 })

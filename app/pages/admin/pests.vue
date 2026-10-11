@@ -140,15 +140,9 @@
                 </div>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-semibold text-agro-dark mb-1">Латинська назва</label>
-                <input v-model="modal.form.latin_name" class="input text-sm italic" placeholder="Schizaphis graminum" />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-agro-dark mb-1">Ряд / клас</label>
-                <input v-model="modal.form.order_name" class="input text-sm" placeholder="Hemiptera" />
-              </div>
+            <div>
+              <label class="block text-xs font-semibold text-agro-dark mb-1">Латинська назва</label>
+              <input v-model="modal.form.latin_name" class="input text-sm italic" placeholder="Schizaphis graminum" />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -160,6 +154,7 @@
                 <select v-model="modal.form.category_slug" class="input text-sm">
                   <option value="">— не вибрано —</option>
                   <option v-for="cat in pestCategories" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
+                  <option v-if="modal.form.category_slug && !pestCategories.some(c => c.slug === modal.form.category_slug)" :value="modal.form.category_slug">{{ modal.categoryName || modal.form.category_slug }}</option>
                 </select>
               </div>
             </div>
@@ -239,18 +234,17 @@ const load = async () => {
   loading.value = false
 }
 
-const emptyForm = () => ({ name: '', slug: '', latin_name: '', order_name: '', culture: '', category_slug: '', source_image_url: '', description: '' })
+const emptyForm = () => ({ name: '', slug: '', latin_name: '', culture: '', category_slug: '', source_image_url: '', description: '' })
 
-const modal = reactive({ show: false, isNew: false, saving: false, id: null as string | null, form: emptyForm() })
+const modal = reactive({ show: false, isNew: false, saving: false, id: null as string | null, categoryName: '', form: emptyForm() })
 
-const TRANSLIT: Record<string, string> = { а:'a',б:'b',в:'v',г:'h',ґ:'g',д:'d',е:'e',є:'ye',ж:'zh',з:'z',и:'y',і:'i',ї:'yi',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ь:'',ю:'yu',я:'ya' }
-const toSlug = (s: string) => s.toLowerCase().split('').map(c => TRANSLIT[c] ?? c).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const autoSlug = () => { if (modal.isNew) modal.form.slug = toSlug(modal.form.name) }
 
 const openModal = (item: any) => {
   modal.isNew = !item
   modal.id = item?.id ?? null
-  modal.form = item ? { name: item.name ?? '', slug: item.slug ?? '', latin_name: item.latin_name ?? '', order_name: item.order_name ?? '', culture: item.culture ?? '', category_slug: item.category_slug ?? '', source_image_url: item.source_image_url ?? '', description: item.description ?? '' } : emptyForm()
+  modal.form = item ? { name: item.name ?? '', slug: item.slug ?? '', latin_name: item.latin_name ?? '', culture: item.culture ?? '', category_slug: item.category_slug ?? '', source_image_url: item.source_image_url ?? '', description: item.description ?? '' } : emptyForm()
+  modal.categoryName = item?.category_name ?? ''
   modal.show = true
 }
 
@@ -259,14 +253,21 @@ const save = async () => {
   if (!modal.form.name || !modal.form.slug) return
   modal.saving = true
   saveError.value = ''
-  const payload = { ...modal.form }
+  // Назву категорії сайт показує з category_name — записуємо разом зі slug
+  const cat = pestCategories.value.find(c => c.slug === modal.form.category_slug)
+  const payload = {
+    ...modal.form,
+    slug: modal.form.slug.trim(),
+    category_slug: modal.form.category_slug || null,
+    category_name: modal.form.category_slug ? (cat?.name ?? modal.categoryName) || null : null,
+  }
   if (modal.isNew) {
     const { data, error } = await supabase.from('agro_pests').insert(payload).select().single()
     if (error) { saveError.value = error.message; modal.saving = false; return }
     if (data) { items.value.unshift(data as any); total.value++ }
   } else {
-    const { error } = await supabase.from('agro_pests').update(payload).eq('id', modal.id)
-    if (error) { saveError.value = error.message; modal.saving = false; return }
+    const { data, error } = await supabase.from('agro_pests').update(payload).eq('id', modal.id!).select('id')
+    if (error || !data?.length) { saveError.value = error?.message || 'Зміни не збережено (немає прав)'; modal.saving = false; return }
     const idx = items.value.findIndex(r => r.id === modal.id)
     if (idx !== -1) items.value[idx] = { ...items.value[idx], ...payload }
   }
@@ -292,8 +293,9 @@ const deleteModal = reactive({ show: false, deleting: false, item: null as any }
 const confirmDelete = (item: any) => { deleteModal.item = item; deleteModal.show = true }
 const doDelete = async () => {
   deleteModal.deleting = true
-  await supabase.from('agro_pest_products').delete().eq('pest_id', deleteModal.item.id)
-  await supabase.from('agro_pests').delete().eq('id', deleteModal.item.id)
+  const links = await supabase.from('agro_pest_products').delete().eq('pest_id', deleteModal.item.id)
+  const res = links.error ? links : await supabase.from('agro_pests').delete().eq('id', deleteModal.item.id).select('id')
+  if (!adminWriteOk(res, 'Не вдалося видалити')) { deleteModal.deleting = false; return }
   items.value = items.value.filter(r => r.id !== deleteModal.item.id)
   total.value--
   deleteModal.deleting = false

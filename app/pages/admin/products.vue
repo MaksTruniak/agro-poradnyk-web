@@ -173,11 +173,6 @@
               <label class="block text-xs font-semibold text-agro-dark mb-1">Опис</label>
               <textarea v-model="modal.form.description" class="input text-sm resize-none" rows="4" placeholder="Коротко про препарат..." />
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-agro-dark mb-1">Культури (через кому)</label>
-              <input v-model="modal.form.crops_str" class="input text-sm" placeholder="Пшениця, Кукурудза, Соняшник" />
-            </div>
           </div>
 
           <div class="px-6 pb-6 flex gap-3">
@@ -221,6 +216,19 @@ const TYPES = [
   { slug: 'rodenticide', name: 'Родентициди' },
   { slug: 'fertilizer', name: 'Добрива' },
   { slug: 'bio_product', name: 'Біопрепарати' },
+  // Решта типів, що є в каталозі (без них товар не можна було зберегти — тип у формі був порожній)
+  { slug: 'seed', name: 'Насіння' },
+  { slug: 'adjuvant', name: "Ад'юванти / ПАР" },
+  { slug: 'acaricide', name: 'Акарициди' },
+  { slug: 'desiccant', name: 'Десиканти' },
+  { slug: 'retardant', name: 'Ретарданти' },
+  { slug: 'fumigant', name: 'Фуміганти' },
+  { slug: 'disinfectant', name: 'Дезінфектанти' },
+  { slug: 'biostimulator', name: 'Біостимулятори' },
+  { slug: 'biofungicide', name: 'Біофунгіциди' },
+  { slug: 'biological_fungicide', name: 'Біофунгіциди біол.' },
+  { slug: 'inoculant', name: 'Інокулянти' },
+  { slug: 'liquid_complex_fertilizer', name: 'Рідкі комплексні добрива' },
 ]
 
 const TYPE_LABELS: Record<string, string> = Object.fromEntries(TYPES.map(t => [t.slug, t.name]))
@@ -249,7 +257,7 @@ const modal = reactive({
   imgPreview: '',
   form: {
     name: '', slug: '', type: '', manufacturer_slug: '',
-    source_image_url: '', chem_class: '', formulation_name: '', dosage: '', description: '', crops_str: '',
+    source_image_url: '', chem_class: '', formulation_name: '', dosage: '', description: '',
   },
 })
 
@@ -272,7 +280,7 @@ const load = async (p = 1) => {
   const to = from + PER_PAGE - 1
 
   let q = supabase.from('agro_products')
-    .select('id, name, slug, type, source_image_url, manufacturer_slug, agro_manufacturers(name)', { count: 'exact' })
+    .select('id, name, slug, type, source_image_url, manufacturer_slug, formulation_name, agro_manufacturers(name)', { count: 'exact' })
     .order('name').range(from, to)
 
   if (search.value.trim()) q = q.ilike('name', `%${search.value.trim()}%`)
@@ -292,8 +300,9 @@ const openModal = async (product: any) => {
   modal.detailsId = null
 
   if (product) {
+    // Деталі товару — окрема таблиця з тим самим id (1:1)
     const { data: details } = await supabase.from('agro_product_details')
-      .select('*').eq('product_id', product.id).single()
+      .select('id, chem_class, dosage, description').eq('id', product.id).maybeSingle()
     modal.detailsId = details?.id ?? null
     modal.form = {
       name: product.name ?? '',
@@ -305,10 +314,9 @@ const openModal = async (product: any) => {
       formulation_name: product.formulation_name ?? '',
       dosage: details?.dosage ?? '',
       description: details?.description ?? '',
-      crops_str: (product.crops || []).join(', '),
     }
   } else {
-    modal.form = { name: '', slug: '', type: '', manufacturer_slug: '', source_image_url: '', chem_class: '', formulation_name: '', dosage: '', description: '', crops_str: '' }
+    modal.form = { name: '', slug: '', type: '', manufacturer_slug: '', source_image_url: '', chem_class: '', formulation_name: '', dosage: '', description: '' }
   }
   modal.show = true
 }
@@ -326,24 +334,26 @@ const save = async () => {
   if (!modal.form.name || !modal.form.type) return
   modal.saving = true
 
-  const slug = modal.form.slug || modal.form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  const slug = modal.form.slug.trim() || toSlug(modal.form.name)
+  if (!slug) { useToast().error('Вкажіть slug латиницею'); modal.saving = false; return }
   let imageUrl = modal.form.source_image_url
 
   if (modal.imgFile) {
     const url = await uploadImage(modal.imgFile, slug)
-    if (url) imageUrl = url
+    if (!url) { useToast().error('Не вдалося завантажити фото'); modal.saving = false; return }
+    imageUrl = url
   }
-
-  const crops = modal.form.crops_str.split(',').map(s => s.trim()).filter(Boolean)
+  const brand = brands.value.find(b => b.slug === modal.form.manufacturer_slug)
 
   const productPayload = {
     name: modal.form.name,
     slug,
     type: modal.form.type,
-    manufacturer_slug: modal.form.manufacturer_slug || null,
+    // Бренд товару на сайті визначає manufacturer_id (сторінки брендів, приховування вимкнених) — пишемо обидва поля
+    manufacturer_id: brand?.id ?? null,
+    manufacturer_slug: brand?.slug ?? null,
     source_image_url: imageUrl || null,
     formulation_name: modal.form.formulation_name || null,
-    crops,
   }
 
   const detailsPayload = {
@@ -353,24 +363,26 @@ const save = async () => {
   }
 
   if (modal.isNew) {
-    const { data: newProduct } = await supabase.from('agro_products').insert(productPayload).select().single()
-    if (newProduct) {
-      await supabase.from('agro_product_details').insert({ ...detailsPayload, product_id: (newProduct as any).id })
-      items.value.unshift({ ...(newProduct as any), agro_manufacturers: brands.value.find(b => b.slug === modal.form.manufacturer_slug) })
-      total.value++
-    }
+    const res = await supabase.from('agro_products').insert(productPayload).select().single()
+    if (!adminWriteOk(res, 'Не вдалося додати товар')) { modal.saving = false; return }
+    const newProduct = res.data as any
+    const det = await supabase.from('agro_product_details').insert({ ...detailsPayload, id: newProduct.id }).select('id')
+    adminWriteOk(det, 'Товар додано, але опис не збережено')
+    items.value.unshift({ ...newProduct, agro_manufacturers: brand })
+    total.value++
   } else {
-    await supabase.from('agro_products').update(productPayload).eq('id', modal.id)
-    if (modal.detailsId) {
-      await supabase.from('agro_product_details').update(detailsPayload).eq('id', modal.detailsId)
-    } else {
-      await supabase.from('agro_product_details').insert({ ...detailsPayload, product_id: modal.id })
-    }
+    const res = await supabase.from('agro_products').update(productPayload).eq('id', modal.id!).select('id')
+    if (!adminWriteOk(res, 'Не вдалося зберегти товар')) { modal.saving = false; return }
+    const det = modal.detailsId
+      ? await supabase.from('agro_product_details').update(detailsPayload).eq('id', modal.detailsId).select('id')
+      : await supabase.from('agro_product_details').insert({ ...detailsPayload, id: modal.id }).select('id')
+    if (!adminWriteOk(det, 'Не вдалося зберегти опис товару')) { modal.saving = false; return }
     const idx = items.value.findIndex(p => p.id === modal.id)
     if (idx !== -1) {
-      items.value[idx] = { ...items.value[idx], ...productPayload, agro_manufacturers: brands.value.find(b => b.slug === modal.form.manufacturer_slug) }
+      items.value[idx] = { ...items.value[idx], ...productPayload, agro_manufacturers: brand }
     }
   }
+  useToast().success('Збережено')
 
   modal.saving = false
   modal.show = false

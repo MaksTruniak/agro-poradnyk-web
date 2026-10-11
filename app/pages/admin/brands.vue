@@ -116,11 +116,6 @@
               </div>
             </div>
 
-            <div>
-              <label class="block text-xs font-semibold text-agro-dark mb-1">Опис</label>
-              <textarea v-model="modal.form.description" class="input text-sm resize-none" rows="3" placeholder="Коротко про бренд..." />
-            </div>
-
             <!-- Видимість -->
             <div class="rounded-2xl border border-agro-border px-4 py-3 flex items-center justify-between">
               <div>
@@ -176,7 +171,7 @@ const modal = reactive({
   id: null as string | null,
   logoFile: null as File | null,
   logoPreview: '' as string,
-  form: { name: '', slug: '', logo_url: '', country: '', website_url: '', description: '', is_active: true },
+  form: { name: '', slug: '', logo_url: '', country: '', website_url: '', is_active: true },
 })
 
 const onLogoFile = (e: Event) => {
@@ -197,7 +192,6 @@ const openModal = (brand: any) => {
     logo_url: brand?.logo_url ?? '',
     country: brand?.country ?? '',
     website_url: brand?.website_url ?? '',
-    description: brand?.description ?? '',
     is_active: brand?.is_active !== false,
   }
   modal.show = true
@@ -217,11 +211,13 @@ const save = async () => {
   modal.saving = true
 
   const payload: any = { ...modal.form }
-  if (!payload.slug) payload.slug = payload.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  payload.slug = payload.slug.trim() || toSlug(payload.name)
+  if (!payload.slug) { useToast().error('Вкажіть slug латиницею'); modal.saving = false; return }
 
   if (modal.logoFile) {
     const url = await uploadLogo(modal.logoFile, payload.slug)
-    if (url) payload.logo_url = url
+    if (!url) { useToast().error('Не вдалося завантажити логотип'); modal.saving = false; return }
+    payload.logo_url = url
   }
 
   if (modal.isNew) {
@@ -231,6 +227,12 @@ const save = async () => {
   } else {
     const { data, error } = await supabase.from('agro_manufacturers').update(payload).eq('id', modal.id).select('id')
     if (error || !data?.length) { useToast().error('Не вдалося зберегти бренд' + (error ? ': ' + error.message : ' — немає прав')); modal.saving = false; return }
+    // Каталог фільтрує товари бренду за manufacturer_slug — після зміни slug оновлюємо його в товарах
+    const old = brands.value.find(b => b.id === modal.id)
+    if (old && old.slug !== payload.slug) {
+      const { error: pErr } = await supabase.from('agro_products').update({ manufacturer_slug: payload.slug }).eq('manufacturer_id', modal.id!)
+      if (pErr) useToast().error('Бренд збережено, але товари не оновились: ' + pErr.message)
+    }
     const idx = brands.value.findIndex(b => b.id === modal.id)
     if (idx !== -1) brands.value[idx] = { ...brands.value[idx], ...payload }
   }

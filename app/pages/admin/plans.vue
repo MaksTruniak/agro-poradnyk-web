@@ -99,15 +99,18 @@ plans.value = data || []
 loading.value = false
 
 async function save(plan: any) {
+  const base = Number(plan.base_price), rate = Number(plan.ha_rate)
+  if (!plan.label?.trim() || !(base >= 0) || !(rate >= 0)) { useToast().error('Вкажіть назву і невід\'ємні ціни'); return }
   saving.value = plan.id
-  await supabase.from('plans').update({
-    label:      plan.label,
-    base_price: plan.base_price,
-    ha_rate:    plan.ha_rate,
-    price_uah:  plan.base_price, // для сумісності
+  const res = await supabase.from('plans').update({
+    label:      plan.label.trim(),
+    base_price: base,
+    ha_rate:    rate,
+    price_uah:  base, // для сумісності
     is_active:  plan.is_active,
-  }).eq('id', plan.id)
+  }).eq('id', plan.id).select('id')
   saving.value = ''
+  if (!adminWriteOk(res, 'Не вдалося зберегти тариф')) return
   savedMsg.value = true
   setTimeout(() => { savedMsg.value = false }, 2000)
 }

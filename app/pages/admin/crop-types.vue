@@ -233,14 +233,24 @@ function openEditVariety(item: any, v: any) {
 async function save() {
   saving.value = true
   const cat = categories.value.find(c => c.id === modal.category_id)
-  const payload: any = { name: modal.name, description: modal.description || null, category_id: modal.category_id || null, category: cat?.name || null }
+  const payload: any = { name: modal.name.trim(), description: modal.description || null, category_id: modal.category_id || null, category: cat?.name || null }
+  if (!payload.name) { saving.value = false; return }
   if (modal.id) {
-    await supabase.from('crop_catalog').update(payload).eq('id', modal.id)
+    const old = items.value.find(i => i.id === modal.id)
+    const res = await supabase.from('crop_catalog').update(payload).eq('id', modal.id).select('id')
+    if (!adminWriteOk(res, 'Не вдалося зберегти культуру')) { saving.value = false; return }
+    // Сорти прив'язані до культури за назвою — при перейменуванні переносимо їх
+    if (old && old.name !== payload.name) {
+      const { error } = await supabase.from('varieties').update({ crop_type: payload.name }).ilike('crop_type', old.name)
+      if (error) useToast().error('Культуру перейменовано, але сорти не перенесено: ' + error.message)
+    }
     const idx = items.value.findIndex(i => i.id === modal.id)
     if (idx !== -1) Object.assign(items.value[idx], payload)
   } else {
-    const { data } = await supabase.from('crop_catalog').insert(payload).select().single()
-    if (data) { items.value.push(data); varieties.value[data.id] = [] }
+    const res = await supabase.from('crop_catalog').insert(payload).select().single()
+    if (!adminWriteOk(res, 'Не вдалося додати культуру')) { saving.value = false; return }
+    const data = res.data as any
+    items.value.push(data); varieties.value[data.id] = []
   }
   saving.value = false
   modal.show = false
@@ -248,14 +258,18 @@ async function save() {
 
 async function saveVariety() {
   vSaving.value = true
-  const payload = { crop_type: vModal.cropName, name: vModal.name, season: vModal.season || null, is_active: vModal.is_active }
+  const payload = { crop_type: vModal.cropName, name: vModal.name.trim(), season: vModal.season || null, is_active: vModal.is_active }
+  if (!payload.name) { vSaving.value = false; return }
   if (vModal.id) {
-    await supabase.from('varieties').update(payload).eq('id', vModal.id)
+    const res = await supabase.from('varieties').update(payload).eq('id', vModal.id).select('id')
+    if (!adminWriteOk(res, 'Не вдалося зберегти сорт')) { vSaving.value = false; return }
     const list = varieties.value[vModal.cropId] || []
     const idx = list.findIndex((v: any) => v.id === vModal.id)
     if (idx !== -1) Object.assign(list[idx], { ...payload })
   } else {
-    const { data } = await supabase.from('varieties').insert(payload).select().single()
+    const res = await supabase.from('varieties').insert(payload).select().single()
+    if (!adminWriteOk(res, 'Не вдалося додати сорт')) { vSaving.value = false; return }
+    const data = res.data as any
     if (data) { if (!varieties.value[vModal.cropId]) varieties.value[vModal.cropId] = []; varieties.value[vModal.cropId].push(data) }
   }
   vSaving.value = false

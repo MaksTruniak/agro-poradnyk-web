@@ -149,6 +149,7 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: 'admin', middleware: 'admin' })
+useHead({ title: 'Агрокалендар — Адмін' })
 
 const supabase = useSupabaseClient()
 const { confirm: confirmDialog } = useConfirm()
@@ -217,20 +218,22 @@ const openEdit = (item: any) => {
 
 const save = async () => {
   saving.value = true
-  const payload = { crop_type: modal.crop_type.toLowerCase().trim(), month: Number(modal.month), week_from: Number(modal.week_from), week_to: Number(modal.week_to), title: modal.title.trim(), description: modal.description.trim(), category: modal.category, urgency: modal.urgency }
-  if (modal.id) {
-    await supabase.from('agro_calendar').update(payload).eq('id', modal.id)
-  } else {
-    await supabase.from('agro_calendar').insert(payload)
-  }
+  const payload = { crop_type: (modal.crop_type || '').toLowerCase().trim(), month: Number(modal.month), week_from: Number(modal.week_from), week_to: Number(modal.week_to), title: (modal.title || '').trim(), description: (modal.description || '').trim(), category: modal.category, urgency: modal.urgency }
+  if (!payload.crop_type || !payload.title) { useToast().error('Вкажіть культуру і назву'); saving.value = false; return }
+  if (payload.week_from > payload.week_to) { useToast().error('Тиждень «з» не може бути пізніше за «по»'); saving.value = false; return }
+  const res = modal.id
+    ? await supabase.from('agro_calendar').update(payload).eq('id', modal.id).select('id')
+    : await supabase.from('agro_calendar').insert(payload).select('id')
   saving.value = false
+  if (!adminWriteOk(res, 'Не вдалося зберегти підказку')) return
   modal.open = false
   await load()
 }
 
 const deleteItem = async (item: any) => {
   if (!await confirmDialog(`Підказку "${item.title}" буде видалено.`, { title: 'Видалити підказку?' })) return
-  await supabase.from('agro_calendar').delete().eq('id', item.id)
+  const res = await supabase.from('agro_calendar').delete().eq('id', item.id).select('id')
+  if (!adminWriteOk(res, 'Не вдалося видалити підказку')) return
   await load()
 }
 

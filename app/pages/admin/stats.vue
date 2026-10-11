@@ -95,15 +95,15 @@ const currentMonthCount = computed(() => stats.value?.months?.at(-1)?.count ?? 0
 const prevMonthCount = computed(() => stats.value?.months?.at(-2)?.count ?? 0)
 
 const roleLabel = (role: string) => {
-  const map: Record<string, string> = { agronomist: 'Агрономи', farmer: 'Фермери', seller: 'Продавці', admin: 'Адміни', unknown: 'Без ролі' }
+  const map: Record<string, string> = { agronomist: 'Агрономи', farmer: 'Фермери', buyer: 'Заготівельники', seller: 'Продавці', admin: 'Адміни', unknown: 'Без ролі' }
   return map[role] || role
 }
 const roleIcon = (role: string) => {
-  const map: Record<string, string> = { agronomist: '🌿', farmer: '🚜', seller: '🛒', admin: '🛡', unknown: '👤' }
+  const map: Record<string, string> = { agronomist: '🌿', farmer: '🚜', buyer: '🌾', seller: '🛒', admin: '🛡', unknown: '👤' }
   return map[role] || '👤'
 }
 const roleColor = (role: string) => {
-  const map: Record<string, string> = { agronomist: 'bg-agro-hover', farmer: 'bg-amber-50', seller: 'bg-blue-50', admin: 'bg-red-50', unknown: 'bg-agro-bg' }
+  const map: Record<string, string> = { agronomist: 'bg-agro-hover', farmer: 'bg-amber-50', buyer: 'bg-lime-50', seller: 'bg-blue-50', admin: 'bg-red-50', unknown: 'bg-agro-bg' }
   return map[role] || 'bg-agro-bg'
 }
 

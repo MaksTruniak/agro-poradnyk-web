@@ -177,11 +177,15 @@
                 <select v-model="modal.form.category_slug" class="input text-sm">
                   <option value="">— не вибрано —</option>
                   <option v-for="cat in weedCategories" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
+                  <option v-if="modal.form.category_slug && !weedCategories.some(c => c.slug === modal.form.category_slug)" :value="modal.form.category_slug">{{ modal.categoryName || modal.form.category_slug }}</option>
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold text-agro-dark mb-1">Клас (bio class slug)</label>
-                <input v-model="modal.form.class_slug" class="input text-sm font-mono" placeholder="dvodolni" />
+                <label class="block text-xs font-semibold text-agro-dark mb-1">Клас</label>
+                <select v-model="modal.form.class_slug" class="input text-sm">
+                  <option value="">— не вибрано —</option>
+                  <option v-for="c in weedClasses" :key="c.slug" :value="c.slug">{{ c.name }}</option>
+                </select>
               </div>
             </div>
             <div>
@@ -244,6 +248,8 @@ definePageMeta({ layout: 'admin', middleware: 'admin' })
 const supabase = useSupabaseClient()
 const api = useAgroApi()
 const weedCategories = ref<{ slug: string; name: string }[]>([])
+// Класи (дводольні / однодольні / хвощовидні) — з наявних бур'янів, разом з id і назвою
+const weedClasses = ref<{ slug: string; name: string; id: string }[]>([])
 const LIMIT = 40
 const search = ref('')
 const page = ref(1)
@@ -266,16 +272,15 @@ const load = async () => {
 
 const emptyForm = () => ({ name: '', slug: '', latin_name: '', family: '', category_slug: '', class_slug: '', crops_affected: '', distribution_zones: '', source_image_url: '' })
 
-const modal = reactive({ show: false, isNew: false, saving: false, id: null as string | null, form: emptyForm() })
+const modal = reactive({ show: false, isNew: false, saving: false, id: null as string | null, categoryName: '', form: emptyForm() })
 
-const TRANSLIT: Record<string, string> = { а:'a',б:'b',в:'v',г:'h',ґ:'g',д:'d',е:'e',є:'ye',ж:'zh',з:'z',и:'y',і:'i',ї:'yi',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'shch',ь:'',ю:'yu',я:'ya' }
-const toSlug = (s: string) => s.toLowerCase().split('').map(c => TRANSLIT[c] ?? c).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const autoSlug = () => { if (modal.isNew) modal.form.slug = toSlug(modal.form.name) }
 
 const openModal = (item: any) => {
   modal.isNew = !item
   modal.id = item?.id ?? null
   modal.form = item ? { name: item.name ?? '', slug: item.slug ?? '', latin_name: item.latin_name ?? '', family: item.family ?? '', category_slug: item.category_slug ?? '', class_slug: item.class_slug ?? '', crops_affected: item.crops_affected ?? '', distribution_zones: item.distribution_zones ?? '', source_image_url: item.source_image_url ?? '' } : emptyForm()
+  modal.categoryName = item?.category_name ?? ''
   modal.show = true
 }
 
@@ -284,14 +289,27 @@ const save = async () => {
   if (!modal.form.name || !modal.form.slug) return
   modal.saving = true
   saveError.value = ''
-  const payload = { ...modal.form }
+  // Сайт показує назви категорії й класу з category_name / class_name — записуємо їх разом зі slug
+  const cat = weedCategories.value.find(c => c.slug === modal.form.category_slug)
+  const cls = weedClasses.value.find(c => c.slug === modal.form.class_slug)
+  const payload = {
+    ...modal.form,
+    slug: modal.form.slug.trim(),
+    category_slug: modal.form.category_slug || null,
+    category_name: modal.form.category_slug ? (cat?.name ?? modal.categoryName) || null : null,
+    class_slug: cls?.slug ?? null,
+    class_name: cls?.name ?? null,
+    class_id: cls?.id ?? null,
+    crops_affected: modal.form.crops_affected || null,
+    distribution_zones: modal.form.distribution_zones || null,
+  }
   if (modal.isNew) {
     const { data, error } = await supabase.from('agro_weeds').insert(payload).select().single()
     if (error) { saveError.value = error.message; modal.saving = false; return }
     if (data) { items.value.unshift(data as any); total.value++ }
   } else {
-    const { error } = await supabase.from('agro_weeds').update(payload).eq('id', modal.id)
-    if (error) { saveError.value = error.message; modal.saving = false; return }
+    const { data: upd, error } = await supabase.from('agro_weeds').update(payload).eq('id', modal.id!).select('id')
+    if (error || !upd?.length) { saveError.value = error?.message || 'Зміни не збережено (немає прав)'; modal.saving = false; return }
     // Перечитуємо з БД щоб мати актуальний стан
     const { data: fresh } = await supabase.from('agro_weeds').select('*').eq('id', modal.id).single()
     const idx = items.value.findIndex(r => r.id === modal.id)
@@ -335,8 +353,8 @@ const searchHerbicides = () => {
 
 const linkProduct = async (product: any) => {
   if (!drawer.item) return
-  const { error } = await supabase.from('agro_weed_herbicides').insert({ weed_id: drawer.item.id, product_id: product.id })
-  if (!error) {
+  const res = await supabase.from('agro_weed_herbicides').insert({ weed_id: drawer.item.id, product_id: product.id }).select('weed_id')
+  if (adminWriteOk(res, 'Не вдалося прив\'язати гербіцид')) {
     drawer.products.push(product)
     drawer.search = ''
     drawer.searchResults = []
@@ -345,8 +363,8 @@ const linkProduct = async (product: any) => {
 
 const unlinkProduct = async (product: any) => {
   if (!drawer.item) return
-  const { error } = await supabase.from('agro_weed_herbicides').delete().eq('weed_id', drawer.item.id).eq('product_id', product.id)
-  if (!error) {
+  const res = await supabase.from('agro_weed_herbicides').delete().eq('weed_id', drawer.item.id).eq('product_id', product.id).select('weed_id')
+  if (adminWriteOk(res, 'Не вдалося відв\'язати гербіцид')) {
     drawer.products = drawer.products.filter((p: any) => p.id !== product.id)
   }
 }
@@ -355,8 +373,9 @@ const deleteModal = reactive({ show: false, deleting: false, item: null as any }
 const confirmDelete = (item: any) => { deleteModal.item = item; deleteModal.show = true }
 const doDelete = async () => {
   deleteModal.deleting = true
-  await supabase.from('agro_weed_herbicides').delete().eq('weed_id', deleteModal.item.id)
-  await supabase.from('agro_weeds').delete().eq('id', deleteModal.item.id)
+  const links = await supabase.from('agro_weed_herbicides').delete().eq('weed_id', deleteModal.item.id)
+  const res = links.error ? links : await supabase.from('agro_weeds').delete().eq('id', deleteModal.item.id).select('id')
+  if (!adminWriteOk(res, 'Не вдалося видалити')) { deleteModal.deleting = false; return }
   items.value = items.value.filter(r => r.id !== deleteModal.item.id)
   total.value--
   deleteModal.deleting = false
@@ -364,8 +383,14 @@ const doDelete = async () => {
 }
 
 onMounted(async () => {
-  const { data } = await supabase.from('agro_categories').select('slug, name').eq('section', 'weeds').eq('is_active', true).order('sort_order')
+  const [{ data }, { data: cls }] = await Promise.all([
+    supabase.from('agro_categories').select('slug, name').eq('section', 'weeds').eq('is_active', true).order('sort_order'),
+    supabase.from('agro_weeds').select('class_slug, class_name, class_id').not('class_slug', 'is', null),
+  ])
   weedCategories.value = data || []
+  const seen = new Map<string, { slug: string; name: string; id: string }>()
+  for (const c of cls || []) if (!seen.has(c.class_slug)) seen.set(c.class_slug, { slug: c.class_slug, name: c.class_name || c.class_slug, id: c.class_id })
+  weedClasses.value = [...seen.values()]
   load()
 })
 </script>

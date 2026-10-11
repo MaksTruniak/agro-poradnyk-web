@@ -124,15 +124,9 @@
         </div>
 
         <div class="mb-4">
-          <label class="block text-sm font-medium text-agro-dark mb-1">Тариф</label>
-          <select v-model="userForm.plan" class="input text-sm">
-            <option value="basic">Basic (безкоштовний)</option>
-            <template v-if="userForm.profile === 'farmer'">
-              <option value="business">Business</option>
-              <option value="business_pro">Business Pro</option>
-            </template>
-            <option v-else value="pro">PRO агронома</option>
-          </select>
+          <label class="block text-sm font-medium text-agro-dark mb-1">Тариф зараз</label>
+          <p class="input text-sm bg-agro-bg">{{ PLAN_LABELS[userForm.plan] || userForm.plan }}</p>
+          <p class="text-xs text-agro-light mt-1">Тариф і термін змінюються в розділі «Користувачі»</p>
         </div>
 
         <div class="bg-white rounded-xl p-4 mb-4 border border-agro-border">
@@ -269,17 +263,19 @@ onMounted(async () => {
 })
 
 const savePlanLimits = async () => {
-  savingPlans.value = true
-  for (const row of planLimits.value) {
-    await supabase.from('ai_plan_limits').upsert({
-      plan: row.plan,
-      credits_base: row.credits_base || 0,
-      credits_per_ha: row.credits_per_ha || 0,
-      credits_ha_cap: row.credits_ha_cap || 0,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'plan' })
+  if (planLimits.value.some(r => [r.credits_base, r.credits_per_ha, r.credits_ha_cap].some(v => Number(v) < 0))) {
+    useToast().error('Кредити не можуть бути від\'ємними'); return
   }
+  savingPlans.value = true
+  const res = await supabase.from('ai_plan_limits').upsert(planLimits.value.map(row => ({
+    plan: row.plan,
+    credits_base: Math.floor(Number(row.credits_base) || 0),
+    credits_per_ha: Number(row.credits_per_ha) || 0,
+    credits_ha_cap: Math.floor(Number(row.credits_ha_cap) || 0),
+    updated_at: new Date().toISOString(),
+  })), { onConflict: 'plan' }).select('plan')
   savingPlans.value = false
+  if (!adminWriteOk(res, 'Не вдалося зберегти кредити')) return
   savedPlans.value = true
   setTimeout(() => savedPlans.value = false, 3000)
 }
@@ -316,6 +312,7 @@ const userForm = reactive({
   ai_text_limit: null as number | null,  // індивідуальний ліміт кредитів
 })
 const userHectares = ref(0)
+const userSubId = ref<string | null>(null)
 const topupsThisMonth = ref(0)
 const topupCredits = ref<number | null>(null)
 const grantingTopup = ref(false)
@@ -332,7 +329,7 @@ const loadUserProfileData = async () => {
   if (!uid) return
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
   const [{ data: sub }, { data: usage }, { data: farms }, { data: topups }, { data: reqs }] = await Promise.all([
-    supabase.from('subscriptions').select('plan, ai_text_limit')
+    supabase.from('subscriptions').select('id, plan, expires_at, ai_text_limit')
       .eq('user_id', uid).eq('profile', userForm.profile).maybeSingle(),
     supabase.from('ai_usage').select('credits_used')
       .eq('user_id', uid).eq('profile', userForm.profile).eq('month', currentMonth).maybeSingle(),
@@ -340,7 +337,9 @@ const loadUserProfileData = async () => {
     supabase.from('ai_credit_topups').select('credits').eq('owner_id', uid).eq('profile', userForm.profile).eq('month', currentMonth),
     supabase.from('ai_requests').select('cost_usd').eq('owner_id', uid).gte('created_at', monthStart.toISOString()),
   ])
-  userForm.plan          = sub?.plan || 'basic'
+  // Діючий тариф (прострочений = Basic) — від нього рахуються кредити
+  userForm.plan          = getActivePlan(sub)
+  userSubId.value        = sub?.id ?? null
   userForm.ai_text_limit = sub?.ai_text_limit ?? null
   userHectares.value = (farms || []).reduce((a: number, f: any) => a + (Number(f.hectares) || 0), 0)
   topupsThisMonth.value = (topups || []).reduce((a: number, t: any) => a + (t.credits || 0), 0)
@@ -364,27 +363,36 @@ const selectUserById = (o: any) => selectUser(o, o.profile === 'agronomist' ? 'a
 
 const grantTopup = async () => {
   if (!selectedUser.value || !topupCredits.value) return
+  const credits = Math.floor(Number(topupCredits.value))
+  if (!(credits > 0)) { useToast().error('Кількість кредитів має бути більше 0'); return }
   grantingTopup.value = true
-  await supabase.from('ai_credit_topups').insert({
-    owner_id: selectedUser.value.id, profile: userForm.profile, credits: topupCredits.value, month: currentMonth, source: 'admin',
-  })
-  topupCredits.value = null
+  const res = await supabase.from('ai_credit_topups').insert({
+    owner_id: selectedUser.value.id, profile: userForm.profile, credits, month: currentMonth, source: 'admin',
+  }).select('id')
   grantingTopup.value = false
+  if (!adminWriteOk(res, 'Не вдалося видати кредити')) return
+  topupCredits.value = null
   await loadUserProfileData()
 }
 
 const saveUserLimits = async () => {
   if (!selectedUser.value) return
+  // Порожнє поле — за тарифом. Тариф тут не змінюємо (раніше збереження ліміту перезаписувало план без терміну)
+  const raw = userForm.ai_text_limit as number | string | null
+  const limit = raw === '' || raw === null ? null : Math.floor(Number(raw))
+  if (limit !== null && !(limit >= 0)) { useToast().error('Ліміт — невід\'ємне число або порожньо'); return }
   savingUser.value = true
 
-  await supabase.from('subscriptions').upsert({
-    user_id:        selectedUser.value.id,
-    profile:        userForm.profile,
-    plan:           userForm.plan,
-    ai_text_limit:  userForm.ai_text_limit ?? null,
-  }, { onConflict: 'user_id,profile' })
+  const res = userSubId.value
+    ? await supabase.from('subscriptions').update({ ai_text_limit: limit }).eq('id', userSubId.value).select('id')
+    : await supabase.from('subscriptions').insert({
+        user_id: selectedUser.value.id, profile: userForm.profile, plan: 'basic', status: 'expired',
+        expires_at: new Date('2024-01-01').toISOString(), ai_text_limit: limit,
+      }).select('id')
 
   savingUser.value = false
+  if (!adminWriteOk(res, 'Не вдалося зберегти ліміт')) return
+  if (!userSubId.value) userSubId.value = (res.data as any)?.[0]?.id ?? null
   savedUser.value  = true
   setTimeout(() => savedUser.value = false, 3000)
   await loadOverrides()
@@ -393,13 +401,16 @@ const saveUserLimits = async () => {
 const resetUsage = async () => {
   if (!selectedUser.value || !confirm('Скинути використання цього місяця для цього користувача?')) return
   resettingUsage.value = true
-  await supabase.from('ai_usage')
+  const res = await supabase.from('ai_usage')
     .update({ credits_used: 0 })
     .eq('user_id', selectedUser.value.id)
     .eq('profile', userForm.profile)
     .eq('month', currentMonth)
-  if (userUsage.value) userUsage.value.credits_used = 0
+    .select('user_id')
   resettingUsage.value = false
+  // Немає рядка за цей місяць — нічого скидати
+  if (!adminWriteOk(res, 'Не вдалося скинути використання', { requireRows: !!userUsage.value?.credits_used })) return
+  if (userUsage.value) userUsage.value.credits_used = 0
 }
 
 // ─── Список overrides ─────────────────────────────────────────────────────────

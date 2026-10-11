@@ -24,9 +24,9 @@ export default defineEventHandler(async (event) => {
     .sort(([a], [b]) => Number(a) - Number(b))
     .map(([year, count]) => ({ year, count }))
 
-  const roleOrder = ['farmer', 'agronomist', 'seller', 'admin', 'unknown']
+  const roleOrder = ['farmer', 'agronomist', 'buyer', 'seller', 'admin', 'unknown']
   const roles = Object.entries(byRole)
-    .sort(([a], [b]) => roleOrder.indexOf(a) - roleOrder.indexOf(b))
+    .sort(([a], [b]) => (roleOrder.indexOf(a) + 1 || 99) - (roleOrder.indexOf(b) + 1 || 99))
     .map(([role, count]) => ({ role, count }))
 
   return { months, years, roles, total: stats?.total ?? 0 }

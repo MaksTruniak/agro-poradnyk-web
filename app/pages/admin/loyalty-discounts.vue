@@ -82,12 +82,16 @@ loading.value = false
 
 async function saveRow(row: DiscountRow) {
   const key = `${row.role}-${row.renewal_year}`
+  const pct = Number(row.discount_percent)
+  if (!Number.isInteger(pct) || pct < 0 || pct > 90) { useToast().error('Знижка — ціле число від 0 до 90%'); return }
   saving.value = key
-  await supabase.from('loyalty_discounts')
-    .update({ discount_percent: row.discount_percent })
+  const res = await supabase.from('loyalty_discounts')
+    .update({ discount_percent: pct })
     .eq('role', row.role)
     .eq('renewal_year', row.renewal_year)
+    .select('role')
   saving.value = null
+  if (!adminWriteOk(res, 'Не вдалося зберегти знижку')) return
   saved.value = true
   setTimeout(() => { saved.value = false }, 2000)
 }

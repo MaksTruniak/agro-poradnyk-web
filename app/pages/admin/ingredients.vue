@@ -313,12 +313,7 @@ const modal = reactive({
 })
 
 const autoSlug = () => {
-  if (!modal.isNew) return
-  modal.form.slug = modal.form.name
-    .toLowerCase()
-    .replace(/[аеєиіїоуюяьъ]/g, (c: string) => ({а:'a',е:'e',є:'ye',и:'y',і:'i',ї:'yi',о:'o',у:'u',ю:'yu',я:'ya',ь:'',ъ:''}[c] || c))
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
+  if (modal.isNew) modal.form.slug = toSlug(modal.form.name)
 }
 
 const openModal = (item: any) => {
@@ -347,11 +342,13 @@ const save = async () => {
   }
 
   if (modal.isNew) {
-    const { data: row } = await supabase.from('agro_active_ingredients').insert(payload).select().single()
-    if (row) items.value.unshift({ ...(row as any), product_count: 0 })
+    const res = await supabase.from('agro_active_ingredients').insert(payload).select().single()
+    if (!adminWriteOk(res, 'Не вдалося додати речовину')) { modal.saving = false; return }
+    items.value.unshift({ ...(res.data as any), product_count: 0 })
     total.value++
   } else {
-    await supabase.from('agro_active_ingredients').update(payload).eq('id', modal.id)
+    const res = await supabase.from('agro_active_ingredients').update(payload).eq('id', modal.id!).select('id')
+    if (!adminWriteOk(res, 'Не вдалося зберегти речовину')) { modal.saving = false; return }
     const idx = items.value.findIndex(r => r.id === modal.id)
     if (idx !== -1) items.value[idx] = { ...items.value[idx], ...payload }
   }
@@ -407,9 +404,10 @@ const doDelete = async () => {
   if (!deleteModal.item) return
   deleteModal.deleting = true
   // Видаляємо зв'язки з товарами
-  await supabase.from('agro_product_ingredients').delete().eq('ingredient_id', deleteModal.item.id)
+  const links = await supabase.from('agro_product_ingredients').delete().eq('ingredient_id', deleteModal.item.id)
   // Видаляємо речовину
-  await supabase.from('agro_active_ingredients').delete().eq('id', deleteModal.item.id)
+  const res = links.error ? links : await supabase.from('agro_active_ingredients').delete().eq('id', deleteModal.item.id).select('id')
+  if (!adminWriteOk(res, 'Не вдалося видалити')) { deleteModal.deleting = false; return }
   items.value = items.value.filter(r => r.id !== deleteModal.item.id)
   total.value--
   deleteModal.deleting = false
