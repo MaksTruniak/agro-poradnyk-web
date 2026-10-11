@@ -225,10 +225,12 @@ const save = async () => {
   }
 
   if (modal.isNew) {
-    const { data } = await supabase.from('agro_manufacturers').insert(payload).select().single()
-    if (data) brands.value.unshift(data)
+    const { data, error } = await supabase.from('agro_manufacturers').insert(payload).select().single()
+    if (error || !data) { useToast().error('Не вдалося додати бренд' + (error ? ': ' + error.message : '')); modal.saving = false; return }
+    brands.value.unshift(data)
   } else {
-    await supabase.from('agro_manufacturers').update(payload).eq('id', modal.id)
+    const { data, error } = await supabase.from('agro_manufacturers').update(payload).eq('id', modal.id).select('id')
+    if (error || !data?.length) { useToast().error('Не вдалося зберегти бренд' + (error ? ': ' + error.message : ' — немає прав')); modal.saving = false; return }
     const idx = brands.value.findIndex(b => b.id === modal.id)
     if (idx !== -1) brands.value[idx] = { ...brands.value[idx], ...payload }
   }
@@ -239,7 +241,9 @@ const save = async () => {
 
 const toggleActive = async (brand: any) => {
   const newVal = brand.is_active === false ? true : false
-  await supabase.from('agro_manufacturers').update({ is_active: newVal }).eq('id', brand.id)
+  const { data, error } = await supabase.from('agro_manufacturers').update({ is_active: newVal }).eq('id', brand.id).select('id')
+  // База відкидає зміну без помилки (0 рядків), якщо немає прав — не показуємо «вимкнено», коли нічого не змінилось
+  if (error || !data?.length) { useToast().error('Не вдалося змінити бренд' + (error ? ': ' + error.message : ' — немає прав')); return }
   const idx = brands.value.findIndex(b => b.id === brand.id)
   if (idx !== -1) brands.value[idx] = { ...brands.value[idx], is_active: newVal }
 }

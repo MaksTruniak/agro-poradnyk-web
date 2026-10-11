@@ -1,11 +1,14 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 export default defineCachedEventHandler(async (event) => {
   const query = getQuery(event)
   const path = query.path as string
   if (!path) throw createError({ statusCode: 400, message: 'path required' })
 
-  const supabase = serverSupabaseServiceRole(event)
+  // Публічний ключ без сесії: кеш спільний для всіх, тож дані — як бачить гість
+  // (вимкнені бренди та їхні товари приховує база; сервісний ключ обходив ці правила)
+  const config = useRuntimeConfig()
+  const supabase = createClient(config.public.supabase.url, config.public.supabase.key, { auth: { persistSession: false } })
 
   // Products list
   if (path === '/v1/products') {
@@ -230,7 +233,7 @@ export default defineCachedEventHandler(async (event) => {
 
   throw createError({ statusCode: 404, message: `Unknown path: ${path}` })
 }, {
-  maxAge: 60 * 60,
+  maxAge: 5 * 60,  // зміни з адмінки (вимкнений бренд тощо) доходять до сайту за кілька хвилин
   name: 'agro',
   getKey: (event) => JSON.stringify(getQuery(event)),
 })

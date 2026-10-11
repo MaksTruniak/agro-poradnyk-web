@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
+import { anonClient, asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 
 // Адмінка: верифікація заготівельника й агронома доходить до значків на публічних сторінках,
 // пошук користувача за ім'ям. ПИШЕ в базу (позначки верифікації, профіль агронома) — лише з E2E_WRITE=1;
@@ -99,5 +99,41 @@ test.describe('Адмінка', () => {
       await page.goto(path)
       await page.waitForURL(/\/dashboard/, { timeout: 15000 })
     }
+  })
+
+  test('вимкнений бренд і його товари зникають із сайту; адмін бачить усе', async ({ page }) => {
+    const admin = serviceClient()
+    // Бренд із товарами
+    const { data: prod } = await admin.from('agro_products').select('id, slug, manufacturer_id').not('manufacturer_id', 'is', null).limit(1).single()
+    const { data: brand } = await admin.from('agro_manufacturers').select('id, name, is_active').eq('id', prod!.manufacturer_id).single()
+    try {
+      await login(page, 'admin')
+      await page.goto('/admin/brands')
+      const row = page.locator('div', { hasText: brand!.name }).filter({ has: page.getByTitle('Вимкнути') }).last()
+      await row.getByTitle('Вимкнути').click()
+      await expect.poll(async () => (await admin.from('agro_manufacturers').select('is_active').eq('id', brand!.id).single()).data?.is_active).toBe(false)
+
+      const anon = anonClient()
+      expect((await anon.from('agro_manufacturers').select('id').eq('id', brand!.id)).data ?? []).toEqual([])
+      expect((await anon.from('agro_products').select('id').eq('id', prod!.id)).data ?? [], 'товар вимкненого бренду видно гостю').toEqual([])
+      const { data: unbranded } = await anon.from('agro_products').select('id').is('manufacturer_id', null).limit(1)
+      expect(unbranded?.length, 'товари без бренду зникли').toBe(1)
+
+      // Адмін (своєю сесією) бачить бренд і товар
+      const { client } = await asUser('admin')
+      expect((await client.from('agro_products').select('id').eq('id', prod!.id)).data?.length).toBe(1)
+    } finally {
+      await admin.from('agro_manufacturers').update({ is_active: brand!.is_active }).eq('id', brand!.id)
+    }
+  })
+
+  test('адмін зберігає кредити AI і товари (раніше база мовчки відкидала зміни)', async () => {
+    const { client } = await asUser('admin')
+    const { data: lim } = await client.from('ai_plan_limits').select('plan, credits_base').limit(1).single()
+    const upd = await client.from('ai_plan_limits').update({ credits_base: lim!.credits_base }).eq('plan', lim!.plan).select('plan')
+    expect(upd.data?.length, 'кредити AI не зберігаються').toBe(1)
+    const { data: p } = await client.from('agro_products').select('id, name').limit(1).single()
+    const updP = await client.from('agro_products').update({ name: p!.name }).eq('id', p!.id).select('id')
+    expect(updP.data?.length, 'товар не зберігається').toBe(1)
   })
 })
