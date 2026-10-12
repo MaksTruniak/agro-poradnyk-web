@@ -45,6 +45,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@vueuse/nuxt',
     '@vercel/analytics',
+    '@vercel/speed-insights',
   ],
 
   supabase: {
