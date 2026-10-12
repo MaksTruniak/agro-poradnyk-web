@@ -5,11 +5,11 @@ const supabaseOrigin = (() => {
 })()
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.clarity.ms https://*.clarity.ms",
+  "script-src 'self' 'unsafe-inline' https://www.clarity.ms https://*.clarity.ms https://va.vercel-scripts.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace('https://', 'wss://')} https://api.novaposhta.ua https://api.open-meteo.com https://*.clarity.ms https://c.bing.com`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace('https://', 'wss://')} https://api.novaposhta.ua https://api.open-meteo.com https://*.clarity.ms https://c.bing.com https://va.vercel-scripts.com`,
   "frame-src 'none'",
   "frame-ancestors 'self'",
   "object-src 'none'",
@@ -44,6 +44,7 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase',
     '@nuxtjs/tailwindcss',
     '@vueuse/nuxt',
+    '@vercel/analytics',
   ],
 
   supabase: {
