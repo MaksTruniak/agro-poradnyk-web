@@ -9,7 +9,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace('https://', 'wss://')} https://api.novaposhta.ua https://api.open-meteo.com https://*.clarity.ms https://c.bing.com`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace('https://', 'wss://')} https://api.novaposhta.ua https://api.open-meteo.com https://*.clarity.ms https://c.bing.com https://vitals.vercel-insights.com`,
   "frame-src 'none'",
   "frame-ancestors 'self'",
   "object-src 'none'",
