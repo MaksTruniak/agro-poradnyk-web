@@ -120,7 +120,7 @@
 definePageMeta({ layout: 'default' })
 useHead({ title: 'Пестициди — АгроПростір' })
 
-const PESTICIDE_TYPES = [
+const PESTICIDE_TYPES_DEFAULTS = [
   { slug: 'herbicide',        name: 'Гербіциди',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>' },
   { slug: 'fungicide',        name: 'Фунгіциди',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>' },
   { slug: 'insecticide',      name: 'Інсектициди',      emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/></svg>' },
@@ -133,11 +133,13 @@ const PESTICIDE_TYPES = [
   { slug: 'adjuvant',         name: "Ад'юванти / ПАР",  emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6m-3 0v6l4 8H8l4-8V3"/></svg>' },
   { slug: 'fumigant',         name: 'Фуміганти',        emoji: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>' },
 ]
-const PESTICIDE_SLUGS = PESTICIDE_TYPES.map(t => t.slug)
+// Назви й видимість — з адмінки «Категорії»
+const PESTICIDE_TYPES = await useCatalogCategories('pesticide', PESTICIDE_TYPES_DEFAULTS)
+const PESTICIDE_SLUGS = PESTICIDE_TYPES_DEFAULTS.map(t => t.slug)
 
-const typeMap = Object.fromEntries(PESTICIDE_TYPES.map(t => [t.slug, t]))
-const typeEmoji = (slug: string) => typeMap[slug]?.emoji || '🌿'
-const typeName = (slug: string) => typeMap[slug]?.name || slug
+const typeMap = computed(() => Object.fromEntries([...PESTICIDE_TYPES_DEFAULTS, ...PESTICIDE_TYPES.value].map(t => [t.slug, t])))
+const typeEmoji = (slug: string) => typeMap.value[slug]?.emoji || '🌿'
+const typeName = (slug: string) => typeMap.value[slug]?.name || slug
 
 const api = useAgroApi()
 const supabase = useSupabaseClient()

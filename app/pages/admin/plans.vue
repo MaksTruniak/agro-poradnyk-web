@@ -38,10 +38,11 @@
               </div>
             </td>
             <td class="px-4 py-4">
-              <div class="relative">
+              <div v-if="!isAgronomist(plan)" class="relative">
                 <input v-model.number="plan.ha_rate" type="number" min="0" class="input text-sm py-1.5 w-full font-mono pr-14" />
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-agro-light">грн/га</span>
               </div>
+              <p v-else class="text-xs text-agro-light">фіксована ціна</p>
             </td>
             <td class="px-4 py-4 text-center">
               <button @click="plan.is_active = !plan.is_active"
@@ -66,7 +67,7 @@
     <div v-if="!loading" class="mt-6 card bg-agro-bg border-0">
       <p class="text-xs font-bold uppercase tracking-wide text-agro-light mb-3">Приклад розрахунку</p>
       <div class="space-y-2">
-        <div v-for="plan in plans.filter(p => p.is_active)" :key="plan.id" class="flex flex-col gap-1">
+        <div v-for="plan in plans.filter(p => p.is_active && !isAgronomist(p))" :key="plan.id" class="flex flex-col gap-1">
           <p class="text-sm font-semibold text-agro-dark">{{ plan.label }}</p>
           <p class="text-xs text-agro-light">
             10 га → {{ ((plan.base_price || 0) + 10 * (plan.ha_rate || 0)).toLocaleString('uk-UA') }} грн/міс &nbsp;|&nbsp;
@@ -94,13 +95,16 @@ const loading = ref(true)
 const saving = ref('')
 const savedMsg = ref(false)
 
-const { data } = await supabase.from('plans').select('*').in('id', ['business', 'business_pro', 'business_year', 'business_pro_year']).order('period').order('base_price')
-plans.value = data || []
+const { data } = await supabase.from('plans').select('*').in('id', ['business', 'business_pro', 'business_year', 'business_pro_year', 'agronomist_pro_month', 'agronomist_pro_year']).order('period').order('base_price')
+// PRO агронома — фіксована ціна (price_uah), без ставки за гектар; редагується в тому ж полі «База»
+const isAgronomist = (plan: any) => String(plan.id).startsWith('agronomist_')
+plans.value = (data || []).map((p: any) => isAgronomist(p) ? { ...p, base_price: p.price_uah || p.base_price, ha_rate: 0 } : p)
 loading.value = false
 
 async function save(plan: any) {
   const base = Number(plan.base_price), rate = Number(plan.ha_rate)
   if (!plan.label?.trim() || !(base >= 0) || !(rate >= 0)) { useToast().error('Вкажіть назву і невід\'ємні ціни'); return }
+  if (isAgronomist(plan) && !(base > 0)) { useToast().error('Ціна PRO агронома має бути більше 0'); return }
   saving.value = plan.id
   const res = await supabase.from('plans').update({
     label:      plan.label.trim(),

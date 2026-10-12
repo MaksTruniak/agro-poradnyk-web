@@ -5,7 +5,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         Категорії
       </h1>
-      <p class="text-agro-light mt-1">Управління категоріями товарів у каталозі</p>
+      <p class="text-agro-light mt-1">Назви категорій у меню каталогу і їх видимість на сайті</p>
     </div>
 
     <!-- Вкладки -->
@@ -18,12 +18,7 @@
       </button>
     </div>
 
-    <div class="flex justify-end mb-4">
-      <button @click="openModal(null)" class="btn-primary text-sm py-2 px-4 inline-flex items-center gap-1.5">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Додати категорію
-      </button>
-    </div>
+
 
     <div v-if="loading" class="card overflow-hidden p-0">
       <div v-for="i in 6" :key="i" class="flex items-center gap-4 px-5 py-4 border-b border-agro-border animate-pulse">
@@ -205,19 +200,24 @@ const openModal = (cat: any) => {
 const save = async () => {
   if (!modal.form.name || !modal.form.slug) return
   modal.saving = true
-  const payload = { ...modal.form, section: activeTab.value }
+  const payload = { ...modal.form, name: modal.form.name.trim(), slug: modal.form.slug.trim(), section: activeTab.value }
+  const list = data[activeTab.value]
 
-  if (modal.isNew) {
-    const { data: row } = await supabase.from('agro_categories').insert(payload).select().single()
-    if (row) {
-      data[activeTab.value].push({ ...(row as any), count: 0 })
-    }
+  if (modal.isNew || !modal.id) {
+    // Вбудована категорія ще без запису в базі (id null) — створюємо запис, інакше зміна нікуди не йшла
+    const res = await supabase.from('agro_categories').insert(payload).select().single()
+    if (!adminWriteOk(res, 'Не вдалося зберегти категорію')) { modal.saving = false; return }
+    const row = res.data as any
+    const idx = list.findIndex(c => !c.id && c.slug === row.slug)
+    if (idx !== -1) list[idx] = { ...list[idx], ...row }
+    else list.push({ ...row, count: 0 })
   } else {
-    await supabase.from('agro_categories').update(payload).eq('id', modal.id)
-    const list = data[activeTab.value]
+    const res = await supabase.from('agro_categories').update(payload).eq('id', modal.id).select('id')
+    if (!adminWriteOk(res, 'Не вдалося зберегти категорію')) { modal.saving = false; return }
     const idx = list.findIndex(c => c.id === modal.id)
     if (idx !== -1) list[idx] = { ...list[idx], ...payload }
   }
+  useToast().success('Збережено')
 
   modal.saving = false
   modal.show = false

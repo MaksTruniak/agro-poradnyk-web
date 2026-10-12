@@ -21,7 +21,7 @@
             :class="!activeCategory ? 'bg-agro text-white' : 'text-agro-light hover:bg-agro-hover hover:text-agro-dark'"
           >Всі категорії</button>
           <button
-            v-for="cat in categories"
+            v-for="cat in visibleCategories"
             :key="cat.slug"
             @click="activeCategory = cat.slug; offset = 0; load()"
             class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5"
@@ -122,6 +122,8 @@ const { data: initData, pending } = useLazyAsyncData('fertilizers-index', async 
 const items = ref<any[]>([])
 const total = ref(0)
 const categories = ref<any[]>([])
+// Назви й видимість груп — з адмінки «Категорії»
+const visibleCategories = await useCatalogCategories('fertilizer', categories)
 const loading = computed(() => pending.value && !items.value.length)
 
 watch(initData, (val) => {

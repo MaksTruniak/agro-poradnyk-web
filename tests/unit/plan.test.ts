@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   getActivePlan, isPaidFarmerPlan, isAgronomistPro, aiLimitKey, resolveAiLimits,
-  HECTARE_LIMITS, MEMBER_LIMITS, subscriptionProfileFor,
+  HECTARE_LIMITS, MEMBER_LIMITS, subscriptionProfileFor, hectareLimitFor, splitPlanHectares,
 } from '../../shared/utils/plan'
 
 const now = new Date('2026-10-01T12:00:00Z')
@@ -70,4 +70,17 @@ describe('профіль підписки', () => {
     expect(subscriptionProfileFor('dacha')).toBe('farmer')
     expect(subscriptionProfileFor(null)).toBe('farmer')
   })
+})
+
+describe('hectareLimitFor — ліміт площі полів', () => {
+  it('Basic — 2 га', () => expect(hectareLimitFor('basic')).toBe(2))
+  it('Бізнес — оплачені гектари', () => expect(hectareLimitFor('business', 20)).toBe(20))
+  it('Бізнес без запису гектарів — 50', () => expect(hectareLimitFor('business', null)).toBe(50))
+  it('Бізнес — не більше 50', () => expect(hectareLimitFor('business', 80)).toBe(50))
+  it('Бізнес Про — без обмеження', () => expect(hectareLimitFor('business_pro', 120)).toBe(Infinity))
+})
+
+describe('splitPlanHectares — гектари з orderReference', () => {
+  it('з гектарами', () => expect(splitPlanHectares('business_year-ha20')).toEqual({ plan: 'business_year', hectares: 20 }))
+  it('без гектарів (старі замовлення, агроном)', () => expect(splitPlanHectares('agronomist_pro_month')).toEqual({ plan: 'agronomist_pro_month', hectares: null }))
 })

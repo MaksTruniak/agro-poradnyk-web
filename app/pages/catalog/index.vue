@@ -92,7 +92,7 @@
 definePageMeta({ layout: 'default' })
 useHead({ title: 'Пестициди — АгроПростір' })
 
-const PESTICIDE_TYPES = [
+const PESTICIDE_TYPES_DEFAULTS = [
   { slug: 'herbicide',        name: 'Гербіциди',             emoji: '🌿' },
   { slug: 'fungicide',        name: 'Фунгіциди',             emoji: '🧴' },
   { slug: 'insecticide',      name: 'Інсектициди',           emoji: '🐛' },
@@ -105,13 +105,15 @@ const PESTICIDE_TYPES = [
   { slug: 'adjuvant',         name: "Ад'юванти / ПАР",      emoji: '🔬' },
   { slug: 'fumigant',         name: 'Фуміганти',             emoji: '💨' },
 ]
+// Назви й видимість — з адмінки «Категорії»
+const PESTICIDE_TYPES = await useCatalogCategories('pesticide', PESTICIDE_TYPES_DEFAULTS)
 
 // Тільки ці типи — решта на окремих сторінках
-const PESTICIDE_SLUGS = PESTICIDE_TYPES.map(t => t.slug)
+const PESTICIDE_SLUGS = PESTICIDE_TYPES_DEFAULTS.map(t => t.slug)
 
-const typeMap = Object.fromEntries(PESTICIDE_TYPES.map(t => [t.slug, t]))
-const typeEmoji = (slug: string) => typeMap[slug]?.emoji || '🌿'
-const typeName = (slug: string) => typeMap[slug]?.name || slug
+const typeMap = computed(() => Object.fromEntries([...PESTICIDE_TYPES_DEFAULTS, ...PESTICIDE_TYPES.value].map(t => [t.slug, t])))
+const typeEmoji = (slug: string) => typeMap.value[slug]?.emoji || '🌿'
+const typeName = (slug: string) => typeMap.value[slug]?.name || slug
 
 const api = useAgroApi()
 const LIMIT = 40

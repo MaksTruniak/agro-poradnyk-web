@@ -33,6 +33,28 @@ export const HECTARE_LIMITS: Record<PlanId, number> = {
   pro: 2,
 }
 
+// Межі гектарів тарифів (як на сторінці підписки й при оплаті): Бізнес — 2–50 га, Бізнес Про — від 50 га
+export const BUSINESS_MIN_HA = 2
+export const BUSINESS_MAX_HA = 50
+
+/**
+ * Скільки гектарів полів дозволяє тариф. Бізнес — оплачені гектари (custom_hectares, записує оплата або адмін),
+ * але не більше 50; без запису (старі оплати, призначено адміном без гектарів) — 50.
+ */
+export const hectareLimitFor = (plan: PlanId, customHectares?: number | null) => {
+  if (plan === 'business') {
+    const paid = Number(customHectares) || 0
+    return paid > 0 ? Math.min(paid, BUSINESS_MAX_HA) : BUSINESS_MAX_HA
+  }
+  return HECTARE_LIMITS[plan]
+}
+
+/** Гектари з orderReference оплати: agro-{plan}-ha{N}-{userId8}-{timestamp} (орденреференс підписаний WFP) */
+export const splitPlanHectares = (planPart: string): { plan: string; hectares: number | null } => {
+  const m = planPart.match(/^(.*)-ha(\d{1,6})$/)
+  return m ? { plan: m[1]!, hectares: Number(m[2]) } : { plan: planPart, hectares: null }
+}
+
 export const MEMBER_LIMITS: Record<PlanId, number> = {
   basic: 0,
   business: 5,

@@ -89,18 +89,20 @@
 definePageMeta({ layout: 'default' })
 useHead({ title: 'Біопрепарати — АгроПростір' })
 
-const BIO_TYPES = [
+const BIO_TYPES_DEFAULTS = [
   { slug: 'bio_product',          name: 'Мікробні та гумінові', emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22l10-10"/><path d="M16 8c0-4-3-6-7-6C5 2 2 7 2 12c0 0 4-1 7-4 1.5 3 5 6 9 6 0-2-1-5-2-6z"/></svg>' },
   { slug: 'biostimulator',        name: 'Біостимулятори',       emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg>' },
   { slug: 'biofungicide',         name: 'Біофунгіциди',         emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
   { slug: 'biological_fungicide', name: 'Біофунгіциди біол.',   emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
   { slug: 'inoculant',            name: 'Інокулянти',           emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41"/></svg>' },
 ]
+// Назви й видимість — з адмінки «Категорії»
+const BIO_TYPES = await useCatalogCategories('bio', BIO_TYPES_DEFAULTS)
 
-const BIO_SLUGS = BIO_TYPES.map(t => t.slug)
-const typeMap = Object.fromEntries(BIO_TYPES.map(t => [t.slug, t]))
-const typeEmoji = (slug: string) => typeMap[slug]?.emoji || '🍃'
-const typeName = (slug: string) => typeMap[slug]?.name || slug
+const BIO_SLUGS = BIO_TYPES_DEFAULTS.map(t => t.slug)
+const typeMap = computed(() => Object.fromEntries([...BIO_TYPES_DEFAULTS, ...BIO_TYPES.value].map(t => [t.slug, t])))
+const typeEmoji = (slug: string) => typeMap.value[slug]?.emoji || '🍃'
+const typeName = (slug: string) => typeMap.value[slug]?.name || slug
 
 const api = useAgroApi()
 const LIMIT = 40

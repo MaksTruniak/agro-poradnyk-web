@@ -121,6 +121,11 @@
               <label class="block text-sm font-medium text-agro-dark">Дійсна до</label>
               <input v-model="modal.expires_at" type="date" class="input text-sm" />
             </div>
+            <div v-if="modal.plan === 'business'" class="space-y-2 mb-4">
+              <label class="block text-sm font-medium text-agro-dark">Оплачено гектарів (2–50)</label>
+              <input v-model.number="modal.hectares" type="number" min="2" max="50" class="input text-sm" placeholder="50" />
+              <p class="text-xs text-agro-light">Ліміт площі полів. Порожньо — 50 га. Більше 50 га — тариф «Бізнес Про».</p>
+            </div>
             <p v-if="saveMsg" class="text-green-600 text-sm font-semibold mb-3 text-center">✓ {{ saveMsg }}</p>
             <p v-if="saveError" class="text-red-500 text-sm mb-3 text-center">{{ saveError }}</p>
             <div class="flex justify-center gap-3">
@@ -201,6 +206,7 @@ const modal = reactive({
   profile: 'farmer' as SubscriptionProfile,
   plan: 'basic',
   expires_at: '',
+  hectares: null as number | string | null,
   coupon_code: '',
   coupon_discount: 10,
 })
@@ -227,10 +233,11 @@ const changePage = (p: number) => {
 }
 
 async function loadModalSub() {
-  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at')
+  const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at, custom_hectares')
     .eq('user_id', modal.userId).eq('profile', modal.profile).maybeSingle()
   modal.plan = sub?.plan || 'basic'
   modal.expires_at = sub?.expires_at ? new Date(sub.expires_at).toISOString().split('T')[0] : ''
+  modal.hectares = sub?.custom_hectares ?? null
 }
 
 async function switchModalProfile(profile: SubscriptionProfile) {
@@ -271,12 +278,17 @@ async function savePlan() {
       ? new Date('2024-01-01').toISOString()
       : new Date(`${modal.expires_at}T23:59:59+03:00`).toISOString()
     if (modal.plan !== 'basic' && new Date(expiresAt) <= new Date()) throw new Error('Дата має бути в майбутньому')
+    const ha = modal.hectares === '' || modal.hectares === null ? null : Number(modal.hectares)
+    if (modal.plan === 'business' && ha !== null && !(Number.isInteger(ha) && ha >= BUSINESS_MIN_HA && ha <= BUSINESS_MAX_HA)) {
+      throw new Error(`Гектари для «Бізнесу» — від ${BUSINESS_MIN_HA} до ${BUSINESS_MAX_HA}`)
+    }
     const { error } = await supabase.from('subscriptions').upsert({
       user_id: modal.userId,
       profile: modal.profile,
       plan: modal.plan,
       status: modal.plan === 'basic' ? 'expired' : 'active',
       expires_at: expiresAt,
+      ...(modal.profile === 'farmer' && modal.plan === 'business' ? { custom_hectares: ha } : {}),
     }, { onConflict: 'user_id,profile' })
     if (error) throw new Error(error.message)
     // Оновлюємо значок тарифу в списку

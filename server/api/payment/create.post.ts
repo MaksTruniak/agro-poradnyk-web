@@ -52,6 +52,7 @@ export default defineEventHandler(async (event) => {
 
   let basePrice = 0
   let planLabel = planData.label
+  let paidHectares: number | null = null
 
   if (planData.ha_rate > 0) {
     // Ціна з гектарами
@@ -62,6 +63,7 @@ export default defineEventHandler(async (event) => {
     const isBusiness = plan === 'business' || plan === 'business_year'
     if (isBusiness && (ha < 2 || ha > 50)) throw createError({ statusCode: 400, message: 'Для плану Бізнес — від 2 до 50 га' })
     if (isPro && ha < 50) throw createError({ statusCode: 400, message: 'Для плану Бізнес Про — мінімум 50 га' })
+    paidHectares = ha
     basePrice = (planData.base_price || 0) + ha * planData.ha_rate
     planLabel = `${planData.label} (${ha} га)`
   } else {
@@ -91,7 +93,8 @@ export default defineEventHandler(async (event) => {
   if (!(amount > 0)) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
   const labelSuffix = discountPercent > 0 ? ` (знижка ${discountPercent}%)` : ''
 
-  const orderReference = `agro-${plan}-${user.id.slice(0, 8)}-${Date.now()}`
+  // Гектари — в orderReference: він підписаний WayForPay, а merchantOptions ні (callback бере ліміт гектарів звідси)
+  const orderReference = `agro-${plan}${paidHectares ? `-ha${paidHectares}` : ''}-${user.id.slice(0, 8)}-${Date.now()}`
   const orderDate      = Math.floor(Date.now() / 1000)
   const currency       = 'UAH'
   const productName    = [`${planLabel}${labelSuffix}`]

@@ -232,6 +232,11 @@
           </div>
 
         </div>
+
+        <p class="mt-10 text-sm text-[rgb(91,107,83)]">
+          Великий агрохолдинг або потрібні особливі умови?
+          <button type="button" @click="contactOpen = true" class="font-bold text-[#2F5233] underline hover:no-underline">Залишити Enterprise-запит</button>
+        </p>
       </div>
     </section>
 
@@ -260,6 +265,7 @@
                 <label class="block text-xs font-semibold text-[rgb(62,79,59)] mb-1.5">Номер телефону</label>
                 <input v-model="contactForm.phone" type="tel" required placeholder="+380" class="input w-full" />
               </div>
+              <p v-if="contactError" class="text-sm text-red-500">{{ contactError }}</p>
               <button type="submit" :disabled="contactLoading"
                 class="mt-2 w-full py-3.5 rounded-xl bg-[#2F5233] text-white font-bold text-sm hover:bg-[#3d6b42] transition-colors disabled:opacity-60">
                 {{ contactLoading ? 'Надсилаємо...' : 'Надіслати запит' }}
@@ -346,15 +352,24 @@ const contactSent = ref(false)
 const contactLoading = ref(false)
 const contactForm = reactive({ name: '', email: '', phone: '' })
 
+const contactError = ref('')
 const submitContact = async () => {
+  contactError.value = ''
+  const name = contactForm.name.trim(), email = contactForm.email.trim().toLowerCase(), phone = contactForm.phone.trim()
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/\D/g, '').length < 9) {
+    contactError.value = 'Перевірте ім\'я, email і телефон'
+    return
+  }
   contactLoading.value = true
-  await supabase.from('contact_requests').insert({
-    name: contactForm.name,
-    email: contactForm.email,
-    phone: contactForm.phone,
-    type: 'enterprise',
-  }).then(() => {}).catch(() => {})
+  // Запит видно в адмінці («Запити»). Помилку не ховаємо — раніше форма писала «надіслано» навіть без запису
+  const { error } = await supabase.from('contact_requests').insert({
+    name: name.slice(0, 200), email: email.slice(0, 200), phone: phone.slice(0, 50), type: 'enterprise',
+  })
   contactLoading.value = false
+  if (error) {
+    contactError.value = 'Не вдалося надіслати запит. Спробуйте ще раз або напишіть на support@agroprostir.com.ua'
+    return
+  }
   contactSent.value = true
 }
 useSeoMeta({

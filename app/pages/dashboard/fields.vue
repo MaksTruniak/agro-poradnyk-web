@@ -165,7 +165,7 @@
             </div>
             <h2 class="font-extrabold text-agro-dark text-xl mb-2">Ліміт гектарів вичерпано</h2>
             <p class="text-agro-light text-sm mb-2">
-              Ваш план <strong class="text-agro-dark capitalize">{{ currentPlan }}</strong>:
+              Ваш план <strong class="text-agro-dark">{{ PLAN_NAMES[currentPlan] || currentPlan }}</strong>:
               ліміт <strong class="text-agro-dark">{{ hectareLimit }} га</strong>.
             </p>
             <p class="text-agro-light text-sm mb-6">
@@ -441,12 +441,14 @@ const uid = await getQueryUserId()
 const [, subRes] = await Promise.all([
   supabase.from('users').select('role').eq('id', uid).single(),
   // План власника даних (для члена команди — план власника)
-  supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
+  supabase.from('subscriptions').select('plan, expires_at, custom_hectares').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
 ])
 
 const currentPlan = computed(() => getActivePlan(subRes.data))
 
-const hectareLimit = computed(() => HECTARE_LIMITS[currentPlan.value])
+// Бізнес — оплачені гектари (до 50), Бізнес Про — без обмеження
+const hectareLimit = computed(() => hectareLimitFor(currentPlan.value, subRes.data?.custom_hectares))
+const PLAN_NAMES: Record<string, string> = { basic: 'Basic', business: 'Бізнес', business_pro: 'Бізнес Про', pro: 'PRO' }
 const totalHectares = computed(() =>
   farms.value.reduce((sum: number, f: any) => sum + (parseFloat(f.hectares) || 0), 0)
 )
@@ -623,6 +625,12 @@ const openEditFarm = (farm: any) => {
 
 const saveFarm = async () => {
   if (!editingFarm.value || !editFarmData.name) return
+  const newHa = parseFloat(editFarmData.hectares) || 0
+  const oldHa = parseFloat(editingFarm.value.hectares) || 0
+  if (hectareLimit.value !== Infinity && newHa > oldHa && totalHectares.value - oldHa + newHa > hectareLimit.value) {
+    showHectarePaywall.value = true
+    return
+  }
   saving.value = true
   const cadastral = editFarmCadastrals.value.map(s => s.trim()).filter(Boolean).join('\n') || null
   const { error } = await supabase.from('farms').update({

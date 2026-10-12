@@ -107,6 +107,8 @@ test.describe('Адмінка', () => {
     const { data: prod } = await admin.from('agro_products').select('id, slug, manufacturer_id').not('manufacturer_id', 'is', null).limit(1).single()
     const { data: brand } = await admin.from('agro_manufacturers').select('id, name, is_active').eq('id', prod!.manufacturer_id).single()
     try {
+      // Бренд має бути увімкнений перед перевіркою; у finally повертаємо його початковий стан
+      await admin.from('agro_manufacturers').update({ is_active: true }).eq('id', brand!.id)
       await login(page, 'admin')
       await page.goto('/admin/brands')
       const row = page.locator('div', { hasText: brand!.name }).filter({ has: page.getByTitle('Вимкнути') }).last()
@@ -176,6 +178,62 @@ test.describe('Адмінка', () => {
       await admin.from('agro_products').update(prod!).eq('id', prod!.id)
       if (det) await admin.from('agro_product_details').update(det).eq('id', prod!.id)
       else await admin.from('agro_product_details').delete().eq('id', prod!.id)
+    }
+  })
+
+  test('звернення й запити Enterprise: видно в адмінці, адмін закриває', async ({ page }) => {
+    const admin = serviceClient()
+    const buyer = await asUser('buyer')
+    const subject = `E2E звернення ${Date.now()}`
+    const { data: ticket } = await admin.from('support_tickets').insert({ user_id: buyer.userId, subject, body: 'Текст звернення', priority: 'normal' }).select('id').single()
+    const email = `e2e-enterprise-${Date.now()}@example.com`
+    try {
+      // Форма Enterprise на /for-farmers — як гість
+      await page.goto('/for-farmers')
+      await page.waitForLoadState('networkidle')
+      await page.getByRole('button', { name: 'Залишити Enterprise-запит' }).click()
+      await page.getByPlaceholder("Ваше ім'я").fill('E2E Enterprise')
+      await page.getByPlaceholder('email@example.com').fill(email)
+      await page.getByPlaceholder('+380').fill('+380501234567')
+      await page.getByRole('button', { name: 'Надіслати запит' }).click()
+      await expect.poll(async () => (await admin.from('contact_requests').select('id').eq('email', email)).data?.length).toBe(1)
+
+      await login(page, 'admin')
+      const errors = collectErrors(page)
+      await page.goto('/admin')
+      await page.getByRole('button', { name: /Звернення/ }).click()
+      const card = page.locator('.card', { hasText: subject })
+      await expect(card).toBeVisible({ timeout: 15000 })
+      await card.getByRole('button', { name: 'Закрити' }).click()
+      await expect.poll(async () => (await admin.from('support_tickets').select('status').eq('id', ticket!.id).single()).data?.status).toBe('closed')
+
+      await page.getByRole('button', { name: /Запити/ }).click()
+      await page.locator('.card', { hasText: email }).getByRole('button', { name: 'Опрацьовано' }).click()
+      await expect.poll(async () => (await admin.from('contact_requests').select('status').eq('email', email).single()).data?.status).toBe('done')
+      await expectNoErrors(errors, 'адмінці')
+    } finally {
+      await admin.from('support_tickets').delete().eq('id', ticket!.id)
+      await admin.from('contact_requests').delete().eq('email', email)
+    }
+  })
+
+  test('категорії: назва й видимість з адмінки на сайті', async ({ page }) => {
+    const admin = serviceClient()
+    const { data: existing } = await admin.from('agro_categories').select('*').eq('section', 'pesticide').in('slug', ['fumigant', 'desiccant'])
+    const restore = existing || []
+    try {
+      await admin.from('agro_categories').delete().eq('section', 'pesticide').in('slug', ['fumigant', 'desiccant'])
+      await admin.from('agro_categories').insert([
+        { section: 'pesticide', slug: 'fumigant', name: 'Фуміганти', is_active: false },
+        { section: 'pesticide', slug: 'desiccant', name: 'Десиканти E2E', is_active: true },
+      ])
+      await page.goto('/pesticides')
+      await expect(page.getByRole('button', { name: 'Десиканти E2E' })).toBeVisible({ timeout: 15000 })
+      await expect(page.getByRole('button', { name: 'Фуміганти' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Гербіциди' })).toBeVisible()
+    } finally {
+      await admin.from('agro_categories').delete().eq('section', 'pesticide').in('slug', ['fumigant', 'desiccant'])
+      if (restore.length) await admin.from('agro_categories').insert(restore)
     }
   })
 })

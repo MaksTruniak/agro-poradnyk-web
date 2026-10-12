@@ -2,7 +2,7 @@
   <div class="p-8">
     <div class="mb-8">
       <h1 class="text-2xl font-extrabold text-agro-dark flex items-center gap-2"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Адмін-панель</h1>
-      <p class="text-agro-light mt-1">Верифікація агрономів</p>
+      <p class="text-agro-light mt-1">Верифікація, звернення і запити</p>
     </div>
 
     <!-- Таби -->
@@ -221,6 +221,42 @@
       </div>
     </div>
 
+    <!-- Звернення в підтримку (з кабінету: «Підтримка», «Інтеграції») -->
+    <div v-else-if="activeTab === 'tickets'">
+      <div class="flex gap-2 mb-4">
+        <button v-for="f in [{ k: 'open', l: 'Відкриті' }, { k: 'closed', l: 'Закриті' }]" :key="f.k" @click="ticketFilter = f.k"
+          class="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors"
+          :class="ticketFilter === f.k ? 'bg-agro-dark text-white border-agro-dark' : 'text-agro-light border-agro-border hover:text-agro-dark'">
+          {{ f.l }}
+        </button>
+      </div>
+      <div v-if="!shownTickets.length" class="card text-center py-16">
+        <p class="font-bold text-agro-dark">{{ ticketFilter === 'open' ? 'Відкритих звернень немає' : 'Закритих звернень немає' }}</p>
+      </div>
+      <div v-else class="space-y-3">
+        <div v-for="t in shownTickets" :key="t.id" class="card">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="font-semibold text-agro-dark">
+                {{ t.subject }}
+                <span v-if="t.priority === 'high'" class="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 align-middle">Пріоритет</span>
+              </p>
+              <p class="text-xs text-agro-light mt-0.5">
+                {{ t.user?.name || '—' }} · <a v-if="t.user?.email" :href="`mailto:${t.user.email}?subject=${encodeURIComponent('Re: ' + t.subject)}`" class="text-agro hover:underline">{{ t.user.email }}</a>
+                · {{ formatDate(t.created_at) }}
+              </p>
+              <p v-if="t.body" class="text-sm text-agro-dark mt-2 whitespace-pre-line break-words">{{ t.body }}</p>
+            </div>
+            <button @click="setTicketStatus(t, t.status === 'closed' ? 'open' : 'closed')" :disabled="t.saving"
+              class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50"
+              :class="t.status === 'closed' ? 'text-agro-light border-agro-border hover:text-agro-dark' : 'bg-agro text-white border-agro hover:bg-agro-dark'">
+              {{ t.status === 'closed' ? 'Відкрити знову' : 'Закрити' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Запити Enterprise -->
     <div v-else-if="activeTab === 'contacts'">
       <div v-if="!contacts.length" class="card text-center py-16">
@@ -228,19 +264,26 @@
         <p class="text-agro-light text-sm mt-1">Форма Enterprise ще не заповнювалась</p>
       </div>
       <div v-else class="space-y-3">
-        <div v-for="c in contacts" :key="c.id" class="card flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
+        <div v-for="c in contacts" :key="c.id" class="card flex items-center justify-between gap-4" :class="c.status === 'done' ? 'opacity-60' : ''">
+          <div class="flex items-center gap-4 min-w-0">
             <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center font-bold text-agro shrink-0">
               {{ c.name?.[0]?.toUpperCase() || '?' }}
             </div>
-            <div>
+            <div class="min-w-0">
               <p class="font-semibold text-agro-dark">{{ c.name }}</p>
-              <p class="text-sm text-agro-light">{{ c.email }} · {{ c.phone }}</p>
+              <p class="text-sm text-agro-light">
+                <a v-if="c.email" :href="`mailto:${c.email}`" class="text-agro hover:underline">{{ c.email }}</a>
+                <template v-if="c.phone"> · <a :href="`tel:${c.phone}`" class="hover:underline">{{ c.phone }}</a></template>
+              </p>
             </div>
           </div>
           <div class="flex items-center gap-3 shrink-0">
             <span class="text-xs text-agro-light">{{ formatDate(c.created_at) }}</span>
             <span class="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-semibold capitalize">{{ c.type || 'enterprise' }}</span>
+            <button @click="setContactStatus(c, c.status === 'done' ? 'new' : 'done')" :disabled="c.saving"
+              class="text-xs font-semibold px-3 py-1.5 rounded-xl border border-agro-border text-agro hover:bg-agro-hover transition-colors disabled:opacity-50">
+              {{ c.status === 'done' ? 'Повернути' : 'Опрацьовано' }}
+            </button>
           </div>
         </div>
       </div>
@@ -264,13 +307,31 @@ const verified = computed(() => agronomists.value.filter(a => a.is_verified))
 
 const contacts = ref<any[]>([])
 const buyers = ref<any[]>([])
+const tickets = ref<any[]>([])
+const ticketFilter = ref('open')
+const shownTickets = computed(() => tickets.value.filter(t => (t.status === 'closed') === (ticketFilter.value === 'closed')))
+
+const setTicketStatus = async (t: any, status: 'open' | 'closed') => {
+  t.saving = true
+  const res = await supabase.from('support_tickets').update({ status }).eq('id', t.id).select('id')
+  t.saving = false
+  if (adminWriteOk(res, 'Не вдалося змінити звернення')) t.status = status
+}
+
+const setContactStatus = async (c: any, status: 'new' | 'done') => {
+  c.saving = true
+  const res = await supabase.from('contact_requests').update({ status }).eq('id', c.id).select('id')
+  c.saving = false
+  if (adminWriteOk(res, 'Не вдалося змінити запит')) c.status = status
+}
 const pendingBuyers = computed(() => buyers.value.filter(b => b.verification_requested && !b.is_verified))
 
 const tabs = computed(() => [
   { key: 'pending', label: 'Очікують', count: pending.value.length || null },
   { key: 'verified', label: 'Верифіковані', count: null },
   { key: 'buyers', label: 'Заготівельники', count: pendingBuyers.value.length || null },
-  { key: 'contacts', label: 'Запити', count: contacts.value.length || null },
+  { key: 'tickets', label: 'Звернення', count: tickets.value.filter(t => t.status !== 'closed').length || null },
+  { key: 'contacts', label: 'Запити', count: contacts.value.filter(c => c.status !== 'done').length || null },
 ])
 
 const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -304,6 +365,14 @@ onMounted(async () => {
     .select('*')
     .order('created_at', { ascending: false })
   contacts.value = contactData || []
+
+  // Звернення: автора підтягуємо окремо (зв'язку з users у схемі немає)
+  const { data: ticketData } = await supabase.from('support_tickets').select('*').order('created_at', { ascending: false }).limit(300)
+  const authorIds = [...new Set((ticketData || []).map((t: any) => t.user_id).filter(Boolean))]
+  const { data: authors } = authorIds.length
+    ? await supabase.from('users').select('id, name, email').in('id', authorIds)
+    : { data: [] as any[] }
+  tickets.value = (ticketData || []).map((t: any) => ({ ...t, user: authors?.find((u: any) => u.id === t.user_id), saving: false }))
 
   const { data: buyerData } = await supabase
     .from('users')

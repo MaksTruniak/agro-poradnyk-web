@@ -44,6 +44,15 @@ test.describe('Оплата WayForPay', () => {
     expect(body.basePrice, 'PRO агронома оплачувався за 0 грн').toBe(plan!.price_uah)
     expect(body.amount).toBeGreaterThan(0)
 
+    // Бізнес: гектари в межах 2–50 і записані в підписаний orderReference (з нього callback бере ліміт площі)
+    const biz = await request.post('/api/payment/create', { headers, data: { plan: 'business', hectares: 20 } })
+    expect(biz.status()).toBe(200)
+    expect((await biz.json()).formData.orderReference).toMatch(/^agro-business-ha20-/)
+    for (const ha of [1, 51]) {
+      const bad = await request.post('/api/payment/create', { headers, data: { plan: 'business', hectares: ha } })
+      expect(bad.status(), `Бізнес ${ha} га`).toBe(400)
+    }
+
     for (const p of ['custom_month', 'custom_year', 'unknown']) {
       const bad = await request.post('/api/payment/create', { headers, data: { plan: p } })
       expect(bad.status(), `тариф ${p}`).toBe(400)

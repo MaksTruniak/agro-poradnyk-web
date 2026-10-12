@@ -69,8 +69,8 @@
             <h2 class="font-bold text-agro-dark text-lg">PRO</h2>
             <span v-if="isPro" class="text-xs bg-agro text-white px-2.5 py-1 rounded-full font-semibold">Ваш план</span>
           </div>
-          <p class="text-2xl font-extrabold text-agro-dark mb-0.5">350 <span class="text-base font-semibold">грн/міс</span></p>
-          <p class="text-agro-light text-xs mb-4">або <strong class="text-agro-dark">3 500 грн/рік</strong> — економія 700 грн</p>
+          <p class="text-2xl font-extrabold text-agro-dark mb-0.5">{{ fmt(proMonth) }} <span class="text-base font-semibold">грн/міс</span></p>
+          <p class="text-agro-light text-xs mb-4">або <strong class="text-agro-dark">{{ fmt(proYear) }} грн/рік</strong><template v-if="yearSaving"> — економія {{ fmt(yearSaving) }} грн</template></p>
           <ul class="space-y-2 mb-5">
             <li v-for="f in PRO_FEATURES" :key="f" class="flex items-start gap-2 text-sm text-agro-dark">
               <span class="text-amber-500 shrink-0 mt-0.5">★</span> {{ f }}
@@ -112,14 +112,14 @@
                 class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors"
                 :class="period === 'month' ? 'border-agro bg-agro text-white' : 'border-agro-border text-agro-dark'">
                 1 місяць<br>
-                <span class="text-xs font-normal opacity-80">350 грн</span>
+                <span class="text-xs font-normal opacity-80">{{ fmt(proMonth) }} грн</span>
               </button>
               <button @click="period = 'year'"
                 class="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors relative"
                 :class="period === 'year' ? 'border-agro bg-agro text-white' : 'border-agro-border text-agro-dark'">
-                <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-17%</span>
+                <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{{ yearDiscount }}%</span>
                 1 рік<br>
-                <span class="text-xs font-normal opacity-80">3 500 грн</span>
+                <span class="text-xs font-normal opacity-80">{{ fmt(proYear) }} грн</span>
               </button>
             </div>
 
@@ -149,6 +149,7 @@
 </template>
 
 <script setup lang="ts">
+const { month: proMonth, year: proYear, yearSaving, yearDiscount, fmt } = await useAgronomistPrices()
 useHead({ title: 'Підписка агронома' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 

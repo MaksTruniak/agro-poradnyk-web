@@ -85,11 +85,12 @@ export default defineEventHandler(async (event) => {
   let userId: string | null = null
   let plan: string | null = null
   let couponId: string | null = null
+  let hectares: number | null = null
 
   const parts = String(orderReference || '').split('-')
   if (parts.length >= 4 && parts[0] === 'agro') {
     const userId8 = parts[parts.length - 2]
-    plan = parts.slice(1, parts.length - 2).join('-')
+    ;({ plan, hectares } = splitPlanHectares(parts.slice(1, parts.length - 2).join('-')))
     if (typeof opts.userId === 'string' && opts.userId.startsWith(userId8)) {
       userId = opts.userId
     } else if (/^[0-9a-f]{8}$/i.test(userId8)) {
@@ -161,6 +162,8 @@ export default defineEventHandler(async (event) => {
       expires_at:    expiresAt.toISOString(),
       renewal_count: (existingSub?.renewal_count ?? 0) + 1,
       first_paid_at: existingSub?.first_paid_at ?? new Date().toISOString(),  // від неї рахується знижка лояльності
+      // Оплачені гектари — ліміт площі полів для «Бізнесу» (hectareLimitFor)
+      ...(subPlan.profile === 'farmer' && hectares ? { custom_hectares: hectares } : {}),
     }, { onConflict: 'user_id,profile' })
     if (error) console.error('[WFP callback] Supabase error:', error)
   } else {
