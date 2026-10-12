@@ -44,6 +44,7 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase',
     '@nuxtjs/tailwindcss',
     '@vueuse/nuxt',
+    '@vercel/analytics',
   ],
 
   supabase: {
