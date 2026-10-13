@@ -26,6 +26,11 @@ export const getActivePlan = (sub: SubscriptionRow | null | undefined, now = new
 export const isPaidFarmerPlan = (plan: PlanId) => plan === 'business' || plan === 'business_pro'
 export const isAgronomistPro = (plan: PlanId) => plan === 'pro'
 
+// Листування з агрономом без угоди на безкоштовному тарифі — символів на місяць (те саме число в messages_protect)
+export const CHAT_FREE_CHARS = 2000
+// Довжина як у Postgres char_length: емодзі — один символ
+export const charCount = (s: string) => [...s].length
+
 export const HECTARE_LIMITS: Record<PlanId, number> = {
   basic: 2,
   business: Infinity,

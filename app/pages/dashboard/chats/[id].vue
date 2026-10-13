@@ -462,16 +462,20 @@
       </Transition>
     </Teleport>
 
-    <!-- Paywall -->
-    <div v-if="!isUnlocked && !iAmAgronomist && !isPro && messageCount >= 3" class="bg-white border-t border-agro-border p-4 text-center">
-      <p class="font-semibold text-agro-dark mb-1 flex items-center justify-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Розблокуйте повне листування</p>
-      <p class="text-sm text-agro-light mb-3">Перші 3 повідомлення безкоштовні · <NuxtLink to="/dashboard/subscription" class="text-agro font-medium">PRO — необмежено</NuxtLink></p>
-      <button @click="unlock" class="btn-primary">Розблокувати</button>
-    </div>
-
-    <!-- Немає активної угоди — фермер не може писати -->
-    <div v-else-if="!isBuyRequest && !iAmAgronomist && agreementStatus !== 'active'" class="bg-white border-t border-agro-border px-6 py-4 shrink-0 text-center">
-      <template v-if="agreementStatus === 'completed'">
+    <!-- Писати не можна: угода купівлі/продажу без активної угоди або вичерпано безкоштовний ліміт -->
+    <div v-if="titledChatBlocked || (freeLimited && freeLeft <= 0)" class="bg-white border-t border-agro-border px-6 py-4 shrink-0 text-center">
+      <template v-if="freeLimited">
+        <p class="font-semibold text-agro-dark text-sm mb-1">Безкоштовні {{ CHAT_FREE_CHARS.toLocaleString('uk-UA') }} символів цього місяця використано</p>
+        <p v-if="agreementStatus === 'pending'" class="text-sm text-agro-light mb-2">⏳ Чекаємо підтвердження угоди від агронома — після неї листування без обмежень</p>
+        <p v-else class="text-sm text-agro-light mb-2">З активною угодою або на тарифі «Бізнес» листування без обмежень</p>
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <button v-if="canProposeAgreement || hasCompletedAgreement" @click="showChatAgreementModal = true" class="text-xs font-semibold px-4 py-2 rounded-xl transition-colors" style="background:rgb(47,82,51);color:white;">
+            Запропонувати співпрацю
+          </button>
+          <NuxtLink to="/dashboard/subscription" class="text-xs font-semibold px-4 py-2 rounded-xl border border-agro-border text-agro hover:bg-agro-hover transition-colors">Оформити тариф</NuxtLink>
+        </div>
+      </template>
+      <template v-else-if="agreementStatus === 'completed'">
         <svg class="mx-auto mb-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(160,175,150)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         <p class="text-sm text-agro-light">Угода завершена — чат заблоковано</p>
       </template>
@@ -487,7 +491,17 @@
     </div>
 
     <!-- Інпут -->
-    <div v-else-if="isUnlocked || iAmAgronomist || isPro || messageCount < 3" class="bg-white border-t border-agro-border px-4 py-3 shrink-0">
+    <div v-else class="bg-white border-t border-agro-border px-4 py-3 shrink-0">
+      <!-- Безкоштовний ліміт без угоди -->
+      <div v-if="freeLimited" class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs mb-2" data-testid="chat-free-left">
+        <span :class="freeLeftAfterInput < 0 ? 'text-red-600 font-semibold' : 'text-agro-light'">
+          Без угоди: залишилось {{ Math.max(freeLeftAfterInput, 0).toLocaleString('uk-UA') }} із {{ CHAT_FREE_CHARS.toLocaleString('uk-UA') }} символів цього місяця<template v-if="freeLeftAfterInput < 0"> — повідомлення задовге</template>
+        </span>
+        <span class="flex items-center gap-3">
+          <button v-if="canProposeAgreement || hasCompletedAgreement" @click="showChatAgreementModal = true" class="font-semibold text-agro hover:underline">Запропонувати співпрацю</button>
+          <NuxtLink to="/dashboard/subscription" class="font-semibold text-agro hover:underline">Без обмежень</NuxtLink>
+        </span>
+      </div>
       <!-- Превью зображення -->
       <div v-if="imagePreview" class="mb-2 relative inline-block">
         <img :src="imagePreview" class="h-20 rounded-xl object-cover border border-agro-border" />
@@ -538,7 +552,7 @@
         </div>
         <button
           @click="sendMessage"
-          :disabled="(!input.trim() && !imageFile) || sending"
+          :disabled="(!input.trim() && !imageFile) || sending || (freeLimited && freeLeftAfterInput < 0)"
           class="w-11 h-11 shrink-0 self-center flex items-center justify-center rounded-xl bg-agro text-white hover:bg-agro-dark transition-colors disabled:opacity-50"
         >
           <svg v-if="!sending" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -566,7 +580,6 @@ const sending = ref(false)
 const messages = ref<any[]>([])
 const input = ref('')
 const interlocutorName = ref('')
-const isUnlocked = ref(false)
 const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const lightboxUrl = ref<string | null>(null)
@@ -600,7 +613,6 @@ const isPro = isPaidFarmerPlan(getActivePlan(subRes.data))
 
 // Завантаження чату — до визначення ролі в чаті
 const { data: chatData } = await supabase.from('chats').select('*, farmer_id, agronomist_id, is_unlocked, title').eq('id', chatId).single()
-isUnlocked.value = chatData?.is_unlocked || false
 
 // Визначаємо позицію в чаті за ID, а не за роллю профілю (підтримує farmer-to-farmer)
 const iAmAgronomist = chatData?.agronomist_id === uid
@@ -608,7 +620,6 @@ const isBuyRequest = chatData?.title?.startsWith('Запит на купівлю
 // У buy-request чаті: farmer_id — це фермер, agronomist_id — це покупець
 const iAmFarmerInBuyChat = isBuyRequest && chatData?.farmer_id === uid
 
-const messageCount = computed(() => messages.value.filter(m => m.sender_id === uid).length)
 
 const isMyMessage = (msg: any) => {
   return iAmAgronomist ? msg.role === 'assistant' : msg.role === 'user'
@@ -718,6 +729,18 @@ if (!isBuyRequest && chatFarmerId && chatAgronomistId) {
   agreementId.value = ag?.id || null
 }
 const hasCompletedAgreement = computed(() => agreementStatus.value === 'completed')
+
+// Угода купівлі/продажу (чат із назвою): без активної угоди фермер не пише — як і раніше
+const titledChatBlocked = computed(() => !!chatData?.title && !isBuyRequest && !iAmAgronomist && agreementStatus.value !== 'active')
+// Звичайний чат без активної угоди й без платного тарифу — безкоштовний ліміт символів (перевіряє база)
+const freeLimited = computed(() => !chatData?.title && !iAmAgronomist && !isPro && agreementStatus.value !== 'active')
+const freeUsed = ref(0)
+if (freeLimited.value) {
+  const { data: used } = await supabase.rpc('chat_free_chars_used' as never)
+  freeUsed.value = Number(used) || 0
+}
+const freeLeft = computed(() => CHAT_FREE_CHARS - freeUsed.value)
+const freeLeftAfterInput = computed(() => freeLeft.value - charCount(input.value.trim()))
 const canProposeAgreement = computed(() => !iAmAgronomist && !isBuyRequest && !agreementStatus.value)
 
 // Модалка угоди з чату
@@ -859,19 +882,24 @@ const sendMessage = async () => {
     is_read: false,
   }).select().single()
 
-
-  if (data) {
+  if (error || !data) {
+    messages.value = messages.value.filter(m => m.id !== tempMsg.id)
+    if (!input.value) input.value = content
+    if (error?.hint === 'chat_free_limit') {
+      // Ліміт рахує база — підтягуємо її число
+      const { data: used } = await supabase.rpc('chat_free_chars_used' as never)
+      freeUsed.value = Number(used) || freeUsed.value
+    }
+    useToast().error(error?.message || 'Повідомлення не надіслано')
+  } else {
     const idx = messages.value.findIndex(m => m.id === tempMsg.id)
     if (idx !== -1) messages.value[idx] = data
+    freeUsed.value += Number((data as any).free_chars) || 0
   }
 
   sending.value = false
 }
 
-const unlock = async () => {
-  await supabase.from('chats').update({ is_unlocked: true }).eq('id', chatId)
-  isUnlocked.value = true
-}
 
 // Парсинг [[Препарат]] → посилання
 const api = useAgroApi()

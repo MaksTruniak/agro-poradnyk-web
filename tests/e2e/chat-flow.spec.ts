@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 
 // Чати фермер ↔ агроном: автор повідомлення, чужі повідомлення, учасники чату, непрочитані, листування через сайт.
-// ПИШЕ в базу, тому лише з E2E_WRITE=1; прибирається сервісним ключем. Потрібна міграція 20261008_chats_protect.sql.
+// ПИШЕ в базу, тому лише з E2E_WRITE=1; прибирається сервісним ключем. Потрібні міграції 20261008_chats_protect.sql і 20261013_chat_free_limit.sql.
 
 const TAG = `E2E ${Date.now()}`
 
@@ -77,6 +77,69 @@ test.describe('Чати', () => {
     expect(wipe.error, 'учасник видалив чат').not.toBeNull()
     const { data: still } = await serviceClient().from('messages').select('id').eq('chat_id', chatId)
     expect(still?.length).toBe(2)
+  })
+
+  test('безкоштовний ліміт: 2000 символів на місяць без угоди, видно в чаті', async ({ browser }) => {
+    test.setTimeout(120_000)
+    const farmer = await asUser('farmer')
+    const agronomist = await asUser('agronomist')
+    const admin = serviceClient()
+    const { data: active } = await admin.from('agreements').select('id')
+      .eq('farmer_id', farmer.userId).eq('agronomist_id', agronomist.userId).eq('status', 'active').limit(1)
+    test.skip(!!active?.length, 'між тестовими акаунтами активна угода — ліміт не діє')
+
+    // Фермер (власний акаунт власника) тимчасово на безкоштовному тарифі; підписка відновлюється
+    const { data: sub } = await admin.from('subscriptions').select('id, plan, expires_at')
+      .eq('user_id', farmer.userId).eq('profile', 'farmer').maybeSingle()
+    let freeChat = ''
+    try {
+      if (sub) await admin.from('subscriptions').update({ plan: 'basic', expires_at: null }).eq('id', sub.id)
+      const { data: chat } = await farmer.client.from('chats')
+        .insert({ farmer_id: farmer.userId, agronomist_id: agronomist.userId, type: 'human' }).select('id').single()
+      freeChat = chat!.id
+
+      const { data: used } = await farmer.client.rpc('chat_free_chars_used')
+      const left = 2000 - Number(used)
+      const tooLong = await farmer.client.from('messages').insert({ chat_id: freeChat, content: 'я'.repeat(left + 1) })
+      expect(tooLong.error?.hint, 'понад ліміт').toBe('chat_free_limit')
+
+      if (left >= 10) {
+        const { data: ok, error } = await farmer.client.from('messages')
+          .insert({ chat_id: freeChat, content: `${TAG}`.slice(0, 10).padEnd(10, '.') }).select('free_chars').single()
+        expect(error).toBeNull()
+        expect(ok!.free_chars).toBe(10)
+        const { data: after } = await farmer.client.rpc('chat_free_chars_used')
+        expect(Number(after)).toBe(Number(used) + 10)
+        // free_chars не підробити
+        const forged = await farmer.client.from('messages').insert({ chat_id: freeChat, content: 'x', free_chars: -5000 } as never).select('free_chars').single()
+        expect(forged.data?.free_chars).toBe(1)
+      }
+
+      // Агроном відповідає без обмежень
+      const reply = await agronomist.client.from('messages').insert({ chat_id: freeChat, content: 'я'.repeat(2500) }).select('free_chars').single()
+      expect(reply.error).toBeNull()
+      expect(reply.data!.free_chars).toBe(0)
+
+      const page = await (await browser.newContext()).newPage()
+      await login(page, 'farmer')
+      const errors = collectErrors(page)
+      await page.goto(`/dashboard/chats/${freeChat}`)
+      const { data: nowUsed } = await farmer.client.rpc('chat_free_chars_used')
+      if (2000 - Number(nowUsed) > 0) {
+        await expect(page.getByTestId('chat-free-left')).toContainText('із 2 000 символів')
+        await page.getByPlaceholder(/Введіть повідомлення/).fill('я'.repeat(2001))
+        await expect(page.getByTestId('chat-free-left')).toContainText('задовге')
+      } else {
+        await expect(page.getByText(/символів цього місяця використано/)).toBeVisible()
+      }
+      await expectNoErrors(errors, 'чаті з лімітом')
+    } finally {
+      if (freeChat) {
+        await admin.from('messages').delete().eq('chat_id', freeChat)
+        await admin.from('chats').delete().eq('id', freeChat)
+      }
+      if (sub) await admin.from('subscriptions').update({ plan: sub.plan, expires_at: sub.expires_at }).eq('id', sub.id)
+    }
   })
 
   test('листування через сайт: агроном пише, фермер бачить непрочитане', async ({ browser }) => {
