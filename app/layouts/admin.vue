@@ -132,6 +132,12 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Агрокалендар
         </NuxtLink>
+        <NuxtLink to="/admin/phase-tips"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+          :class="$route.path === '/admin/phase-tips' ? 'bg-agro-hover text-agro' : 'text-agro-light hover:bg-agro-bg hover:text-agro-dark'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 3a7 7 0 007 7 7 7 0 00-7-7"/><path d="M19 3a7 7 0 01-7 7 7 7 0 017-7"/></svg>
+          Поради за фазами
+        </NuxtLink>
       </nav>
       <div class="p-3 border-t border-agro-border">
         <NuxtLink to="/" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-agro-light hover:bg-agro-bg hover:text-agro-dark transition-colors mb-1">

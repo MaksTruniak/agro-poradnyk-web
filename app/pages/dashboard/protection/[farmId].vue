@@ -72,10 +72,11 @@
       <template v-else>
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
-          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-visible">
+          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-visible" :class="{ 'ring-2 ring-agro': phase.key === currentPhaseKey }">
             <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="text-agro shrink-0" v-html="phaseIcon(phase.key)" />
               <span class="font-bold text-agro-dark">{{ phase.key }}</span>
+              <span v-if="phase.key === currentPhaseKey" class="text-[11px] font-bold text-white bg-agro rounded-full px-2 py-0.5" title="Поточна фенофаза насадження">Зараз</span>
               <span class="ml-auto text-xs text-agro-light mr-2">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
               <button v-if="!readOnly" @click="removePhase(phase)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-agro-light hover:text-red-400">
                 <X :size="13" />
@@ -314,6 +315,7 @@ const treatments = ref<any[]>([])
 const growthPhases = useGrowthPhases()
 const allPhases = growthPhases.allPhases
 const phases = ref<any[]>([])
+const currentPhaseKey = ref<string | null>(null)
 const activePhasesKeys = ref<string[]>([])
 
 const showPhasePicker = ref(false)
@@ -392,6 +394,13 @@ const selectCrop = async (crop: any) => {
   activePhasesKeys.value = []
 
   phases.value = growthPhases.phasesForCrop(crop.crop_type)
+
+  // Поточна фенофаза — останній запис журналу насадження
+  currentPhaseKey.value = null
+  const { data: phaseRows } = await supabase.from('planting_phases')
+    .select('phase_key').eq('farm_crop_id', crop.id)
+    .order('observed_at', { ascending: false }).order('created_at', { ascending: false }).limit(1)
+  if (selectedCrop.value?.id === crop.id) currentPhaseKey.value = phaseRows?.[0]?.phase_key ?? null
 
   const { data: programRows } = await supabase
     .from('protection_programs').select('*').eq('farm_crop_id', crop.id).order('created_at', { ascending: true }).limit(1)

@@ -64,7 +64,7 @@
 
         <!-- Підказки агрокалендаря -->
         <div v-else-if="calendarTips.length && hasPaidPlan" class="mb-5">
-          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально цього місяця</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально зараз</p>
           <div class="space-y-2">
             <div v-for="tip in calendarTips" :key="tip.id" class="card py-3 px-4">
               <div class="flex items-start gap-3">
@@ -74,7 +74,7 @@
                     'bg-amber-50 text-amber-500': tip.urgency === 'medium',
                     'bg-agro-hover text-agro': tip.urgency === 'low',
                   }">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="CATEGORY_SVG[tip.category]" />
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="CATEGORY_SVG[tip.category] ?? TIP_CATEGORIES[tip.category]?.svg" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
@@ -88,6 +88,7 @@
                       {{ tip.urgency === 'high' ? 'Важливо' : tip.urgency === 'medium' ? 'Рекомендовано' : 'Опційно' }}
                     </span>
                     <span class="text-xs text-agro-light">{{ tip.crop_type }}</span>
+                    <span v-if="tip.source === 'phase'" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full">фаза: {{ tip.phase_key }}</span>
                   </div>
                   <p class="text-xs text-agro-light mt-0.5">{{ tip.description }}</p>
 
@@ -102,7 +103,7 @@
 
                   <div class="flex items-center gap-2 mt-2">
                     <button @click="explainTip(tip)"
-                      v-if="!tipExplanations[tip.id] && !tipLoading[tip.id]"
+                      v-if="tip.source !== 'phase' && !tipExplanations[tip.id] && !tipLoading[tip.id]"
                       class="text-xs text-agro hover:underline flex items-center gap-1">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                       Детальніше від AI
@@ -330,6 +331,7 @@
 
 <script setup lang="ts">
 import { Trash2 } from 'lucide-vue-next'
+import { TIP_CATEGORIES } from '~/utils/tipCategories'
 useHead({ title: 'Нагадування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
@@ -355,6 +357,7 @@ const cropAreas = ref<Record<string, number>>({})
 const hasPaidPlan = ref(false)
 
 const authHeader = useAuthHeader()
+const growthPhases = useGrowthPhases()
 
 const explainTip = async (tip: any) => {
   if (tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
@@ -390,7 +393,7 @@ const loadCalendarTips = async () => {
   const currentMonth = new Date().getMonth() + 1
 
   const { data: farms } = await supabase.from('farms')
-    .select('id, name, region, farm_crops(crop_type, area_ha)')
+    .select('id, name, region, farm_crops(id, crop_type, area_ha)')
     .eq('user_id', user.id)
 
   const cropSet = new Set<string>()
@@ -430,7 +433,44 @@ const loadCalendarTips = async () => {
     })
   })
 
-  calendarTips.value = tips
+  calendarTips.value = [...(await loadPhaseTips(farms || [])), ...tips]
+}
+
+// Поради за поточною фенофазою насаджень (опубліковані) — одна порада на культуру
+const loadPhaseTips = async (farms: any[]) => {
+  const crops = farms.flatMap((f: any) => f.farm_crops || []).filter((c: any) => c.id)
+  if (!crops.length) return []
+  await growthPhases.load()
+  const { data: phaseRows } = await supabase.from('planting_phases')
+    .select('farm_crop_id, phase_key').in('farm_crop_id', crops.map((c: any) => c.id))
+    .order('observed_at', { ascending: false }).order('created_at', { ascending: false })
+  const current: Record<string, string> = {}
+  for (const r of phaseRows || []) current[r.farm_crop_id] ??= r.phase_key
+
+  // культура → (група, фаза); однакові назви культур не дублюємо
+  const wanted = new Map<string, { crop_type: string; group: string; phase: string }>()
+  for (const c of crops) {
+    const phase = current[c.id]
+    const group = growthPhases.groupForCrop(c.crop_type)
+    if (phase && group) wanted.set(`${c.crop_type}|${phase}`, { crop_type: c.crop_type, group, phase })
+  }
+  if (!wanted.size) return []
+  const { data: tips } = await supabase.from('phase_tips')
+    .select('id, crop_group, phase_key, title, description, category, urgency')
+    .eq('is_published', true)
+    .in('crop_group', [...new Set([...wanted.values()].map(w => w.group))])
+    .in('phase_key', [...new Set([...wanted.values()].map(w => w.phase))])
+    .order('order_num')
+  const result: any[] = []
+  for (const w of wanted.values()) {
+    for (const t of tips || []) {
+      if (t.crop_group === w.group && t.phase_key === w.phase) {
+        result.push({ ...t, id: `phase-${t.id}-${w.crop_type}`, crop_type: w.crop_type, source: 'phase' })
+      }
+    }
+  }
+  const rank: Record<string, number> = { high: 0, medium: 1, low: 2 }
+  return result.sort((a, b) => (rank[a.urgency] ?? 1) - (rank[b.urgency] ?? 1))
 }
 
 const addFromCalendar = (tip: any) => {

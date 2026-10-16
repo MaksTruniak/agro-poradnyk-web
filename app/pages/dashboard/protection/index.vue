@@ -70,11 +70,12 @@
 
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
-          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-visible">
+          <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-visible" :class="{ 'ring-2 ring-agro': phase.key === currentPhaseKey }">
             <!-- Заголовок фази -->
             <div class="flex items-center gap-2 px-5 py-3 bg-agro-hover border-b border-agro-border">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="text-agro shrink-0" v-html="phaseIcon(phase.key)" />
               <span class="font-bold text-agro-dark">{{ phase.key }}</span>
+              <span v-if="phase.key === currentPhaseKey" class="text-[11px] font-bold text-white bg-agro rounded-full px-2 py-0.5" title="Поточна фенофаза насадження">Зараз</span>
               <span class="ml-auto text-xs text-agro-light mr-2">{{ treatmentsByPhase[phase.key]?.length || 0 }} обробок</span>
               <button v-if="!isViewer" @click="removePhase(phase)" class="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors text-agro-light hover:text-red-400">
                 <X :size="13" />
@@ -392,6 +393,7 @@
 import { Trash2, X, Bell } from 'lucide-vue-next'
 import { TREATMENT_TYPES, TYPE_SVG, TYPE_BG, TYPE_BADGE } from '~/utils/treatmentTypes'
 import { phaseIcon } from '~/utils/phaseIcons'
+import { plantingSummary } from '~/utils/planting'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Технічні карти — АгроПростір' })
 
@@ -407,13 +409,16 @@ const user = useSupabaseUser()
 const loading = ref(true)
 const saving = ref(false)
 const hasPaidPlan = ref(false)
-const farmInfo = ref<{ id: string; name: string; area_ha: number | null } | null>(null)
+const farmInfo = ref<{ id: string; name: string; area_ha: number | null; region: string | null } | null>(null)
+// Культура поля: сорт і параметри насадження — для AI-генерації карти
+const farmCrop = ref<any>(null)
 const savingPhase = ref<string | null>(null)
 const program = ref<any>(null)
 const treatments = ref<any[]>([])
 const growthPhases = useGrowthPhases()
 const allPhases = growthPhases.allPhases
 const phases = ref<any[]>([])
+const currentPhaseKey = ref<string | null>(null)
 const activePhasesKeys = ref<string[]>([])
 
 const showPhasePicker = ref(false)
@@ -489,7 +494,17 @@ const generateCard = async () => {
     const result = await $fetch('/api/ai-generate-card', {
       method: 'POST',
       headers: await authHeader(),
-      body: { cropType, areaHa: farmInfo.value?.area_ha || null },
+      body: {
+        cropType,
+        variety: farmCrop.value?.variety || null,
+        region: farmInfo.value?.region || null,
+        areaHa: farmInfo.value?.area_ha || null,
+        phases: phases.value.map((p: any) => p.key),
+        planting: [
+          farmCrop.value ? plantingSummary(farmCrop.value) : '',
+          currentPhaseKey.value ? `поточна фаза: ${currentPhaseKey.value}` : '',
+        ].filter(Boolean).join(' · ') || null,
+      },
     }) as {
       phases: { name: string; treatments: { type: string; product_name: string; dosage: string; notes: string; catalog_product_slug: string | null }[] }[]
       verification?: { catalog: number; replaced: number; generic: number; missing: number }
@@ -665,12 +680,19 @@ const load = async () => {
   phases.value = growthPhases.phasesForCrop(cropType)
 
   if (farmCropId) {
+    // Поточна фенофаза — останній запис журналу насадження
+    const { data: phaseRows } = await supabase.from('planting_phases')
+      .select('phase_key').eq('farm_crop_id', farmCropId)
+      .order('observed_at', { ascending: false }).order('created_at', { ascending: false }).limit(1)
+    currentPhaseKey.value = phaseRows?.[0]?.phase_key ?? null
+
     const { data: farmCropRow } = await supabase
-      .from('farm_crops').select('farm_id, area_ha, farms(id, name, hectares)').eq('id', farmCropId).maybeSingle()
+      .from('farm_crops').select('farm_id, area_ha, variety, planting_year, rootstock, row_spacing_m, plant_spacing_m, plants_count, trellis, irrigation, farms(id, name, hectares, region)').eq('id', farmCropId).maybeSingle()
+    farmCrop.value = farmCropRow
     if (farmCropRow?.farms) {
       const f = farmCropRow.farms as any
       // Площа обробки — площа культури; якщо не вказана — площа поля
-      farmInfo.value = { id: f.id, name: f.name, area_ha: farmCropRow.area_ha || f.hectares || null }
+      farmInfo.value = { id: f.id, name: f.name, area_ha: farmCropRow.area_ha || f.hectares || null, region: f.region || null }
     }
 
     const { data: programRows, error: progErr } = await supabase

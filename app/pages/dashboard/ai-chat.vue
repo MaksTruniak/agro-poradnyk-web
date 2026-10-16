@@ -527,6 +527,8 @@ const farmRegion = ref('')
 const weatherInfo = ref<{ temp: number; condition: string; icon: string } | null>(null)
 const crops = ref<any[]>([])
 const selectedCrop = ref<any | null>(null)
+// Остання відмічена фенофаза кожної культури поля: farm_crop_id → { phase_key, observed_at }
+const cropPhases = ref<Record<string, { phase_key: string; observed_at: string }>>({})
 const currentChatId = ref<string | null>(null)
 
 watch(currentChatId, (id) => {
@@ -611,7 +613,15 @@ const farmContext = computed(() => {
   if (farmHectares.value) parts.push(`Площа: ${farmHectares.value} га`)
   if (farmRegion.value) parts.push(`Регіон: ${farmRegion.value}`)
   if (selectedCrop.value) {
-    parts.push(`Культура: ${selectedCrop.value.crop_type}${selectedCrop.value.variety ? ` (${selectedCrop.value.variety})` : ''}`)
+    const c = selectedCrop.value
+    parts.push(`Культура: ${c.crop_type}${c.variety ? ` (${c.variety})` : ''}${c.area_ha ? `, ${c.area_ha} га` : ''}`)
+    const planting = plantingSummary(c)
+    if (planting) parts.push(`Насадження: ${planting}`)
+    const phase = c.id ? cropPhases.value[c.id] : null
+    if (phase) {
+      const [y, m, d] = phase.observed_at.split('-')
+      parts.push(`Поточна фенофаза: ${phase.phase_key} (відмічено ${d}.${m}.${y})`)
+    }
   }
   if (crops.value.length > 1) {
     const others = crops.value
@@ -675,7 +685,7 @@ onMounted(async () => {
   if (farmId.value) {
     const { data } = await supabase
       .from('farms')
-      .select('name, hectares, region, farm_crops(id, crop_type, variety)')
+      .select('name, hectares, region, farm_crops(id, crop_type, variety, area_ha, planting_year, rootstock, row_spacing_m, plant_spacing_m, plants_count, trellis, irrigation)')
       .eq('id', farmId.value)
       .single()
 
@@ -685,6 +695,15 @@ onMounted(async () => {
       farmRegion.value = data.region || ''
       crops.value = data.farm_crops || []
       if (data.region) loadWeather(data.region)
+      const cropIds = crops.value.map((c: any) => c.id)
+      if (cropIds.length) {
+        const { data: phaseRows } = await supabase.from('planting_phases')
+          .select('farm_crop_id, phase_key, observed_at').in('farm_crop_id', cropIds)
+          .order('observed_at', { ascending: false }).order('created_at', { ascending: false })
+        const latest: Record<string, { phase_key: string; observed_at: string }> = {}
+        for (const r of phaseRows || []) latest[r.farm_crop_id] ??= { phase_key: r.phase_key, observed_at: r.observed_at }
+        cropPhases.value = latest
+      }
       // Якщо перейшли з конкретної культури — вибираємо її, інакше першу
       if (queryCropId.value) {
         selectedCrop.value = crops.value.find(c => c.id === queryCropId.value) || crops.value[0] || null
@@ -1038,6 +1057,7 @@ const extractProducts = (text: string): string[] => {
 
 import { TREATMENT_TYPES } from '~/utils/treatmentTypes'
 import { phaseIcon } from '~/utils/phaseIcons'
+import { plantingSummary } from '~/utils/planting'
 
 const growthPhases = useGrowthPhases()
 const phases = growthPhases.allPhases

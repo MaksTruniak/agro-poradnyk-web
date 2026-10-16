@@ -28,6 +28,11 @@ export default defineEventHandler(async (event) => {
   const variety = clampText(body?.variety, 100).trim()
   const region = clampText(body?.region, 100).trim()
   const areaHa = Number(body?.areaHa) > 0 ? Number(body.areaHa) : null
+  // Фенофази культури з довідника — карта має використовувати саме їх (тоді видно, яка фаза поточна)
+  const allowedPhases: string[] = (Array.isArray(body?.phases) ? body.phases : [])
+    .map((p: unknown) => clampText(p, 80).trim()).filter(Boolean).slice(0, 20)
+  // Опис насадження: вік, підщепа, схема, поточна фаза
+  const planting = clampText(body?.planting, 300).trim()
 
   if (!cropType) {
     await requireAiAccess(event)  // без входу — 401, а не 400
@@ -44,14 +49,19 @@ export default defineEventHandler(async (event) => {
   const monthNames = ['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень']
   const currentMonth = monthNames[now.getMonth()]
 
-  const prompt = `Ти агроном-експерт з агрохімічного захисту та живлення рослин в Україні. Згенеруй реалістичну технологічну карту для культури: ${cropFull}${areaNote}${regionNote}.
+  const plantingNote = planting ? `\nНасадження: ${planting}.` : ''
+  const phasesRule = allowedPhases.length
+    ? `\n- Назви фаз ("name") — ТІЛЬКИ дослівно з цього списку, у його порядку: ${allowedPhases.join('; ')}`
+    : ''
+
+  const prompt = `Ти агроном-експерт з агрохімічного захисту та живлення рослин в Україні. Згенеруй реалістичну технологічну карту для культури: ${cropFull}${areaNote}${regionNote}.${plantingNote}
 Поточний місяць: ${currentMonth}. Враховуй це для визначення актуальних фаз.
 
 ВИМОГИ:
 - Всі препарати — зареєстровані та реально доступні в Україні (не вигадані назви)
 - Дози — реалістичні для українських умов і площі${areaHa ? ` ${areaHa} га` : ''}
 - Фази — у хронологічному порядку реального циклу вирощування цієї культури
-- 3–5 фаз, кожна 1–3 обробки з балансом захисту і живлення
+- 3–5 фаз, кожна 1–3 обробки з балансом захисту і живлення${phasesRule}
 - В полі notes — коротко (до 8 слів): клас препарату і проти чого (фунгіцид, інсектицид, гербіцид, протруйник, мікродобриво, стимулятор тощо)
 - JSON без пробілів і переносів рядків — відповідь має бути компактною
 
@@ -83,6 +93,7 @@ export default defineEventHandler(async (event) => {
       messages: [{ role: 'user', content: prompt }],
     }, 'ai-generate-card')
     card = parseCard(res.text)
+    if (card && allowedPhases.length) card = { phases: card.phases.map((p: { name: string; treatments: any[] }) => ({ ...p, name: matchPhase(p.name, allowedPhases) })) }
     await recordAiRequest(access, res.usage, card ? 'ok' : res.refused ? 'refused' : 'error')
   } catch (err) {
     await releaseAiUsage(access)

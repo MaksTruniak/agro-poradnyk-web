@@ -75,7 +75,7 @@
                 v-model="editRegionQuery"
                 @input="onEditRegionInput"
                 @focus="showEditRegionList = true"
-                @blur="() => setTimeout(() => showEditRegionList = false, 150)"
+                @blur="hideLater(() => showEditRegionList = false, 150)"
                 class="input"
                 placeholder="Оберіть область..."
                 autocomplete="off"
@@ -98,7 +98,7 @@
                 v-model="editSettlementQuery"
                 @input="onEditSettlementInput"
                 @focus="showEditSettlementList = true"
-                @blur="() => setTimeout(() => showEditSettlementList = false, 150)"
+                @blur="hideLater(() => showEditSettlementList = false, 150)"
                 class="input"
                 placeholder="Місто або село..."
                 autocomplete="off"
@@ -169,9 +169,19 @@
             <div class="flex-1">
               <p class="font-semibold text-agro-dark">{{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}</p>
               <p class="text-xs text-agro-light">{{ crop.area_ha }} га{{ crop.planned_yield_t ? ` · план ${crop.planned_yield_t} т/га` : '' }}{{ crop.stock_quantity != null ? ` · склад: ${crop.stock_quantity} ${crop.stock_unit || 'т'}` : '' }}</p>
+              <p v-if="isPerennialCrop(crop) && plantingSummary(crop)" class="text-xs text-agro-light mt-0.5">{{ plantingSummary(crop) }}</p>
               <p v-if="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares)" class="text-xs text-amber-600 font-semibold mt-0.5">
                 ⚠ Перевищує площу поля ({{ farm.hectares }} га)
               </p>
+              <button v-if="isPerennialCrop(crop) && (currentPhase(crop) || !isViewer)" type="button" @click="openPhases(crop)"
+                class="phase-chip" :class="{ 'phase-chip-empty': !currentPhase(crop) }"
+                :title="currentPhase(crop) ? 'Журнал фенофаз' : 'Відмітити поточну фенофазу'">
+                <template v-if="currentPhase(crop)">
+                  {{ phaseEmoji(currentPhase(crop).phase_key) }} {{ currentPhase(crop).phase_key }}
+                  <span class="phase-chip-date">з {{ formatPhaseDate(currentPhase(crop).observed_at) }}</span>
+                </template>
+                <template v-else>+ Відмітити фенофазу</template>
+              </button>
             </div>
             <NuxtLink
               :to="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) ? undefined : `/dashboard/ai-chat?farmId=${farmId}&cropId=${crop.id}&cropType=${encodeURIComponent(crop.crop_type)}${crop.variety ? '&variety=' + encodeURIComponent(crop.variety) : ''}`"
@@ -384,7 +394,7 @@
       <Transition name="fade">
         <div v-if="showAddCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showAddCrop = false" />
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-8">
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-8 max-h-[92vh] overflow-y-auto">
             <h2 class="font-bold text-agro-dark text-xl mb-5">➕ Нова культура</h2>
 
             <div class="space-y-4">
@@ -395,7 +405,7 @@
                     v-model="cropSearch"
                     @input="searchCrops"
                     @focus="showCropSuggestions = true"
-                    @blur="setTimeout(() => showCropSuggestions = false, 200)"
+                    @blur="hideLater(() => showCropSuggestions = false)"
                     class="input"
                     :class="selectedCrop ? 'border-agro' : ''"
                     placeholder="Почніть вводити назву..."
@@ -416,7 +426,7 @@
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Сорт (необов'язково)</label>
                 <div class="relative">
-                  <input v-model="newVariety" @input="searchVarieties" @focus="loadVarieties" @blur="setTimeout(() => showVarietySuggestions = false, 200)"
+                  <input v-model="newVariety" @input="searchVarieties" @focus="loadVarieties" @blur="hideLater(() => showVarietySuggestions = false)"
                     class="input" placeholder="Введіть або оберіть сорт..." />
                   <div v-if="showVarietySuggestions" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-10 overflow-hidden">
                     <button v-for="v in varietySuggestions" :key="v" @mousedown.prevent="newVariety = v; showVarietySuggestions = false"
@@ -436,6 +446,7 @@
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Площа (га)</label>
                 <input v-model="newArea" class="input" placeholder="0.0" inputmode="decimal" @input="newArea = ($event.target as HTMLInputElement).value.replace(',', '.')" />
               </div>
+              <DashboardPlantingFields v-if="selectedCropGroup && isPerennialGroup(selectedCropGroup)" v-model="newPlanting" :area-ha="newArea" :group="selectedCropGroup" />
               <div>
                 <label class="block text-sm font-medium text-agro-dark mb-1.5">Плановий урожай (т/га) <span class="text-agro-light font-normal">(необов'язково)</span></label>
                 <input v-model="newPlannedYield" class="input" placeholder="0.0" inputmode="decimal" @input="newPlannedYield = ($event.target as HTMLInputElement).value.replace(',', '.')" />
@@ -526,7 +537,7 @@
       <Transition name="fade">
         <div v-if="editingCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="editingCrop = null" />
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-6">
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-6 max-h-[92vh] overflow-y-auto">
             <h2 class="font-bold text-agro-dark text-lg mb-4">Редагувати культуру</h2>
             <p class="text-sm font-semibold text-agro-dark mb-4 flex items-center gap-2">
               <img :src="`/crops/${cropToSlug(editingCrop.crop_type)}.svg`" class="w-5 h-5" @error="($event.target as HTMLImageElement).style.display='none'" />
@@ -542,7 +553,7 @@
                     placeholder="Необов'язково"
                     @input="searchEditVarieties"
                     @focus="loadEditVarieties"
-                    @blur="setTimeout(() => showEditVarietySuggestions = false, 200)"
+                    @blur="hideLater(() => showEditVarietySuggestions = false)"
                   />
                   <div v-if="showEditVarietySuggestions && (editVarietySuggestions.length || editCropForm.variety.trim())"
                     class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-40 overflow-y-auto">
@@ -560,6 +571,7 @@
                 <label class="farm-edit-label">Площа (га)</label>
                 <input v-model="editCropForm.area_ha" class="input" type="number" step="0.01" placeholder="0.0" inputmode="decimal" />
               </div>
+              <DashboardPlantingFields v-if="isPerennialCrop(editingCrop)" v-model="editPlanting" :area-ha="editCropForm.area_ha" :group="growthPhases.groupForCrop(editingCrop.crop_type)" />
               <div>
                 <label class="farm-edit-label">Планова врожайність (т/га)</label>
                 <input v-model="editCropForm.planned_yield_t" class="input" type="number" step="0.01" placeholder="Необов'язково" inputmode="decimal" />
@@ -591,11 +603,84 @@
       </Transition>
     </Teleport>
 
+    <!-- Модалка фенофаз -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="phaseCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="phaseCrop = null" />
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-6 max-h-[92vh] overflow-y-auto">
+            <h2 class="font-bold text-agro-dark text-lg mb-1">Фенофаза</h2>
+            <p class="text-sm text-agro-light mb-4">{{ phaseCrop.crop_type }}{{ phaseCrop.variety ? ` · ${phaseCrop.variety}` : '' }}</p>
+
+            <template v-if="!isViewer">
+              <div class="flex flex-wrap gap-2 mb-4">
+                <button v-for="p in phaseOptions" :key="p.key" type="button" @click="phaseForm.key = p.key"
+                  class="phase-option" :class="{ 'phase-option-active': phaseForm.key === p.key }">
+                  {{ p.emoji }} {{ p.key }}
+                </button>
+              </div>
+            </template>
+
+            <!-- Поради для обраної (або поточної) фази -->
+            <div v-if="phaseTipsShown.length" class="mb-4 rounded-xl bg-agro-bg p-3 space-y-2.5">
+              <p class="farm-detail-label">Що робити на фазі «{{ tipsPhaseKey }}»</p>
+              <div v-for="tip in phaseTipsShown" :key="tip.id" class="flex items-start gap-2.5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" :class="TIP_URGENCY_BADGE[tip.urgency]">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" v-html="TIP_CATEGORIES[tip.category]?.svg" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-agro-dark leading-snug">{{ tip.title }}</p>
+                  <p class="text-xs text-agro-light mt-0.5 leading-relaxed">{{ tip.description }}</p>
+                </div>
+              </div>
+            </div>
+
+            <template v-if="!isViewer">
+              <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label class="farm-edit-label">Дата спостереження</label>
+                  <input v-model="phaseForm.observed_at" type="date" class="input" :max="todayIso" />
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="farm-edit-label">Нотатка <span class="text-agro-light font-normal">(необов'язково)</span></label>
+                <textarea v-model="phaseForm.note" class="input resize-none" rows="2" maxlength="1000" placeholder="Напр. 30% квіток розкрилось" />
+              </div>
+              <button @click="savePhase" :disabled="!phaseForm.key || !phaseForm.observed_at || saving" class="btn-primary w-full">
+                {{ saving ? '...' : 'Відмітити фазу' }}
+              </button>
+            </template>
+
+            <div v-if="phaseHistory.length" class="mt-5">
+              <p class="farm-detail-label mb-2">Журнал</p>
+              <div class="divide-y divide-agro-border">
+                <div v-for="r in phaseHistory" :key="r.id" class="py-2.5 flex items-start gap-2">
+                  <span class="text-base leading-5">{{ phaseEmoji(r.phase_key) }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-agro-dark">{{ r.phase_key }}</p>
+                    <p class="text-xs text-agro-light">{{ formatPhaseDate(r.observed_at, true) }}{{ r.note ? ` · ${r.note}` : '' }}</p>
+                  </div>
+                  <button v-if="!isViewer" @click="deletePhase(r)" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-red-300 hover:text-red-500 shrink-0" title="Видалити запис">
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button @click="phaseCrop = null" class="btn-outline w-full mt-4">Закрити</button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { Trash2, ShieldCheck } from 'lucide-vue-next'
+import { isPerennialGroup } from '~/utils/cropGroups'
+import { plantingSummary, emptyPlantingForm, plantingFormFrom, plantingPayload } from '~/utils/planting'
+import { TIP_CATEGORIES, TIP_URGENCY_BADGE } from '~/utils/tipCategories'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -605,6 +690,9 @@ const farmId = route.params.id as string
 const readOnly = route.query.readOnly === '1'
 const supabase = useSupabaseClient()
 
+
+// Ховає випадний список після blur, щоб клік по пункту встиг спрацювати
+const hideLater = (fn: () => void, ms = 200) => { setTimeout(fn, ms) }
 
 const loading = ref(true)
 const saving = ref(false)
@@ -733,6 +821,7 @@ const newPlannedYield = ref('')
 const newStockQuantity = ref('')
 const newStockUnit = ref('т')
 const newShowInCatalog = ref(true)
+const newPlanting = ref(emptyPlantingForm())
 const varietySuggestions = ref<string[]>([])
 const showVarietySuggestions = ref(false)
 
@@ -745,6 +834,11 @@ const isPro = isPaidFarmerPlan(getActivePlan(subData))
 
 const { load: loadCrops, emojiFor } = useCropCatalog()
 const { cropToSlug } = await import('~/utils/cropSlugs')
+const growthPhases = useGrowthPhases()
+const toast = useToast()
+
+// Фенофази насаджень: записи журналу по культурах поля, найновіші першими
+const plantingPhases = ref<any[]>([])
 
 const load = async () => {
   const [farmData, cropsData, rotationData] = await Promise.all([
@@ -755,6 +849,18 @@ const load = async () => {
   rotation.value = rotationData.data || []
   farm.value = farmData.data
   crops.value = cropsData.data || []
+
+  const cropIds = crops.value.map((c: any) => c.id)
+  if (cropIds.length) {
+    const { data: phaseRows } = await supabase.from('planting_phases')
+      .select('id, farm_crop_id, phase_key, observed_at, note, created_at')
+      .in('farm_crop_id', cropIds)
+      .order('observed_at', { ascending: false })
+      .order('created_at', { ascending: false })
+    plantingPhases.value = phaseRows || []
+  } else {
+    plantingPhases.value = []
+  }
 
   // Агрономи фермера (власника поля) з активними угодами
   if (uid) {
@@ -771,7 +877,67 @@ const load = async () => {
   loading.value = false
 }
 
-await Promise.all([load(), loadCrops()])
+await Promise.all([load(), loadCrops(), growthPhases.load()])
+
+const isPerennialCrop = (crop: any) => !!crop && isPerennialGroup(growthPhases.groupForCrop(crop.crop_type))
+const currentPhase = (crop: any) => plantingPhases.value.find(r => r.farm_crop_id === crop.id) ?? null
+const phaseEmoji = (key: string) => growthPhases.emojiFor(key)
+const formatPhaseDate = (iso: string, withYear = false) => {
+  const [y, m, d] = iso.split('-')
+  return withYear ? `${d}.${m}.${y}` : `${d}.${m}`
+}
+
+const todayIso = new Date().toLocaleDateString('sv-SE')
+const phaseCrop = ref<any>(null)
+const phaseForm = reactive({ key: '', observed_at: todayIso, note: '' })
+const phaseOptions = computed(() => phaseCrop.value ? growthPhases.phasesForCrop(phaseCrop.value.crop_type) : [])
+const phaseHistory = computed(() => phaseCrop.value ? plantingPhases.value.filter(r => r.farm_crop_id === phaseCrop.value.id) : [])
+
+// Опубліковані поради групи культури, що відкрита у вікні фаз
+const phaseTips = ref<any[]>([])
+const tipsPhaseKey = computed(() => phaseForm.key || (phaseCrop.value ? currentPhase(phaseCrop.value)?.phase_key : '') || '')
+const phaseTipsShown = computed(() => phaseTips.value.filter(t => t.phase_key === tipsPhaseKey.value))
+
+const openPhases = async (crop: any) => {
+  phaseCrop.value = crop
+  phaseTips.value = []
+  const group = growthPhases.groupForCrop(crop.crop_type)
+  if (group) {
+    supabase.from('phase_tips').select('id, phase_key, title, description, category, urgency')
+      .eq('crop_group', group).eq('is_published', true).order('order_num')
+      .then(({ data }) => { if (phaseCrop.value?.id === crop.id) phaseTips.value = data || [] })
+  }
+  // Пропонуємо наступну фазу після поточної
+  const cur = currentPhase(crop)
+  const options = growthPhases.phasesForCrop(crop.crop_type)
+  const idx = cur ? options.findIndex(p => p.key === cur.phase_key) : -1
+  // Переглядач нічого не відмічає — показуємо поради поточної фази
+  const suggested = isViewer.value ? cur?.phase_key : options[idx + 1]?.key ?? cur?.phase_key
+  Object.assign(phaseForm, { key: suggested ?? '', observed_at: todayIso, note: '' })
+}
+
+const savePhase = async () => {
+  if (!phaseCrop.value || !phaseForm.key || !phaseForm.observed_at) return
+  saving.value = true
+  const { error } = await supabase.from('planting_phases').insert({
+    farm_crop_id: phaseCrop.value.id,
+    phase_key: phaseForm.key,
+    observed_at: phaseForm.observed_at,
+    note: phaseForm.note.trim() || null,
+  })
+  saving.value = false
+  if (error) { toast.error('Не вдалося зберегти фазу'); return }
+  toast.success('Фазу відмічено')
+  phaseCrop.value = null
+  await load()
+}
+
+const deletePhase = async (r: any) => {
+  if (!await confirmDialog(`Запис «${r.phase_key}» від ${formatPhaseDate(r.observed_at, true)} буде видалено.`, { title: 'Видалити запис?' })) return
+  const { error } = await supabase.from('planting_phases').delete().eq('id', r.id)
+  if (error) { toast.error('Не вдалося видалити запис'); return }
+  plantingPhases.value = plantingPhases.value.filter(p => p.id !== r.id)
+}
 
 const startEdit = () => {
   Object.assign(editForm, { name: farm.value.name, region: farm.value.region || '', city: farm.value.city || '', hectares: String(farm.value.hectares), cadastral_number: farm.value.cadastral_number || '' })
@@ -794,11 +960,13 @@ const searchCrops = () => {
     const q = cropSearch.value.trim().toLowerCase()
     const { crops } = useCropCatalog()
     cropResults.value = q
-      ? crops.value.filter(c => c.name.toLowerCase().includes(q)).slice(0, 20).map(c => ({ name: c.name, emoji: c.emoji }))
-      : crops.value.slice(0, 20).map(c => ({ name: c.name, emoji: c.emoji }))
+      ? crops.value.filter(c => c.name.toLowerCase().includes(q)).slice(0, 20).map(c => ({ id: c.id, name: c.name, emoji: c.emoji }))
+      : crops.value.slice(0, 20).map(c => ({ id: c.id, name: c.name, emoji: c.emoji }))
     showCropSuggestions.value = true
   }, 200)
 }
+
+const selectedCropGroup = computed(() => selectedCrop.value ? growthPhases.groupForCrop(selectedCrop.value.name) : null)
 
 const selectCrop = (c: any) => {
   selectedCrop.value = c
@@ -810,9 +978,10 @@ const selectCrop = (c: any) => {
 watch(showAddCrop, (val) => {
   if (val) {
     const { crops } = useCropCatalog()
-    cropResults.value = crops.value.slice(0, 20).map(c => ({ name: c.name, emoji: c.emoji }))
+    cropResults.value = crops.value.slice(0, 20).map(c => ({ id: c.id, name: c.name, emoji: c.emoji }))
     cropSearch.value = ''
     selectedCrop.value = null
+    newPlanting.value = emptyPlantingForm()
   }
 })
 
@@ -866,6 +1035,7 @@ const addCrop = async () => {
     stock_quantity: newStockQuantity.value !== '' ? parseFloat(newStockQuantity.value) : null,
     stock_unit: newStockUnit.value,
     show_in_catalog: newShowInCatalog.value,
+    ...(isPerennialGroup(selectedCropGroup.value) ? plantingPayload(newPlanting.value, parseFloat(newArea.value) || null) : {}),
   })
   selectedCrop.value = null
   cropSearch.value = ''
@@ -936,6 +1106,7 @@ const deleteRotation = async (id: string) => {
 // Редагування культури
 const editingCrop = ref<any>(null)
 const editCropForm = reactive({ variety: '', area_ha: '', planned_yield_t: '', stock_quantity: '', stock_unit: 'т', show_in_catalog: true })
+const editPlanting = ref(emptyPlantingForm())
 const editVarietySuggestions = ref<string[]>([])
 const showEditVarietySuggestions = ref(false)
 
@@ -949,6 +1120,7 @@ const openEditCrop = (crop: any) => {
     stock_unit: crop.stock_unit || 'т',
     show_in_catalog: crop.show_in_catalog !== false,
   })
+  editPlanting.value = plantingFormFrom(crop)
   editVarietySuggestions.value = []
 }
 
@@ -980,6 +1152,7 @@ const saveCropEdit = async () => {
     stock_quantity: editCropForm.stock_quantity !== '' ? parseFloat(editCropForm.stock_quantity) : null,
     stock_unit: editCropForm.stock_unit,
     show_in_catalog: editCropForm.show_in_catalog,
+    ...(isPerennialCrop(editingCrop.value) ? plantingPayload(editPlanting.value, parseFloat(editCropForm.area_ha) || null) : {}),
   }).eq('id', editingCrop.value.id)
   saving.value = false
   editingCrop.value = null
@@ -1147,6 +1320,46 @@ const saveCropEdit = async () => {
   transition: opacity 0.15s;
 }
 .farm-add-btn:hover { opacity: 0.88; }
+
+.phase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(47, 82, 51);
+  background: rgb(238, 241, 227);
+  border: 1px solid rgb(214, 224, 196);
+  transition: background-color 0.15s;
+}
+.phase-chip:hover { background: rgb(228, 234, 212); }
+.phase-chip-empty {
+  background: transparent;
+  border-style: dashed;
+  color: rgb(110, 128, 100);
+}
+.phase-chip-date { font-weight: 500; color: rgb(110, 128, 100); }
+
+.phase-option {
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(27, 46, 27);
+  background: white;
+  border: 1px solid rgb(214, 224, 196);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.phase-option:hover { background: rgb(246, 248, 240); }
+.phase-option-active {
+  background: rgb(47, 82, 51);
+  border-color: rgb(47, 82, 51);
+  color: white;
+}
+.phase-option-active:hover { background: rgb(47, 82, 51); }
 
 .farm-outline-btn {
   display: inline-flex;
