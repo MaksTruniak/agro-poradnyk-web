@@ -1054,7 +1054,8 @@ const { confirm: confirmDialog } = useConfirm()
 
 const deleteCrop = async (crop: any) => {
   if (!await confirmDialog(`Культуру "${crop.crop_type}" буде видалено з поля.`, { title: 'Видалити культуру?' })) return
-  await supabase.from('farm_crops').delete().eq('id', crop.id)
+  const { error } = await supabase.from('farm_crops').delete().eq('id', crop.id)
+  if (error) { toast.error('Не вдалося видалити культуру: ' + error.message); return }
   await load()
 }
 

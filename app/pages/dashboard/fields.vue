@@ -604,7 +604,8 @@ const { confirm: confirmDialog } = useConfirm()
 
 const deleteFarm = async (farm: any) => {
   if (!await confirmDialog(`Поле "${farm.name}" та всі пов'язані культури будуть видалені.`, { title: `Видалити поле?` })) return
-  await supabase.from('farms').delete().eq('id', farm.id)
+  const { error } = await supabase.from('farms').delete().eq('id', farm.id)
+  if (error) { showError('Не вдалося видалити поле: ' + error.message); return }
   await load()
 }
 

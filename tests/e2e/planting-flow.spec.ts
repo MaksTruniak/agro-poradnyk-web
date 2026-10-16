@@ -135,4 +135,29 @@ test.describe('Насадження і фенофази', () => {
     await expect(page.getByText(`${TAG} чернетка`)).toHaveCount(0)
     await expectNoErrors(errors, 'вікні фенофази')
   })
+
+  test('поле з продажем видаляється, продаж лишається без прив’язки', async () => {
+    const farmer = await asUser('farmer')
+    const admin = serviceClient()
+    const { data: farm } = await farmer.client.from('farms')
+      .insert({ user_id: farmer.userId, name: `${TAG} видалення`, hectares: 1 }).select('id').single()
+    const { data: crop } = await farmer.client.from('farm_crops')
+      .insert({ farm_id: farm!.id, crop_type: 'Смородина чорна', area_ha: 1, stock_quantity: 5, stock_unit: 'т' }).select('id').single()
+    const { data: sale, error } = await farmer.client.from('manual_sales').insert({
+      user_id: farmer.userId, crop_type: `${TAG} продаж`, quantity_tons: 1, price_per_ton: 1,
+      sold_at: '2026-10-16', farm_crop_id: crop!.id, deduct_from_stock: true,
+    }).select('id').single()
+    expect(error).toBeNull()
+    try {
+      const del = await farmer.client.from('farms').delete().eq('id', farm!.id).select('id')
+      expect(del.error, 'база не дала видалити поле з продажем').toBeNull()
+      expect(del.data).toHaveLength(1)
+      const { data: kept } = await admin.from('manual_sales').select('farm_crop_id').eq('id', sale!.id).single()
+      expect(kept, 'продаж видалився разом із полем').toEqual({ farm_crop_id: null })
+    } finally {
+      await admin.from('manual_sales').delete().eq('id', sale!.id)
+      await admin.from('farm_crops').delete().eq('farm_id', farm!.id)
+      await admin.from('farms').delete().eq('id', farm!.id)
+    }
+  })
 })
