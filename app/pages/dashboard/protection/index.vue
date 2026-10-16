@@ -404,70 +404,6 @@ const supabase = useSupabaseClient()
 const { getQueryUserId, isViewer } = useTeamContext()
 const user = useSupabaseUser()
 
-const CROP_GROUPS: Record<string, string> = {
-  // grain – зернові
-  'пшениця': 'grain', 'ячмінь': 'grain', 'жито': 'grain', 'овес': 'grain',
-  'тритикале': 'grain', 'просо': 'grain', 'сорго': 'grain', 'гречка': 'grain',
-  // corn – кукурудза
-  'кукурудза': 'corn',
-  // oilseed – олійні
-  'соняшник': 'oilseed', 'ріпак': 'oilseed',
-  // legume – бобові
-  'соя': 'legume', 'горох': 'legume', 'квасоля': 'legume', 'боби': 'legume',
-  'нут': 'legume', 'сочевиця': 'legume', 'люпин': 'legume',
-  // technical – технічні
-  'льон': 'technical', 'цукровий буряк': 'technical', 'коноплі': 'technical',
-  'хміль': 'technical', 'тютюн': 'technical', 'лаванда': 'technical',
-  "м'ята": 'technical', 'меліса': 'technical',
-  // veg_nightshade – пасльонові
-  'томат': 'veg_nightshade', 'помідор': 'veg_nightshade', 'перець': 'veg_nightshade',
-  'баклажан': 'veg_nightshade', 'картопля': 'veg_nightshade',
-  // veg_cucurbit – гарбузові
-  'огірок': 'veg_cucurbit', 'кабачок': 'veg_cucurbit', 'гарбуз': 'veg_cucurbit',
-  'кавун': 'veg_cucurbit', 'диня': 'veg_cucurbit', 'патисон': 'veg_cucurbit',
-  // veg_brassica – капустяні
-  'капуста': 'veg_brassica', 'броколі': 'veg_brassica', 'кольрабі': 'veg_brassica',
-  // veg_allium – цибулеві
-  'цибуля': 'veg_allium', 'часник': 'veg_allium', 'порей': 'veg_allium',
-  // veg_root – коренеплоди
-  'морква': 'veg_root', 'пастернак': 'veg_root', 'редиска': 'veg_root',
-  'редька': 'veg_root', 'ріпа': 'veg_root', 'буряк': 'veg_root',
-  // veg_leaf – листові/зелень
-  'салат': 'veg_leaf', 'шпинат': 'veg_leaf', 'кріп': 'veg_leaf',
-  'петрушка': 'veg_leaf', 'базилік': 'veg_leaf', 'селера': 'veg_leaf',
-  'спаржа': 'veg_leaf', 'артишок': 'veg_leaf',
-  // berry_shrub – ягідні кущові
-  'смородина': 'berry_shrub', 'аґрус': 'berry_shrub', 'агрус': 'berry_shrub',
-  'малина': 'berry_shrub', 'ожина': 'berry_shrub', 'виноград': 'berry_shrub',
-  'калина': 'berry_shrub', 'горобина': 'berry_shrub', 'шипшина': 'berry_shrub',
-  'обліпиха': 'berry_shrub', 'журавлина': 'berry_shrub',
-  // berry_herb – ягідні трав'янисті
-  'полуниця': 'berry_herb', 'суниця': 'berry_herb',
-  'чорниця': 'berry_herb', 'лохина': 'berry_herb',
-  // fruit_pome – зерняткові
-  'яблуня': 'fruit_pome', 'яблука': 'fruit_pome', 'груша': 'fruit_pome', 'айва': 'fruit_pome',
-  // fruit_stone – кісточкові
-  'вишня': 'fruit_stone', 'черешня': 'fruit_stone', 'слива': 'fruit_stone',
-  'персик': 'fruit_stone', 'нектарин': 'fruit_stone', 'абрикос': 'fruit_stone',
-  'алича': 'fruit_stone', 'кизил': 'fruit_stone', 'хурма': 'fruit_stone', 'інжир': 'fruit_stone',
-  // nut – горіхові
-  'горіх': 'nut', 'ліщина': 'nut', 'каштан': 'nut', 'фундук': 'nut', 'мигдаль': 'nut',
-}
-
-const getCropGroup = (crop: string): string | null => {
-  if (!crop) return null
-  const lower = crop.toLowerCase().trim()
-  // Точний збіг спочатку (для "цукровий буряк" vs "буряк")
-  for (const [key, group] of Object.entries(CROP_GROUPS)) {
-    if (lower === key) return group
-  }
-  // Потім пошук підрядка
-  for (const [key, group] of Object.entries(CROP_GROUPS)) {
-    if (lower.includes(key)) return group
-  }
-  return null
-}
-
 const loading = ref(true)
 const saving = ref(false)
 const hasPaidPlan = ref(false)
@@ -726,8 +662,7 @@ const load = async () => {
     const { data: sub } = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', ownerId).eq('profile', 'farmer').maybeSingle()
     hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(sub))
   }
-  const cropGroup = getCropGroup(cropType)
-  phases.value = allPhases.value.filter((p: any) => !p.crop_groups || !cropGroup || p.crop_groups?.includes(cropGroup))
+  phases.value = growthPhases.phasesForCrop(cropType)
 
   if (farmCropId) {
     const { data: farmCropRow } = await supabase

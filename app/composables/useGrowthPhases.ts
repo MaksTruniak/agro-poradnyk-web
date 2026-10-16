@@ -8,6 +8,8 @@ export interface GrowthPhase {
 export function useGrowthPhases() {
   const supabase = useSupabaseClient()
   const allPhases = useState<GrowthPhase[]>('growth-phases', () => [])
+  // назва культури (lower) → group_key з каталогу
+  const catalogGroups = useState<Record<string, string>>('crop-catalog-groups', () => ({}))
   const loaded = useState<boolean>('growth-phases-loaded', () => false)
 
   const load = async () => {
@@ -15,24 +17,35 @@ export function useGrowthPhases() {
     // Системні фази (created_by порожній) + власні фази користувача; чужі не показуємо
     const { data: { session } } = await supabase.auth.getSession()
     const uid = session?.user?.id
-    const { data } = await supabase
-      .from('growth_phases')
-      .select('*')
-      .or(uid ? `created_by.is.null,created_by.eq.${uid}` : 'created_by.is.null')
-      .order('order_num', { ascending: true })
+    const [{ data }, { data: catalog }] = await Promise.all([
+      supabase
+        .from('growth_phases')
+        .select('*')
+        .or(uid ? `created_by.is.null,created_by.eq.${uid}` : 'created_by.is.null')
+        .order('order_num', { ascending: true }),
+      supabase.from('crop_catalog').select('name, group_key').not('group_key', 'is', null),
+    ])
     allPhases.value = (data || []).map((p: any) => ({
       key: p.key,
       emoji: p.emoji,
       order: p.order_num,
       crop_groups: p.crop_groups ?? null,
     }))
+    catalogGroups.value = Object.fromEntries((catalog || []).map((c: any) => [c.name.toLowerCase().trim(), c.group_key]))
     loaded.value = true
   }
 
+  // Група культури: з каталогу, для вписаних вручну — за назвою
+  const groupForCrop = (cropType: string | null | undefined) => {
+    if (!cropType) return null
+    return catalogGroups.value[cropType.toLowerCase().trim()] ?? guessCropGroup(cropType)
+  }
+
   const phasesForCrop = (cropType: string | null | undefined) => {
-    if (!cropType) return allPhases.value
+    const group = groupForCrop(cropType)
+    if (!group) return [...allPhases.value]
     return allPhases.value.filter(
-      p => !p.crop_groups || p.crop_groups.includes(cropType)
+      p => !p.crop_groups || p.crop_groups.includes(group)
     )
   }
 
@@ -42,5 +55,5 @@ export function useGrowthPhases() {
   const orderFor = (phaseKey: string) =>
     allPhases.value.find(p => p.key === phaseKey)?.order ?? 99
 
-  return { allPhases, load, phasesForCrop, emojiFor, orderFor }
+  return { allPhases, load, groupForCrop, phasesForCrop, emojiFor, orderFor }
 }

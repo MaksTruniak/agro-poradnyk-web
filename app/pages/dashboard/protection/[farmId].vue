@@ -326,30 +326,6 @@ const inlineT = ref<Record<string, { product_name: string; type: string; dosage:
 let searchTimer: any = null
 
 
-const CROP_GROUPS: Record<string, string> = {
-  'пшениця': 'grain', 'ячмінь': 'grain', 'жито': 'grain', 'овес': 'grain', 'кукурудза': 'corn',
-  'соняшник': 'oilseed', 'ріпак': 'oilseed', 'соя': 'legume', 'горох': 'legume',
-  'томат': 'veg_nightshade', 'помідор': 'veg_nightshade', 'перець': 'veg_nightshade', 'картопля': 'veg_nightshade',
-  'огірок': 'veg_cucurbit', 'кабачок': 'veg_cucurbit', 'гарбуз': 'veg_cucurbit',
-  'капуста': 'veg_brassica', 'цибуля': 'veg_allium', 'часник': 'veg_allium',
-  'морква': 'veg_root', 'буряк': 'veg_root', 'цукровий буряк': 'technical',
-  'смородина': 'berry_shrub', 'малина': 'berry_shrub', 'виноград': 'berry_shrub',
-  'полуниця': 'berry_herb', 'суниця': 'berry_herb', 'лохина': 'berry_herb',
-  'яблуня': 'fruit_pome', 'яблука': 'fruit_pome', 'груша': 'fruit_pome',
-  'вишня': 'fruit_stone', 'черешня': 'fruit_stone', 'слива': 'fruit_stone', 'персик': 'fruit_stone',
-}
-
-const getCropGroup = (crop: string) => {
-  const lower = crop?.toLowerCase().trim() || ''
-  for (const [key, group] of Object.entries(CROP_GROUPS)) {
-    if (lower === key) return group
-  }
-  for (const [key, group] of Object.entries(CROP_GROUPS)) {
-    if (lower.includes(key)) return group
-  }
-  return null
-}
-
 const treatmentsByPhase = computed(() => {
   const map: Record<string, any[]> = {}
   for (const t of treatments.value) {
@@ -415,10 +391,7 @@ const selectCrop = async (crop: any) => {
   treatments.value = []
   activePhasesKeys.value = []
 
-  const cropGroup = getCropGroup(crop.crop_type)
-  phases.value = allPhases.value.filter(
-    (p: any) => !p.crop_groups || !cropGroup || p.crop_groups.includes(cropGroup)
-  )
+  phases.value = growthPhases.phasesForCrop(crop.crop_type)
 
   const { data: programRows } = await supabase
     .from('protection_programs').select('*').eq('farm_crop_id', crop.id).order('created_at', { ascending: true }).limit(1)
