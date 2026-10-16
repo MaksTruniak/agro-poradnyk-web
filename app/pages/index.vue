@@ -162,7 +162,7 @@ const cropStats = computed(() => cropStatsData.value || [])
   min-height: 100svh;
   background:
     linear-gradient(to bottom, rgba(8, 18, 8, 0.55) 0%, rgba(12, 24, 8, 0.45) 60%, rgba(8, 18, 8, 0.7) 100%),
-    url('/hero-field.png') center/cover no-repeat;
+    url('/hero-field.jpg') center/cover no-repeat;
   background-color: #0d1a08;
 }
 .hero-overlay {
