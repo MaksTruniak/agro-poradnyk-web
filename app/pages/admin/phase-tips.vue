@@ -23,6 +23,10 @@
         <option value="">Всі фази</option>
         <option v-for="p in filterPhaseOptions" :key="p" :value="p">{{ p }}</option>
       </select>
+      <select v-model="filterStage" class="input-sm">
+        <option value="">Усі стадії</option>
+        <option v-for="(label, key) in PLANTING_STAGE_NAMES" :key="key" :value="key">{{ label }}</option>
+      </select>
       <select v-model="filterStatus" class="input-sm">
         <option value="">Всі</option>
         <option value="draft">Чернетки</option>
@@ -53,6 +57,9 @@
                 <p class="font-semibold text-agro-dark text-sm">{{ item.title }}</p>
                 <span class="text-xs px-2 py-0.5 rounded-full font-medium" :class="TIP_URGENCY_BADGE[item.urgency]">{{ TIP_URGENCY_LABEL[item.urgency] }}</span>
                 <span class="text-xs text-agro-light">{{ TIP_CATEGORIES[item.category]?.label }}</span>
+                <span v-for="st in item.stages || []" :key="st" class="text-xs px-2 py-0.5 rounded-full bg-agro-bg text-agro-dark border border-agro-border">
+                  {{ PLANTING_STAGE_NAMES[st as PlantingStageKey] }}
+                </span>
               </div>
               <p class="text-xs text-agro-light mt-1 leading-relaxed">{{ item.description }}</p>
             </div>
@@ -130,6 +137,16 @@
                   <input v-model.number="modal.order_num" type="number" min="0" class="input" />
                 </div>
               </div>
+              <div>
+                <label class="label">Для якого віку насадження</label>
+                <div class="flex flex-wrap gap-4">
+                  <label v-for="(label, key) in PLANTING_STAGE_NAMES" :key="key" class="flex items-center gap-2 text-sm text-agro-dark cursor-pointer select-none">
+                    <input type="checkbox" :value="key" v-model="modal.stages" class="w-4 h-4 accent-agro rounded" />
+                    {{ label }}
+                  </label>
+                </div>
+                <p class="text-xs text-agro-light mt-1">Нічого не вибрано — порада для всіх. Рік посадки — перший сезон, молоде — до початку повного плодоношення.</p>
+              </div>
               <label class="flex items-center gap-3 cursor-pointer select-none">
                 <input type="checkbox" v-model="modal.is_published" class="w-4 h-4 accent-agro rounded" />
                 <span class="text-sm font-medium text-agro-dark">Опубліковано — фермери бачать цю пораду</span>
@@ -151,6 +168,7 @@
 <script setup lang="ts">
 import { PERENNIAL_GROUP_LABELS } from '~/utils/cropGroups'
 import { TIP_CATEGORIES, TIP_URGENCY_LABEL, TIP_URGENCY_BADGE } from '~/utils/tipCategories'
+import { PLANTING_STAGE_NAMES, type PlantingStageKey } from '~~/shared/utils/plantingStage'
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Поради за фазами — Адмін' })
@@ -167,6 +185,8 @@ const phases = ref<{ key: string; order_num: number; crop_groups: string[] | nul
 const filterGroup = ref('')
 const filterPhase = ref('')
 const filterStatus = ref<'' | 'draft' | 'published'>('')
+// Стадія: порада без стадій підходить усім
+const filterStage = ref<'' | PlantingStageKey>('')
 
 const phasesOf = (group: string) => phases.value
   .filter(p => !group || !p.crop_groups || p.crop_groups.includes(group))
@@ -183,6 +203,7 @@ const filtered = computed(() => items.value.filter(i => {
   if (filterPhase.value && i.phase_key !== filterPhase.value) return false
   if (filterStatus.value === 'draft' && i.is_published) return false
   if (filterStatus.value === 'published' && !i.is_published) return false
+  if (filterStage.value && i.stages?.length && !i.stages.includes(filterStage.value)) return false
   return true
 }))
 
@@ -200,7 +221,7 @@ const sections = computed(() => {
 
 const modal = reactive({
   open: false, id: '', crop_group: 'berry_shrub', phase_key: '', title: '', description: '',
-  category: 'disease', urgency: 'medium', order_num: 0, is_published: false,
+  category: 'disease', urgency: 'medium', order_num: 0, is_published: false, stages: [] as string[],
 })
 
 const load = async () => {
@@ -218,6 +239,7 @@ const openAdd = () => {
   Object.assign(modal, {
     open: true, id: '', crop_group: filterGroup.value || 'berry_shrub', phase_key: filterPhase.value || '',
     title: '', description: '', category: 'disease', urgency: 'medium', order_num: 0, is_published: false,
+    stages: filterStage.value ? [filterStage.value] : [],
   })
 }
 
@@ -225,7 +247,7 @@ const openEdit = (item: any) => {
   Object.assign(modal, {
     open: true, id: item.id, crop_group: item.crop_group, phase_key: item.phase_key, title: item.title,
     description: item.description || '', category: item.category, urgency: item.urgency,
-    order_num: item.order_num || 0, is_published: item.is_published,
+    order_num: item.order_num || 0, is_published: item.is_published, stages: [...(item.stages || [])],
   })
 }
 
@@ -234,6 +256,10 @@ const save = async () => {
     crop_group: modal.crop_group, phase_key: modal.phase_key, title: modal.title.trim(),
     description: modal.description.trim(), category: modal.category, urgency: modal.urgency,
     order_num: Number(modal.order_num) || 0, is_published: modal.is_published,
+    // у порядку стадій; усі три — те саме, що «для всіх»
+    stages: modal.stages.length && modal.stages.length < 3
+      ? Object.keys(PLANTING_STAGE_NAMES).filter(k => modal.stages.includes(k))
+      : null,
   }
   if (!payload.title || !payload.phase_key) { useToast().error('Вкажіть фазу і назву'); return }
   saving.value = true

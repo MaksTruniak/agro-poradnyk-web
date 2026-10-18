@@ -881,8 +881,14 @@ const load = async () => {
 await Promise.all([load(), loadCrops(), growthPhases.load()])
 
 const isPerennialCrop = (crop: any) => !!crop && isPerennialGroup(growthPhases.groupForCrop(crop.crop_type))
-const cropStageLabel = (crop: any) =>
-  plantingStageLabel(plantingStage(growthPhases.groupForCrop(crop.crop_type), crop.planting_year))
+const cropStage = (crop: any) => plantingStage(growthPhases.groupForCrop(crop.crop_type), crop.planting_year)
+const cropStageLabel = (crop: any) => plantingStageLabel(cropStage(crop))
+// Фази культури з урахуванням віку: без урожаю — без фаз плодів і збору
+const phasesForPlanting = (crop: any) => {
+  const all = growthPhases.phasesForCrop(crop.crop_type)
+  const keys = phasesForStage(all.map(p => p.key), cropStage(crop))
+  return all.filter(p => keys.includes(p.key))
+}
 const currentPhase = (crop: any) => plantingPhases.value.find(r => r.farm_crop_id === crop.id) ?? null
 const phaseEmoji = (key: string) => growthPhases.emojiFor(key)
 const formatPhaseDate = (iso: string, withYear = false) => {
@@ -893,26 +899,27 @@ const formatPhaseDate = (iso: string, withYear = false) => {
 const todayIso = new Date().toLocaleDateString('sv-SE')
 const phaseCrop = ref<any>(null)
 const phaseForm = reactive({ key: '', observed_at: todayIso, note: '' })
-const phaseOptions = computed(() => phaseCrop.value ? growthPhases.phasesForCrop(phaseCrop.value.crop_type) : [])
+const phaseOptions = computed(() => phaseCrop.value ? phasesForPlanting(phaseCrop.value) : [])
 const phaseHistory = computed(() => phaseCrop.value ? plantingPhases.value.filter(r => r.farm_crop_id === phaseCrop.value.id) : [])
 
 // Опубліковані поради групи культури, що відкрита у вікні фаз
 const phaseTips = ref<any[]>([])
 const tipsPhaseKey = computed(() => phaseForm.key || (phaseCrop.value ? currentPhase(phaseCrop.value)?.phase_key : '') || '')
-const phaseTipsShown = computed(() => phaseTips.value.filter(t => t.phase_key === tipsPhaseKey.value))
+const phaseTipsShown = computed(() => phaseTips.value.filter(t =>
+  t.phase_key === tipsPhaseKey.value && tipFitsStage(t.stages, phaseCrop.value ? cropStage(phaseCrop.value) : null)))
 
 const openPhases = async (crop: any) => {
   phaseCrop.value = crop
   phaseTips.value = []
   const group = growthPhases.groupForCrop(crop.crop_type)
   if (group) {
-    supabase.from('phase_tips').select('id, phase_key, title, description, category, urgency')
+    supabase.from('phase_tips').select('id, phase_key, title, description, category, urgency, stages')
       .eq('crop_group', group).eq('is_published', true).order('order_num')
       .then(({ data }) => { if (phaseCrop.value?.id === crop.id) phaseTips.value = data || [] })
   }
   // Пропонуємо наступну фазу після поточної
   const cur = currentPhase(crop)
-  const options = growthPhases.phasesForCrop(crop.crop_type)
+  const options = phasesForPlanting(crop)
   const idx = cur ? options.findIndex(p => p.key === cur.phase_key) : -1
   // Переглядач нічого не відмічає — показуємо поради поточної фази
   const suggested = isViewer.value ? cur?.phase_key : options[idx + 1]?.key ?? cur?.phase_key

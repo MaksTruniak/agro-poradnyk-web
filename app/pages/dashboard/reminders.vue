@@ -332,6 +332,7 @@
 <script setup lang="ts">
 import { Trash2 } from 'lucide-vue-next'
 import { TIP_CATEGORIES } from '~/utils/tipCategories'
+import type { PlantingStageInfo } from '~~/shared/utils/plantingStage'
 useHead({ title: 'Нагадування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
@@ -393,7 +394,7 @@ const loadCalendarTips = async () => {
   const currentMonth = new Date().getMonth() + 1
 
   const { data: farms } = await supabase.from('farms')
-    .select('id, name, region, farm_crops(id, crop_type, area_ha)')
+    .select('id, name, region, farm_crops(id, crop_type, area_ha, planting_year)')
     .eq('user_id', user.id)
 
   const cropSet = new Set<string>()
@@ -448,15 +449,16 @@ const loadPhaseTips = async (farms: any[]) => {
   for (const r of phaseRows || []) current[r.farm_crop_id] ??= r.phase_key
 
   // культура → (група, фаза); однакові назви культур не дублюємо
-  const wanted = new Map<string, { crop_type: string; group: string; phase: string }>()
+  const wanted = new Map<string, { crop_type: string; group: string; phase: string; stage: PlantingStageInfo | null }>()
   for (const c of crops) {
     const phase = current[c.id]
     const group = growthPhases.groupForCrop(c.crop_type)
-    if (phase && group) wanted.set(`${c.crop_type}|${phase}`, { crop_type: c.crop_type, group, phase })
+    const stage = plantingStage(group, c.planting_year)
+    if (phase && group) wanted.set(`${c.crop_type}|${phase}|${stage?.stage ?? ''}`, { crop_type: c.crop_type, group, phase, stage })
   }
   if (!wanted.size) return []
   const { data: tips } = await supabase.from('phase_tips')
-    .select('id, crop_group, phase_key, title, description, category, urgency')
+    .select('id, crop_group, phase_key, title, description, category, urgency, stages')
     .eq('is_published', true)
     .in('crop_group', [...new Set([...wanted.values()].map(w => w.group))])
     .in('phase_key', [...new Set([...wanted.values()].map(w => w.phase))])
@@ -464,8 +466,11 @@ const loadPhaseTips = async (farms: any[]) => {
   const result: any[] = []
   for (const w of wanted.values()) {
     for (const t of tips || []) {
-      if (t.crop_group === w.group && t.phase_key === w.phase) {
-        result.push({ ...t, id: `phase-${t.id}-${w.crop_type}`, crop_type: w.crop_type, source: 'phase' })
+      if (t.crop_group === w.group && t.phase_key === w.phase && tipFitsStage(t.stages, w.stage)) {
+        // одна порада для однакових культур; стадія — щоб насадження різного віку не дублювались
+        if (!result.some(r => r.tip_id === t.id && r.crop_type === w.crop_type)) {
+          result.push({ ...t, id: `phase-${t.id}-${w.crop_type}`, tip_id: t.id, crop_type: w.crop_type, source: 'phase' })
+        }
       }
     }
   }

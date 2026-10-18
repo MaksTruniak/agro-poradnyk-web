@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeName, findByName, findByIngredient, isGenericFertilizer, type CatalogProduct } from '../../server/utils/agroCatalog'
+import { normalizeName, findByName, findByIngredient, isGenericFertilizer, isFieldOperation, type CatalogProduct } from '../../server/utils/agroCatalog'
 
 const p = (name: string, type: string, ingredients: string[] = [], kind: 'product' | 'fertilizer' = 'product'): CatalogProduct =>
   ({ id: name, name, slug: name, type, kind, norm: normalizeName(name), ingredients: ingredients.map(normalizeName) })
@@ -62,5 +62,24 @@ describe('isGenericFertilizer', () => {
     expect(isGenericFertilizer('Аміачна селітра 34,4%')).toBe(true)
     expect(isGenericFertilizer('Аммофос')).toBe(true)
     expect(isGenericFertilizer('Амістар Екстра')).toBe(false)
+  })
+})
+
+describe('isFieldOperation', () => {
+  it('полив, мульча, ручні роботи — не препарати', () => {
+    expect(isFieldOperation('полив', 'Вода (крапельне зрошення)')).toBe(true)
+    expect(isFieldOperation('обробка', 'Мульча з соснової кори')).toBe(true)
+    expect(isFieldOperation('обробка', 'Ручне видалення квіток')).toBe(true)
+    expect(isFieldOperation('обробка', "Підв'язка лози")).toBe(true)
+  })
+  it('препарати лишаються препаратами', () => {
+    expect(isFieldOperation('захист', 'Хорус')).toBe(false)
+    expect(isFieldOperation('підживлення', 'Монокалійфосфат')).toBe(false)
+    // назва схожа на операцію, але є діюча речовина — це препарат
+    expect(isFieldOperation('обробка', 'Мульча-гербіцид', 'пендиметалін')).toBe(false)
+  })
+  it('монокалійфосфат і сірка — загальні добрива', () => {
+    expect(isGenericFertilizer('Монокалійфосфат')).toBe(true)
+    expect(isGenericFertilizer('Сірка гранульована')).toBe(true)
   })
 })

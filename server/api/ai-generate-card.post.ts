@@ -81,13 +81,14 @@ export default defineEventHandler(async (event) => {
  */
 async function verifyCard(card: NonNullable<ReturnType<typeof parseCard>>) {
   const catalog = await getCatalog()
-  const stats = { catalog: 0, replaced: 0, generic: 0, missing: 0 }
+  const stats = { catalog: 0, replaced: 0, generic: 0, missing: 0, operations: 0 }
   const phases = card.phases.map((phase: { name: string; treatments: any[] }) => ({
     name: phase.name,
     treatments: phase.treatments.map((t: any) => {
       // catalog_product_id у program_treatments посилається на іншу таблицю (не agro_products) — зберігаємо лише slug
       const base = { type: t.type, product_name: t.product_name, dosage: t.dosage, notes: t.notes, catalog_product_slug: null as string | null }
       const link = (p: CatalogProduct) => p.kind === 'product' ? { catalog_product_slug: p.slug } : {}
+      if (isFieldOperation(t.type, t.product_name, t.active_ingredient)) { stats.operations++; return base }
       const byName = findByName(catalog, t.product_name)
       if (byName) { stats.catalog++; return { ...base, product_name: byName.name, ...link(byName) } }
       if (isGenericFertilizer(t.product_name)) { stats.generic++; return base }

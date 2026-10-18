@@ -161,4 +161,38 @@ test.describe('Насадження і фенофази', () => {
       await admin.from('farms').delete().eq('id', farm!.id)
     }
   })
+
+  test('рік посадки: без фаз збору, поради лише для першого року', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const admin = serviceClient()
+    const year = new Date().getFullYear()
+    const { data: farm } = await farmer.client.from('farms')
+      .insert({ user_id: farmer.userId, name: `${TAG} молоде`, hectares: 1 }).select('id').single()
+    const { data: crop } = await farmer.client.from('farm_crops')
+      .insert({ farm_id: farm!.id, crop_type: 'Лохина', area_ha: 1, planting_year: year }).select('id').single()
+    const { data: tips } = await admin.from('phase_tips').insert([
+      { crop_group: 'berry_shrub', phase_key: 'Цвітіння', title: `${TAG} перший рік`, description: 'E2E', category: 'pruning', urgency: 'high', is_published: true, stages: ['establishment'] },
+      { crop_group: 'berry_shrub', phase_key: 'Цвітіння', title: `${TAG} плодоносне`, description: 'E2E', category: 'disease', urgency: 'high', is_published: true, stages: ['bearing'] },
+    ]).select('id')
+    tipIds.push(...(tips ?? []).map(t => t.id))
+    try {
+      const errors = collectErrors(page)
+      await login(page, 'farmer')
+      await page.goto(`/dashboard/farm/${farm!.id}`)
+      await expect(page.getByText(`посадка ${year} (цього року)`)).toBeVisible()
+      await expect(page.getByText('рік посадки, урожаю немає')).toBeVisible()
+      await page.getByRole('button', { name: '+ Відмітити фенофазу' }).click()
+      await expect(page.getByRole('button', { name: /^🌸 Цвітіння$/ })).toBeVisible()
+      for (const fruit of [/Збір урожаю/, /Дозрівання/, /Формування плодів/]) {
+        await expect(page.getByRole('button', { name: fruit }), `фаза ${fruit} для куща першого року`).toHaveCount(0)
+      }
+      await page.getByRole('button', { name: /^🌸 Цвітіння$/ }).click()
+      await expect(page.getByText(`${TAG} перший рік`)).toBeVisible()
+      await expect(page.getByText(`${TAG} плодоносне`)).toHaveCount(0)
+      await expectNoErrors(errors, 'вікні фенофази молодого насадження')
+    } finally {
+      await admin.from('farm_crops').delete().eq('id', crop!.id)
+      await admin.from('farms').delete().eq('id', farm!.id)
+    }
+  })
 })
