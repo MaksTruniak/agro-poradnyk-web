@@ -500,6 +500,8 @@ const generateCard = async () => {
         region: farmInfo.value?.region || null,
         areaHa: farmInfo.value?.area_ha || null,
         phases: phases.value.map((p: any) => p.key),
+        cropGroup: growthPhases.groupForCrop(cropType),
+        plantingYear: farmCrop.value?.planting_year || null,
         planting: [
           farmCrop.value ? plantingSummary(farmCrop.value) : '',
           currentPhaseKey.value ? `поточна фаза: ${currentPhaseKey.value}` : '',

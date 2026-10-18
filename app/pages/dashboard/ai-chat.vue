@@ -617,6 +617,9 @@ const farmContext = computed(() => {
     parts.push(`Культура: ${c.crop_type}${c.variety ? ` (${c.variety})` : ''}${c.area_ha ? `, ${c.area_ha} га` : ''}`)
     const planting = plantingSummary(c)
     if (planting) parts.push(`Насадження: ${planting}`)
+    const group = growthPhases.groupForCrop(c.crop_type)
+    const stage = plantingStageInstructions(group, plantingStage(group, c.planting_year))
+    if (stage) parts.push(`Стадія насадження: ${stage}`)
     const phase = c.id ? cropPhases.value[c.id] : null
     if (phase) {
       const [y, m, d] = phase.observed_at.split('-')

@@ -36,7 +36,7 @@ const num = (v: number) => String(v).replace('.', ',')
 export const plantingSummary = (crop: any, now = new Date()) => {
   const parts: string[] = []
   const age = plantingAge(crop.planting_year, now)
-  if (crop.planting_year) parts.push(age ? `посадка ${crop.planting_year} (${age} ${yearsWord(age)})` : `посадка ${crop.planting_year}`)
+  if (crop.planting_year) parts.push(age ? `посадка ${crop.planting_year} (${age} ${yearsWord(age)})` : `посадка ${crop.planting_year} (цього року)`)
   if (crop.rootstock) parts.push(`підщепа ${crop.rootstock}`)
   if (crop.row_spacing_m && crop.plant_spacing_m) parts.push(`${num(crop.row_spacing_m)}×${num(crop.plant_spacing_m)} м`)
   if (crop.plants_count) parts.push(`${crop.plants_count.toLocaleString('uk-UA')} рослин`)

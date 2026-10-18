@@ -170,6 +170,7 @@
               <p class="font-semibold text-agro-dark">{{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}</p>
               <p class="text-xs text-agro-light">{{ crop.area_ha }} га{{ crop.planned_yield_t ? ` · план ${crop.planned_yield_t} т/га` : '' }}{{ crop.stock_quantity != null ? ` · склад: ${crop.stock_quantity} ${crop.stock_unit || 'т'}` : '' }}</p>
               <p v-if="isPerennialCrop(crop) && plantingSummary(crop)" class="text-xs text-agro-light mt-0.5">{{ plantingSummary(crop) }}</p>
+              <p v-if="cropStageLabel(crop)" class="text-xs font-semibold text-agro mt-0.5">{{ cropStageLabel(crop) }}</p>
               <p v-if="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares)" class="text-xs text-amber-600 font-semibold mt-0.5">
                 ⚠ Перевищує площу поля ({{ farm.hectares }} га)
               </p>
@@ -880,6 +881,8 @@ const load = async () => {
 await Promise.all([load(), loadCrops(), growthPhases.load()])
 
 const isPerennialCrop = (crop: any) => !!crop && isPerennialGroup(growthPhases.groupForCrop(crop.crop_type))
+const cropStageLabel = (crop: any) =>
+  plantingStageLabel(plantingStage(growthPhases.groupForCrop(crop.crop_type), crop.planting_year))
 const currentPhase = (crop: any) => plantingPhases.value.find(r => r.farm_crop_id === crop.id) ?? null
 const phaseEmoji = (key: string) => growthPhases.emojiFor(key)
 const formatPhaseDate = (iso: string, withYear = false) => {

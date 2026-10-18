@@ -31,7 +31,7 @@ describe('plantingSummary', () => {
     expect(plantingSummary({ planting_year: 2025 }, now)).toBe('посадка 2025 (1 рік)')
     expect(plantingSummary({ planting_year: 2023 }, now)).toBe('посадка 2023 (3 роки)')
     expect(plantingSummary({ planting_year: 2015 }, now)).toBe('посадка 2015 (11 років)')
-    expect(plantingSummary({ planting_year: 2026 }, now)).toBe('посадка 2026')
+    expect(plantingSummary({ planting_year: 2026 }, now)).toBe('посадка 2026 (цього року)')
   })
   it('порожнє насадження — порожній рядок', () => {
     expect(plantingSummary({}, now)).toBe('')

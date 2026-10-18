@@ -1,4 +1,5 @@
 import type { CatalogProduct } from '../utils/agroCatalog'
+import type { CardPromptInput } from '../utils/cardPrompt'
 
 const TREATMENT_TYPES = ['захист', 'підживлення', 'обробка', 'полив']
 
@@ -41,49 +42,12 @@ export default defineEventHandler(async (event) => {
 
   const access = await requireAiAccess(event, 'card')
 
-  const cropFull = variety ? `${cropType} (${variety})` : cropType
-  const areaNote = areaHa ? `, площа ${areaHa} га` : ''
-  const regionNote = region ? `, регіон: ${region}` : ''
-
-  const now = new Date()
-  const monthNames = ['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень']
-  const currentMonth = monthNames[now.getMonth()]
-
-  const plantingNote = planting ? `\nНасадження: ${planting}.` : ''
-  const phasesRule = allowedPhases.length
-    ? `\n- Назви фаз ("name") — ТІЛЬКИ дослівно з цього списку, у його порядку: ${allowedPhases.join('; ')}`
-    : ''
-
-  const prompt = `Ти агроном-експерт з агрохімічного захисту та живлення рослин в Україні. Згенеруй реалістичну технологічну карту для культури: ${cropFull}${areaNote}${regionNote}.${plantingNote}
-Поточний місяць: ${currentMonth}. Враховуй це для визначення актуальних фаз.
-
-ВИМОГИ:
-- Всі препарати — зареєстровані та реально доступні в Україні (не вигадані назви)
-- Дози — реалістичні для українських умов і площі${areaHa ? ` ${areaHa} га` : ''}
-- Фази — у хронологічному порядку реального циклу вирощування цієї культури
-- 3–5 фаз, кожна 1–3 обробки з балансом захисту і живлення${phasesRule}
-- В полі notes — коротко (до 8 слів): клас препарату і проти чого (фунгіцид, інсектицид, гербіцид, протруйник, мікродобриво, стимулятор тощо)
-- JSON без пробілів і переносів рядків — відповідь має бути компактною
-
-Поверни ТІЛЬКИ валідний JSON — без тексту до або після, без \`\`\`json маркерів:
-{
-  "phases": [
-    {
-      "name": "Назва фази",
-      "treatments": [
-        {
-          "type": "захист або підживлення або обробка або полив",
-          "product_name": "Реальна назва препарату або добрива",
-          "dosage": "норма внесення (наприклад: 1.5 л/га або 200 кг/га)",
-          "active_ingredient": "діюча речовина українською (для добрив — склад), наприклад: азоксистробін + ципроконазол",
-          "notes": "клас і призначення: фунгіцид проти борошнистої роси тощо"
-        }
-      ]
-    }
-  ]
-}
-
-Значення поля "type" — ТІЛЬКИ одне з: "захист", "підживлення", "обробка", "полив"`
+  const promptInput: CardPromptInput = {
+    cropType, variety, region, areaHa, phases: allowedPhases, planting,
+    cropGroup: clampText(body?.cropGroup, 40).trim() || null,
+    plantingYear: Number.isInteger(Number(body?.plantingYear)) ? Number(body.plantingYear) : null,
+  }
+  const prompt = buildCardPrompt(promptInput)
 
   let card: ReturnType<typeof parseCard> = null
   try {
@@ -93,7 +57,10 @@ export default defineEventHandler(async (event) => {
       messages: [{ role: 'user', content: prompt }],
     }, 'ai-generate-card')
     card = parseCard(res.text)
-    if (card && allowedPhases.length) card = { phases: card.phases.map((p: { name: string; treatments: any[] }) => ({ ...p, name: matchPhase(p.name, allowedPhases) })) }
+    if (card) {
+      const phases = normalizeCardPhases(card.phases as { name: string; treatments: any[] }[], promptInput, matchPhase)
+      card = phases.length ? { phases } : null
+    }
     await recordAiRequest(access, res.usage, card ? 'ok' : res.refused ? 'refused' : 'error')
   } catch (err) {
     await releaseAiUsage(access)

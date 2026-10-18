@@ -57,6 +57,7 @@ test.describe('Насадження і фенофази', () => {
     await page.getByRole('button', { name: 'Додати', exact: true }).last().click()
 
     await expect(page.getByText(/посадка 2021 \(\d+ (рік|роки|років)\) · підщепа власнокоренева · 3×1 м · 6\s667 рослин/)).toBeVisible()
+    await expect(page.getByText(`плодоносне, ${new Date().getFullYear() - 2021 + 1}-й рік вегетації`)).toBeVisible()
 
     const { data: crop } = await serviceClient().from('farm_crops')
       .select('id, catalog_id, planting_year, rootstock, row_spacing_m, plant_spacing_m, plants_count')
