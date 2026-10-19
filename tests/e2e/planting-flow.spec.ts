@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
+import { estimatePhase, shouldSuggestPhase } from '../../shared/utils/phaseEstimate'
+import { plantingStage, phasesForStage } from '../../shared/utils/plantingStage'
 
 // Багаторічні насадження: параметри насадження і журнал фенофаз на сторінці поля.
 // ПИШЕ в базу, тому лише з E2E_WRITE=1; тимчасове поле видаляється сервісним ключем.
@@ -80,6 +82,37 @@ test.describe('Насадження і фенофази', () => {
 
     await expectNoErrors(errors, 'сторінці поля')
     expect(apiErrors, apiErrors.join('\n')).toEqual([])
+  })
+
+  test('підказка фази за сумою активних температур', async ({ page, request }) => {
+    const res = await request.get('/api/weather/degree-days?region=' + encodeURIComponent('Київська область'))
+    expect(res.ok()).toBe(true)
+    const dd = await res.json()
+    expect(dd.region).toBe('Київська')
+    expect(dd.gdd5).toBeGreaterThanOrEqual(dd.gdd10)
+    expect((await request.get('/api/weather/degree-days?region=Марс')).status()).toBe(400)
+
+    const { data: phases } = await serviceClient().from('growth_phases').select('key, order_num, crop_groups').is('created_by', null).order('order_num')
+    const keys = (phases || []).filter((p: any) => !p.crop_groups?.length || p.crop_groups.includes('berry_shrub')).map((p: any) => p.key)
+    const stage = plantingStage('berry_shrub', 2021)
+    const estimate = estimatePhase('berry_shrub', dd, phasesForStage(keys, stage), stage)
+    const expected = shouldSuggestPhase(estimate, { phase_key: 'Цвітіння', observed_at: new Date().toLocaleDateString('sv-SE') }, keys)
+
+    const errors = collectErrors(page)
+    await login(page, 'farmer')
+    await page.goto(`/dashboard/farm/${farmId}`)
+    await expect(page.getByRole('button', { name: /Цвітіння з \d\d\.\d\d/ })).toBeVisible()
+    const hint = page.getByRole('button', { name: /^Мабуть, уже .+\? Відмітити$/ })
+    if (!expected) {
+      await expect(hint).toHaveCount(0)
+    } else {
+      await expect(hint).toContainText(estimate!)
+      await hint.click()
+      await expect(page.getByText(/орієнтовно за погодою: сума активних температур \d+ °C/)).toBeVisible()
+      await expect(page.locator('.phase-option-active')).toContainText(estimate!)
+      await page.getByRole('button', { name: 'Закрити' }).click()
+    }
+    await expectNoErrors(errors, 'сторінці поля')
   })
 
   test('журнал фаз: лише власник, автора не підробити', async () => {

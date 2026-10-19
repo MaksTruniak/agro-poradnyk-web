@@ -183,6 +183,10 @@
                 </template>
                 <template v-else>+ Відмітити фенофазу</template>
               </button>
+              <button v-if="phaseHint(crop)" type="button" @click="openPhases(crop)" class="phase-hint"
+                title="Орієнтовно за сумою активних температур з 1 січня — перевірте на ділянці">
+                Мабуть, уже {{ phaseEmoji(phaseHint(crop)!) }} {{ phaseHint(crop) }}? Відмітити
+              </button>
             </div>
             <NuxtLink
               :to="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) ? undefined : `/dashboard/ai-chat?farmId=${farmId}&cropId=${crop.id}&cropType=${encodeURIComponent(crop.crop_type)}${crop.variety ? '&variety=' + encodeURIComponent(crop.variety) : ''}`"
@@ -622,6 +626,12 @@
               </div>
             </template>
 
+            <p v-if="!isViewer && degreeDaysData && phaseForm.key && phaseForm.key === phaseHint(phaseCrop)" class="text-xs text-agro-light mb-4 leading-relaxed">
+              «{{ phaseForm.key }}» — орієнтовно за погодою: сума активних температур
+              {{ phaseCrop && growthPhases.groupForCrop(phaseCrop.crop_type) === 'grape' ? `${degreeDaysData.gdd10} °C (вище 10 °C)` : `${degreeDaysData.gdd5} °C (вище 5 °C)` }}
+              з 1 січня, {{ degreeDaysData.region }} обл. Перевірте на ділянці.
+            </p>
+
             <!-- Поради для обраної (або поточної) фази -->
             <div v-if="phaseTipsShown.length" class="mb-4 rounded-xl bg-agro-bg p-3 space-y-2.5">
               <p class="farm-detail-label">Що робити на фазі «{{ tipsPhaseKey }}»</p>
@@ -682,6 +692,7 @@ import { Trash2, ShieldCheck } from 'lucide-vue-next'
 import { isPerennialGroup } from '~/utils/cropGroups'
 import { plantingSummary, emptyPlantingForm, plantingFormFrom, plantingPayload } from '~/utils/planting'
 import { TIP_CATEGORIES, TIP_URGENCY_BADGE } from '~/utils/tipCategories'
+import { estimatePhase, shouldSuggestPhase, type DegreeDays } from '~~/shared/utils/phaseEstimate'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -890,6 +901,22 @@ const phasesForPlanting = (crop: any) => {
   return all.filter(p => keys.includes(p.key))
 }
 const currentPhase = (crop: any) => plantingPhases.value.find(r => r.farm_crop_id === crop.id) ?? null
+
+// Підказка «мабуть, уже …?» за сумою активних температур області поля
+const degreeDaysData = ref<(DegreeDays & { region: string }) | null>(null)
+const loadDegreeDays = () => {
+  if (!farm.value?.region || !crops.value.some(isPerennialCrop)) return
+  $fetch<DegreeDays & { region: string }>('/api/weather/degree-days', { query: { region: farm.value.region } })
+    .then(d => { degreeDaysData.value = d })
+    .catch(() => {})
+}
+const phaseHint = (crop: any): string | null => {
+  if (isViewer.value || !crop || !degreeDaysData.value || !isPerennialCrop(crop)) return null
+  const options = phasesForPlanting(crop).map(p => p.key)
+  const estimate = estimatePhase(growthPhases.groupForCrop(crop.crop_type), degreeDaysData.value, options, cropStage(crop))
+  return shouldSuggestPhase(estimate, currentPhase(crop), options) ? estimate : null
+}
+loadDegreeDays()
 const phaseEmoji = (key: string) => growthPhases.emojiFor(key)
 const formatPhaseDate = (iso: string, withYear = false) => {
   const [y, m, d] = iso.split('-')
@@ -922,7 +949,7 @@ const openPhases = async (crop: any) => {
   const options = phasesForPlanting(crop)
   const idx = cur ? options.findIndex(p => p.key === cur.phase_key) : -1
   // Переглядач нічого не відмічає — показуємо поради поточної фази
-  const suggested = isViewer.value ? cur?.phase_key : options[idx + 1]?.key ?? cur?.phase_key
+  const suggested = isViewer.value ? cur?.phase_key : phaseHint(crop) ?? options[idx + 1]?.key ?? cur?.phase_key
   Object.assign(phaseForm, { key: suggested ?? '', observed_at: todayIso, note: '' })
 }
 
@@ -1353,6 +1380,19 @@ const saveCropEdit = async () => {
   color: rgb(110, 128, 100);
 }
 .phase-chip-date { font-weight: 500; color: rgb(110, 128, 100); }
+.phase-hint {
+  display: inline-flex;
+  margin: 6px 0 0 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(146, 92, 18);
+  background: rgb(253, 244, 226);
+  border: 1px dashed rgb(232, 198, 140);
+  transition: background-color 0.15s;
+}
+.phase-hint:hover { background: rgb(250, 236, 206); }
 
 .phase-option {
   padding: 6px 12px;
