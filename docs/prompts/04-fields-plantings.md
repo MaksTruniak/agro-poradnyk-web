@@ -60,6 +60,9 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
 | `shared/utils/plantingStage.ts` | **стадія насадження за віком** (рік посадки / молоде / плодоносне), фази без плодів, фільтр порад — 1:1 з `tests/unit/planting-stage.test.ts` |
 | `shared/utils/phaseEstimate.ts` | орієнтовна фаза за сумою активних температур і правило підказки — 1:1 з `tests/unit/phase-estimate.test.ts` |
 | `server/api/weather/degree-days.get.ts` | `GET /api/weather/degree-days?region=…` → `{ region, date, gdd5, gdd10 }` (сайт, кеш 6 год) |
+| `shared/utils/weatherRisks.ts` | заморозки й погода для інфекцій — 1:1 з `tests/unit/weather-risks.test.ts` |
+| `shared/utils/waitingPeriod.ts` | строк очікування до збору — 1:1 з `tests/unit/waiting-period.test.ts` |
+| `server/api/weather/forecast.get.ts` | `GET /api/weather/forecast?region=…` → `{ region, today, daily, hourly }` (минулі 2 доби + 4 дні, кеш 1 год) |
 | `app/utils/cropGroups.ts` | групи культур, `isPerennialGroup`, `guessCropGroup`, `PERENNIAL_GROUP_LABELS` — 1:1 з `tests/unit/crop-groups.test.ts` |
 | `app/utils/tipCategories.ts` | категорії порад (назви + SVG), пріоритети |
 | `app/composables/useGrowthPhases.ts` | завантаження фаз, `groupForCrop`, `phasesForCrop` |
@@ -160,6 +163,14 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
      (пунктирний бурштиновий бейдж поруч): фаза `estimatePhase(група, САТ, фази_стадії, стадія)`, показується, якщо
      `shouldSuggestPhase(…)`; САТ — з `GET {SITE_URL}/api/weather/degree-days?region=<farms.region>` один раз на екран;
      помилка запиту — підказки просто немає; натиск відкриває **вікно фенофази** з цією фазою;
+   - **строк очікування** (усі культури): `activeWaiting(обробки техкарти культури, сьогодні)` з
+     `protection_programs(farm_crop_id) → program_treatments(product_name, status, done_at, waiting_days)`;
+     блок «⏳ Строк очікування: збір не раніше дд.мм» / «Після обробки «…».»; якщо фаза зараз у `HARVEST_PHASES` —
+     червоний, з текстом « Насадження вже на фазі збору — ягоди й плоди до цієї дати не збирати і не продавати.»,
+     інакше бурштиновий;
+   - **погодні ризики** (багаторічні, бачать усі ролі): `weatherRisks(група, фаза_зараз, прогноз, today)`, де
+     прогноз — `GET {SITE_URL}/api/weather/forecast?region=…`, фаза_зараз — `effectivePhase(орієнтовна, поточна, фази)`;
+     кожен ризик — блок `RISK_ICONS[kind] title` + `advice`, червоний для `high`, бурштиновий для `medium`;
    - дії: «Каталог / Приховано» (`show_in_catalog`), редагувати, видалити («Культуру "…" буде видалено з поля.»).
      «AI» і «Тех. карта» — поки не показувати.
 3. Блок «Сівозміна» на сайті прихований — не робити.
@@ -229,6 +240,7 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
     Та сама лохина, посаджена 6 років тому: «плодоносне, 7-й рік вегетації», усі фази.
 6в. Лохина у Київській області з відміченим навесні цвітінням: у жовтні поруч бейдж
     «Мабуть, уже 🍂 Підготовка до зими? Відмітити», вікно відкривається з цією фазою — як на сайті.
+6г. Обробка з `status = done`, `done_at` = сьогодні, `waiting_days` = 14 → на картці «збір не раніше <сьогодні+14>».
 6б. Поле з продажем видаляється; продаж лишається в історії продажів сайту.
 7. Переглядач команди не бачить кнопок зміни й відмітки фази, але бачить журнал і поради.
 8. Помилки бази (обмеження полів, RLS) показуються тостом, а не мовчки.

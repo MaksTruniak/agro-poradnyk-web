@@ -34,11 +34,11 @@
         class="card flex items-start gap-4 transition-all"
         :class="!n.is_read ? 'border-l-4 border-l-amber-400' : 'opacity-70'">
         <div class="text-2xl shrink-0 mt-0.5">
-          {{ n.type === 'inventory_low' ? '🧪' : n.type === 'treatment_soon' ? '🔔' : '📋' }}
+          {{ n.type === 'inventory_low' ? '🧪' : n.type === 'treatment_soon' ? '🔔' : n.type === 'weather_risk' ? '🌦️' : '📋' }}
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-agro-dark text-sm">{{ n.title }}</p>
-          <p v-if="n.body" class="text-agro-light text-sm mt-0.5">{{ n.body }}</p>
+          <p v-if="n.body" class="text-agro-light text-sm mt-0.5 whitespace-pre-line">{{ n.body }}</p>
           <p class="text-xs text-agro-light mt-1">{{ formatDate(n.created_at) }}</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
@@ -49,6 +49,10 @@
           <NuxtLink v-else-if="n.type === 'treatment_soon'" to="/dashboard/reminders"
             class="text-xs text-agro hover:underline font-medium">
             До нагадувань →
+          </NuxtLink>
+          <NuxtLink v-else-if="n.type === 'weather_risk'" :to="n.data?.farmIds?.length === 1 ? `/dashboard/farm/${n.data.farmIds[0]}` : '/dashboard/fields'"
+            class="text-xs text-agro hover:underline font-medium">
+            До поля →
           </NuxtLink>
           <button v-if="!n.is_read" @click="markRead(n)"
             class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-agro-hover text-agro-light hover:text-agro transition-colors"

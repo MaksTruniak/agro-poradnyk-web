@@ -18,6 +18,7 @@ function parseCard(text: string) {
       dosage: clampText(t?.dosage, 100).trim(),
       notes: clampText(t?.notes, 300).trim(),
       active_ingredient: clampText(t?.active_ingredient, 200).trim(),
+      waiting_days: Number.isInteger(t?.waiting_days) && t.waiting_days >= 0 && t.waiting_days <= 365 ? t.waiting_days : null,
     })).filter((t: any) => t.product_name),
   })).filter((p: any) => p.name && p.treatments.length)
   return phases.length ? { phases } : null
@@ -86,7 +87,7 @@ async function verifyCard(card: NonNullable<ReturnType<typeof parseCard>>) {
     name: phase.name,
     treatments: phase.treatments.map((t: any) => {
       // catalog_product_id у program_treatments посилається на іншу таблицю (не agro_products) — зберігаємо лише slug
-      const base = { type: t.type, product_name: t.product_name, dosage: t.dosage, notes: t.notes, catalog_product_slug: null as string | null }
+      const base = { type: t.type, product_name: t.product_name, dosage: t.dosage, notes: t.notes, waiting_days: t.waiting_days, catalog_product_slug: null as string | null }
       const link = (p: CatalogProduct) => p.kind === 'product' ? { catalog_product_slug: p.slug } : {}
       if (isFieldOperation(t.type, t.product_name, t.active_ingredient)) { stats.operations++; return base }
       const byName = findByName(catalog, t.product_name)
@@ -95,7 +96,8 @@ async function verifyCard(card: NonNullable<ReturnType<typeof parseCard>>) {
       const byIngredient = t.active_ingredient ? findByIngredient(catalog, t.active_ingredient, `${t.notes} ${t.type}`) : null
       if (byIngredient) {
         stats.replaced++
-        return { ...base, product_name: byIngredient.name, ...link(byIngredient), notes: clampText(`Аналог з каталогу (AI запропонував «${t.product_name}», д.р. ${t.active_ingredient}). ${t.notes}`, 400) }
+        // Строк очікування аналога може відрізнятись — фермер вносить його з етикетки
+        return { ...base, product_name: byIngredient.name, ...link(byIngredient), waiting_days: null, notes: clampText(`Аналог з каталогу (AI запропонував «${t.product_name}», д.р. ${t.active_ingredient}). ${t.notes}`, 400) }
       }
       stats.missing++
       return { ...base, notes: clampText(`⚠ Немає в каталозі АгроПростір — перевірте реєстрацію в Україні. ${t.notes}`, 400) }

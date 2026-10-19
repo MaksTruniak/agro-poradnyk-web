@@ -115,6 +115,44 @@ test.describe('Насадження і фенофази', () => {
     await expectNoErrors(errors, 'сторінці поля')
   })
 
+  test('погодні ризики: заморозок на цвітінні (травень, прогноз підставлено)', async ({ page }) => {
+    const days = ['2026-05-10', '2026-05-11', '2026-05-12', '2026-05-13', '2026-05-14', '2026-05-15']
+    const hourly = { time: [] as string[], temp: [] as number[], rh: [] as number[], precip: [] as number[] }
+    for (const d of days) for (let h = 0; h < 24; h++) { hourly.time.push(`${d}T${String(h).padStart(2, '0')}:00`); hourly.temp.push(14); hourly.rh.push(60); hourly.precip.push(0) }
+    await page.clock.setFixedTime(new Date('2026-05-12T09:00:00'))
+    await page.route('**/api/weather/degree-days**', r => r.fulfill({ json: { region: 'Київська', date: '2026-05-12', gdd5: 230, gdd10: 70 } }))
+    await page.route('**/api/weather/forecast**', r => r.fulfill({ json: {
+      region: 'Київська', today: '2026-05-12', hourly,
+      daily: { time: days, tmin: [6, 5, 4, -2.4, 3, 6], tmean: [12, 12, 11, 8, 10, 12], precip: [0, 0, 0, 0, 0, 0] },
+    } }))
+    const errors = collectErrors(page)
+    await login(page, 'farmer')
+    await page.goto(`/dashboard/farm/${farmId}`)
+    await expect(page.getByText('Заморозок до −2,4 °C у ніч на 13.05')).toBeVisible()
+    await expect(page.getByText(/На фазі «Цвітіння» пошкодження можливі вже від −1,5 °C/)).toBeVisible()
+    await expectNoErrors(errors, 'сторінці поля')
+  })
+
+  test('строк очікування: після обробки — «збір не раніше»', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const { data: program, error } = await farmer.client.from('protection_programs')
+      .insert({ farm_crop_id: cropId, name: TAG }).select('id').single()
+    expect(error).toBeNull()
+    const doneAt = new Date().toLocaleDateString('sv-SE')
+    const { error: tErr } = await farmer.client.from('program_treatments').insert({
+      program_id: program!.id, phase: 'Цвітіння', type: 'захист', product_name: 'Світч 62,5 WG', status: 'done', done_at: doneAt, waiting_days: 14,
+    })
+    expect(tErr, 'потрібна міграція 20261019_waiting_days_weather_alerts.sql').toBeNull()
+    const until = new Date(Date.now() + 14 * 864e5).toLocaleDateString('sv-SE')
+
+    const errors = collectErrors(page)
+    await login(page, 'farmer')
+    await page.goto(`/dashboard/farm/${farmId}`)
+    await expect(page.getByText(`⏳ Строк очікування: збір не раніше ${until.slice(8, 10)}.${until.slice(5, 7)}`)).toBeVisible()
+    await expect(page.getByText('Після обробки «Світч 62,5 WG».', { exact: false })).toBeVisible()
+    await expectNoErrors(errors, 'сторінці поля')
+  })
+
   test('журнал фаз: лише власник, автора не підробити', async () => {
     const farmer = await asUser('farmer')
     const stranger = await asUser('buyer')

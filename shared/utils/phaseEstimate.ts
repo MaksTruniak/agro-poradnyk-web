@@ -93,3 +93,14 @@ export function shouldSuggestPhase(estimate: string | null, current: { phase_key
   if (ci < 0) return true
   return ei > ci
 }
+
+/**
+ * Фаза, на яку орієнтуються ризики й поради: орієнтовна, якщо вона попереду відміченої
+ * (фермер не встиг відмітити), інакше — відмічена цього року.
+ */
+export function effectivePhase(estimate: string | null, current: { phase_key: string; observed_at: string } | null,
+  orderedKeys: string[], now = new Date()): string | null {
+  if (shouldSuggestPhase(estimate, current, orderedKeys, now)) return estimate
+  if (current && Number(current.observed_at.slice(0, 4)) === now.getFullYear()) return current.phase_key
+  return estimate
+}

@@ -105,6 +105,7 @@
                     {{ t.dosage }}
                   </p>
                   <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
+                  <DashboardTreatmentWaiting v-if="t.type !== 'полив'" :t="t" :read-only="isViewer" />
                 </div>
                 <div class="relative shrink-0 reminder-info-wrap">
                   <button @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors shrink-0 relative"
@@ -508,7 +509,7 @@ const generateCard = async () => {
         ].filter(Boolean).join(' · ') || null,
       },
     }) as {
-      phases: { name: string; treatments: { type: string; product_name: string; dosage: string; notes: string; catalog_product_slug: string | null }[] }[]
+      phases: { name: string; treatments: { type: string; product_name: string; dosage: string; notes: string; catalog_product_slug: string | null; waiting_days: number | null }[] }[]
       verification?: { catalog: number; replaced: number; generic: number; missing: number }
     }
 
@@ -531,6 +532,7 @@ const generateCard = async () => {
       dosage: t.dosage || null,
       notes: t.notes || null,
       catalog_product_slug: t.catalog_product_slug || null,
+      waiting_days: t.waiting_days ?? null,
       status: 'planned',
     })))
     if (rows.length) {
@@ -625,7 +627,9 @@ const exportPdf = () => {
 const cycleStatus = async (t: any) => {
   const next = STATUS_CYCLE[t.status || 'planned'] || 'done'
   t.status = next
-  await supabase.from('program_treatments').update({ status: next }).eq('id', t.id)
+  // Дата виконання — для строку очікування до збору; фермер може її змінити
+  t.done_at = next === 'done' ? new Date().toLocaleDateString('sv-SE') : null
+  await supabase.from('program_treatments').update({ status: next, done_at: t.done_at }).eq('id', t.id)
 }
 
 const addActivePhase = async (phase: any) => {

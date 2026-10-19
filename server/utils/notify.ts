@@ -16,7 +16,7 @@ export function kyivDayBounds(now = new Date()) {
   return { start, end }
 }
 
-type Notification = { type: 'inventory_low' | 'treatment_soon'; title: string; body?: string; data?: Record<string, unknown> }
+type Notification = { type: 'inventory_low' | 'treatment_soon' | 'weather_risk'; title: string; body?: string; data?: Record<string, unknown> }
 
 /**
  * Сповіщення в кабінет (farm_notifications). Поки попереднє такого ж типу не прочитане — оновлюємо його,

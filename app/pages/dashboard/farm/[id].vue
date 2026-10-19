@@ -187,6 +187,16 @@
                 title="Орієнтовно за сумою активних температур з 1 січня — перевірте на ділянці">
                 Мабуть, уже {{ phaseEmoji(phaseHint(crop)!) }} {{ phaseHint(crop) }}? Відмітити
               </button>
+              <div v-if="cropWaiting(crop)" class="weather-risk" :class="cropWaiting(crop)!.harvesting ? 'weather-risk-high' : 'weather-risk-medium'">
+                <p class="font-semibold">⏳ Строк очікування: збір не раніше {{ cropWaiting(crop)!.date }}</p>
+                <p class="weather-risk-advice">
+                  Після обробки «{{ cropWaiting(crop)!.product }}».{{ cropWaiting(crop)!.harvesting ? ' Насадження вже на фазі збору — ягоди й плоди до цієї дати не збирати і не продавати.' : '' }}
+                </p>
+              </div>
+              <div v-for="r in cropRisks(crop)" :key="r.kind" class="weather-risk" :class="r.level === 'high' ? 'weather-risk-high' : 'weather-risk-medium'">
+                <p class="font-semibold">{{ RISK_ICONS[r.kind] }} {{ r.title }}</p>
+                <p class="weather-risk-advice">{{ r.advice }}</p>
+              </div>
             </div>
             <NuxtLink
               :to="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) ? undefined : `/dashboard/ai-chat?farmId=${farmId}&cropId=${crop.id}&cropType=${encodeURIComponent(crop.crop_type)}${crop.variety ? '&variety=' + encodeURIComponent(crop.variety) : ''}`"
@@ -692,7 +702,9 @@ import { Trash2, ShieldCheck } from 'lucide-vue-next'
 import { isPerennialGroup } from '~/utils/cropGroups'
 import { plantingSummary, emptyPlantingForm, plantingFormFrom, plantingPayload } from '~/utils/planting'
 import { TIP_CATEGORIES, TIP_URGENCY_BADGE } from '~/utils/tipCategories'
-import { estimatePhase, shouldSuggestPhase, type DegreeDays } from '~~/shared/utils/phaseEstimate'
+import { estimatePhase, shouldSuggestPhase, effectivePhase, type DegreeDays } from '~~/shared/utils/phaseEstimate'
+import { weatherRisks, RISK_ICONS, type Forecast } from '~~/shared/utils/weatherRisks'
+import { activeWaiting, HARVEST_PHASES, type WaitingTreatment } from '~~/shared/utils/waitingPeriod'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -851,6 +863,8 @@ const toast = useToast()
 
 // Фенофази насаджень: записи журналу по культурах поля, найновіші першими
 const plantingPhases = ref<any[]>([])
+// Обробки з техкарт культур — для строку очікування до збору
+const cropTreatments = ref<Record<string, WaitingTreatment[]>>({})
 
 const load = async () => {
   const [farmData, cropsData, rotationData] = await Promise.all([
@@ -870,8 +884,13 @@ const load = async () => {
       .order('observed_at', { ascending: false })
       .order('created_at', { ascending: false })
     plantingPhases.value = phaseRows || []
+    const { data: programs } = await supabase.from('protection_programs')
+      .select('farm_crop_id, program_treatments(product_name, status, done_at, waiting_days)')
+      .in('farm_crop_id', cropIds)
+    cropTreatments.value = Object.fromEntries((programs || []).map((p: any) => [p.farm_crop_id, p.program_treatments || []]))
   } else {
     plantingPhases.value = []
+    cropTreatments.value = {}
   }
 
   // Агрономи фермера (власника поля) з активними угодами
@@ -904,17 +923,41 @@ const currentPhase = (crop: any) => plantingPhases.value.find(r => r.farm_crop_i
 
 // Підказка «мабуть, уже …?» за сумою активних температур області поля
 const degreeDaysData = ref<(DegreeDays & { region: string }) | null>(null)
+const forecastData = ref<(Forecast & { today: string }) | null>(null)
 const loadDegreeDays = () => {
   if (!farm.value?.region || !crops.value.some(isPerennialCrop)) return
-  $fetch<DegreeDays & { region: string }>('/api/weather/degree-days', { query: { region: farm.value.region } })
+  const query = { region: farm.value.region }
+  $fetch<DegreeDays & { region: string }>('/api/weather/degree-days', { query })
     .then(d => { degreeDaysData.value = d })
     .catch(() => {})
+  $fetch<Forecast & { today: string }>('/api/weather/forecast', { query })
+    .then(d => { forecastData.value = d })
+    .catch(() => {})
+}
+const cropEstimate = (crop: any) => {
+  if (!crop || !degreeDaysData.value || !isPerennialCrop(crop)) return null
+  const options = phasesForPlanting(crop).map(p => p.key)
+  return { options, estimate: estimatePhase(growthPhases.groupForCrop(crop.crop_type), degreeDaysData.value, options, cropStage(crop)) }
 }
 const phaseHint = (crop: any): string | null => {
-  if (isViewer.value || !crop || !degreeDaysData.value || !isPerennialCrop(crop)) return null
-  const options = phasesForPlanting(crop).map(p => p.key)
-  const estimate = estimatePhase(growthPhases.groupForCrop(crop.crop_type), degreeDaysData.value, options, cropStage(crop))
-  return shouldSuggestPhase(estimate, currentPhase(crop), options) ? estimate : null
+  const e = isViewer.value ? null : cropEstimate(crop)
+  return e && shouldSuggestPhase(e.estimate, currentPhase(crop), e.options) ? e.estimate : null
+}
+// Заморозки й погода для інфекцій на фазі, у якій насадження зараз (відмічена або орієнтовна)
+const cropPhaseNow = (crop: any) => {
+  const e = cropEstimate(crop)
+  return e ? effectivePhase(e.estimate, currentPhase(crop), e.options) : currentPhase(crop)?.phase_key ?? null
+}
+const cropRisks = (crop: any) => {
+  if (!forecastData.value || !isPerennialCrop(crop)) return []
+  return weatherRisks(growthPhases.groupForCrop(crop.crop_type), cropPhaseNow(crop), forecastData.value, forecastData.value.today)
+}
+// Строк очікування після останніх обробок; на фазах збору — як попередження
+const cropWaiting = (crop: any) => {
+  const w = activeWaiting(cropTreatments.value[crop.id] || [], todayIso)
+  if (!w) return null
+  const phase = cropPhaseNow(crop)
+  return { ...w, harvesting: !!phase && HARVEST_PHASES.includes(phase), date: formatPhaseDate(w.from) }
 }
 loadDegreeDays()
 const phaseEmoji = (key: string) => growthPhases.emojiFor(key)
@@ -1393,6 +1436,17 @@ const saveCropEdit = async () => {
   transition: background-color 0.15s;
 }
 .phase-hint:hover { background: rgb(250, 236, 206); }
+.weather-risk {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  border: 1px solid;
+}
+.weather-risk-high { background: rgb(254, 242, 242); border-color: rgb(252, 202, 202); color: rgb(153, 27, 27); }
+.weather-risk-medium { background: rgb(253, 246, 232); border-color: rgb(240, 214, 160); color: rgb(133, 82, 14); }
+.weather-risk-advice { margin-top: 2px; opacity: .9; }
 
 .phase-option {
   padding: 6px 12px;
