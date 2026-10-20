@@ -104,3 +104,15 @@ export function effectivePhase(estimate: string | null, current: { phase_key: st
   if (current && Number(current.observed_at.slice(0, 4)) === now.getFullYear()) return current.phase_key
   return estimate
 }
+
+/**
+ * Чи це та сама фаза: у техкартах трапляються старі назви («Набрякання бруньок»)
+ * замість нинішніх ключів («Проростання / Набрякання бруньок»).
+ */
+export function samePhase(a: string | null | undefined, b: string | null | undefined) {
+  if (!a || !b) return false
+  const norm = (s: string) => s.toLowerCase().replace(/[’']/g, '\'').trim()
+  if (norm(a) === norm(b)) return true
+  const pa = a.split('/').map(norm), pb = b.split('/').map(norm)
+  return pa.some(x => pb.includes(x))
+}

@@ -49,6 +49,27 @@
           </NuxtLink>
         </div>
 
+        <!-- План на тиждень (насадження) -->
+        <div v-if="role !== 'dacha' && weekPlan.items.value.length" class="card mb-6" data-test="week-plan-widget">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="dash-card-title bitter">План на тиждень</h2>
+            <NuxtLink to="/dashboard/week" class="text-sm text-agro hover:underline">Весь план ({{ weekPlan.items.value.length }}) →</NuxtLink>
+          </div>
+          <div class="space-y-2">
+            <NuxtLink v-for="item in weekPlan.items.value.slice(0, 4)" :key="item.id" to="/dashboard/week"
+              class="flex items-start gap-3 p-3 rounded-xl transition-colors"
+              :class="item.priority === 'high' ? 'bg-red-50 hover:bg-red-100' : 'bg-agro-bg hover:bg-agro-hover'">
+              <span class="text-lg leading-none mt-0.5">{{ item.icon }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-agro-dark text-sm">{{ item.title }}</p>
+                <p v-if="weekPlan.cropOf(item.cropId)" class="text-xs text-agro-light mt-0.5 truncate">
+                  {{ weekPlan.cropOf(item.cropId)!.crop_type }} · {{ weekPlan.farmOf(item.farmId)?.name }}
+                </p>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+
         <div class="mb-6">
           <!-- Найближчі нагадування -->
           <div class="card">
@@ -352,6 +373,8 @@ const loadFarmWeather = async (farmId: string, region: string) => {
     farmWeather.value[farmId] = { temp: Math.round(data.current.temperature_2m), condition, icon }
   } catch {}
 }
+// Перші справи плану на тиждень по насадженнях
+const weekPlan = useWeekPlan()
 const pendingAgreements = ref<any[]>([])
 const activeOrders = ref<any[]>([])
 
@@ -406,6 +429,8 @@ onMounted(async () => {
     }
     nextReminders.value = remRes.data || []
     activeOrders.value = ordersRes.data || []
+
+    if (!isDacha) weekPlan.load()
 
     // Погода по полях
     if (!isDacha) {

@@ -213,6 +213,7 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/farmers':                     { paths: [{ d: 'M20 20c0-3.3-4-5-6-5H10c-2 0-6 1.7-6 5', sw: 1.6, lc: 'round' }], circles: [{ cx: 12, cy: 9, r: 4, sw: 1.6 }] },
   '/dashboard/buyer-crops':       { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', sw: 1.6, lj: 'round' }] },
   '/dashboard/inventory':         { paths: [{ d: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18', sw: 1.6, lj: 'round' }] },
+  '/dashboard/week':              { paths: [{ d: 'M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18', sw: 1.6, lj: 'round' }, { d: 'M9 15l2 2 4-4', sw: 1.7, lc: 'round', lj: 'round' }] },
   '/dashboard/treatments':        { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4', sw: 1.6, lj: 'round' }] },
   '/dashboard/harvest':           { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h2M9 16h2M13 12h2M13 16h2', sw: 1.6, lj: 'round' }] },
   '/dashboard/harvest/workers':   { paths: [{ d: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', sw: 1.6, lj: 'round' }] },
@@ -557,6 +558,7 @@ const navItems = computed(() => {
     const fieldLabel2 = role.value === 'dacha' ? 'Мої культури' : 'Мої поля'
     const mainItems2: any[] = [
       { to: '/dashboard/fields', label: fieldLabel2 },
+      { to: '/dashboard/week', label: 'План на тиждень' },
       { to: '/dashboard/analytics', label: 'Аналітика' },
       { to: '/dashboard/expenses', label: 'Витрати / Доходи' },
       { to: '/dashboard/inventory', label: 'Склад' },
@@ -589,6 +591,7 @@ const navItems = computed(() => {
       { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
       { label: 'Господарство', items: [
         { to: '/dashboard/fields', label: 'Поля' },
+        { to: '/dashboard/week', label: 'План на тиждень' },
         { to: '/dashboard/inventory', label: 'Склад' },
         { to: '/dashboard/treatments', label: 'Журнал обробок' },
       ]},
@@ -604,8 +607,9 @@ const navItems = computed(() => {
     { to: '/dashboard/team', label: 'Співробітники' },
   ]
   if (role.value !== 'dacha') {
-    mainItems.splice(1, 0, { to: '/dashboard/analytics', label: 'Аналітика' })
-    mainItems.splice(2, 0, { to: '/dashboard/expenses', label: 'Витрати / Доходи' })
+    mainItems.splice(1, 0, { to: '/dashboard/week', label: 'План на тиждень' })
+    mainItems.splice(2, 0, { to: '/dashboard/analytics', label: 'Аналітика' })
+    mainItems.splice(3, 0, { to: '/dashboard/expenses', label: 'Витрати / Доходи' })
   }
   return [
     { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },

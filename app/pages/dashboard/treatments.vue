@@ -11,7 +11,11 @@
         <p class="dash-subtitle">Що, коли і скільки внесено на кожне поле</p>
       </div>
       <div class="flex gap-2 shrink-0">
-        <button v-if="hasPaidPlan && items.length" @click="exportCsv" class="btn-outline inline-flex items-center gap-1.5">
+        <button v-if="hasPaidPlan && allItems.length" @click="printJournal" class="btn-outline inline-flex items-center gap-1.5" title="Журнал для перевірки чи сертифікації — друк або збереження в PDF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Друк / PDF
+        </button>
+        <button v-if="hasPaidPlan && allItems.length" @click="exportCsv" class="btn-outline inline-flex items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           CSV
         </button>
@@ -43,7 +47,7 @@
 
     <template v-else-if="hasPaidPlan">
       <!-- Фільтри -->
-      <div v-if="items.length" class="flex flex-wrap gap-3 mb-5">
+      <div v-if="allItems.length" class="flex flex-wrap gap-3 mb-5">
         <UiAppSelect v-model="filterFarm" :options="[{ value: '', label: 'Всі поля' }, ...farms.map(f => ({ value: f.id, label: f.name }))]" class="w-44" />
         <UiAppSelect v-model="filterType" :options="[{ value: '', label: 'Всі типи' }, ...Object.entries(TYPES).map(([k, t]) => ({ value: k, label: t.label }))]" class="w-44" />
         <UiAppSelect v-model="filterMonth" :options="[{ value: '', label: 'Всі місяці' }, ...MONTHS.map((m, i) => ({ value: i + 1, label: m }))]" class="w-40" />
@@ -116,9 +120,20 @@
               <span v-if="item.area_ha" class="text-xs text-agro-light">{{ item.area_ha }} га</span>
               <span v-if="item.total_amount" class="text-xs font-semibold text-agro-dark">{{ item.total_amount }} {{ item.unit }}</span>
             </div>
+            <div v-if="item.phase || item.waiting_days != null || item.source === 'techcard'" class="flex items-center gap-2 mt-1 flex-wrap">
+              <span v-if="item.source === 'techcard'" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[rgb(238,241,227)] text-agro">з техкарти</span>
+              <span v-if="item.phase" class="text-xs text-agro-light">фаза: {{ item.phase }}</span>
+              <span v-if="item.waiting_days != null" class="text-xs" :class="harvestFromOf(item) && harvestFromOf(item)! > todayIso ? 'text-amber-700 font-semibold' : 'text-agro-light'">
+                ⏳ {{ item.waiting_days }} дн<template v-if="harvestFromOf(item)"> · збір з {{ formatShort(harvestFromOf(item)!) }}</template>
+              </span>
+            </div>
             <p v-if="item.notes" class="text-xs text-agro-light mt-1 italic">{{ item.notes }}</p>
           </div>
-          <div class="flex gap-1 shrink-0">
+          <div v-if="item.source === 'techcard'" class="flex gap-1 shrink-0">
+            <NuxtLink :to="`/dashboard/protection?farmCropId=${item.farm_crop_id}&cropType=${encodeURIComponent(item.crop_type || '')}`"
+              class="text-xs font-semibold text-agro hover:underline px-2 py-1.5">Техкарта →</NuxtLink>
+          </div>
+          <div v-else class="flex gap-1 shrink-0">
             <button v-if="!isViewer" @click="openEdit(item)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-hover text-agro transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
@@ -208,6 +223,11 @@
                 <span class="text-sm text-agro-dark">Всього: <strong>{{ modal.total_amount }} {{ modal.unit }}</strong></span>
               </div>
               <div>
+                <label class="modal-label">Строк очікування до збору, днів</label>
+                <input type="number" v-model.number="modal.waiting_days" class="modal-input" placeholder="за етикеткою препарату" min="0" max="365" step="1" />
+                <p v-if="modal.waiting_days && modal.treatment_date" class="text-xs text-agro mt-1">Збір не раніше {{ formatShort(addDays(modal.treatment_date, modal.waiting_days)) }}</p>
+              </div>
+              <div>
                 <label class="modal-label">Примітки</label>
                 <textarea v-model="modal.notes" class="modal-input resize-none" rows="2" placeholder="Погода, умови, фаза розвитку..." />
               </div>
@@ -280,11 +300,13 @@ useHead({ title: 'Журнал обробок — АгроПростір' })
 const supabase = useSupabaseClient()
 const { getQueryUserId, isViewer } = useTeamContext()
 const { confirm: confirmDialog } = useConfirm()
+const toast = useToast()
 
 const loading = ref(true)
 const planLoading = ref(true)
 const saving = ref(false)
 const items = ref<any[]>([])
+const techItems = ref<any[]>([])
 const farms = ref<any[]>([])
 const hasPaidPlan = ref(false)
 
@@ -295,6 +317,8 @@ const filterMonth = ref<number | ''>('')
 const MONTHS = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
 
 import { TREATMENT_TYPES } from '~/utils/treatmentTypes'
+import { escapeHtml } from '~~/shared/utils/html'
+import { addDays } from '~~/shared/utils/weatherRisks'
 // Для відображення іконок і кольорів у списку (підтримка старих англ. ключів і нових укр.)
 const LEGACY_TYPES: Record<string, { label: string; bg: string; color: string; icon: string }> = {
   fungicide:   { label: 'Обробка',     bg: '#fef2f2', color: '#dc2626', icon: '<path d="M9 3h6"/><path d="M10 3v5L5 17.5A1 1 0 006 19h12a1 1 0 00.87-1.5L14 8V3"/><line x1="8" y1="13" x2="16" y2="13"/>' },
@@ -326,6 +350,7 @@ const modal = reactive({
   product_name: '', product_type: 'захист',
   dose_per_ha: null as number | null, area_ha: null as number | null,
   total_amount: null as number | null, unit: 'л', notes: '',
+  waiting_days: null as number | null,
   addReminder: false,
   reminderDate: '',
   reminderHour: 9 as number,
@@ -343,7 +368,14 @@ const farmCrops = computed(() => {
   return f?.farm_crops?.map((c: any) => c.crop_type) || []
 })
 
-const filtered = computed(() => items.value.filter(i => {
+// Ручні записи + виконані обробки з техкарт культур, найновіші першими
+const allItems = computed(() => [...items.value, ...techItems.value]
+  .sort((a, b) => String(b.treatment_date).localeCompare(String(a.treatment_date))))
+const todayIso = new Date().toLocaleDateString('sv-SE')
+const harvestFromOf = (i: any) => i.treatment_date && i.waiting_days ? addDays(String(i.treatment_date).slice(0, 10), i.waiting_days) : null
+const formatShort = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`
+
+const filtered = computed(() => allItems.value.filter(i => {
   if (filterFarm.value && i.farm_id !== filterFarm.value) return false
   if (filterType.value && i.product_type !== filterType.value) return false
   if (filterMonth.value) {
@@ -444,7 +476,29 @@ const load = async () => {
 
   hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(sub))
   farms.value = farmsData || []
-  items.value = treatmentsData || []
+  items.value = (treatmentsData || []).map((t: any) => ({ ...t, source: 'journal' }))
+
+  // Виконані обробки з техкарт культур — у журнал автоматично (редагуються в техкарті)
+  const cropsById = Object.fromEntries(farms.value.flatMap((f: any) => (f.farm_crops || []).map((c: any) => [c.id, { crop: c, farm: f }])))
+  const cropIds = Object.keys(cropsById)
+  const { data: programs } = cropIds.length
+    ? await supabase.from('protection_programs')
+      .select('farm_crop_id, program_treatments(id, product_name, dosage, phase, type, status, done_at, waiting_days, notes)')
+      .in('farm_crop_id', cropIds)
+    : { data: [] as any[] }
+  techItems.value = (programs || []).flatMap((p: any) => (p.program_treatments || [])
+    .filter((t: any) => t.status === 'done' && t.done_at)
+    .map((t: any) => {
+      const { crop, farm } = cropsById[p.farm_crop_id]
+      return {
+        id: `tc:${t.id}`, source: 'techcard', farm_crop_id: p.farm_crop_id,
+        farm_id: farm.id, farm_name: farm.name,
+        crop_type: crop.crop_type, variety: crop.variety,
+        treatment_date: t.done_at, product_name: t.product_name, product_type: t.type || 'захист',
+        dose_text: t.dosage, area_ha: crop.area_ha ? Number(crop.area_ha) : null,
+        phase: t.phase, waiting_days: t.waiting_days, notes: t.notes,
+      }
+    }))
   loading.value = false
   planLoading.value = false
 }
@@ -454,13 +508,14 @@ const openAdd = () => {
     open: true, id: '', farm_id: '', farm_name: '', crop_type: '',
     treatment_date: new Date().toISOString().slice(0,10),
     product_name: '', product_type: 'захист',
-    dose_per_ha: null, area_ha: null, total_amount: null, unit: 'л', notes: '',
+    dose_per_ha: null, area_ha: null, total_amount: null, unit: 'л', notes: '', waiting_days: null,
     addReminder: false, reminderDate: '', reminderHour: 9, reminderMinute: 0,
   })
 }
 
 const openEdit = (item: any) => {
-  Object.assign(modal, { open: true, ...item, addReminder: false, reminderDate: '', reminderHour: 9, reminderMinute: 0 })
+  const { source: _source, ...row } = item
+  Object.assign(modal, { open: true, waiting_days: null, ...row, addReminder: false, reminderDate: '', reminderHour: 9, reminderMinute: 0 })
   if (item.treatment_date) {
     const d = new Date(item.treatment_date)
     tCalMonth.value = d.getMonth()
@@ -486,6 +541,7 @@ const save = async () => {
     total_amount: modal.total_amount || null,
     unit: modal.unit,
     notes: modal.notes?.trim() || null,
+    waiting_days: Number.isInteger(modal.waiting_days) && modal.waiting_days! >= 0 && modal.waiting_days! <= 365 ? modal.waiting_days : null,
   }
   const shouldAddReminder = !modal.id && modal.addReminder && modal.reminderDate
   const reminderPayload = shouldAddReminder ? {
@@ -529,21 +585,73 @@ const deleteItem = async (item: any) => {
   await load()
 }
 
+// Норма для таблиці: числом з одиницею (ручні записи) або текстом з техкарти
+const doseOf = (i: any) => i.dose_text || (i.dose_per_ha ? `${i.dose_per_ha} ${i.unit || ''}/га` : '')
+const typeLabel = (i: any) => TYPES[i.product_type]?.label || i.product_type || ''
+
 const exportCsv = () => {
-  const headers = ['Дата','Поле','Культура','Препарат','Тип','Норма/га','Площа га','Всього','Одиниця','Примітки']
+  const headers = ['Дата','Поле','Культура','Препарат','Тип','Норма','Площа га','Всього','Одиниця','Фаза','Строк очікування, дн','Збір не раніше','Джерело','Примітки']
   const rows = filtered.value.map(i => [
-    i.treatment_date, i.farm_name || '', i.crop_type || '',
-    i.product_name, TYPES[i.product_type]?.label || i.product_type,
-    i.dose_per_ha || '', i.area_ha || '', i.total_amount || '', i.unit || '', i.notes || '',
+    i.treatment_date, i.farm_name || '', [i.crop_type, i.variety].filter(Boolean).join(' · '),
+    i.product_name, typeLabel(i),
+    doseOf(i), i.area_ha || '', i.total_amount || '', i.unit || '',
+    i.phase || '', i.waiting_days ?? '', harvestFromOf(i) || '', i.source === 'techcard' ? 'техкарта' : 'журнал', i.notes || '',
   ])
   const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `journal-${new Date().toISOString().slice(0,10)}.csv`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+// Журнал для перевірки (покупець, сертифікація GlobalG.A.P.): по полях і культурах, друк або «Зберегти як PDF»
+const printJournal = () => {
+  const list = filtered.value
+  if (!list.length) return
+  const e = escapeHtml
+  const dates = list.map(i => String(i.treatment_date)).sort()
+  const period = `${formatShort(dates[0]!)} — ${formatShort(dates[dates.length - 1]!)}`
+  const groups = new Map<string, any[]>()
+  for (const i of [...list].sort((a, b) => String(a.treatment_date).localeCompare(String(b.treatment_date)))) {
+    const key = `${i.farm_name || 'Без прив\'язки до поля'}|${i.crop_type || ''}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(i)
+  }
+  const sections = [...groups.entries()].map(([key, rows]) => {
+    const [farmName, crop] = key.split('|')
+    const farm = farms.value.find(f => f.name === farmName)
+    const fc = farm?.farm_crops?.find((c: any) => c.crop_type === crop)
+    const meta = [fc?.variety && `сорт ${fc.variety}`, fc?.area_ha && `${fc.area_ha} га`, farm?.cadastral_number && `кадастр ${farm.cadastral_number}`].filter(Boolean).join(' · ')
+    return `<h2>${e(farmName)}${crop ? ` — ${e(crop)}` : ''}</h2>${meta ? `<p class="meta">${e(meta)}</p>` : ''}
+<table><thead><tr><th>Дата</th><th>Препарат / захід</th><th>Тип</th><th>Норма</th><th>Площа, га</th><th>Всього</th><th>Фаза</th><th>Строк оч., дн</th><th>Збір не раніше</th><th>Примітки</th></tr></thead><tbody>
+${rows.map(i => `<tr><td>${e(formatShort(String(i.treatment_date).slice(0, 10)))}</td><td>${e(i.product_name)}</td><td>${e(typeLabel(i))}</td><td>${e(doseOf(i))}</td><td>${e(i.area_ha ?? '')}</td><td>${i.total_amount ? e(`${i.total_amount} ${i.unit || ''}`) : ''}</td><td>${e(i.phase || '')}</td><td>${e(i.waiting_days ?? '')}</td><td>${harvestFromOf(i) ? e(formatShort(harvestFromOf(i)!)) : ''}</td><td>${e(i.notes || '')}</td></tr>`).join('\n')}
+</tbody></table>`
+  }).join('\n')
+  const html = `<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Журнал обробок ${e(period)}</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;margin:24px}
+h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;margin:20px 0 2px}
+.sub,.meta{color:#555;margin:0 0 6px}
+table{width:100%;border-collapse:collapse;margin-top:4px}
+th,td{border:1px solid #bbb;padding:4px 5px;text-align:left;vertical-align:top}
+th{background:#f0f2ea;font-size:10px}
+.sign{margin-top:32px;display:flex;gap:48px}.sign div{flex:1;border-top:1px solid #333;padding-top:4px;color:#555}
+@page{size:A4 landscape;margin:12mm}
+</style></head><body>
+<h1>Журнал обробок насаджень</h1>
+<p class="sub">Період: ${e(period)} · записів: ${list.length} · сформовано ${e(formatShort(todayIso))} в АгроПростір</p>
+${sections}
+<div class="sign"><div>Відповідальна особа (ПІБ, підпис)</div><div>Дата</div></div>
+<script>window.onload=function(){window.print()}<\/script>
+</body></html>`
+  const w = window.open('', '_blank')
+  if (!w) { toast.error('Дозвольте спливні вікна, щоб надрукувати журнал'); return }
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
 }
 
 onMounted(load)

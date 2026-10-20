@@ -197,6 +197,24 @@
                 <p class="font-semibold">{{ RISK_ICONS[r.kind] }} {{ r.title }}</p>
                 <p class="weather-risk-advice">{{ r.advice }}</p>
               </div>
+              <div v-if="cropCare(crop).length" class="care-block">
+                <p class="care-title">🛠️ Догляд зараз</p>
+                <div v-for="task in cropCare(crop)" :key="task.key" class="care-task">
+                  <div class="flex items-start gap-2">
+                    <button type="button" class="flex-1 text-left" @click="careOpen = careOpen === `${crop.id}:${task.key}` ? null : `${crop.id}:${task.key}`">
+                      <span class="font-semibold">{{ task.title }}</span>
+                      <span class="care-until">до {{ formatPhaseDate(task.until) }}</span>
+                    </button>
+                    <button v-if="!isViewer" type="button" class="care-done" title="Відмітити виконаним" @click="markCareDone(crop, task)">✓</button>
+                  </div>
+                  <p v-if="careOpen === `${crop.id}:${task.key}`" class="care-advice">{{ task.advice }}</p>
+                </div>
+              </div>
+              <div v-if="isPerennialCrop(crop) && (yieldSummary(crop) || !isViewer)" class="mt-2">
+                <button type="button" class="yield-chip" @click="openYields(crop)">
+                  🧺 {{ yieldSummary(crop) ?? 'Внести урожай' }}
+                </button>
+              </div>
             </div>
             <NuxtLink
               :to="farm && parseFloat(crop.area_ha) > parseFloat(farm.hectares) ? undefined : `/dashboard/ai-chat?farmId=${farmId}&cropId=${crop.id}&cropType=${encodeURIComponent(crop.crop_type)}${crop.variety ? '&variety=' + encodeURIComponent(crop.variety) : ''}`"
@@ -694,7 +712,72 @@
       </Transition>
     </Teleport>
 
-  </div>
+    <!-- Урожайність насадження по роках -->
+    <Teleport to="body">
+      <div v-if="yieldCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="yieldCrop = null" />
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl z-10 max-h-[90vh] overflow-y-auto" data-test="yield-modal">
+          <div class="px-6 pt-6 pb-4 border-b border-agro-border flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="font-extrabold text-agro-dark text-lg">Урожайність</h2>
+              <p class="text-sm text-agro-light truncate">{{ yieldCrop.crop_type }}{{ yieldCrop.variety ? ` · ${yieldCrop.variety}` : '' }} · {{ yieldCrop.area_ha }} га</p>
+            </div>
+            <button @click="yieldCrop = null" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-bg text-agro-light">✕</button>
+          </div>
+          <div class="px-6 py-5">
+            <div v-if="cropYields(yieldCrop).length" class="overflow-x-auto -mx-2 mb-5">
+              <table class="yield-table">
+                <thead>
+                  <tr><th>Рік</th><th>Урожай</th><th>т/га</th><th>Витрати</th><th>Виручка</th><th>грн/кг</th><th /></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in cropYields(yieldCrop)" :key="r.year">
+                    <td class="font-semibold">{{ r.year }}</td>
+                    <td>
+                      {{ formatKg(r.kg) }}
+                      <span v-if="r.change != null" :class="r.change >= 0 ? 'text-green-700' : 'text-red-700'" class="text-xs ml-1">{{ r.change > 0 ? '+' : '' }}{{ r.change }}%</span>
+                      <p class="text-[11px] text-agro-light">{{ r.source === 'harvest' ? 'з обліку збору' : 'внесено вручну' }}</p>
+                    </td>
+                    <td>{{ r.tPerHa != null ? String(r.tPerHa).replace('.', ',') : '—' }}</td>
+                    <td>{{ r.expenses ? `${r.expenses.toLocaleString('uk-UA')} грн` : '—' }}</td>
+                    <td>{{ r.revenue ? `${r.revenue.toLocaleString('uk-UA')} грн` : '—' }}</td>
+                    <td>{{ r.costPerKg != null ? String(r.costPerKg).replace('.', ',') : '—' }}</td>
+                    <td class="whitespace-nowrap">
+                      <button v-if="!isViewer" type="button" class="text-agro text-xs font-semibold hover:underline" @click="editYieldYear(r.year)">змінити</button>
+                      <button v-if="!isViewer && r.source === 'manual'" type="button" class="text-red-500 text-xs font-semibold hover:underline ml-2" @click="deleteYield(r.year)">✕</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p v-else class="text-sm text-agro-light mb-5">
+              Даних про урожай ще немає. Внесіть урожай за рік вручну — або ведіть «Облік збору» зі збирачами, прив'язаний до цього насадження, і він порахується сам.
+            </p>
+            <p v-if="yieldCrop.planned_yield_t" class="text-xs text-agro-light mb-4">План: {{ yieldCrop.planned_yield_t }} т/га</p>
+
+            <div v-if="!isViewer" class="bg-agro-bg rounded-xl p-4">
+              <p class="text-sm font-semibold text-agro-dark mb-3">Урожай за рік</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs font-semibold text-agro-dark block mb-1">Рік</label>
+                  <input v-model.number="yieldForm.year" type="number" min="1990" :max="new Date().getFullYear()" class="input w-full" data-test="yield-year">
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-agro-dark block mb-1">Зібрано, т</label>
+                  <input v-model="yieldForm.tons" type="text" inputmode="decimal" class="input w-full" placeholder="3,2" data-test="yield-tons">
+                </div>
+              </div>
+              <input v-model="yieldForm.note" type="text" maxlength="500" class="input w-full mt-3" placeholder="Примітка: заморозок на цвітінні, перший рік плодоношення…">
+              <p class="text-[11px] text-agro-light mt-2">Ручний запис має перевагу над обліком збору за цей рік. Витрати — з розділу «Витрати / Доходи» по цьому полю й культурі, виручка — з продажів, прив'язаних до насадження.</p>
+              <button type="button" class="dash-btn-primary w-full mt-3 justify-center" :disabled="saving || !yieldForm.tons" @click="saveYield">
+                {{ saving ? 'Збереження…' : 'Зберегти' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -705,6 +788,8 @@ import { TIP_CATEGORIES, TIP_URGENCY_BADGE } from '~/utils/tipCategories'
 import { estimatePhase, shouldSuggestPhase, effectivePhase, type DegreeDays } from '~~/shared/utils/phaseEstimate'
 import { weatherRisks, RISK_ICONS, type Forecast } from '~~/shared/utils/weatherRisks'
 import { activeWaiting, HARVEST_PHASES, type WaitingTreatment } from '~~/shared/utils/waitingPeriod'
+import { careTasksDue, type DueCareTask } from '~~/shared/utils/careTasks'
+import { plantingYields, formatKg } from '~~/shared/utils/plantingYield'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -865,6 +950,15 @@ const toast = useToast()
 const plantingPhases = ref<any[]>([])
 // Обробки з техкарт культур — для строку очікування до збору
 const cropTreatments = ref<Record<string, WaitingTreatment[]>>({})
+// Обробки, внесені в журнал вручну (зі строком очікування), — по полю
+const journalTreatments = ref<any[]>([])
+// Виконаний догляд: `${farm_crop_id}:${task_key}:${period}`
+const careDone = ref<Set<string>>(new Set())
+// Урожай і гроші по насадженнях: ручні записи, облік збору, витрати поля, продажі
+const yieldRows = ref<any[]>([])
+const harvestRows = ref<Record<string, any[]>>({})
+const expenseRows = ref<any[]>([])
+const salesRows = ref<Record<string, { total: number | null; date: string | null }[]>>({})
 
 const load = async () => {
   const [farmData, cropsData, rotationData] = await Promise.all([
@@ -888,6 +982,7 @@ const load = async () => {
       .select('farm_crop_id, program_treatments(product_name, status, done_at, waiting_days)')
       .in('farm_crop_id', cropIds)
     cropTreatments.value = Object.fromEntries((programs || []).map((p: any) => [p.farm_crop_id, p.program_treatments || []]))
+    await loadCropExtras(cropIds)
   } else {
     plantingPhases.value = []
     cropTreatments.value = {}
@@ -906,6 +1001,34 @@ const load = async () => {
     }
   }
   loading.value = false
+}
+
+// Догляд, урожай, витрати, продажі, журнал — таблиці без цих даних (стара база) просто дають порожньо
+async function loadCropExtras(cropIds: string[]) {
+  const rows = (r: { data: any[] | null }) => r.data || []
+  const yearAgo = new Date(Date.now() - 366 * 86400000).toLocaleDateString('sv-SE')
+  const [care, yields, seasons, expenses, manualSales, deals, journal] = await Promise.all([
+    supabase.from('planting_care_log').select('farm_crop_id, task_key, period').in('farm_crop_id', cropIds),
+    supabase.from('planting_yields').select('id, farm_crop_id, year, yield_kg, note').in('farm_crop_id', cropIds),
+    supabase.from('harvest_seasons').select('farm_crop_id, harvest_records(weight_kg, recorded_at)').in('farm_crop_id', cropIds),
+    supabase.from('expenses').select('crop_type, amount_uah, expense_date').eq('farm_id', farmId),
+    supabase.from('manual_sales').select('farm_crop_id, total_price, sold_at').in('farm_crop_id', cropIds).neq('status', 'cancelled'),
+    supabase.from('deals').select('farm_crop_id, total_price, confirmed_at, completed_at, created_at')
+      .in('farm_crop_id', cropIds).in('status', ['confirmed', 'completed']),
+    supabase.from('field_treatments').select('crop_type, product_name, treatment_date, waiting_days')
+      .eq('farm_id', farmId).not('waiting_days', 'is', null).gte('treatment_date', yearAgo),
+  ])
+  careDone.value = new Set(rows(care).map((c: any) => `${c.farm_crop_id}:${c.task_key}:${c.period}`))
+  yieldRows.value = rows(yields)
+  const hr: Record<string, any[]> = {}
+  for (const sRow of rows(seasons)) (hr[sRow.farm_crop_id] ??= []).push(...(sRow.harvest_records || []))
+  harvestRows.value = hr
+  expenseRows.value = rows(expenses)
+  const sales: Record<string, { total: number | null; date: string | null }[]> = {}
+  for (const m of rows(manualSales)) (sales[m.farm_crop_id] ??= []).push({ total: m.total_price, date: m.sold_at })
+  for (const d of rows(deals)) (sales[d.farm_crop_id] ??= []).push({ total: d.total_price, date: d.completed_at || d.confirmed_at || d.created_at })
+  salesRows.value = sales
+  journalTreatments.value = rows(journal)
 }
 
 await Promise.all([load(), loadCrops(), growthPhases.load()])
@@ -953,12 +1076,84 @@ const cropRisks = (crop: any) => {
   return weatherRisks(growthPhases.groupForCrop(crop.crop_type), cropPhaseNow(crop), forecastData.value, forecastData.value.today)
 }
 // Строк очікування після останніх обробок; на фазах збору — як попередження
+// Записи журналу вручну: культура в журналі — назва без сорту в дужках
+const cropJournal = (crop: any): WaitingTreatment[] => journalTreatments.value
+  .filter(j => j.crop_type && crop.crop_type.startsWith(j.crop_type.split(' (')[0]))
+  .map(j => ({ product_name: j.product_name, status: 'done', done_at: j.treatment_date, waiting_days: j.waiting_days }))
 const cropWaiting = (crop: any) => {
-  const w = activeWaiting(cropTreatments.value[crop.id] || [], todayIso)
+  const w = activeWaiting([...(cropTreatments.value[crop.id] || []), ...cropJournal(crop)], todayIso)
   if (!w) return null
   const phase = cropPhaseNow(crop)
   return { ...w, harvesting: !!phase && HARVEST_PHASES.includes(phase), date: formatPhaseDate(w.from) }
 }
+// Сезонний догляд (обрізка, побілка, укриття…) на сьогодні
+const cropCare = (crop: any): DueCareTask[] => {
+  if (!isPerennialCrop(crop)) return []
+  const done = new Set([...careDone.value].filter(k => k.startsWith(`${crop.id}:`)).map(k => k.slice(crop.id.length + 1)))
+  return careTasksDue({
+    group: growthPhases.groupForCrop(crop.crop_type), cropType: crop.crop_type,
+    phaseKey: cropPhaseNow(crop), stage: cropStage(crop), today: todayIso, done,
+  })
+}
+const careOpen = ref<string | null>(null)
+const markCareDone = async (crop: any, task: DueCareTask) => {
+  const { error } = await supabase.from('planting_care_log').insert({ farm_crop_id: crop.id, task_key: task.key, period: task.period })
+  if (error && error.code !== '23505') { toast.error('Не вдалося зберегти'); return }
+  careDone.value = new Set([...careDone.value, `${crop.id}:${task.key}:${task.period}`])
+  toast.success(`«${task.title}» — виконано`)
+}
+
+// Урожайність по роках
+const cropYields = (crop: any) => plantingYields({
+  areaHa: crop.area_ha,
+  manual: yieldRows.value.filter(y => y.farm_crop_id === crop.id),
+  harvest: harvestRows.value[crop.id] || [],
+  expenses: expenseRows.value.filter(e => e.crop_type && crop.crop_type.startsWith(e.crop_type.split(' (')[0])),
+  sales: salesRows.value[crop.id] || [],
+})
+const yieldSummary = (crop: any) => {
+  const [last] = cropYields(crop)
+  if (!last || !last.kg) return null
+  const parts = [`${formatKg(last.kg)} у ${last.year}`]
+  if (last.tPerHa != null) parts.push(`${String(last.tPerHa).replace('.', ',')} т/га`)
+  if (last.change != null) parts.push(`${last.change > 0 ? '+' : ''}${last.change}% до попереднього`)
+  if (last.costPerKg != null) parts.push(`собівартість ${String(last.costPerKg).replace('.', ',')} грн/кг`)
+  return parts.join(' · ')
+}
+const yieldCrop = ref<any>(null)
+const yieldForm = reactive({ year: new Date().getFullYear(), tons: '', note: '' })
+const openYields = (crop: any) => {
+  yieldCrop.value = crop
+  const year = new Date().getFullYear()
+  const row = yieldRows.value.find(y => y.farm_crop_id === crop.id && y.year === year)
+  Object.assign(yieldForm, { year, tons: row ? String(Number(row.yield_kg) / 1000) : '', note: row?.note || '' })
+}
+const editYieldYear = (year: number) => {
+  const row = yieldRows.value.find(y => y.farm_crop_id === yieldCrop.value?.id && y.year === year)
+  const auto = cropYields(yieldCrop.value).find(r => r.year === year)
+  Object.assign(yieldForm, { year, tons: row ? String(Number(row.yield_kg) / 1000) : auto ? String(auto.kg / 1000) : '', note: row?.note || '' })
+}
+const saveYield = async () => {
+  const tons = parseFloat(String(yieldForm.tons).replace(',', '.'))
+  if (!yieldCrop.value || !(tons >= 0) || !yieldForm.year) return
+  saving.value = true
+  const { data, error } = await supabase.from('planting_yields').upsert({
+    farm_crop_id: yieldCrop.value.id, year: yieldForm.year,
+    yield_kg: Math.round(tons * 1000 * 10) / 10, note: yieldForm.note.trim() || null,
+  }, { onConflict: 'farm_crop_id,year' }).select('id, farm_crop_id, year, yield_kg, note').single()
+  saving.value = false
+  if (error || !data) { toast.error('Не вдалося зберегти урожай'); return }
+  yieldRows.value = [...yieldRows.value.filter(y => y.id !== data.id && !(y.farm_crop_id === data.farm_crop_id && y.year === data.year)), data]
+  toast.success('Урожай збережено')
+}
+const deleteYield = async (year: number) => {
+  const row = yieldRows.value.find(y => y.farm_crop_id === yieldCrop.value?.id && y.year === year)
+  if (!row) return
+  const { error } = await supabase.from('planting_yields').delete().eq('id', row.id)
+  if (error) { toast.error('Не вдалося видалити запис'); return }
+  yieldRows.value = yieldRows.value.filter(y => y.id !== row.id)
+}
+
 loadDegreeDays()
 const phaseEmoji = (key: string) => growthPhases.emojiFor(key)
 const formatPhaseDate = (iso: string, withYear = false) => {
@@ -1447,6 +1642,41 @@ const saveCropEdit = async () => {
 .weather-risk-high { background: rgb(254, 242, 242); border-color: rgb(252, 202, 202); color: rgb(153, 27, 27); }
 .weather-risk-medium { background: rgb(253, 246, 232); border-color: rgb(240, 214, 160); color: rgb(133, 82, 14); }
 .weather-risk-advice { margin-top: 2px; opacity: .9; }
+.care-block {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  background: rgb(240, 246, 236);
+  border: 1px solid rgb(208, 224, 196);
+  color: rgb(38, 66, 40);
+}
+.care-title { font-weight: 700; margin-bottom: 4px; }
+.care-task + .care-task { margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgb(208, 224, 196); }
+.care-until { margin-left: 6px; font-size: 11px; color: rgb(100, 122, 92); white-space: nowrap; }
+.care-advice { margin-top: 2px; color: rgb(70, 92, 64); }
+.care-done {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 7px; font-weight: 800; font-size: 12px;
+  color: rgb(47, 82, 51); background: white; border: 1px solid rgb(190, 210, 176);
+}
+.care-done:hover { background: rgb(47, 82, 51); color: white; }
+.yield-chip {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(90, 70, 30);
+  background: rgb(250, 245, 233);
+  border: 1px solid rgb(232, 220, 190);
+  text-align: left;
+}
+.yield-chip:hover { background: rgb(245, 236, 214); }
+.yield-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.yield-table th { text-align: left; font-size: 11px; font-weight: 700; color: rgb(110, 128, 100); text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid rgb(226, 232, 214); }
+.yield-table td { padding: 8px; border-bottom: 1px solid rgb(240, 243, 234); color: rgb(27, 46, 27); vertical-align: top; }
 
 .phase-option {
   padding: 6px 12px;

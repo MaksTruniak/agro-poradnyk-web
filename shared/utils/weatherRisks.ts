@@ -121,12 +121,13 @@ export function weatherRisks(group: string | null | undefined, phaseKey: string 
   }
 
   const periods = wetPeriods(fc.hourly).filter(p => p.start.slice(0, 10) >= addDays(today, -2) && p.start.slice(0, 10) <= lastDay)
-  const pick = (cands: { p: WetPeriod; level: 'medium' | 'high' }[]) =>
+  type Cand = { p: WetPeriod; level: 'medium' | 'high' }
+  const pick = (cands: Cand[]) =>
     cands.sort((a, b) => (a.level === b.level ? 0 : a.level === 'high' ? -1 : 1) || a.p.start.localeCompare(b.p.start))[0]
 
   // ── Парша (зерняткові) ──
   if (group === 'fruit_pome' && SCAB_PHASES.includes(phaseKey)) {
-    const best = pick(periods.flatMap(p => {
+    const best = pick(periods.flatMap<Cand>(p => {
       const need = scabHoursNeeded(p.meanT)
       return p.hours >= need ? [{ p, level: 'high' as const }] : p.hours >= need * 0.7 ? [{ p, level: 'medium' as const }] : []
     }))
@@ -167,7 +168,7 @@ export function weatherRisks(group: string | null | undefined, phaseKey: string 
 
   // ── Сіра гниль (ягідні, виноград) ──
   if (BOTRYTIS_PHASES[group]?.includes(phaseKey)) {
-    const best = pick(periods.flatMap(p => p.meanT < 12 || p.meanT > 26 ? []
+    const best = pick(periods.flatMap<Cand>(p => p.meanT < 12 || p.meanT > 26 ? []
       : p.hours >= 15 ? [{ p, level: 'high' as const }] : p.hours >= 10 ? [{ p, level: 'medium' as const }] : []))
     if (best) {
       const date = best.p.start.slice(0, 10)
@@ -181,7 +182,7 @@ export function weatherRisks(group: string | null | undefined, phaseKey: string 
 
   // ── Моніліоз (кісточкові на цвітінні) ──
   if (group === 'fruit_stone' && MONILIA_PHASES.includes(phaseKey)) {
-    const best = pick(periods.flatMap(p => p.meanT < 10 || p.meanT > 25 ? []
+    const best = pick(periods.flatMap<Cand>(p => p.meanT < 10 || p.meanT > 25 ? []
       : p.hours >= 12 ? [{ p, level: 'high' as const }] : p.hours >= 6 ? [{ p, level: 'medium' as const }] : []))
     if (best) {
       const date = best.p.start.slice(0, 10)

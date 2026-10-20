@@ -2,11 +2,34 @@ import { test, expect } from '@playwright/test'
 import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 import { estimatePhase, shouldSuggestPhase } from '../../shared/utils/phaseEstimate'
 import { plantingStage, phasesForStage } from '../../shared/utils/plantingStage'
+import { plantingNow } from '../../shared/utils/weekPlan'
+import { careTasksDue } from '../../shared/utils/careTasks'
+import { addDays } from '../../shared/utils/weatherRisks'
+import type { Page } from '@playwright/test'
 
 // Багаторічні насадження: параметри насадження і журнал фенофаз на сторінці поля.
 // ПИШЕ в базу, тому лише з E2E_WRITE=1; тимчасове поле видаляється сервісним ключем.
 
 const TAG = `E2E ${Date.now()}`
+const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`
+
+// Фільтр «Всі поля» у журналі обробок (UiAppSelect)
+async function selectFarm(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Всі поля' }).click()
+  await page.getByRole('button', { name, exact: true }).last().click()
+}
+
+// Погода без ризиків на сьогодні — щоб план не залежав від справжнього прогнозу
+async function mockMildWeather(page: Page, today: string, dd: { gdd5: number; gdd10: number }) {
+  const days = [-2, -1, 0, 1, 2, 3].map(n => addDays(today, n))
+  const hourly = { time: [] as string[], temp: [] as number[], rh: [] as number[], precip: [] as number[] }
+  for (const d of days) for (let h = 0; h < 24; h++) { hourly.time.push(`${d}T${String(h).padStart(2, '0')}:00`); hourly.temp.push(14); hourly.rh.push(60); hourly.precip.push(0) }
+  await page.route('**/api/weather/degree-days**', r => r.fulfill({ json: { region: 'Київська', date: today, ...dd } }))
+  await page.route('**/api/weather/forecast**', r => r.fulfill({ json: {
+    region: 'Київська', today, hourly,
+    daily: { time: days, tmin: days.map(() => 8), tmean: days.map(() => 14), precip: days.map(() => 0) },
+  } }))
+}
 
 test.describe('Насадження і фенофази', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест створює і видаляє записи)')
@@ -29,7 +52,10 @@ test.describe('Насадження і фенофази', () => {
     const admin = serviceClient()
     if (tipIds.length) await admin.from('phase_tips').delete().in('id', tipIds)
     if (!farmId) return
-    await admin.from('farm_crops').delete().eq('farm_id', farmId) // журнал фаз видаляється каскадом
+    if (cropId) await admin.from('reminders').delete().eq('farm_crop_id', cropId)
+    await admin.from('expenses').delete().eq('farm_id', farmId)
+    await admin.from('field_treatments').delete().eq('farm_id', farmId)
+    await admin.from('farm_crops').delete().eq('farm_id', farmId) // журнал фаз, догляд, урожай — каскадом
     await admin.from('farms').delete().eq('id', farmId)
   })
 
@@ -265,5 +291,149 @@ test.describe('Насадження і фенофази', () => {
       await admin.from('farm_crops').delete().eq('id', crop!.id)
       await admin.from('farms').delete().eq('id', farm!.id)
     }
+  })
+
+  test('план на тиждень: техкарта на поточній фазі, строк очікування, догляд', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const admin = serviceClient()
+    const today = new Date().toLocaleDateString('sv-SE')
+    const dd = { gdd5: 2500, gdd10: 1200 }
+    await mockMildWeather(page, today, dd)
+
+    const { data: phases } = await admin.from('growth_phases').select('key, crop_groups').is('created_by', null).order('order_num')
+    const keys = (phases || []).filter((p: any) => !p.crop_groups?.length || p.crop_groups.includes('berry_shrub')).map((p: any) => p.key)
+    const { data: cur } = await admin.from('planting_phases').select('phase_key, observed_at').eq('farm_crop_id', cropId)
+      .order('observed_at', { ascending: false }).order('created_at', { ascending: false }).limit(1).single()
+    const now = plantingNow({ crop: { id: cropId, farm_id: farmId, crop_type: 'Лохина', planting_year: 2021 }, group: 'berry_shrub', phases: keys, current: cur, dd })
+    expect(now.phase).toBeTruthy()
+
+    const { data: program } = await admin.from('protection_programs').select('id').eq('farm_crop_id', cropId).single()
+    const { error } = await farmer.client.from('program_treatments').insert({
+      program_id: program!.id, phase: now.phase, type: 'підживлення', product_name: `${TAG} Калімагнезія`, dosage: '200 кг/га', status: 'planned',
+    })
+    expect(error).toBeNull()
+    const care = careTasksDue({ group: 'berry_shrub', cropType: 'Лохина', phaseKey: now.phase, stage: plantingStage('berry_shrub', 2021), today })
+    const until = addDays(today, 14)
+
+    const errors = collectErrors(page)
+    const apiErrors = collectApiErrors(page)
+    await login(page, 'farmer')
+    await page.goto('/dashboard/week')
+    const section = page.locator('section').filter({ has: page.getByRole('heading', { name: TAG, exact: true }) })
+    await expect(section.getByText(`Підживлення: ${TAG} Калімагнезія`)).toBeVisible()
+    await expect(section.getByText(`За техкартою на фазі «${now.phase}» · 200 кг/га`)).toBeVisible()
+    await expect(section.getByText(`Збір не раніше ${ddmm(until)}`)).toBeVisible()
+    await expect(section.getByText('Строк очікування після обробки «Світч 62,5 WG».')).toBeVisible()
+    for (const c of care) await expect(section.locator('[data-kind="care"]').filter({ hasText: c.title })).toBeVisible()
+
+    // Нагадування з пункту техкарти — на завтра, прив'язане до насадження
+    const treatmentRow = section.locator('[data-kind="treatment"]').filter({ hasText: `${TAG} Калімагнезія` })
+    await treatmentRow.getByRole('button', { name: '🔔 Нагадати' }).click()
+    await expect(treatmentRow.locator('input[type="date"]')).toHaveValue(addDays(today, 1))
+    await treatmentRow.getByRole('button', { name: 'Зберегти' }).click()
+    await expect(page.getByText('Нагадування додано')).toBeVisible()
+    const { data: rem } = await admin.from('reminders').select('description, type, farm_id, user_id').eq('farm_crop_id', cropId)
+    expect(rem).toEqual([{ description: `Підживлення: ${TAG} Калімагнезія — Лохина`, type: 'обробка', farm_id: farmId, user_id: farmer.userId }])
+
+    if (care.length) {
+      const first = section.locator('[data-kind="care"]').filter({ hasText: care[0]!.title })
+      await first.getByRole('button', { name: '✓ Зроблено' }).click()
+      await expect(first).toHaveCount(0)
+      const { data: log } = await admin.from('planting_care_log').select('task_key, period, created_by').eq('farm_crop_id', cropId)
+      expect(log).toEqual([{ task_key: care[0]!.key, period: care[0]!.period, created_by: farmer.userId }])
+      // На сторінці поля виконаний догляд теж зник
+      await page.goto(`/dashboard/farm/${farmId}`)
+      if (care.length > 1) await expect(page.locator('.care-block')).toContainText(care[1]!.title)
+      await expect(page.locator('.care-block').getByText(care[0]!.title, { exact: true })).toHaveCount(0)
+    }
+
+    await page.goto('/dashboard')
+    await expect(page.locator('[data-test="week-plan-widget"]')).toBeVisible()
+    await expectNoErrors(errors, 'плані на тиждень')
+    expect(apiErrors, apiErrors.join('\n')).toEqual([])
+  })
+
+  test('урожайність: урожай за рік, т/га, собівартість; сторонній не бачить', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const stranger = await asUser('buyer')
+    const year = new Date().getFullYear()
+    const { error: eErr } = await farmer.client.from('expenses').insert({
+      user_id: farmer.userId, farm_id: farmId, crop_type: 'Лохина', category: 'other', description: TAG,
+      amount_uah: 32000, expense_date: `${year}-03-15`,
+    })
+    expect(eErr).toBeNull()
+
+    const errors = collectErrors(page)
+    const apiErrors = collectApiErrors(page)
+    await login(page, 'farmer')
+    await page.goto(`/dashboard/farm/${farmId}`)
+    await page.getByRole('button', { name: '🧺 Внести урожай' }).click()
+    const modal = page.locator('[data-test="yield-modal"]')
+    await expect(modal.getByText('Даних про урожай ще немає')).toBeVisible()
+    await modal.locator('[data-test="yield-tons"]').fill('3,2')
+    await modal.getByRole('button', { name: 'Зберегти' }).click()
+    const row = modal.locator('tbody tr').first()
+    await expect(row).toContainText(String(year))
+    await expect(row).toContainText('3,2 т')
+    await expect(row).toContainText('1,6')
+    await expect(row).toContainText('32 000 грн')
+    await expect(row).toContainText('10')
+    await expect(row).toContainText('внесено вручну')
+    await modal.getByRole('button', { name: '✕' }).first().click()
+    await expect(page.getByRole('button', { name: `🧺 3,2 т у ${year} · 1,6 т/га · собівартість 10 грн/кг` })).toBeVisible()
+
+    const { data: hidden } = await stranger.client.from('planting_yields').select('id').eq('farm_crop_id', cropId)
+    expect(hidden ?? [], 'сторонній бачить урожай').toEqual([])
+    const forged = await stranger.client.from('planting_yields').insert({ farm_crop_id: cropId, year: year - 1, yield_kg: 1 })
+    expect(forged.error, 'сторонній вніс урожай у чуже насадження').not.toBeNull()
+    const forgedCare = await stranger.client.from('planting_care_log').insert({ farm_crop_id: cropId, task_key: 'mulch', period: `${year}-04` })
+    expect(forgedCare.error, 'сторонній відмітив догляд у чужому насадженні').not.toBeNull()
+
+    await expectNoErrors(errors, 'вікні урожайності')
+    expect(apiErrors, apiErrors.join('\n')).toEqual([])
+  })
+
+  test('журнал обробок: виконане з техкарти, строк очікування, друк', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const today = new Date().toLocaleDateString('sv-SE')
+    const { error } = await farmer.client.from('field_treatments').insert({
+      user_id: farmer.userId, farm_id: farmId, farm_name: TAG, crop_type: 'Лохина', treatment_date: today,
+      product_name: `${TAG} Фітоверм`, product_type: 'захист', waiting_days: 3,
+    })
+    expect(error, 'потрібна міграція 20261020_care_yields.sql').toBeNull()
+    const bad = await farmer.client.from('field_treatments').insert({
+      user_id: farmer.userId, farm_id: farmId, treatment_date: today, product_name: 'x', product_type: 'захист', waiting_days: 400,
+    })
+    expect(bad.error, 'база прийняла строк очікування 400 днів').not.toBeNull()
+
+    await page.context().addInitScript(() => { window.print = () => {} })
+    const errors = collectErrors(page)
+    await login(page, 'farmer')
+    await page.goto('/dashboard/treatments')
+    await expect(page.getByRole('heading', { name: 'Журнал обробок' })).toBeVisible()
+    if (await page.getByText('Перейти на Бізнес →').isVisible()) {
+      test.info().annotations.push({ type: 'skip', description: 'у фермера немає тарифу Бізнес — журнал недоступний' })
+      return
+    }
+    await selectFarm(page, TAG)
+    const tech = page.locator('.card').filter({ hasText: 'Світч 62,5 WG' })
+    await expect(tech).toContainText('з техкарти')
+    await expect(tech).toContainText('фаза: Цвітіння')
+    await expect(tech).toContainText('⏳ 14 дн')
+    await expect(tech.getByRole('link', { name: 'Техкарта →' })).toBeVisible()
+    const manual = page.locator('.card').filter({ hasText: `${TAG} Фітоверм` })
+    const from = addDays(today, 3)
+    await expect(manual).toContainText(`⏳ 3 дн · збір з ${ddmm(from)}.${from.slice(0, 4)}`)
+
+    const popupPromise = page.waitForEvent('popup')
+    await page.getByRole('button', { name: 'Друк / PDF' }).click()
+    const popup = await popupPromise
+    await expect(popup.getByRole('heading', { name: 'Журнал обробок насаджень' })).toBeVisible()
+    await expect(popup.getByRole('heading', { name: `${TAG} — Лохина` })).toBeVisible()
+    await expect(popup.getByText('Світч 62,5 WG')).toBeVisible()
+    await expect(popup.getByText(`${TAG} Фітоверм`)).toBeVisible()
+    await expect(popup.getByText('Відповідальна особа (ПІБ, підпис)')).toBeVisible()
+    await popup.close()
+    await expectNoErrors(errors, 'журналі обробок')
   })
 })

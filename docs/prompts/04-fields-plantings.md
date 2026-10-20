@@ -62,6 +62,11 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
 | `server/api/weather/degree-days.get.ts` | `GET /api/weather/degree-days?region=…` → `{ region, date, gdd5, gdd10 }` (сайт, кеш 6 год) |
 | `shared/utils/weatherRisks.ts` | заморозки й погода для інфекцій — 1:1 з `tests/unit/weather-risks.test.ts` |
 | `shared/utils/waitingPeriod.ts` | строк очікування до збору — 1:1 з `tests/unit/waiting-period.test.ts` |
+| `shared/utils/careTasks.ts` | сезонний догляд (обрізка, побілка, укриття…) — 1:1 з `tests/unit/care-plan.test.ts` |
+| `shared/utils/plantingYield.ts` | урожай, т/га, собівартість, виручка по роках — 1:1 з `tests/unit/care-plan.test.ts` |
+| `shared/utils/weekPlan.ts` | пункти плану на тиждень по насадженню (`cropPlan`, `sortPlan`, `plantingNow`) — 1:1 з `tests/unit/care-plan.test.ts` |
+| `app/composables/useWeekPlan.ts`, `app/pages/dashboard/week.vue`, `app/components/dashboard/WeekPlanRow.vue` | екран «План на тиждень» |
+| `supabase/migrations/20261020_care_yields.sql` | `planting_care_log`, `planting_yields`, `field_treatments.waiting_days` |
 | `server/api/weather/forecast.get.ts` | `GET /api/weather/forecast?region=…` → `{ region, today, daily, hourly }` (минулі 2 доби + 4 дні, кеш 1 год) |
 | `app/utils/cropGroups.ts` | групи культур, `isPerennialGroup`, `guessCropGroup`, `PERENNIAL_GROUP_LABELS` — 1:1 з `tests/unit/crop-groups.test.ts` |
 | `app/utils/tipCategories.ts` | категорії порад (назви + SVG), пріоритети |
@@ -85,6 +90,8 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
 | `crop_catalog` | `id, name, emoji, group_key, is_perennial, category_id` | читання всім |
 | `varieties` | `crop_type, name` | читання; новий сорт фермер може додати |
 | `phase_tips` | `crop_group, phase_key, title, description, category, urgency, order_num, is_published,` **`stages`** | читання лише опублікованих |
+| `planting_care_log` | `id, farm_crop_id, task_key, period (yyyy-mm), done_at, created_by, created_at`; унікально `(farm_crop_id, task_key, period)` | власник, редактор команди — усе; агроном з угодою — читання, додавання, видалення; `created_by` ставить база |
+| `planting_yields` | `id, farm_crop_id, year, yield_kg, note, created_by, created_at`; унікально `(farm_crop_id, year)` | власник, редактор команди — усе; агроном — читання |
 
 Обмеження бази для `farm_crops` (помилку показати тостом):
 `planting_year` 1900–2100; `row_spacing_m`, `plant_spacing_m` > 0 і ≤ 20; `plants_count` ≥ 0;
@@ -171,9 +178,34 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
    - **погодні ризики** (багаторічні, бачать усі ролі): `weatherRisks(група, фаза_зараз, прогноз, today)`, де
      прогноз — `GET {SITE_URL}/api/weather/forecast?region=…`, фаза_зараз — `effectivePhase(орієнтовна, поточна, фази)`;
      кожен ризик — блок `RISK_ICONS[kind] title` + `advice`, червоний для `high`, бурштиновий для `medium`;
+   - строк очікування рахує також ручні записи журналу обробок поля (`field_treatments` з `waiting_days`,
+     культура журналу — назва без сорту в дужках, за початком `crop_type`);
+   - **«🛠️ Догляд зараз»** (багаторічні): `careTasksDue({ group, cropType, phaseKey: фаза_зараз, stage, today, done })`,
+     `done` — `${task_key}:${period}` з `planting_care_log` культури; рядок — назва + «до дд.мм», натиск розгортає пораду;
+     кнопка «✓» (не для переглядача) → `insert planting_care_log { farm_crop_id, task_key, period }` (код 23505 — вже
+     відмічено, не помилка), тост ««…» — виконано»;
+   - **урожай** (багаторічні): бейдж «🧺 3,2 т у 2026 · 1,6 т/га · +10% до попереднього · собівартість 10 грн/кг»
+     (останній рік з `plantingYields`) або «🧺 Внести урожай» (не для переглядача). Натиск — вікно «Урожайність»:
+     таблиця по роках (урожай, т/га, витрати, виручка, грн/кг, джерело «з обліку збору» / «внесено вручну»), «змінити»,
+     «✕» для ручних; форма «Рік» + «Зібрано, т» + примітка → `upsert planting_yields` (`onConflict: farm_crop_id,year`).
+     Джерела: `planting_yields`; `harvest_seasons(farm_crop_id) → harvest_records(weight_kg, recorded_at)`;
+     `expenses` поля за культурою; `manual_sales` (не `cancelled`) і `deals` (`confirmed`/`completed`) з `farm_crop_id`;
    - дії: «Каталог / Приховано» (`show_in_catalog`), редагувати, видалити («Культуру "…" буде видалено з поля.»).
      «AI» і «Тех. карта» — поки не показувати.
 3. Блок «Сівозміна» на сайті прихований — не робити.
+
+### 6а. Екран «План на тиждень» — `app/(app)/week.tsx`
+
+- Для всіх багаторічних насаджень власника (у команді — власника): `cropPlan(...)` по кожному + нагадування
+  (`reminders` без `completed_at`, від −14 до +7 днів; прострочені — терміново), сортування `sortPlan`.
+- Погода — один запит САТ і прогнозу на область.
+- Розділ «Терміново» (високі ризики, строк очікування на фазі збору, прострочені нагадування) з назвою поля,
+  далі розділи по полях. Фільтр-чипи полів, якщо полів з пунктами більше одного. Лічильник «N термінових · M справ».
+- Пункт: значок, назва, «до дд.мм» для догляду / дата нагадування, `культура · сорт`, пояснення; дії:
+  догляд — «✓ Зроблено» і «🔔 Нагадати»; обробка з техкарти — «🔔 Нагадати» (`reminders` на вибраний день 8:00,
+  `type` `обробка`, для догляду `інше`, `farm_id`, `farm_crop_id`, опис «назва — культура»); фаза — «Відмітити фазу»;
+  ризик і строк очікування — «До поля». Переглядач — без дій запису.
+- Порожньо: «На цей тиждень усе зроблено»; без насаджень — «Поки немає насаджень» і «До полів».
 
 ### 7. Форма культури (додавання і редагування)
 
@@ -241,6 +273,10 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
 6в. Лохина у Київській області з відміченим навесні цвітінням: у жовтні поруч бейдж
     «Мабуть, уже 🍂 Підготовка до зими? Відмітити», вікно відкривається з цією фазою — як на сайті.
 6г. Обробка з `status = done`, `done_at` = сьогодні, `waiting_days` = 14 → на картці «збір не раніше <сьогодні+14>».
+6д. План на тиждень: обробка техкарти на фазі, у яку насадження зараз (відмічена або орієнтовна), видна з дозуванням;
+    стара назва фази в техкарті («Набрякання бруньок») збігається з ключем («Проростання / Набрякання бруньок») — `samePhase`.
+6е. «✓ Зроблено» для догляду в додатку ховає його і на сайті до наступного сезону; урожай, внесений у додатку,
+    — у таблиці «Урожайність» сайту з тим самим т/га і собівартістю.
 6б. Поле з продажем видаляється; продаж лишається в історії продажів сайту.
 7. Переглядач команди не бачить кнопок зміни й відмітки фази, але бачить журнал і поради.
 8. Помилки бази (обмеження полів, RLS) показуються тостом, а не мовчки.
