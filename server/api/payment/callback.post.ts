@@ -189,7 +189,9 @@ export default defineEventHandler(async (event) => {
     const lastName  = profileData?.last_name  || profileData?.name?.split(' ').slice(1).join(' ') || ''
     const fullName  = [firstName, lastName].filter(Boolean).join(' ') || emailTo?.split('@')[0] || ''
 
-    if (emailTo) {
+    // E2E-тест оплати підписує цей заголовок тим самим секретом — чек тоді не надсилаємо
+    const silent = getHeader(event, 'x-e2e-silent') === wfpSign(['e2e-silent'], secretKey)
+    if (emailTo && !silent) {
       await sendPaymentConfirmEmail(emailTo, fullName, plan, {
         amount: Number(amount),
         currency: currency || 'UAH',

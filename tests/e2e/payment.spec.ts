@@ -8,6 +8,8 @@ import { asUser, hasAccount, serviceClient } from './helpers'
 
 const sign = (fields: (string | number)[]) =>
   crypto.createHmac('md5', process.env.WFP_SECRET_KEY || '').update(fields.join(';')).digest('hex')
+// Без цього заголовка сервер надсилає справжній лист-чек на пошту тестового акаунта
+const SILENT = { 'x-e2e-silent': sign(['e2e-silent']) }
 
 test.describe('Оплата WayForPay', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест пише платіж і змінює підписку)')
@@ -75,7 +77,7 @@ test.describe('Оплата WayForPay', () => {
       merchantOptions: { userId },
     }
 
-    const first = await request.post('/api/payment/callback', { data: payload })
+    const first = await request.post('/api/payment/callback', { data: payload, headers: SILENT })
     expect(first.status()).toBe(200)
     expect((await first.json()).status).toBe('accept')
     const { data: sub } = await admin.from('subscriptions').select('expires_at, first_paid_at').eq('id', original!.id).single()
@@ -84,7 +86,7 @@ test.describe('Оплата WayForPay', () => {
     expect(sub!.first_paid_at).toBeTruthy()
 
     // Повтор і паралельні повтори того самого замовлення — без другого продовження
-    const again = await Promise.all([1, 2, 3].map(() => request.post('/api/payment/callback', { data: payload })))
+    const again = await Promise.all([1, 2, 3].map(() => request.post('/api/payment/callback', { data: payload, headers: SILENT })))
     for (const r of again) expect(r.status()).toBe(200)
     const { data: after } = await admin.from('subscriptions').select('expires_at').eq('id', original!.id).single()
     expect(after!.expires_at).toBe(sub!.expires_at)
@@ -92,7 +94,7 @@ test.describe('Оплата WayForPay', () => {
     expect(count).toBe(1)
 
     // Підроблений підпис — відмова, нічого не змінюється
-    const forged = await request.post('/api/payment/callback', { data: { ...payload, orderReference: `${orderReference}-x`, merchantSignature: 'bad' } })
+    const forged = await request.post('/api/payment/callback', { data: { ...payload, orderReference: `${orderReference}-x`, merchantSignature: 'bad' }, headers: SILENT })
     expect(forged.status()).toBe(400)
   })
 })
