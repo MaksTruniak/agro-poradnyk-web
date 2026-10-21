@@ -80,6 +80,9 @@
                     {{ seasonLabel(v.season) }}
                   </span>
                   <span v-else class="text-agro-light text-xs">—</span>
+                  <span v-if="v.ripening" class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-agro-hover text-agro">
+                    {{ RIPENING_LABELS[v.ripening as Ripening] }}{{ v.harvest_from && v.harvest_to ? ` · ${v.harvest_from.slice(3)}.${v.harvest_from.slice(0, 2)}–${v.harvest_to.slice(3)}.${v.harvest_to.slice(0, 2)}` : '' }}
+                  </span>
                 </td>
                 <td class="px-5 py-3 text-center">
                   <span class="inline-block w-2 h-2 rounded-full" :class="v.is_active ? 'bg-green-500' : 'bg-gray-300'" />
@@ -153,6 +156,26 @@
                 </button>
               </div>
             </div>
+            <div>
+              <label class="block text-sm font-medium text-agro-dark mb-2">Строк стиглості</label>
+              <div class="flex gap-2 flex-wrap">
+                <button v-for="key in RIPENING_ORDER" :key="key" type="button" data-test="variety-ripening"
+                  @click="vModal.ripening = vModal.ripening === key ? '' : key"
+                  class="px-3 py-1.5 rounded-xl text-sm font-semibold border transition-colors"
+                  :class="vModal.ripening === key ? 'bg-agro text-white border-agro' : 'bg-white text-agro-light border-agro-border hover:border-agro'">
+                  {{ RIPENING_LABELS[key] }}
+                </button>
+              </div>
+              <div v-if="vModal.ripening" class="grid grid-cols-2 gap-2 mt-3">
+                <label class="block text-xs text-agro-light">Збір з (ДД.ММ, необов'язково)
+                  <input v-model="vModal.harvest_from" class="input mt-1" placeholder="05.07" maxlength="5" />
+                </label>
+                <label class="block text-xs text-agro-light">по
+                  <input v-model="vModal.harvest_to" class="input mt-1" placeholder="25.07" maxlength="5" />
+                </label>
+              </div>
+              <p v-if="vModal.ripening" class="text-xs text-agro-light mt-1">Без дат вікно збору береться з групи стиглості для культури (середній рік, центр України).</p>
+            </div>
             <div class="flex items-center gap-3">
               <button @click="vModal.is_active = !vModal.is_active" type="button"
                 class="w-10 h-6 rounded-full transition-colors flex items-center px-0.5"
@@ -175,6 +198,7 @@
 </template>
 
 <script setup lang="ts">
+import { RIPENING_LABELS, RIPENING_ORDER, type Ripening } from '~~/shared/utils/ripening'
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Культури — Адмін' })
 
@@ -201,7 +225,10 @@ const seasonLabel = (v: string) => seasons.find(s => s.value === v)?.label || v
 const seasonClass = (v: string) => ({ winter: 'bg-blue-50 text-blue-700', spring: 'bg-green-50 text-green-700', summer: 'bg-amber-50 text-amber-700', autumn: 'bg-orange-50 text-orange-700' }[v] || 'bg-agro-bg text-agro-dark')
 
 const modal = reactive({ show: false, id: null as string | null, name: '', category_id: '', description: '' })
-const vModal = reactive({ show: false, id: null as string | null, cropId: '', cropName: '', name: '', season: '', is_active: true })
+const vModal = reactive({ show: false, id: null as string | null, cropId: '', cropName: '', name: '', season: '', is_active: true, ripening: '', harvest_from: '', harvest_to: '' })
+// ДД.ММ ↔ mm-dd (як у базі)
+const toMmdd = (s: string) => { const m = s.trim().match(/^(\d{1,2})\.(\d{1,2})$/); return m ? `${m[2]!.padStart(2, '0')}-${m[1]!.padStart(2, '0')}` : null }
+const fromMmdd = (s: string | null) => s ? `${s.slice(3)}.${s.slice(0, 2)}` : ''
 
 async function toggleExpand(id: string) {
   if (expanded.value === id) { expanded.value = null; return }
@@ -209,7 +236,7 @@ async function toggleExpand(id: string) {
   if (!varieties.value[id]) {
     loadingVarieties.value[id] = true
     const item = items.value.find(i => i.id === id)
-    const { data } = await supabase.from('varieties').select('id, name, season, is_active').ilike('crop_type', item?.name || '').order('name')
+    const { data } = await supabase.from('varieties').select('id, name, season, is_active, ripening, harvest_from, harvest_to').ilike('crop_type', item?.name || '').order('name')
     varieties.value[id] = data || []
     loadingVarieties.value[id] = false
   }
@@ -224,10 +251,13 @@ function openEdit(item: any) {
   Object.assign(modal, { show: true, id: item.id, name: item.name, category_id: item.category_id || '', description: item.description || '' })
 }
 function openAddVariety(item: any) {
-  Object.assign(vModal, { show: true, id: null, cropId: item.id, cropName: item.name, name: '', season: '', is_active: true })
+  Object.assign(vModal, { show: true, id: null, cropId: item.id, cropName: item.name, name: '', season: '', is_active: true, ripening: '', harvest_from: '', harvest_to: '' })
 }
 function openEditVariety(item: any, v: any) {
-  Object.assign(vModal, { show: true, id: v.id, cropId: item.id, cropName: item.name, name: v.name, season: v.season || '', is_active: v.is_active })
+  Object.assign(vModal, {
+    show: true, id: v.id, cropId: item.id, cropName: item.name, name: v.name, season: v.season || '', is_active: v.is_active,
+    ripening: v.ripening || '', harvest_from: fromMmdd(v.harvest_from), harvest_to: fromMmdd(v.harvest_to),
+  })
 }
 
 async function save() {
@@ -258,7 +288,12 @@ async function save() {
 
 async function saveVariety() {
   vSaving.value = true
-  const payload = { crop_type: vModal.cropName, name: vModal.name.trim(), season: vModal.season || null, is_active: vModal.is_active }
+  const from = vModal.ripening ? toMmdd(vModal.harvest_from) : null
+  const to = vModal.ripening ? toMmdd(vModal.harvest_to) : null
+  const payload = {
+    crop_type: vModal.cropName, name: vModal.name.trim(), season: vModal.season || null, is_active: vModal.is_active,
+    ripening: vModal.ripening || null, harvest_from: from && to ? from : null, harvest_to: from && to ? to : null,
+  }
   if (!payload.name) { vSaving.value = false; return }
   if (vModal.id) {
     const res = await supabase.from('varieties').update(payload).eq('id', vModal.id).select('id')

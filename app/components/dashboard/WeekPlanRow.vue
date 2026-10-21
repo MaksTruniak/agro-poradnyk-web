@@ -63,10 +63,10 @@ const link = computed(() => {
   }
   if (item.kind === 'reminder') return { to: '/dashboard/reminders', label: 'Нагадування →' }
   if (item.kind === 'phase' && item.farmId) return { to: `/dashboard/farm/${item.farmId}`, label: 'Відмітити фазу →' }
-  if ((item.kind === 'risk' || item.kind === 'waiting') && item.farmId) return { to: `/dashboard/farm/${item.farmId}`, label: 'До поля →' }
+  if ((item.kind === 'risk' || item.kind === 'waiting' || item.kind === 'harvest') && item.farmId) return { to: `/dashboard/farm/${item.farmId}`, label: 'До поля →' }
   return null
 })
-const canRemind = computed(() => !props.readOnly && (props.item.kind === 'care' || props.item.kind === 'treatment'))
+const canRemind = computed(() => !props.readOnly && (props.item.kind === 'care' || props.item.kind === 'treatment' || props.item.kind === 'harvest'))
 
 const startRemind = () => {
   remindDate.value = addDays(props.today, 1)

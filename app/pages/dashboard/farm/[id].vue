@@ -210,8 +210,12 @@
                   <p v-if="careOpen === `${crop.id}:${task.key}`" class="care-advice">{{ task.advice }}</p>
                 </div>
               </div>
-              <div v-if="isPerennialCrop(crop) && (yieldSummary(crop) || !isViewer)" class="mt-2">
-                <button type="button" class="yield-chip" @click="openYields(crop)">
+              <div v-if="isPerennialCrop(crop) && (yieldSummary(crop) || !isViewer || cropHarvest(crop))" class="mt-2 flex flex-wrap gap-1.5">
+                <span v-if="cropHarvest(crop)" class="harvest-chip" data-test="harvest-window"
+                  title="Орієнтовно для середнього року в центрі України; рік, район і догляд зсувають строки на 1–2 тижні">
+                  🗓️ Збір ~{{ formatWindow(cropHarvest(crop)!) }} · {{ cropHarvest(crop)!.label }}
+                </span>
+                <button v-if="yieldSummary(crop) || !isViewer" type="button" class="yield-chip" @click="openYields(crop)">
                   🧺 {{ yieldSummary(crop) ?? 'Внести урожай' }}
                 </button>
               </div>
@@ -463,7 +467,7 @@
                     class="input" placeholder="Введіть або оберіть сорт..." />
                   <div v-if="showVarietySuggestions" class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-10 overflow-hidden">
                     <button v-for="v in varietySuggestions" :key="v" @mousedown.prevent="newVariety = v; showVarietySuggestions = false"
-                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover border-b border-agro-border last:border-0">{{ v }}</button>
+                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover border-b border-agro-border last:border-0">{{ v }}<span v-if="varietyRipening[v]" class="text-xs text-agro-light"> · {{ varietyRipening[v] }}</span></button>
                     <button v-if="newVariety.trim() && !varietySuggestions.find(v => v.toLowerCase() === newVariety.trim().toLowerCase())"
                       @mousedown.prevent="showVarietySuggestions = false"
                       class="w-full text-left px-4 py-2.5 text-sm text-agro-light hover:bg-agro-hover">
@@ -591,7 +595,7 @@
                   <div v-if="showEditVarietySuggestions && (editVarietySuggestions.length || editCropForm.variety.trim())"
                     class="absolute top-full left-0 right-0 mt-1 bg-white border border-agro-border rounded-xl shadow-lg z-30 max-h-40 overflow-y-auto">
                     <button v-for="v in editVarietySuggestions" :key="v" @mousedown.prevent="editCropForm.variety = v; showEditVarietySuggestions = false"
-                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors">{{ v }}</button>
+                      class="w-full text-left px-4 py-2.5 text-sm hover:bg-agro-hover transition-colors">{{ v }}<span v-if="varietyRipening[v]" class="text-xs text-agro-light"> · {{ varietyRipening[v] }}</span></button>
                     <button v-if="editCropForm.variety.trim() && !editVarietySuggestions.find(v => v.toLowerCase() === editCropForm.variety.trim().toLowerCase())"
                       @mousedown.prevent="showEditVarietySuggestions = false"
                       class="w-full text-left px-4 py-2.5 text-sm text-agro hover:bg-agro-hover transition-colors">
@@ -790,6 +794,7 @@ import { weatherRisks, RISK_ICONS, type Forecast } from '~~/shared/utils/weather
 import { activeWaiting, HARVEST_PHASES, type WaitingTreatment } from '~~/shared/utils/waitingPeriod'
 import { careTasksDue, type DueCareTask } from '~~/shared/utils/careTasks'
 import { plantingYields, formatKg } from '~~/shared/utils/plantingYield'
+import { findVariety, formatWindow, harvestWindow, RIPENING_LABELS, type Ripening } from '~~/shared/utils/ripening'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -932,6 +937,12 @@ const newStockUnit = ref('т')
 const newShowInCatalog = ref(true)
 const newPlanting = ref(emptyPlantingForm())
 const varietySuggestions = ref<string[]>([])
+// Строк стиглості біля назви сорту в підказках
+const varietyRipening = ref<Record<string, string>>({})
+const rememberRipening = (rows: any[] | null) => (rows || []).map((v: any) => {
+  if (v.ripening && RIPENING_LABELS[v.ripening as Ripening]) varietyRipening.value[v.name] = RIPENING_LABELS[v.ripening as Ripening]
+  return v.name as string
+})
 const showVarietySuggestions = ref(false)
 
 // Дані господарства: власні або власника команди (його тариф і агрономи)
@@ -1007,7 +1018,8 @@ const load = async () => {
 async function loadCropExtras(cropIds: string[]) {
   const rows = (r: { data: any[] | null }) => r.data || []
   const yearAgo = new Date(Date.now() - 366 * 86400000).toLocaleDateString('sv-SE')
-  const [care, yields, seasons, expenses, manualSales, deals, journal] = await Promise.all([
+  const varietyNames = [...new Set(crops.value.map((c: any) => c.variety).filter(Boolean))]
+  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties] = await Promise.all([
     supabase.from('planting_care_log').select('farm_crop_id, task_key, period').in('farm_crop_id', cropIds),
     supabase.from('planting_yields').select('id, farm_crop_id, year, yield_kg, note').in('farm_crop_id', cropIds),
     supabase.from('harvest_seasons').select('farm_crop_id, harvest_records(weight_kg, recorded_at)').in('farm_crop_id', cropIds),
@@ -1017,7 +1029,11 @@ async function loadCropExtras(cropIds: string[]) {
       .in('farm_crop_id', cropIds).in('status', ['confirmed', 'completed']),
     supabase.from('field_treatments').select('crop_type, product_name, treatment_date, waiting_days')
       .eq('farm_id', farmId).not('waiting_days', 'is', null).gte('treatment_date', yearAgo),
+    varietyNames.length
+      ? supabase.from('varieties').select('crop_type, name, ripening, harvest_from, harvest_to').in('name', varietyNames).not('ripening', 'is', null)
+      : Promise.resolve({ data: [] }),
   ])
+  varietyRows.value = rows(varieties as any)
   careDone.value = new Set(rows(care).map((c: any) => `${c.farm_crop_id}:${c.task_key}:${c.period}`))
   yieldRows.value = rows(yields)
   const hr: Record<string, any[]> = {}
@@ -1034,6 +1050,13 @@ async function loadCropExtras(cropIds: string[]) {
 await Promise.all([load(), loadCrops(), growthPhases.load()])
 
 const isPerennialCrop = (crop: any) => !!crop && isPerennialGroup(growthPhases.groupForCrop(crop.crop_type))
+// Орієнтовне вікно збору за строком стиглості сорту (лише плодоносним насадженням)
+const varietyRows = ref<any[]>([])
+const cropHarvest = (crop: any) => {
+  const stage = cropStage(crop)
+  if (stage && !stage.fruiting) return null
+  return harvestWindow(crop.crop_type, findVariety(varietyRows.value, crop.crop_type, crop.variety), new Date().getFullYear())
+}
 const cropStage = (crop: any) => plantingStage(growthPhases.groupForCrop(crop.crop_type), crop.planting_year)
 const cropStageLabel = (crop: any) => plantingStageLabel(cropStage(crop))
 // Фази культури з урахуванням віку: без урожаю — без фаз плодів і збору
@@ -1263,10 +1286,10 @@ watch(showAddCrop, (val) => {
 const loadVarieties = async () => {
   if (!selectedCrop.value) { showVarietySuggestions.value = false; return }
   const cropName = selectedCrop.value.name
-  const { data } = await supabase.from('varieties').select('name')
+  const { data } = await supabase.from('varieties').select('name, ripening')
     .ilike('crop_type', `${cropName}%`)
     .order('name')
-  varietySuggestions.value = (data || []).map((v: any) => v.name)
+  varietySuggestions.value = rememberRipening(data)
   showVarietySuggestions.value = true
 }
 
@@ -1275,8 +1298,8 @@ const searchVarieties = () => {
   clearTimeout(varTimer)
   varTimer = setTimeout(async () => {
     if (!selectedCrop.value) return
-    const { data } = await supabase.from('varieties').select('name').ilike('crop_type', `${selectedCrop.value.name}%`).ilike('name', `%${newVariety.value}%`).order('name')
-    varietySuggestions.value = (data || []).map((v: any) => v.name)
+    const { data } = await supabase.from('varieties').select('name, ripening').ilike('crop_type', `${selectedCrop.value.name}%`).ilike('name', `%${newVariety.value}%`).order('name')
+    varietySuggestions.value = rememberRipening(data)
     showVarietySuggestions.value = true
   }, 200)
 }
@@ -1402,16 +1425,16 @@ const openEditCrop = (crop: any) => {
 
 const loadEditVarieties = async () => {
   if (!editingCrop.value) return
-  const { data } = await supabase.from('varieties').select('name').ilike('crop_type', `${editingCrop.value.crop_type}%`).order('name')
-  editVarietySuggestions.value = (data || []).map((v: any) => v.name)
+  const { data } = await supabase.from('varieties').select('name, ripening').ilike('crop_type', `${editingCrop.value.crop_type}%`).order('name')
+  editVarietySuggestions.value = rememberRipening(data)
   showEditVarietySuggestions.value = true
 }
 
 const searchEditVarieties = async () => {
   if (!editingCrop.value) return
   const q = editCropForm.variety.trim()
-  const { data } = await supabase.from('varieties').select('name').ilike('crop_type', `${editingCrop.value.crop_type}%`).ilike('name', `%${q}%`).order('name')
-  editVarietySuggestions.value = (data || []).map((v: any) => v.name)
+  const { data } = await supabase.from('varieties').select('name, ripening').ilike('crop_type', `${editingCrop.value.crop_type}%`).ilike('name', `%${q}%`).order('name')
+  editVarietySuggestions.value = rememberRipening(data)
   showEditVarietySuggestions.value = true
 }
 
@@ -1674,6 +1697,16 @@ const saveCropEdit = async () => {
   text-align: left;
 }
 .yield-chip:hover { background: rgb(245, 236, 214); }
+.harvest-chip {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(47, 82, 51);
+  background: rgb(238, 241, 227);
+  border: 1px solid rgb(214, 224, 196);
+}
 .yield-table { width: 100%; font-size: 13px; border-collapse: collapse; }
 .yield-table th { text-align: left; font-size: 11px; font-weight: 700; color: rgb(110, 128, 100); text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid rgb(226, 232, 214); }
 .yield-table td { padding: 8px; border-bottom: 1px solid rgb(240, 243, 234); color: rgb(27, 46, 27); vertical-align: top; }

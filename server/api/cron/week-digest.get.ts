@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { regionKey } from '../../../shared/utils/regionCoords'
 import { addDays } from '../../../shared/utils/weatherRisks'
 import { assemblePlan, planDigest } from '../../../shared/utils/weekPlan'
+import { findVariety } from '../../../shared/utils/ripening'
 import { guessCropGroup, isPerennialGroup } from '../../../app/utils/cropGroups'
 import { sendWeekPlanEmail } from '../../utils/email'
 import { KYIV_TZ, notifyUser } from '../../utils/notify'
@@ -24,11 +25,12 @@ export default defineEventHandler(async (event) => {
 
   let farmsQuery = supabase.from('farms').select('id, user_id, name, region, farm_crops(id, farm_id, crop_type, variety, catalog_id, planting_year)')
   if (onlyUser) farmsQuery = farmsQuery.eq('user_id', onlyUser)
-  const [{ data: farms, error }, { data: catalog }, { data: phases }, { data: optedOut }] = await Promise.all([
+  const [{ data: farms, error }, { data: catalog }, { data: phases }, { data: optedOut }, { data: varieties }] = await Promise.all([
     farmsQuery,
     supabase.from('crop_catalog').select('id, name, group_key').not('group_key', 'is', null),
     supabase.from('growth_phases').select('key, order_num, crop_groups').is('created_by', null).order('order_num'),
     supabase.from('notification_settings').select('user_id').eq('week_digest', false),
+    supabase.from('varieties').select('crop_type, name, ripening, harvest_from, harvest_to').not('ripening', 'is', null),
   ])
   if (error) throw createError({ statusCode: 500, message: error.message })
 
@@ -93,6 +95,7 @@ export default defineEventHandler(async (event) => {
         care: care.data || [],
         reminders: reminders.data || [],
         weather: region => weather.get(regionKey(region) ?? '') ?? { dd: null, fc: null },
+        varietyOf: c => findVariety(varieties || [], c.crop_type, c.variety),
         today,
         timeZone: KYIV_TZ,
         now,

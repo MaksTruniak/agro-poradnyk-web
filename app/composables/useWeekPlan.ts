@@ -4,6 +4,7 @@ import { regionKey } from '~~/shared/utils/regionCoords'
 import { addDays, type Forecast } from '~~/shared/utils/weatherRisks'
 import type { DegreeDays } from '~~/shared/utils/phaseEstimate'
 import { assemblePlan, type PlanItem } from '~~/shared/utils/weekPlan'
+import { findVariety } from '~~/shared/utils/ripening'
 import { seasonTips, TIP_REMINDER_TYPE, type SeasonTip, type TipCrop } from '~~/shared/utils/seasonTips'
 import { getActivePlan, isPaidFarmerPlan } from '~~/shared/utils/plan'
 
@@ -56,7 +57,8 @@ export function useWeekPlan() {
 
     const t = today.value
     const empty = Promise.resolve({ data: [] as any[] })
-    const [phasesRes, programsRes, journalRes, careRes, remindersRes, subRes, calendarRes] = await Promise.all([
+    const varietyNames = [...new Set(perennial.map(c => c.variety).filter(Boolean))] as string[]
+    const [phasesRes, programsRes, journalRes, careRes, remindersRes, subRes, calendarRes, varietiesRes] = await Promise.all([
       crops.value.length ? supabase.from('planting_phases').select('farm_crop_id, phase_key, observed_at')
         .in('farm_crop_id', crops.value.map(c => c.id)).order('observed_at', { ascending: false }).order('created_at', { ascending: false }) : empty,
       ids.length ? supabase.from('protection_programs')
@@ -73,6 +75,8 @@ export function useWeekPlan() {
       supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
       crops.value.length ? supabase.from('agro_calendar').select('id, crop_type, title, description, category, urgency')
         .eq('month', Number(t.slice(5, 7))) : empty,
+      varietyNames.length ? supabase.from('varieties').select('crop_type, name, ripening, harvest_from, harvest_to')
+        .in('name', varietyNames).not('ripening', 'is', null) : empty,
       weatherLoad,
     ])
     hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
@@ -89,6 +93,7 @@ export function useWeekPlan() {
       care: careRes.data || [],
       reminders: remindersRes.data || [],
       weather: region => weather[regionKey(region) ?? ''] ?? { dd: null, fc: null },
+      varietyOf: c => findVariety(varietiesRes.data || [], c.crop_type, c.variety),
       today: t,
     })
     items.value = plan.items

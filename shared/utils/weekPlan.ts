@@ -6,8 +6,9 @@ import { estimatePhase, effectivePhase, shouldSuggestPhase, samePhase, type Degr
 import { weatherRisks, RISK_ICONS, type Forecast } from './weatherRisks'
 import { activeWaiting, HARVEST_PHASES, type WaitingTreatment } from './waitingPeriod'
 import { careTasksDue } from './careTasks'
+import { formatWindow, harvestStatus, harvestWindow, type VarietyRipening } from './ripening'
 
-export type PlanKind = 'risk' | 'waiting' | 'treatment' | 'care' | 'phase' | 'reminder'
+export type PlanKind = 'risk' | 'waiting' | 'harvest' | 'treatment' | 'care' | 'phase' | 'reminder'
 
 export interface PlanItem {
   id: string
@@ -33,7 +34,7 @@ export interface PlanTreatment extends WaitingTreatment {
 }
 
 export interface PlanCropInput {
-  crop: { id: string; farm_id: string; crop_type: string; planting_year?: number | null }
+  crop: { id: string; farm_id: string; crop_type: string; variety?: string | null; planting_year?: number | null }
   group: string | null
   /** фази культури в порядку сезону (ключі growth_phases) */
   phases: string[]
@@ -44,10 +45,12 @@ export interface PlanCropInput {
   /** обробки з журналу, внесені вручну (для строку очікування) */
   journal?: WaitingTreatment[]
   careDone?: Set<string>
+  /** строк стиглості сорту з довідника */
+  variety?: VarietyRipening | null
 }
 
 const TYPE_LABEL: Record<string, string> = { захист: 'Обробка', підживлення: 'Підживлення', полив: 'Полив' }
-const KIND_ORDER: PlanKind[] = ['risk', 'waiting', 'reminder', 'treatment', 'phase', 'care']
+const KIND_ORDER: PlanKind[] = ['risk', 'waiting', 'reminder', 'harvest', 'treatment', 'phase', 'care']
 
 /** Поточна фаза й підказка для насадження */
 export function plantingNow(input: Pick<PlanCropInput, 'crop' | 'group' | 'phases' | 'current' | 'dd'>, now = new Date()) {
@@ -79,6 +82,17 @@ export function cropPlan(input: PlanCropInput, today: string, now = new Date()):
       ...base, id: `waiting:${crop.id}`, kind: 'waiting', priority: harvesting ? 'high' : 'normal', date: w.from,
       icon: '⏳', title: `Збір не раніше ${w.from.slice(8, 10)}.${w.from.slice(5, 7)}`,
       detail: `Строк очікування після обробки «${w.product}».${harvesting ? ' Насадження вже на фазі збору — до цієї дати не збирати і не продавати.' : ''}`,
+    })
+  }
+
+  // Збір за строком стиглості сорту: за 2 тижні до початку вікна і поки триває (не для насаджень без урожаю)
+  const hw = stage && !stage.fruiting ? null : harvestWindow(crop.crop_type, input.variety, Number(today.slice(0, 4)))
+  const hs = hw ? harvestStatus(hw, today) : null
+  if (hw && hs) {
+    items.push({
+      ...base, id: `harvest:${crop.id}`, kind: 'harvest', priority: 'normal', date: hs === 'now' ? hw.to : hw.from, icon: '🧺',
+      title: hs === 'now' ? `Збір${crop.variety ? ` «${crop.variety}»` : ''}: орієнтовно до ${hw.to.slice(8, 10)}.${hw.to.slice(5, 7)}` : `Скоро збір${crop.variety ? ` «${crop.variety}»` : ''}: орієнтовно з ${hw.from.slice(8, 10)}.${hw.from.slice(5, 7)}`,
+      detail: `${hw.label[0]!.toUpperCase()}${hw.label.slice(1)}, у середній рік ${formatWindow(hw)}. Підготуйте тару, працівників і збут; перевірте строк очікування після обробок.`,
     })
   }
 
@@ -123,7 +137,7 @@ export function sortPlan(items: PlanItem[]) {
 
 export interface AssembleInput {
   /** усі культури господарства; план — лише для багаторічних (groupOf → багаторічна група) */
-  crops: { id: string; farm_id: string; crop_type: string; planting_year?: number | null; catalog_id?: string | null }[]
+  crops: { id: string; farm_id: string; crop_type: string; variety?: string | null; planting_year?: number | null; catalog_id?: string | null }[]
   farmRegion: (farmId: string) => string | null
   groupOf: (crop: AssembleInput['crops'][number]) => string | null
   isPerennial: (group: string | null) => boolean
@@ -134,6 +148,8 @@ export interface AssembleInput {
   journal: { farm_id: string; crop_type: string | null; product_name: string; treatment_date: string; waiting_days: number | null }[]
   care: { farm_crop_id: string; task_key: string; period: string }[]
   reminders: { id: string; description: string; scheduled_date: string; farm_id: string | null; farm_crop_id: string | null }[]
+  /** строк стиглості сорту культури (довідник сортів) */
+  varietyOf?: (crop: AssembleInput['crops'][number]) => VarietyRipening | null
   weather: (region: string | null) => { dd: DegreeDays | null; fc: (Forecast & { today?: string }) | null }
   today: string
   /** часовий пояс для дат нагадувань (на сервері — Europe/Kyiv) */
@@ -166,6 +182,7 @@ export function assemblePlan(a: AssembleInput) {
         .filter(j => j.farm_id === crop.farm_id && j.crop_type && crop.crop_type.startsWith(j.crop_type.split(' (')[0]!))
         .map(j => ({ product_name: j.product_name, status: 'done', done_at: j.treatment_date, waiting_days: j.waiting_days })),
       careDone: new Set(a.care.filter(c => c.farm_crop_id === crop.id).map(c => `${c.task_key}:${c.period}`)),
+      variety: a.varietyOf?.(crop) ?? null,
     }
     out.push(...cropPlan(input, w.fc?.today ?? a.today, a.now))
     const now = plantingNow(input, a.now)

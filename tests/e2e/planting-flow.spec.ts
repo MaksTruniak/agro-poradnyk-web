@@ -5,6 +5,7 @@ import { plantingStage, phasesForStage } from '../../shared/utils/plantingStage'
 import { plantingNow } from '../../shared/utils/weekPlan'
 import { careTasksDue } from '../../shared/utils/careTasks'
 import { addDays } from '../../shared/utils/weatherRisks'
+import { formatWindow } from '../../shared/utils/ripening'
 import type { Page } from '@playwright/test'
 
 // Багаторічні насадження: параметри насадження і журнал фенофаз на сторінці поля.
@@ -542,5 +543,38 @@ test.describe('Насадження і фенофази', () => {
     await expect(modal.locator('[data-test="tm-result"]')).toContainText('≈ 45 г на рослину (6667 шт)')
     await expect(modal.locator('[data-test="tm-tank"]')).toHaveCount(0)
     await expectNoErrors(errors, 'калькуляторі розчину')
+  })
+
+  test('строк стиглості сорту: вікно збору на картці й у плані; фермер строків не задає', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const admin = serviceClient()
+    const today = new Date().toLocaleDateString('sv-SE')
+    const from = addDays(today, 7), to = addDays(today, 20)
+    test.skip(from.slice(0, 4) !== to.slice(0, 4), 'вікно через Новий рік')
+    const name = `${TAG} сорт`
+    const { data: v, error } = await admin.from('varieties')
+      .insert({ crop_type: 'Лохина', name, ripening: 'mid', harvest_from: from.slice(5), harvest_to: to.slice(5) }).select('id').single()
+    expect(error, 'потрібна міграція 20261023_variety_ripening.sql').toBeNull()
+    try {
+      await farmer.client.from('farm_crops').update({ variety: name }).eq('id', cropId)
+      // Фермер може додати сорт, але строки стиглості база обнуляє
+      const { data: own } = await farmer.client.from('varieties')
+        .insert({ crop_type: 'Лохина', name: `${TAG} свій`, ripening: 'early', harvest_from: '06-01', harvest_to: '06-10' }).select('id, ripening, harvest_from').single()
+      expect(own).toMatchObject({ ripening: null, harvest_from: null })
+      await admin.from('varieties').delete().eq('id', own!.id)
+
+      const errors = collectErrors(page)
+      await login(page, 'farmer')
+      await page.goto(`/dashboard/farm/${farmId}`)
+      await expect(page.locator('[data-test="harvest-window"]')).toContainText(`Збір ~${formatWindow({ from, to })} · середній сорт`)
+
+      await page.goto('/dashboard/week')
+      const section = page.locator('section').filter({ has: page.getByRole('heading', { name: TAG, exact: true }) })
+      await expect(section.locator('[data-kind="harvest"]')).toContainText(`Скоро збір «${name}»: орієнтовно з ${ddmm(from)}`)
+      await expectNoErrors(errors, 'вікні збору сорту')
+    } finally {
+      await farmer.client.from('farm_crops').update({ variety: null }).eq('id', cropId)
+      await admin.from('varieties').delete().eq('id', v?.id ?? '00000000-0000-0000-0000-000000000000')
+    }
   })
 })

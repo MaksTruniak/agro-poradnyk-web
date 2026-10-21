@@ -199,3 +199,33 @@ describe('щотижневий лист: однаковий догляд', () =>
     expect(many.lines[0]!.meta).toBe('Полуниця, Смородина, Лохина і ще 1 · до 31.10')
   })
 })
+
+describe('строк стиглості сорту', () => {
+  it('вікно з групи стиглості, точні дати сорту, невідома культура', async () => {
+    const { harvestWindow, harvestStatus, formatWindow, sameCropFamily } = await import('../../shared/utils/ripening')
+    const w = harvestWindow('Лохина', { ripening: 'mid' }, 2026)!
+    expect(w).toMatchObject({ from: '2026-07-05', to: '2026-07-30', label: 'середній сорт' })
+    expect(formatWindow(w)).toBe('05–30.07')
+    expect(harvestWindow('Лохина', { ripening: 'late', harvest_from: '08-01', harvest_to: '08-20' }, 2026)).toMatchObject({ from: '2026-08-01', label: 'пізній сорт' })
+    expect(harvestWindow('Ківі', { ripening: 'mid' }, 2026)).toBeNull()
+    expect(harvestWindow('Лохина', { ripening: null }, 2026)).toBeNull()
+    expect(harvestStatus(w, '2026-06-22')).toBe('soon')
+    expect(harvestStatus(w, '2026-06-10')).toBeNull()
+    expect(harvestStatus(w, '2026-07-10')).toBe('now')
+    expect(harvestStatus(w, '2026-08-01')).toBeNull()
+    expect(sameCropFamily('Яблука', 'Яблуня')).toBe(true)
+    expect(sameCropFamily('Виноград', 'Виноград технічний')).toBe(true)
+    expect(sameCropFamily('Смородина чорна', 'Смородина червона')).toBe(true)
+  })
+
+  it('у плані: «скоро збір» за 2 тижні; молоде насадження без урожаю — ні', () => {
+    const input = (planting_year: number) => ({
+      crop: { id: 'c', farm_id: 'f', crop_type: 'Лохина', variety: 'Блюкроп', planting_year },
+      group: 'berry_shrub', phases: ['Цвітіння'], current: null, dd: null, forecast: null, program: [],
+      variety: { ripening: 'mid' },
+    })
+    const items = cropPlan(input(2018), '2026-06-25', new Date('2026-06-25T12:00:00'))
+    expect(items.find(i => i.kind === 'harvest')).toMatchObject({ title: 'Скоро збір «Блюкроп»: орієнтовно з 05.07', date: '2026-07-05' })
+    expect(cropPlan(input(2026), '2026-06-25', new Date('2026-06-25T12:00:00')).find(i => i.kind === 'harvest')).toBeUndefined()
+  })
+})
