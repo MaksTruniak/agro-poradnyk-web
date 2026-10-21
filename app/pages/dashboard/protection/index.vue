@@ -1,6 +1,6 @@
 <template>
   <div class="dash-page">
-    <div class="dash-head">
+    <div class="dash-head tc-head">
       <NuxtLink to="/dashboard/fields" class="dash-icon-box shrink-0 hover:bg-agro-hover transition-colors">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       </NuxtLink>
@@ -8,6 +8,7 @@
         <h1 class="dash-title bitter">Технічна карта</h1>
         <p class="dash-subtitle">{{ cropType || 'Програми захисту культур' }}</p>
       </div>
+      <div class="tc-actions">
       <button v-if="program && !isViewer" @click="generateCard" :disabled="generating || !hasPaidPlan" class="dash-btn-outline shrink-0 flex items-center gap-1.5" :title="!hasPaidPlan ? 'Доступно на тарифі Бізнес' : ''" :class="!hasPaidPlan ? 'opacity-40 cursor-not-allowed' : ''">
         <svg v-if="!generating" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/>
@@ -27,6 +28,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         PDF
       </button>
+      </div>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -1039,6 +1041,12 @@ const addToCart = async (items: any[]) => {
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
 .dash-btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1.5px solid rgb(47,82,51); color: rgb(47,82,51); font-size: 13px; font-weight: 700; background: transparent; cursor: pointer; transition: background 0.15s; }
 .dash-btn-outline:hover { background: rgb(238,241,227); }
+.tc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .tc-head { flex-wrap: wrap; }
+  .tc-actions { width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .tc-actions > * { height: 36px; padding: 0 12px; font-size: 13px; }
+}
 .tm-open { white-space: nowrap; margin-left: 6px; padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; color: rgb(47,82,51); background: rgb(238,241,227); }
 .tm-open:hover { background: rgb(222,230,205); }
 </style>
