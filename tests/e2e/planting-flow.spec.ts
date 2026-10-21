@@ -484,8 +484,9 @@ test.describe('Насадження і фенофази', () => {
       await toggle.uncheck()
       await expect.poll(async () => (await admin.from('notification_settings').select('week_digest').eq('user_id', farmer.userId).maybeSingle()).data)
         .toEqual({ week_digest: false })
+      expect(on.users[0].email).toBe(true)
       const off = await (await request.get(url, { headers: auth })).json()
-      expect(off.users, 'лист зібрано попри вимкнення').toEqual([])
+      expect(off.users[0]?.email, 'лист надсилається попри вимкнення').toBe(false)
 
       // Чужі налаштування не видно і не змінити
       const stranger = await asUser('buyer')

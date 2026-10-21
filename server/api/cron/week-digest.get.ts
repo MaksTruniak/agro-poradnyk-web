@@ -5,9 +5,11 @@ import { assemblePlan, planDigest } from '../../../shared/utils/weekPlan'
 import { guessCropGroup, isPerennialGroup } from '../../../app/utils/cropGroups'
 import { sendWeekPlanEmail } from '../../utils/email'
 import { KYIV_TZ, notifyUser } from '../../utils/notify'
+import { notifyTelegram, SITE_URL, tgEscape } from '../../utils/telegram'
 
 // Щопонеділка: план на тиждень по багаторічних насадженнях — лист і сповіщення в кабінет.
-// Той самий план, що на сторінці /dashboard/week (assemblePlan). Хто вимкнув у налаштуваннях — не отримує.
+// Той самий план, що на сторінці /dashboard/week (assemblePlan). Лист вимикається в налаштуваннях (week_digest),
+// Telegram — окремо (tg_week_plan).
 // ?dry=1 — нічого не надсилати, повернути рядки листа; ?user=<uuid> — лише для одного власника.
 export default defineEventHandler(async (event) => {
   if (getHeader(event, 'authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -35,12 +37,11 @@ export default defineEventHandler(async (event) => {
   const groupOf = (c: any): string | null => (c.catalog_id && byId.get(c.catalog_id)) || byName.get(c.crop_type.toLowerCase().trim()) || guessCropGroup(c.crop_type)
   const phasesOf = (_c: any, group: string | null) => (phases || [])
     .filter((p: any) => !p.crop_groups?.length || (group && p.crop_groups.includes(group))).map((p: any) => p.key as string)
-  const skip = new Set((optedOut || []).map((r: any) => r.user_id))
+  const noEmail = new Set((optedOut || []).map((r: any) => r.user_id))
 
   // Власники з багаторічними насадженнями
   const owners = new Map<string, any[]>()
   for (const f of farms || []) {
-    if (skip.has(f.user_id)) continue
     if (!(f.farm_crops || []).some((c: any) => isPerennialGroup(groupOf(c)))) continue
     owners.set(f.user_id, [...(owners.get(f.user_id) ?? []), f])
   }
@@ -57,8 +58,9 @@ export default defineEventHandler(async (event) => {
     return weather.get(key)!
   }
 
-  const report: { userId: string; lines: unknown[]; more: number }[] = []
+  const report: { userId: string; email: boolean; lines: unknown[]; more: number }[] = []
   let emails = 0
+  let telegrams = 0
   for (const [userId, userFarms] of owners) {
     try {
       const crops = userFarms.flatMap((f: any) => f.farm_crops || [])
@@ -101,7 +103,7 @@ export default defineEventHandler(async (event) => {
         return c ? `${c.crop_type}${c.variety ? ` (${c.variety})` : ''}` : null
       }
       const digest = planDigest(plan.items, { crop: cropName, farm: id => userFarms.find((f: any) => f.id === id)?.name ?? null })
-      if (dry) { report.push({ userId, lines: digest.lines, more: digest.more }); continue }
+      if (dry) { report.push({ userId, email: !noEmail.has(userId), lines: digest.lines, more: digest.more }); continue }
 
       await notifyUser(supabase, userId, {
         type: 'week_plan',
@@ -109,6 +111,15 @@ export default defineEventHandler(async (event) => {
         body: digest.lines.slice(0, 5).map(l => `${l.icon} ${l.title}${l.meta ? ` — ${l.meta}` : ''}`).join('\n'),
       }).catch(e => console.error('[week-digest cron] notification', userId, e))
 
+      const tg = [
+        `🗓️ <b>План на тиждень</b>${digest.urgent ? ` — ${digest.urgent} терміново` : ''}`,
+        '',
+        ...digest.lines.map(l => `${l.icon} ${l.urgent ? '<b>' : ''}${tgEscape(l.title)}${l.urgent ? '</b>' : ''}${l.meta ? `\n     <i>${tgEscape(l.meta)}</i>` : ''}`),
+        ...(digest.more ? ['', `І ще ${digest.more} — у повному плані.`] : []),
+      ].join('\n')
+      if (await notifyTelegram(supabase, userId, 'week_plan', tg, { text: 'Відкрити план', url: `${SITE_URL}/dashboard/week` })) telegrams++
+
+      if (noEmail.has(userId)) continue
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue
       const name = userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
@@ -118,5 +129,5 @@ export default defineEventHandler(async (event) => {
       console.error('[week-digest cron]', userId, e)
     }
   }
-  return dry ? { ok: true, today, users: report } : { ok: true, users: owners.size, emails }
+  return dry ? { ok: true, today, users: report } : { ok: true, users: owners.size, emails, telegrams }
 })

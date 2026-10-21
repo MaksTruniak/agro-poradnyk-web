@@ -6,6 +6,7 @@ import { weatherRisks, RISK_ICONS, type WeatherRisk } from '../../../shared/util
 import { guessCropGroup, isPerennialGroup } from '../../../app/utils/cropGroups'
 import { sendWeatherRiskEmail } from '../../utils/email'
 import { notifyUser } from '../../utils/notify'
+import { notifyTelegram, SITE_URL, tgEscape } from '../../utils/telegram'
 
 // Щоранку: заморозки на чутливих фазах і погода для інфекцій по багаторічних насадженнях.
 // Сповіщення в кабінет — про високі ризики; лист — лише про сильний заморозок у прогнозі (раз на ту саму ніч).
@@ -92,6 +93,10 @@ export default defineEventHandler(async (event) => {
       console.error('[weather-risks cron] notification', userId, e)
     }
     if (!freshFrost.length) continue
+    const farmLink = `${SITE_URL}/dashboard/${u.farmIds.size === 1 ? `farm/${[...u.farmIds][0]}` : 'fields'}`
+    await notifyTelegram(supabase, userId, 'frost',
+      `❄️ <b>Загроза заморозку для насаджень</b>\n\n${freshFrost.map(f => tgEscape(f.line)).join('\n\n')}\n\n<i>Прогноз для центру області; у низинах і біля ґрунту холодніше.</i>`,
+      { text: 'Відкрити поле', url: farmLink })
     try {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue

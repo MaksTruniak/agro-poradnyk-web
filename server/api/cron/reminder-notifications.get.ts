@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendReminderEmail } from '../../utils/email'
 import { KYIV_TZ, kyivDayBounds, notifyUser } from '../../utils/notify'
+import { notifyTelegram, SITE_URL, tgEscape } from '../../utils/telegram'
 
 export default defineEventHandler(async (event) => {
   const authHeader = getHeader(event, 'authorization')
@@ -46,6 +47,9 @@ export default defineEventHandler(async (event) => {
     } catch (e) {
       console.error('[cron] reminder notification (cabinet) error', userId, e)
     }
+    await notifyTelegram(supabase, userId, 'reminders',
+      `🔔 <b>Нагадування на сьогодні</b>\n\n${userReminders.map(r => `${kyivTime(r.scheduled_date)} — ${tgEscape(r.description)}`).join('\n')}`,
+      { text: 'Відкрити нагадування', url: `${SITE_URL}/dashboard/reminders` })
     try {
       const { data: userData } = await supabase.auth.admin.getUserById(userId)
       if (!userData?.user?.email) continue

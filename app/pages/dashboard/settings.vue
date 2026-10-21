@@ -153,6 +153,39 @@
         </label>
       </div>
 
+      <!-- Telegram -->
+      <div v-if="isFarmer" id="telegram" class="card" data-test="telegram-card">
+        <h2 class="dash-card-title bitter mb-1">Telegram</h2>
+        <template v-if="tgLink">
+          <p class="text-sm text-agro-dark mb-4">
+            ✅ Підключено{{ tgLink.username ? ` — @${tgLink.username}` : '' }}. Повідомлення надсилає бот
+            <a :href="`https://t.me/${TELEGRAM_BOT}`" target="_blank" rel="noopener" class="text-agro hover:underline">@{{ TELEGRAM_BOT }}</a>.
+          </p>
+          <div class="space-y-3 mb-4">
+            <label v-for="o in TG_OPTIONS" :key="o.key" class="flex items-start gap-3 cursor-pointer">
+              <input v-model="tgPrefs[o.key]" type="checkbox" class="mt-1 accent-agro" :data-test="`tg-${o.key}`" @change="saveTgPref(o.key)">
+              <span>
+                <span class="block text-sm font-semibold text-agro-dark">{{ o.label }}</span>
+                <span class="block text-xs text-agro-light mt-0.5">{{ o.hint }}</span>
+              </span>
+            </label>
+          </div>
+          <button type="button" class="btn-outline text-sm" :disabled="tgBusy" data-test="tg-unlink" @click="unlinkTelegram">Відключити Telegram</button>
+        </template>
+        <template v-else>
+          <p class="text-sm text-agro-light mb-4">
+            План на тиждень, попередження про сильний заморозок і нагадування на день — у Telegram, поруч з іншими чатами.
+          </p>
+          <button type="button" class="btn-primary text-sm" :disabled="tgBusy" data-test="tg-link" @click="linkTelegram">
+            {{ tgWaiting ? 'Чекаємо підтвердження в Telegram…' : 'Підключити Telegram' }}
+          </button>
+          <p v-if="tgWaiting" class="text-xs text-agro-light mt-2">
+            У Telegram натисніть «Запустити» (Start). Не відкрилось?
+            <a :href="tgUrl" target="_blank" rel="noopener" class="text-agro hover:underline">Відкрити бота</a>
+          </p>
+        </template>
+      </div>
+
       <!-- Зміна пароля -->
       <div class="card">
         <h2 class="dash-card-title bitter mb-5">Зміна пароля</h2>
@@ -406,12 +439,72 @@ const isAgronomist = computed(() => role.value === 'agronomist' || userRoles.val
 const isSeller = computed(() => role.value === 'seller')
 const isFarmer = computed(() => role.value === 'farmer' || userRoles.value.includes('farmer'))
 
-// Щотижневий лист: рядка немає — лист увімкнено
+// Щотижневий лист і Telegram: рядка немає — усе увімкнено
 const weekDigest = ref(true)
 const savingDigest = ref(false)
+const TELEGRAM_BOT = 'agroprostir_bot'
+type TgKey = 'tg_week_plan' | 'tg_frost' | 'tg_reminders'
+const TG_OPTIONS: { key: TgKey; label: string; hint: string }[] = [
+  { key: 'tg_week_plan', label: 'План на тиждень', hint: 'Щопонеділка вранці' },
+  { key: 'tg_frost', label: 'Загроза заморозку', hint: 'Коли за прогнозом сильний заморозок на чутливій фазі' },
+  { key: 'tg_reminders', label: 'Нагадування на день', hint: 'Щоранку, якщо на сьогодні є нагадування' },
+]
+const tgPrefs = reactive<Record<TgKey, boolean>>({ tg_week_plan: true, tg_frost: true, tg_reminders: true })
+const tgLink = ref<{ username: string | null } | null>(null)
+const tgBusy = ref(false)
+const tgWaiting = ref(false)
+const tgUrl = ref('')
 if (uid) {
-  const { data: ns } = await (supabase as any).from('notification_settings').select('week_digest').eq('user_id', uid).maybeSingle()
+  const [{ data: ns }, { data: link }] = await Promise.all([
+    (supabase as any).from('notification_settings').select('week_digest, tg_week_plan, tg_frost, tg_reminders').eq('user_id', uid).maybeSingle(),
+    (supabase as any).from('telegram_links').select('username').eq('user_id', uid).maybeSingle(),
+  ])
   weekDigest.value = ns?.week_digest ?? true
+  for (const o of TG_OPTIONS) tgPrefs[o.key] = ns?.[o.key] ?? true
+  tgLink.value = link ?? null
+}
+
+const authHeader = useAuthHeader()
+let tgPoll: ReturnType<typeof setInterval> | null = null
+const stopTgPoll = () => { if (tgPoll) clearInterval(tgPoll); tgPoll = null }
+onBeforeUnmount(stopTgPoll)
+
+const linkTelegram = async () => {
+  // Вікно відкриваємо одразу (у межах кліку), інакше браузер його заблокує
+  const win = window.open('', '_blank')
+  tgBusy.value = true
+  try {
+    const { url } = await $fetch<{ url: string }>('/api/telegram/link', { method: 'POST', headers: await authHeader() })
+    tgUrl.value = url
+    if (win) win.location.href = url
+    tgWaiting.value = true
+    const started = Date.now()
+    stopTgPoll()
+    tgPoll = setInterval(async () => {
+      const { data } = await (supabase as any).from('telegram_links').select('username').eq('user_id', uid).maybeSingle()
+      if (data) { tgLink.value = data; tgWaiting.value = false; stopTgPoll() }
+      else if (Date.now() - started > 15 * 60 * 1000) { tgWaiting.value = false; stopTgPoll() }
+    }, 3000)
+  } catch (e: any) {
+    win?.close()
+    showError(e?.data?.message || 'Не вдалося підключити Telegram')
+  } finally {
+    tgBusy.value = false
+  }
+}
+
+const unlinkTelegram = async () => {
+  tgBusy.value = true
+  const { error } = await (supabase as any).from('telegram_links').delete().eq('user_id', uid)
+  tgBusy.value = false
+  if (error) showError('Не вдалося відключити')
+  else tgLink.value = null
+}
+
+const saveTgPref = async (key: TgKey) => {
+  const { error } = await (supabase as any).from('notification_settings')
+    .upsert({ user_id: uid, [key]: tgPrefs[key], updated_at: new Date().toISOString() })
+  if (error) { tgPrefs[key] = !tgPrefs[key]; showError('Не вдалося зберегти') }
 }
 const saveDigest = async () => {
   if (!uid) return
