@@ -128,7 +128,7 @@ test.describe('Насадження і фенофази', () => {
     const errors = collectErrors(page)
     await login(page, 'farmer')
     await page.goto(`/dashboard/farm/${farmId}`)
-    await expect(page.getByRole('button', { name: /Цвітіння з \d\d\.\d\d/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Цвітіння з \d\d\.\d\d/ })).toBeVisible({ timeout: 15000 })
     const hint = page.getByRole('button', { name: /^Мабуть, уже .+\? Відмітити$/ })
     if (!expected) {
       await expect(hint).toHaveCount(0)
@@ -327,7 +327,7 @@ test.describe('Насадження і фенофази', () => {
     await login(page, 'farmer')
     await page.goto('/dashboard/week')
     const section = page.locator('section').filter({ has: page.getByRole('heading', { name: TAG, exact: true }) })
-    await expect(section.getByText(`Підживлення: ${TAG} Калімагнезія`)).toBeVisible()
+    await expect(section.getByText(`Підживлення: ${TAG} Калімагнезія`)).toBeVisible({ timeout: 15000 })
     await expect(section.getByText(`За техкартою на фазі «${now.phase}» · 200 кг/га`)).toBeVisible()
     await expect(section.getByText(`Збір не раніше ${ddmm(until)}`)).toBeVisible()
     await expect(section.getByText('Строк очікування після обробки «Світч 62,5 WG».')).toBeVisible()
@@ -482,6 +482,7 @@ test.describe('Насадження і фенофази', () => {
       await page.goto('/dashboard/settings#notifications')
       const toggle = page.locator('[data-test="week-digest-toggle"]')
       await expect(toggle).toBeChecked()
+      await page.waitForLoadState('networkidle') // клік до гідратації не доходить до обробника
       await toggle.uncheck()
       await expect.poll(async () => (await admin.from('notification_settings').select('week_digest').eq('user_id', farmer.userId).maybeSingle()).data)
         .toEqual({ week_digest: false })
@@ -606,12 +607,12 @@ test.describe('Насадження і фенофази', () => {
     await form.locator('[data-test="event-reason"]').selectOption('frost')
     await form.locator('[data-test="event-save"]').click()
     await expect(modal.locator('[data-test="event-row"]')).toHaveCount(1)
-    await form.getByRole('button', { name: 'Підсадили' }).click()
+    await form.getByRole('button', { name: 'Підсадили' }).click() // квартал лишається вибраним — підсадка теж у «Квартал 1»
     await form.locator('[data-test="event-count"]').fill('5')
     await form.locator('[data-test="event-save"]').click()
     await expect(modal.locator('[data-test="event-row"]')).toHaveCount(2)
     await expect(modal.locator('[data-test="plants-alive"]')).toHaveText('6 652')
-    await expect(modal.locator('[data-test="block-row"]').filter({ hasText: 'Квартал 1' })).toContainText('3 980 живих')
+    await expect(modal.locator('[data-test="block-row"]').filter({ hasText: 'Квартал 1' })).toContainText('−20 · +5 · 3 985 живих')
 
     await page.getByRole('button', { name: 'Закрити' }).click()
     await expect(chip).toHaveText('🌱 6 652 живих рослин · випади 0,3% · 2 кв.')

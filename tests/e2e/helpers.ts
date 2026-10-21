@@ -70,6 +70,8 @@ export function collectErrors(page: Page) {
   page.on('pageerror', e => errors.push(`JS: ${String(e).slice(0, 300)}`))
   page.on('console', m => {
     const t = m.text()
+    // Скрипти аналітики Vercel існують лише на Vercel — у локальній продакшн-збірці їх немає
+    if (/\/_vercel\/(speed-)?insights\//.test(t)) return
     if (m.type() === 'error' && /Content Security Policy|Refused to|is not defined|Cannot read prop/i.test(t)) {
       errors.push(`console: ${t.slice(0, 300)}`)
     }
