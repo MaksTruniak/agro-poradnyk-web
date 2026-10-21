@@ -65,6 +65,7 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
 | `shared/utils/careTasks.ts` | сезонний догляд (обрізка, побілка, укриття…) — 1:1 з `tests/unit/care-plan.test.ts` |
 | `shared/utils/plantingYield.ts` | урожай, т/га, собівартість, виручка по роках — 1:1 з `tests/unit/care-plan.test.ts` |
 | `shared/utils/weekPlan.ts` | пункти плану на тиждень по насадженню (`cropPlan`, `sortPlan`, `plantingNow`) — 1:1 з `tests/unit/care-plan.test.ts` |
+| `shared/utils/tankMix.ts` | калькулятор робочого розчину в техкарті: розбір норми (`parseDosage`: л/га, діапазон, «мл на 10 л води», «г на кущ», витрата води в дужках), заправки (`tankMix`), формат (`formatAmount`), типова витрата л/га за групою — 1:1 з `tests/unit/tank-mix.test.ts`. У застосунку — кнопка «🧮 Розрахувати розчин» біля норми й нижній лист з тими самими полями; ≥ 20 кг/га сухого добрива без витрати води — режим «внесення» (лише всього і на рослину); об’єм бака запам’ятовується на пристрої |
 | `shared/utils/seasonTips.ts` | поради на цей час для плану: `phase_tips` за поточною фазою + `agro_calendar` місяця (`seasonTips`, `calendarCropMatches`) — 1:1 з `tests/unit/season-tips.test.ts` |
 | `app/composables/useWeekPlan.ts`, `app/pages/dashboard/week.vue`, `app/components/dashboard/WeekPlanRow.vue` | екран «План на тиждень» |
 | `supabase/migrations/20261020_care_yields.sql` | `planting_care_log`, `planting_yields`, `field_treatments.waiting_days` |

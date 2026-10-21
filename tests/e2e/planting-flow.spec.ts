@@ -500,4 +500,47 @@ test.describe('Насадження і фенофази', () => {
       if (before) await admin.from('notification_settings').insert({ user_id: farmer.userId, week_digest: before.week_digest })
     }
   })
+
+  test('калькулятор робочого розчину в техкарті', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const admin = serviceClient()
+    const { data: program } = await admin.from('protection_programs').select('id').eq('farm_crop_id', cropId).single()
+    const { error } = await farmer.client.from('program_treatments').insert([
+      { program_id: program!.id, phase: 'Цвітіння', type: 'захист', product_name: `${TAG} Свіч`, dosage: '0.3 л/га', status: 'planned' },
+      { program_id: program!.id, phase: 'Цвітіння', type: 'підживлення', product_name: `${TAG} Гранули`, dosage: '20 г на кущ', status: 'planned' },
+      { program_id: program!.id, phase: 'Цвітіння', type: 'захист', product_name: `${TAG} Без норми`, dosage: 'за етикеткою', status: 'planned' },
+      { program_id: program!.id, phase: 'Цвітіння', type: 'підживлення', product_name: `${TAG} Сульфат калію`, dosage: '150 кг/га', status: 'planned' },
+    ])
+    expect(error).toBeNull()
+
+    const errors = collectErrors(page)
+    await login(page, 'farmer')
+    await page.addInitScript(() => { try { localStorage.removeItem('agro_tank_l') } catch {} })
+    await page.goto(`/dashboard/protection?farmCropId=${cropId}&cropType=${encodeURIComponent('Лохина')}`)
+    const row = (name: string) => page.locator('div.flex.items-start.gap-3').filter({ hasText: name })
+    await expect(row(`${TAG} Без норми`).locator('[data-test="tank-mix-open"]')).toHaveCount(0)
+
+    await row(`${TAG} Свіч`).locator('[data-test="tank-mix-open"]').click()
+    const modal = page.locator('[data-test="tank-mix-modal"]')
+    await expect(modal.locator('[data-test="tm-area"]')).toHaveValue('2')
+    await expect(modal.locator('[data-test="tm-water"]')).toHaveValue('500') // лохина — типово 500 л/га
+    await modal.locator('[data-test="tm-tank"]').fill('400')
+    await expect(modal.locator('[data-test="tm-total"]')).toHaveText('600 мл')
+    await expect(modal.locator('[data-test="tm-per-tank"]')).toContainText('2 повні заправки по 400 л — 240 мл препарату в кожну')
+    await expect(modal.locator('[data-test="tm-last-tank"]')).toContainText('Остання заправка — 200 л розчину, 120 мл препарату')
+    await modal.getByRole('button', { name: 'Закрити' }).click()
+
+    await row(`${TAG} Гранули`).locator('[data-test="tank-mix-open"]').click()
+    await expect(modal.locator('[data-test="tm-plants"]')).toHaveValue('6667')
+    await expect(modal.locator('[data-test="tm-result"]')).toContainText('133 кг')
+    await modal.getByRole('button', { name: 'Закрити' }).click()
+
+    // 150 кг/га сухого добрива — внесення в ґрунт: лише скільки всього і на рослину
+    await row(`${TAG} Сульфат калію`).locator('[data-test="tank-mix-open"]').click()
+    await expect(modal.locator('[data-test="tm-spray"]')).not.toBeChecked()
+    await expect(modal.locator('[data-test="tm-total"]')).toHaveText('300 кг')
+    await expect(modal.locator('[data-test="tm-result"]')).toContainText('≈ 45 г на рослину (6667 шт)')
+    await expect(modal.locator('[data-test="tm-tank"]')).toHaveCount(0)
+    await expectNoErrors(errors, 'калькуляторі розчину')
+  })
 })

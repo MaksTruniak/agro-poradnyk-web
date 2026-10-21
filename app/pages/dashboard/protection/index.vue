@@ -100,9 +100,13 @@
                     </button>
                   </div>
                   <p class="font-semibold text-agro-dark mt-1 text-sm" :class="{ 'line-through opacity-50': t.status === 'missed' }">{{ t.product_name }}</p>
-                  <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5 flex items-center gap-1">
+                  <p v-if="t.dosage" class="text-xs text-agro-light mt-0.5 flex flex-wrap items-center gap-1">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4"/></svg>
                     {{ t.dosage }}
+                    <button v-if="t.type !== 'полив' && parseDosage(t.dosage)" type="button" class="tm-open" data-test="tank-mix-open"
+                      title="Скільки препарату й води на площу і на кожну заправку" @click="tankMixFor = t">
+                      🧮 Розрахувати розчин
+                    </button>
                   </p>
                   <p v-if="t.notes" class="text-xs text-agro-light mt-0.5 italic">{{ t.notes }}</p>
                   <DashboardTreatmentWaiting v-if="t.type !== 'полив'" :t="t" :read-only="isViewer" />
@@ -239,6 +243,11 @@
       </template>
     </div>
   </div>
+
+  <!-- Калькулятор робочого розчину -->
+  <DashboardTankMixModal v-if="tankMixFor" :product="tankMixFor.product_name" :dosage="tankMixFor.dosage"
+    :area-ha="farmInfo?.area_ha ?? null" :plants-count="farmCrop?.plants_count ?? null" :group="growthPhases.groupForCrop(cropType)"
+    @close="tankMixFor = null" />
 
   <!-- Модал нагадування -->
   <Teleport to="body">
@@ -395,6 +404,7 @@ import { Trash2, X, Bell } from 'lucide-vue-next'
 import { TREATMENT_TYPES, TYPE_SVG, TYPE_BG, TYPE_BADGE } from '~/utils/treatmentTypes'
 import { phaseIcon } from '~/utils/phaseIcons'
 import { plantingSummary } from '~/utils/planting'
+import { parseDosage } from '~~/shared/utils/tankMix'
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Технічні карти — АгроПростір' })
 
@@ -417,6 +427,7 @@ const savingPhase = ref<string | null>(null)
 const program = ref<any>(null)
 const treatments = ref<any[]>([])
 const growthPhases = useGrowthPhases()
+const tankMixFor = ref<any>(null)
 const allPhases = growthPhases.allPhases
 const phases = ref<any[]>([])
 const currentPhaseKey = ref<string | null>(null)
@@ -1028,4 +1039,6 @@ const addToCart = async (items: any[]) => {
 .dash-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: rgb(238,241,227); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
 .dash-btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1.5px solid rgb(47,82,51); color: rgb(47,82,51); font-size: 13px; font-weight: 700; background: transparent; cursor: pointer; transition: background 0.15s; }
 .dash-btn-outline:hover { background: rgb(238,241,227); }
+.tm-open { white-space: nowrap; margin-left: 6px; padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; color: rgb(47,82,51); background: rgb(238,241,227); }
+.tm-open:hover { background: rgb(222,230,205); }
 </style>
