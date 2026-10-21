@@ -312,6 +312,12 @@ test.describe('Насадження і фенофази', () => {
       program_id: program!.id, phase: now.phase, type: 'підживлення', product_name: `${TAG} Калімагнезія`, dosage: '200 кг/га', status: 'planned',
     })
     expect(error).toBeNull()
+    // Опублікована порада на поточній фазі — тепер у плані, а не в нагадуваннях
+    const { data: tip, error: tipErr } = await admin.from('phase_tips').insert({
+      crop_group: 'berry_shrub', phase_key: now.phase, title: `${TAG} порада плану`, description: 'E2E', category: 'nutrition', urgency: 'high', is_published: true,
+    }).select('id').single()
+    expect(tipErr).toBeNull()
+    tipIds.push(tip!.id)
     const care = careTasksDue({ group: 'berry_shrub', cropType: 'Лохина', phaseKey: now.phase, stage: plantingStage('berry_shrub', 2021), today })
     const until = addDays(today, 14)
 
@@ -335,6 +341,19 @@ test.describe('Насадження і фенофази', () => {
     const { data: rem } = await admin.from('reminders').select('description, type, farm_id, user_id').eq('farm_crop_id', cropId)
     expect(rem).toEqual([{ description: `Підживлення: ${TAG} Калімагнезія — Лохина`, type: 'обробка', farm_id: farmId, user_id: farmer.userId }])
 
+    const tips = page.locator('[data-test="week-tips"]')
+    if (await tips.isVisible()) {
+      // В акаунті можуть бути й інші насадження на цій фазі — беремо рядок тестового поля
+      const row = tips.locator('[data-source="phase"]').filter({ hasText: `${TAG} порада плану` }).filter({ hasText: `Лохина · ${TAG}` })
+      await expect(row).toContainText(`фаза «${now.phase}»`)
+      await row.getByRole('button', { name: '🔔 Нагадати' }).click()
+      await row.getByRole('button', { name: 'Зберегти' }).click()
+      await expect.poll(async () => (await admin.from('reminders').select('type, farm_crop_id')
+        .eq('description', `${TAG} порада плану — Лохина`)).data).toEqual([{ type: 'підживлення', farm_crop_id: cropId }])
+    } else {
+      await expect(page.locator('[data-test="week-tips-locked"]')).toBeVisible()
+    }
+
     if (care.length) {
       const first = section.locator('[data-kind="care"]').filter({ hasText: care[0]!.title })
       await first.getByRole('button', { name: '✓ Зроблено' }).click()
@@ -346,6 +365,10 @@ test.describe('Насадження і фенофази', () => {
       if (care.length > 1) await expect(page.locator('.care-block')).toContainText(care[1]!.title)
       await expect(page.locator('.care-block').getByText(care[0]!.title, { exact: true })).toHaveCount(0)
     }
+
+    await page.goto('/dashboard/reminders')
+    await expect(page.locator('[data-test="reminders-week-link"]')).toBeVisible()
+    await expect(page.getByText('Актуально зараз')).toHaveCount(0)
 
     await page.goto('/dashboard')
     await expect(page.locator('[data-test="week-plan-widget"]')).toBeVisible()

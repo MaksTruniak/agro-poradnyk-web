@@ -50,75 +50,14 @@
       <!-- Фермер: агрокалендар + список -->
       <template v-else>
 
-        <!-- Підказки агрокалендаря — gate для Basic -->
-        <div v-if="calendarTips.length && !hasPaidPlan" class="mb-5">
-          <div class="card flex items-center gap-4 py-4 px-5">
-            <div class="w-11 h-11 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 text-xl">🌱</div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-agro-dark text-sm">Агрокалендар</p>
-              <p class="text-xs text-agro-light mt-0.5">Підказки по догляду за культурами з AI — на тарифі Бізнес</p>
-            </div>
-            <NuxtLink to="/dashboard/subscription" class="dash-btn-primary shrink-0 text-sm whitespace-nowrap">Бізнес →</NuxtLink>
+        <NuxtLink to="/dashboard/week" class="card flex items-center gap-4 py-3 px-5 mb-5 hover:border-agro transition-colors" data-test="reminders-week-link">
+          <div class="w-10 h-10 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 text-lg">🗓️</div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-agro-dark text-sm">Що робити зараз — у «Плані на тиждень»</p>
+            <p class="text-xs text-agro-light mt-0.5">Погодні ризики, обробки за техкартою, догляд і поради на сезон по всіх полях</p>
           </div>
-        </div>
-
-        <!-- Підказки агрокалендаря -->
-        <div v-else-if="calendarTips.length && hasPaidPlan" class="mb-5">
-          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">🌱 Актуально зараз</p>
-          <div class="space-y-2">
-            <div v-for="tip in calendarTips" :key="tip.id" class="card py-3 px-4">
-              <div class="flex items-start gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                  :class="{
-                    'bg-red-50 text-red-500': tip.urgency === 'high',
-                    'bg-amber-50 text-amber-500': tip.urgency === 'medium',
-                    'bg-agro-hover text-agro': tip.urgency === 'low',
-                  }">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" v-html="CATEGORY_SVG[tip.category] ?? TIP_CATEGORIES[tip.category]?.svg" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <p class="font-semibold text-agro-dark text-sm">{{ tip.title }}</p>
-                    <span class="text-xs px-2 py-0.5 rounded-full font-medium"
-                      :class="{
-                        'bg-red-50 text-red-600': tip.urgency === 'high',
-                        'bg-amber-50 text-amber-600': tip.urgency === 'medium',
-                        'bg-agro-hover text-agro': tip.urgency === 'low',
-                      }">
-                      {{ tip.urgency === 'high' ? 'Важливо' : tip.urgency === 'medium' ? 'Рекомендовано' : 'Опційно' }}
-                    </span>
-                    <span class="text-xs text-agro-light">{{ tip.crop_type }}</span>
-                    <span v-if="tip.source === 'phase'" class="text-xs bg-agro-hover text-agro px-2 py-0.5 rounded-full">фаза: {{ tip.phase_key }}</span>
-                  </div>
-                  <p class="text-xs text-agro-light mt-0.5">{{ tip.description }}</p>
-
-                  <!-- AI пояснення -->
-                  <div v-if="tipExplanations[tip.id]" class="mt-2 p-2.5 bg-agro-bg rounded-xl text-xs text-agro-dark leading-relaxed">
-                    <span class="text-agro font-semibold">✦ AI агроном: </span>{{ tipExplanations[tip.id] }}
-                  </div>
-                  <div v-else-if="tipLoading[tip.id]" class="mt-2 flex items-center gap-1.5 text-xs text-agro-light">
-                    <svg class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
-                    AI аналізує...
-                  </div>
-
-                  <div class="flex items-center gap-2 mt-2">
-                    <button @click="explainTip(tip)"
-                      v-if="tip.source !== 'phase' && !tipExplanations[tip.id] && !tipLoading[tip.id]"
-                      class="text-xs text-agro hover:underline flex items-center gap-1">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                      Детальніше від AI
-                    </button>
-                    <button @click="addFromCalendar(tip)"
-                      class="text-xs font-medium text-agro-dark bg-agro-hover hover:bg-agro hover:text-white px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ml-auto">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                      Додати нагадування
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          <span class="text-agro text-sm font-semibold shrink-0">→</span>
+        </NuxtLink>
 
         <div v-if="reminders.length === 0" class="card text-center py-16">
           <div class="dash-empty-icon">
@@ -331,8 +270,6 @@
 
 <script setup lang="ts">
 import { Trash2 } from 'lucide-vue-next'
-import { TIP_CATEGORIES } from '~/utils/tipCategories'
-import type { PlantingStageInfo } from '~~/shared/utils/plantingStage'
 useHead({ title: 'Нагадування' })
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 
@@ -344,154 +281,12 @@ const reminders = ref<any[]>([])
 const sentReminders = ref<any[]>([])
 const farms = ref<any[]>([])
 const savingJournal = ref(false)
+const hasPaidPlan = ref(false)
 const isAgronomist = ref(
   import.meta.client
     ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
     : false
 )
-
-const calendarTips = ref<any[]>([])
-const tipExplanations = ref<Record<string, string>>({})
-const tipLoading = ref<Record<string, boolean>>({})
-const farmerRegion = ref('')
-const cropAreas = ref<Record<string, number>>({})
-const hasPaidPlan = ref(false)
-
-const authHeader = useAuthHeader()
-const growthPhases = useGrowthPhases()
-
-const explainTip = async (tip: any) => {
-  if (tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
-  tipLoading.value[tip.id] = true
-  try {
-    const area_ha = cropAreas.value[tip.crop_type.toLowerCase()] || null
-    const res = await $fetch<{ explanation: string }>('/api/calendar-explain', {
-      method: 'POST',
-      headers: await authHeader(),
-      body: { tipId: tip.id, region: farmerRegion.value, area_ha },  // текст підказки сервер бере з agro_calendar
-    })
-    tipExplanations.value[tip.id] = res.explanation
-  } finally {
-    tipLoading.value[tip.id] = false
-  }
-}
-
-const CATEGORY_SVG: Record<string, string> = {
-  pest:        '<path d="M12 2a5 5 0 100 10A5 5 0 0012 2z"/><path d="M12 12v10"/><path d="M8 14l-4 2"/><path d="M16 14l4 2"/>',
-  disease:     '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-  nutrition:   '<path d="M12 22V12"/><path d="M5 3a7 7 0 007 7 7 7 0 00-7-7"/><path d="M19 3a7 7 0 01-7 7 7 7 0 017-7"/>',
-  irrigation:  '<path d="M20 16.2A4.5 4.5 0 0018 8h-1.26a8 8 0 10-12.62 8"/><line x1="8" y1="16" x2="8" y2="21"/><line x1="16" y1="16" x2="16" y2="21"/><line x1="12" y1="19" x2="12" y2="23"/>',
-  harvest:     '<path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 21h18"/>',
-  preparation: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>',
-}
-
-const loadCalendarTips = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
-
-  const subRes = await supabase.from('subscriptions').select('plan, expires_at').eq('user_id', user.id).eq('profile', 'farmer').maybeSingle()
-  hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
-  const currentMonth = new Date().getMonth() + 1
-
-  const { data: farms } = await supabase.from('farms')
-    .select('id, name, region, farm_crops(id, crop_type, area_ha, planting_year)')
-    .eq('user_id', user.id)
-
-  const cropSet = new Set<string>()
-  for (const farm of (farms || [])) {
-    if (farm.region && !farmerRegion.value) farmerRegion.value = farm.region
-    for (const fc of (farm.farm_crops || [])) {
-      if (fc.crop_type) {
-        cropSet.add(fc.crop_type)
-        const key = fc.crop_type.toLowerCase()
-        cropAreas.value[key] = (cropAreas.value[key] || 0) + (parseFloat(fc.area_ha) || 0)
-      }
-    }
-  }
-
-  if (cropSet.size === 0) return
-
-  const { data: allTips } = await supabase.from('agro_calendar')
-    .select('*')
-    .eq('month', currentMonth)
-    .order('urgency', { ascending: true })
-
-  const crops = [...cropSet].map(c => c.toLowerCase())
-  const tips = (allTips || []).filter(tip => {
-    const tc = tip.crop_type.toLowerCase()
-    return crops.some(c => {
-      // Точний збіг
-      if (c === tc) return true
-      // Культура фермера містить назву з календаря (напр. "смородина чорна" містить "смородина")
-      // але НЕ якщо в календарі є уточнення кольору якого немає у фермера
-      // "смородина чорна" → матч "смородина" ✅, але НЕ "смородина червона" ✅
-      if (tc.includes(' ')) {
-        // Календар має уточнення (напр. "смородина червона") — перевіряємо точний збіг з фермером
-        return c === tc || c.startsWith(tc)
-      }
-      // Календар без уточнення (напр. "смородина") — матч якщо фермер містить це слово
-      return c.startsWith(tc) || c === tc
-    })
-  })
-
-  calendarTips.value = [...(await loadPhaseTips(farms || [])), ...tips]
-}
-
-// Поради за поточною фенофазою насаджень (опубліковані) — одна порада на культуру
-const loadPhaseTips = async (farms: any[]) => {
-  const crops = farms.flatMap((f: any) => f.farm_crops || []).filter((c: any) => c.id)
-  if (!crops.length) return []
-  await growthPhases.load()
-  const { data: phaseRows } = await supabase.from('planting_phases')
-    .select('farm_crop_id, phase_key').in('farm_crop_id', crops.map((c: any) => c.id))
-    .order('observed_at', { ascending: false }).order('created_at', { ascending: false })
-  const current: Record<string, string> = {}
-  for (const r of phaseRows || []) current[r.farm_crop_id] ??= r.phase_key
-
-  // культура → (група, фаза); однакові назви культур не дублюємо
-  const wanted = new Map<string, { crop_type: string; group: string; phase: string; stage: PlantingStageInfo | null }>()
-  for (const c of crops) {
-    const phase = current[c.id]
-    const group = growthPhases.groupForCrop(c.crop_type)
-    const stage = plantingStage(group, c.planting_year)
-    if (phase && group) wanted.set(`${c.crop_type}|${phase}|${stage?.stage ?? ''}`, { crop_type: c.crop_type, group, phase, stage })
-  }
-  if (!wanted.size) return []
-  const { data: tips } = await supabase.from('phase_tips')
-    .select('id, crop_group, phase_key, title, description, category, urgency, stages')
-    .eq('is_published', true)
-    .in('crop_group', [...new Set([...wanted.values()].map(w => w.group))])
-    .in('phase_key', [...new Set([...wanted.values()].map(w => w.phase))])
-    .order('order_num')
-  const result: any[] = []
-  for (const w of wanted.values()) {
-    for (const t of tips || []) {
-      if (t.crop_group === w.group && t.phase_key === w.phase && tipFitsStage(t.stages, w.stage)) {
-        // одна порада для однакових культур; стадія — щоб насадження різного віку не дублювались
-        if (!result.some(r => r.tip_id === t.id && r.crop_type === w.crop_type)) {
-          result.push({ ...t, id: `phase-${t.id}-${w.crop_type}`, tip_id: t.id, crop_type: w.crop_type, source: 'phase' })
-        }
-      }
-    }
-  }
-  const rank: Record<string, number> = { high: 0, medium: 1, low: 2 }
-  return result.sort((a, b) => (rank[a.urgency] ?? 1) - (rank[b.urgency] ?? 1))
-}
-
-const addFromCalendar = (tip: any) => {
-  const now = new Date()
-  calMonth.value = now.getMonth()
-  calYear.value = now.getFullYear()
-  Object.assign(newForm, {
-    title: tip.title,
-    note: tip.description,
-    type: tip.category === 'irrigation' ? 'полив' : tip.category === 'harvest' ? 'збір' : tip.category === 'nutrition' ? 'підживлення' : 'обробка',
-    date: '', hour: 9, minute: 0,
-    j_farm_id: '', j_farm_name: '', j_crop_type: tip.crop_type || '',
-    j_product_name: '', j_dose_per_ha: null, j_area_ha: null, j_unit: 'л',
-  })
-  showAdd.value = true
-}
 
 const TYPES = [
   { value: 'обробка',     label: 'Обробка',     icon: '<path d="M9 3h6"/><path d="M10 3v5L5 17.5A1 1 0 006 19h12a1 1 0 00.87-1.5L14 8V3"/><line x1="8" y1="13" x2="16" y2="13"/>' },
@@ -574,10 +369,12 @@ const load = async () => {
   const queryUid = await getQueryUserId()  // uid власника в режимі команди
   if (!queryUid) { loading.value = false; return }
 
-  const [{ data: own }, { data: farmsData }] = await Promise.all([
+  const [{ data: own }, { data: farmsData }, { data: sub }] = await Promise.all([
     supabase.from('reminders').select('*').eq('user_id', queryUid).eq('from_agronomist', false).order('scheduled_date', { ascending: true }),
     supabase.from('farms').select('*, farm_crops(*)').eq('user_id', queryUid).order('name'),
+    supabase.from('subscriptions').select('plan, expires_at').eq('user_id', queryUid).eq('profile', 'farmer').maybeSingle(),
   ])
+  hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(sub as any))
   reminders.value = own || []
   farms.value = farmsData || []
 
@@ -594,7 +391,6 @@ const load = async () => {
 }
 onMounted(() => {
   load()
-  if (!isAgronomist.value) loadCalendarTips()
 
   const route = useRoute()
   if (route.query.title) {

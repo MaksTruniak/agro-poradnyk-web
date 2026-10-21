@@ -3,7 +3,10 @@ import { isPerennialGroup } from '~/utils/cropGroups'
 import { regionKey } from '~~/shared/utils/regionCoords'
 import { addDays, type Forecast } from '~~/shared/utils/weatherRisks'
 import type { DegreeDays } from '~~/shared/utils/phaseEstimate'
-import { cropPlan, sortPlan, type PlanItem, type PlanTreatment } from '~~/shared/utils/weekPlan'
+import { cropPlan, plantingNow, sortPlan, type PlanItem, type PlanTreatment } from '~~/shared/utils/weekPlan'
+import { plantingStage } from '~~/shared/utils/plantingStage'
+import { seasonTips, TIP_REMINDER_TYPE, type SeasonTip, type TipCrop } from '~~/shared/utils/seasonTips'
+import { getActivePlan, isPaidFarmerPlan } from '~~/shared/utils/plan'
 
 export interface PlanFarm { id: string; name: string; region: string | null }
 export interface PlanCrop { id: string; farm_id: string; crop_type: string; variety: string | null; planting_year: number | null; area_ha: number | null }
@@ -19,6 +22,11 @@ export function useWeekPlan() {
   const farms = ref<PlanFarm[]>([])
   const crops = ref<PlanCrop[]>([])
   const items = ref<PlanItem[]>([])
+  // Поради на цей час (за фазою й агрокалендарем) — на тарифі Бізнес
+  const tips = ref<SeasonTip[]>([])
+  const hasPaidPlan = ref(false)
+  const tipExplanations = ref<Record<string, string>>({})
+  const tipLoading = ref<Record<string, boolean>>({})
   const today = ref(new Date().toLocaleDateString('sv-SE'))
 
   const load = async () => {
@@ -49,7 +57,7 @@ export function useWeekPlan() {
 
     const t = today.value
     const empty = Promise.resolve({ data: [] as any[] })
-    const [phasesRes, programsRes, journalRes, careRes, remindersRes] = await Promise.all([
+    const [phasesRes, programsRes, journalRes, careRes, remindersRes, subRes, calendarRes] = await Promise.all([
       ids.length ? supabase.from('planting_phases').select('farm_crop_id, phase_key, observed_at')
         .in('farm_crop_id', ids).order('observed_at', { ascending: false }).order('created_at', { ascending: false }) : empty,
       ids.length ? supabase.from('protection_programs')
@@ -63,8 +71,14 @@ export function useWeekPlan() {
         .eq('user_id', uid).is('completed_at', null)
         .gte('scheduled_date', `${addDays(t, -14)}T00:00:00`).lte('scheduled_date', `${addDays(t, 7)}T23:59:59`)
         .order('scheduled_date'),
+      supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'farmer').maybeSingle(),
+      crops.value.length ? supabase.from('agro_calendar').select('id, crop_type, title, description, category, urgency')
+        .eq('month', Number(t.slice(5, 7))) : empty,
       weatherLoad,
     ])
+    hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
+    const currentOf = (id: string) => (phasesRes.data || []).find((r: any) => r.farm_crop_id === id) ?? null
+    const tipCrops: TipCrop[] = []
 
     const out: PlanItem[] = []
     for (const crop of perennial) {
@@ -75,17 +89,25 @@ export function useWeekPlan() {
       const journal = (journalRes.data || [])
         .filter((j: any) => j.farm_id === crop.farm_id && j.crop_type && crop.crop_type.startsWith(j.crop_type.split(' (')[0]))
         .map((j: any) => ({ product_name: j.product_name, status: 'done', done_at: j.treatment_date, waiting_days: j.waiting_days }))
-      out.push(...cropPlan({
+      const input = {
         crop,
         group: growthPhases.groupForCrop(crop.crop_type),
         phases: growthPhases.phasesForCrop(crop.crop_type).map(p => p.key),
-        current: (phasesRes.data || []).find((r: any) => r.farm_crop_id === crop.id) ?? null,
+        current: currentOf(crop.id),
         dd: w.dd,
         forecast: w.fc,
         program,
         journal,
-        careDone: new Set((careRes.data || []).filter((c: any) => c.farm_crop_id === crop.id).map((c: any) => `${c.task_key}:${c.period}`)),
-      }, w.fc?.today ?? t))
+        careDone: new Set<string>((careRes.data || []).filter((c: any) => c.farm_crop_id === crop.id).map((c: any) => `${c.task_key}:${c.period}`)),
+      }
+      out.push(...cropPlan(input, w.fc?.today ?? t))
+      const now = plantingNow(input)
+      tipCrops.push({ id: crop.id, farm_id: crop.farm_id, crop_type: crop.crop_type, group: input.group, phase: now.phase, stage: now.stage })
+    }
+    // Однорічні культури — лише відмічена фаза
+    for (const crop of crops.value.filter(c => !ids.includes(c.id))) {
+      const group = growthPhases.groupForCrop(crop.crop_type)
+      tipCrops.push({ id: crop.id, farm_id: crop.farm_id, crop_type: crop.crop_type, group, phase: currentOf(crop.id)?.phase_key ?? null, stage: plantingStage(group, crop.planting_year) })
     }
 
     for (const r of remindersRes.data || []) {
@@ -100,7 +122,43 @@ export function useWeekPlan() {
     }
 
     items.value = sortPlan(out)
+    tips.value = seasonTips(tipCrops, await loadPhaseTips(tipCrops), calendarRes.data || [])
     loading.value = false
+  }
+
+  const loadPhaseTips = async (list: TipCrop[]) => {
+    const withPhase = list.filter(c => c.phase && c.group)
+    if (!withPhase.length) return []
+    const { data } = await supabase.from('phase_tips')
+      .select('id, crop_group, phase_key, title, description, category, urgency, stages')
+      .eq('is_published', true)
+      .in('crop_group', [...new Set(withPhase.map(c => c.group))])
+      .in('phase_key', [...new Set(withPhase.map(c => c.phase))])
+      .order('order_num')
+    return data || []
+  }
+
+  /** Пояснення поради агрокалендаря від AI (тариф Бізнес; текст сервер бере з agro_calendar за id) */
+  const authHeader = useAuthHeader()
+  const explainTip = async (tip: SeasonTip) => {
+    if (tip.source !== 'calendar' || tipLoading.value[tip.id] || tipExplanations.value[tip.id]) return
+    tipLoading.value[tip.id] = true
+    try {
+      const tipCrops = crops.value.filter(c => tip.cropIds.includes(c.id))
+      const area = tipCrops.reduce((s, c) => s + (Number(c.area_ha) || 0), 0)
+      const region = farms.value.find(f => tip.farmIds.includes(f.id) && f.region)?.region ?? ''
+      const res = await $fetch<{ explanation: string }>('/api/calendar-explain', {
+        method: 'POST',
+        headers: await authHeader(),
+        body: { tipId: tip.tipId, region, area_ha: area || null },
+      })
+      tipExplanations.value[tip.id] = res.explanation
+    } catch {
+      return false
+    } finally {
+      tipLoading.value[tip.id] = false
+    }
+    return true
   }
 
   const cropOf = (id: string | null) => crops.value.find(c => c.id === id) ?? null
@@ -116,22 +174,43 @@ export function useWeekPlan() {
     return true
   }
 
-  /** Перенести пункт плану в нагадування на вказаний день о 8:00 */
-  const remind = async (item: PlanItem, date: string) => {
+  const addReminder = async (r: { description: string; type: string; date: string; farmId: string | null; cropId: string | null }) => {
     if (!ownerId.value) return false
-    const crop = cropOf(item.cropId)
-    const [y, m, d] = date.split('-').map(Number)
+    const [y, m, d] = r.date.split('-').map(Number)
     const { error } = await supabase.from('reminders').insert({
       user_id: ownerId.value,
-      description: `${item.title}${crop ? ` — ${crop.crop_type}` : ''}`,
-      type: item.kind === 'treatment' ? 'обробка' : 'інше',
+      description: r.description,
+      type: r.type,
       scheduled_date: new Date(y!, m! - 1, d!, 8, 0, 0).toISOString(),
       from_agronomist: false,
-      farm_id: item.farmId,
-      farm_crop_id: item.cropId,
+      farm_id: r.farmId,
+      farm_crop_id: r.cropId,
     })
     return !error
   }
 
-  return { loading, items, farms, crops, today, load, cropOf, farmOf, markCareDone, remind }
+  /** Перенести пункт плану в нагадування на вказаний день о 8:00 */
+  const remind = (item: PlanItem, date: string) => {
+    const crop = cropOf(item.cropId)
+    return addReminder({
+      description: `${item.title}${crop ? ` — ${crop.crop_type}` : ''}`,
+      type: item.kind === 'treatment' ? 'обробка' : 'інше',
+      date, farmId: item.farmId, cropId: item.cropId,
+    })
+  }
+
+  /** Порада → нагадування; прив'язка до насадження, лише якщо порада стосується одного */
+  const remindTip = (tip: SeasonTip, date: string) => {
+    const one = tip.cropIds.length === 1 ? cropOf(tip.cropIds[0]!) : null
+    return addReminder({
+      description: `${tip.title} — ${one?.crop_type ?? tip.crop_type}`,
+      type: TIP_REMINDER_TYPE[tip.category] ?? 'інше',
+      date, farmId: one?.farm_id ?? (tip.farmIds.length === 1 ? tip.farmIds[0]! : null), cropId: one?.id ?? null,
+    })
+  }
+
+  return {
+    loading, items, farms, crops, today, load, cropOf, farmOf, markCareDone, remind,
+    tips, hasPaidPlan, tipExplanations, tipLoading, explainTip, remindTip,
+  }
 }

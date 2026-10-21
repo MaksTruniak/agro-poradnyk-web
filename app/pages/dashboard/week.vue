@@ -8,7 +8,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <h1 class="dash-title bitter">План на тиждень</h1>
-        <p class="dash-subtitle">Погода, техкарта, догляд і нагадування по всіх насадженнях</p>
+        <p class="dash-subtitle">Погода, техкарта, догляд, поради на сезон і нагадування по всіх полях</p>
       </div>
     </div>
 
@@ -16,7 +16,7 @@
       <div v-for="i in 4" :key="i" class="card animate-pulse h-20" />
     </div>
 
-    <div v-else-if="!hasPerennials && !items.length" class="card text-center py-14">
+    <div v-else-if="!hasPerennials && !items.length && !tips.length" class="card text-center py-14">
       <p class="font-bold text-agro-dark text-lg mb-2">Поки немає насаджень</p>
       <p class="text-agro-light text-sm mb-5 max-w-md mx-auto">
         Додайте на поле ягідні кущі, полуницю, виноград чи плодові — і тут з'являться погодні ризики, обробки за техкартою на поточній фазі та сезонний догляд.
@@ -37,7 +37,7 @@
         </span>
       </div>
 
-      <div v-if="!shown.length" class="card text-center py-12 text-agro-light">
+      <div v-if="!shown.length && !shownTips.length" class="card text-center py-12 text-agro-light">
         <p class="text-3xl mb-2">🌿</p>
         <p class="font-semibold text-agro-dark mb-1">На цей тиждень усе зроблено</p>
         <p class="text-sm">Ризиків у прогнозі немає, обробок на поточній фазі й сезонних робіт не лишилось.</p>
@@ -62,6 +62,24 @@
         </div>
       </section>
 
+      <section v-if="shownTips.length && hasPaidPlan" class="mb-6" data-test="week-tips">
+        <h2 class="week-section-title">🌱 Поради на цей час</h2>
+        <div class="space-y-2">
+          <DashboardWeekTipRow v-for="tip in shownTips" :key="tip.id" :tip="tip" :today="today" :read-only="isViewer"
+            :farm-names="tip.farmIds.map(id => farmOf(id)?.name).filter(Boolean) as string[]"
+            :explanation="tipExplanations[tip.id]" :explaining="tipLoading[tip.id]"
+            @explain="onExplain" @remind="onRemindTip" />
+        </div>
+      </section>
+      <div v-else-if="shownTips.length" class="card flex items-center gap-4 py-4 px-5 mb-6" data-test="week-tips-locked">
+        <div class="w-11 h-11 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 text-xl">🌱</div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-agro-dark text-sm">Поради на цей час: {{ shownTips.length }}</p>
+          <p class="text-xs text-agro-light mt-0.5">Поради за фенофазою й агрокалендарем з поясненням AI — на тарифі Бізнес</p>
+        </div>
+        <NuxtLink to="/dashboard/subscription" class="dash-btn-primary shrink-0 text-sm whitespace-nowrap">Бізнес →</NuxtLink>
+      </div>
+
       <p class="text-xs text-agro-light mt-8">
         Фаза насадження — відмічена або орієнтовна за сумою активних температур; строки догляду орієнтовні для Центральної України. Звіряйте з тим, що бачите на ділянці.
       </p>
@@ -71,6 +89,7 @@
 
 <script setup lang="ts">
 import type { PlanItem } from '~~/shared/utils/weekPlan'
+import type { SeasonTip } from '~~/shared/utils/seasonTips'
 import { isPerennialGroup } from '~/utils/cropGroups'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
@@ -79,11 +98,15 @@ useHead({ title: 'План на тиждень — АгроПростір' })
 const { isViewer } = useTeamContext()
 const toast = useToast()
 const growthPhases = useGrowthPhases()
-const { loading, items, farms, crops, today, load, cropOf, farmOf, markCareDone, remind } = useWeekPlan()
+const {
+  loading, items, farms, crops, today, load, cropOf, farmOf, markCareDone, remind,
+  tips, hasPaidPlan, tipExplanations, tipLoading, explainTip, remindTip,
+} = useWeekPlan()
 
 const farmFilter = ref('')
 const hasPerennials = computed(() => crops.value.some(c => isPerennialGroup(growthPhases.groupForCrop(c.crop_type))))
-const farmsWithItems = computed(() => farms.value.filter(f => items.value.some(i => i.farmId === f.id)))
+const farmsWithItems = computed(() => farms.value.filter(f => items.value.some(i => i.farmId === f.id) || tips.value.some(t => t.farmIds.includes(f.id))))
+const shownTips = computed(() => tips.value.filter(t => !farmFilter.value || t.farmIds.includes(farmFilter.value)))
 const shown = computed(() => items.value.filter(i => !farmFilter.value || i.farmId === farmFilter.value))
 const urgent = computed(() => shown.value.filter(i => i.priority === 'high'))
 const groups = computed(() => {
@@ -103,6 +126,14 @@ const onDone = async (item: PlanItem) => {
 }
 const onRemind = async (item: PlanItem, date: string) => {
   if (await remind(item, date)) toast.success('Нагадування додано')
+  else toast.error('Не вдалося додати нагадування')
+}
+
+const onExplain = async (tip: SeasonTip) => {
+  if (!await explainTip(tip)) toast.error('Не вдалося отримати пояснення')
+}
+const onRemindTip = async (tip: SeasonTip, date: string) => {
+  if (await remindTip(tip, date)) toast.success('Нагадування додано')
   else toast.error('Не вдалося додати нагадування')
 }
 

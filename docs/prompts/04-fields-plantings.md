@@ -65,6 +65,7 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
 | `shared/utils/careTasks.ts` | сезонний догляд (обрізка, побілка, укриття…) — 1:1 з `tests/unit/care-plan.test.ts` |
 | `shared/utils/plantingYield.ts` | урожай, т/га, собівартість, виручка по роках — 1:1 з `tests/unit/care-plan.test.ts` |
 | `shared/utils/weekPlan.ts` | пункти плану на тиждень по насадженню (`cropPlan`, `sortPlan`, `plantingNow`) — 1:1 з `tests/unit/care-plan.test.ts` |
+| `shared/utils/seasonTips.ts` | поради на цей час для плану: `phase_tips` за поточною фазою + `agro_calendar` місяця (`seasonTips`, `calendarCropMatches`) — 1:1 з `tests/unit/season-tips.test.ts` |
 | `app/composables/useWeekPlan.ts`, `app/pages/dashboard/week.vue`, `app/components/dashboard/WeekPlanRow.vue` | екран «План на тиждень» |
 | `supabase/migrations/20261020_care_yields.sql` | `planting_care_log`, `planting_yields`, `field_treatments.waiting_days` |
 | `server/api/weather/forecast.get.ts` | `GET /api/weather/forecast?region=…` → `{ region, today, daily, hourly }` (минулі 2 доби + 4 дні, кеш 1 год) |
@@ -205,6 +206,13 @@ UI-компоненти, i18n, auth-стан, usePlan() і PlanLockedNotice.
   догляд — «✓ Зроблено» і «🔔 Нагадати»; обробка з техкарти — «🔔 Нагадати» (`reminders` на вибраний день 8:00,
   `type` `обробка`, для догляду `інше`, `farm_id`, `farm_crop_id`, опис «назва — культура»); фаза — «Відмітити фазу»;
   ризик і строк очікування — «До поля». Переглядач — без дій запису.
+- Розділ «🌱 Поради на цей час» після розділів полів (раніше «Актуально зараз» на екрані нагадувань — там його
+  більше немає, лише картка-посилання «Що робити зараз — у «Плані на тиждень»»): `seasonTips(...)` — опубліковані
+  `phase_tips` за поточною фазою кожного насадження (відмічена або орієнтовна за САТ; для однорічних — лише відмічена)
+  і `agro_calendar` поточного місяця; однакова порада для кількох насаджень однієї культури — один раз.
+  Рядок: іконка категорії, назва, «Важливо / Рекомендовано / Опційно», `культура · поля`, «фаза «X»», опис;
+  «Детальніше від AI» лише для агрокалендаря (`/api/calendar-explain` з `tipId`), «🔔 Нагадати» (тип за категорією).
+  Поради — тариф Бізнес; на безкоштовному — картка «Поради на цей час: N» **без кнопки оплати** в застосунку.
 - Порожньо: «На цей тиждень усе зроблено»; без насаджень — «Поки немає насаджень» і «До полів».
 
 ### 7. Форма культури (додавання і редагування)
