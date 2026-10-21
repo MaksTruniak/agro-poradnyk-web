@@ -147,7 +147,11 @@ test.describe('Ліміти AI', () => {
     await expect(card).toBeVisible({ timeout: 15_000 })
     await expect(card).toContainText(`/ ${credits.allowance}`)
     await expect(card).toContainText('Питання AI агроному')
-    await expect(page.getByText('без обмежень')).toHaveCount(0)  // «AI без обмежень» більше не обіцяємо
+    // «AI без обмежень» більше не обіцяємо (чат з агрономом без обмежень — лишається)
+    await expect(page.getByText(/AI[^.,;]{0,40}(без обмежень|необмежен|повний доступ)/)).toHaveCount(0)
     await expectNoErrors([...errors, ...apiErrors], 'підписка фермера')
+    await page.goto('/for-farmers')
+    await expect(page.getByText('AI агроном — більше кредитів')).toBeVisible()
+    await expect(page.getByText(/AI[^.,;]{0,40}(без обмежень|необмежен|повний доступ)/)).toHaveCount(0)
   })
 })
