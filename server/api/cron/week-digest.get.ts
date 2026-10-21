@@ -4,9 +4,10 @@ import { addDays } from '../../../shared/utils/weatherRisks'
 import { assemblePlan, planDigest } from '../../../shared/utils/weekPlan'
 import { findVariety } from '../../../shared/utils/ripening'
 import { guessCropGroup, isPerennialGroup } from '../../../app/utils/cropGroups'
-import { sendWeekPlanEmail } from '../../utils/email'
+import { sendClientsPlanEmail, sendWeekPlanEmail } from '../../utils/email'
 import { KYIV_TZ, notifyUser } from '../../utils/notify'
 import { notifyTelegram, SITE_URL, tgEscape } from '../../utils/telegram'
+import { getActivePlan, isAgronomistPro } from '../../../shared/utils/plan'
 
 // Щопонеділка: план на тиждень по багаторічних насадженнях — лист і сповіщення в кабінет.
 // Той самий план, що на сторінці /dashboard/week (assemblePlan). Лист вимикається в налаштуваннях (week_digest),
@@ -61,6 +62,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const report: { userId: string; email: boolean; lines: unknown[]; more: number }[] = []
+  // План для агронома клієнта — без журналу обробок і нагадувань фермера (їх бачить лише господар)
+  const forAgronomist = new Map<string, ReturnType<typeof planDigest>>()
   let emails = 0
   let telegrams = 0
   for (const [userId, userFarms] of owners) {
@@ -100,11 +103,19 @@ export default defineEventHandler(async (event) => {
         timeZone: KYIV_TZ,
         now,
       })
-      if (!plan.items.length) continue
       const cropName = (id: string | null) => {
         const c = crops.find((c: any) => c.id === id)
         return c ? `${c.crop_type}${c.variety ? ` (${c.variety})` : ''}` : null
       }
+      const farmName = (id: string | null) => userFarms.find((f: any) => f.id === id)?.name ?? null
+      const agro = assemblePlan({
+        crops, farmRegion: id => userFarms.find((f: any) => f.id === id)?.region ?? null, groupOf, isPerennial: isPerennialGroup, phasesOf,
+        phaseRows: phaseRows.data || [], programs: programs.data || [], journal: [], care: care.data || [], reminders: [],
+        weather: region => weather.get(regionKey(region) ?? '') ?? { dd: null, fc: null },
+        varietyOf: c => findVariety(varieties || [], c.crop_type, c.variety), today, timeZone: KYIV_TZ, now,
+      })
+      if (agro.items.length) forAgronomist.set(userId, planDigest(agro.items, { crop: cropName, farm: farmName }, 4))
+      if (!plan.items.length) continue
       const digest = planDigest(plan.items, { crop: cropName, farm: id => userFarms.find((f: any) => f.id === id)?.name ?? null })
       if (dry) { report.push({ userId, email: !noEmail.has(userId), lines: digest.lines, more: digest.more }); continue }
 
@@ -132,5 +143,43 @@ export default defineEventHandler(async (event) => {
       console.error('[week-digest cron]', userId, e)
     }
   }
-  return dry ? { ok: true, today, users: report } : { ok: true, users: owners.size, emails, telegrams }
+  // ── Агрономам Про: клієнти цього тижня ──
+  const agroReport: { agronomistId: string; clients: { farmerId: string; name: string; urgent: number; lines: unknown[] }[] }[] = []
+  let agroSent = 0
+  const { data: agreements } = forAgronomist.size
+    ? await supabase.from('agreements').select('agronomist_id, farmer_id').eq('status', 'active').in('farmer_id', [...forAgronomist.keys()])
+    : { data: [] as any[] }
+  const byAgronomist = new Map<string, string[]>()
+  for (const a of agreements || []) byAgronomist.set(a.agronomist_id, [...new Set([...(byAgronomist.get(a.agronomist_id) ?? []), a.farmer_id])])
+  if (byAgronomist.size) {
+    const [{ data: subs }, { data: names }] = await Promise.all([
+      supabase.from('subscriptions').select('user_id, plan, expires_at').eq('profile', 'agronomist').in('user_id', [...byAgronomist.keys()]),
+      supabase.from('public_profiles').select('id, name').in('id', [...new Set([...byAgronomist.values()].flat())]),
+    ])
+    for (const [agronomistId, farmerIds] of byAgronomist) {
+      if (!isAgronomistPro(getActivePlan((subs || []).find((s: any) => s.user_id === agronomistId)))) continue
+      const clients = farmerIds.map(id => ({ farmerId: id, name: (names || []).find((n: any) => n.id === id)?.name || 'Клієнт', ...forAgronomist.get(id)! }))
+        .sort((a, b) => b.urgent - a.urgent)
+      if (dry) { agroReport.push({ agronomistId, clients: clients.map(c => ({ farmerId: c.farmerId, name: c.name, urgent: c.urgent, lines: c.lines })) }); continue }
+      try {
+        const urgent = clients.reduce((s, c) => s + c.urgent, 0)
+        const tg = [
+          `👥 <b>Клієнти цього тижня</b>${urgent ? ` — ${urgent} терміново` : ''}`,
+          ...clients.flatMap(c => ['', `<b>${tgEscape(c.name)}</b>${c.urgent ? ` · ${c.urgent} терміново` : ''}`,
+            ...c.lines.map(l => `${l.icon} ${tgEscape(l.title)}${l.meta ? ` — <i>${tgEscape(l.meta)}</i>` : ''}`),
+            ...(c.more ? [`… і ще ${c.more}`] : [])]),
+        ].join('\n')
+        await notifyTelegram(supabase, agronomistId, 'week_plan', tg.slice(0, 4000), { text: 'Відкрити', url: `${SITE_URL}/dashboard/clients-week` })
+        if (noEmail.has(agronomistId)) continue
+        const { data: userData } = await supabase.auth.admin.getUserById(agronomistId)
+        if (!userData?.user?.email) continue
+        const name = userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
+        await sendClientsPlanEmail(userData.user.email, name, clients)
+        agroSent++
+      } catch (e) {
+        console.error('[week-digest cron] agronomist', agronomistId, e)
+      }
+    }
+  }
+  return dry ? { ok: true, today, users: report, agronomists: agroReport } : { ok: true, users: owners.size, emails, telegrams, agronomists: agroSent }
 })

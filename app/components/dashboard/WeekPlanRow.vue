@@ -7,7 +7,7 @@
         <span v-if="dateLabel" class="plan-date">{{ dateLabel }}</span>
       </div>
       <p v-if="crop" class="text-xs text-agro font-semibold mt-0.5">
-        {{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}<template v-if="showFarm && farm"> · {{ farm.name }}</template>
+        <template v-if="owner">{{ owner }} · </template>{{ crop.crop_type }}{{ crop.variety ? ` · ${crop.variety}` : '' }}<template v-if="showFarm && farm"> · {{ farm.name }}</template>
       </p>
       <p class="text-xs text-agro-light mt-1 leading-relaxed">{{ item.detail }}</p>
 
@@ -15,7 +15,8 @@
         <button v-if="item.kind === 'care' && !readOnly" type="button" class="plan-btn plan-btn-primary" :disabled="busy" @click="done">
           ✓ Зроблено
         </button>
-        <NuxtLink v-if="link" :to="link.to" class="plan-btn">{{ link.label }}</NuxtLink>
+        <NuxtLink v-if="link && !hideLinks" :to="link.to" class="plan-btn">{{ link.label }}</NuxtLink>
+        <slot />
         <template v-if="canRemind">
           <button v-if="!reminding" type="button" class="plan-btn" @click="startRemind">🔔 Нагадати</button>
           <template v-else>
@@ -40,6 +41,10 @@ const props = defineProps<{
   today: string
   readOnly?: boolean
   showFarm?: boolean
+  /** свої дії замість посилань (кабінет агронома) — через слот */
+  hideLinks?: boolean
+  /** підпис над культурою, напр. ім'я клієнта */
+  owner?: string
 }>()
 const emit = defineEmits<{ done: [item: PlanItem]; remind: [item: PlanItem, date: string] }>()
 

@@ -141,20 +141,20 @@
       </div>
 
       <!-- Листи -->
-      <div v-if="isFarmer" id="notifications" class="card">
+      <div v-if="isFarmer || isAgronomist" id="notifications" class="card">
         <h2 class="dash-card-title bitter mb-1">Листи на пошту</h2>
         <p class="text-sm text-agro-light mb-4">Про сильний заморозок і нагадування на день листи приходять завжди.</p>
         <label class="flex items-start gap-3 cursor-pointer">
           <input v-model="weekDigest" type="checkbox" class="mt-1 accent-agro" data-test="week-digest-toggle" :disabled="savingDigest" @change="saveDigest">
           <span>
-            <span class="block text-sm font-semibold text-agro-dark">План на тиждень щопонеділка</span>
-            <span class="block text-xs text-agro-light mt-0.5">Погодні ризики, обробки за техкартою, догляд і нагадування по насадженнях</span>
+            <span class="block text-sm font-semibold text-agro-dark">{{ isFarmer ? 'План на тиждень щопонеділка' : 'Клієнти цього тижня щопонеділка' }}</span>
+            <span class="block text-xs text-agro-light mt-0.5">{{ isFarmer ? 'Погодні ризики, обробки за техкартою, догляд і нагадування по насадженнях' : 'Ризики, строки очікування й обробки в насадженнях клієнтів (Агроном Про)' }}</span>
           </span>
         </label>
       </div>
 
       <!-- Telegram -->
-      <div v-if="isFarmer" id="telegram" class="card" data-test="telegram-card">
+      <div v-if="isFarmer || isAgronomist" id="telegram" class="card" data-test="telegram-card">
         <h2 class="dash-card-title bitter mb-1">Telegram</h2>
         <template v-if="tgLink">
           <p class="text-sm text-agro-dark mb-4">

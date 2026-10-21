@@ -351,6 +351,46 @@ export async function sendWeekPlanEmail(to: string, name: string, lines: WeekPla
   })
 }
 
+/** Щопонеділка агроному Про: що відбувається в насадженнях клієнтів */
+export async function sendClientsPlanEmail(to: string, name: string, clients: { name: string; urgent: number; lines: WeekPlanEmailLine[]; more: number }[]) {
+  const blocks = clients.map(c => `
+      <tr><td colspan="2" style="padding:14px 16px 6px;font-weight:800;font-size:15px;color:#1B2E1B">${escapeHtml(c.name)}${c.urgent ? ` <span style="color:#991b1b;font-size:12px;font-weight:700">· ${c.urgent} терміново</span>` : ''}</td></tr>
+      ${c.lines.map(l => `<tr>
+        <td style="padding:6px 0 6px 16px;font-size:16px;width:26px;vertical-align:top">${escapeHtml(l.icon)}</td>
+        <td style="padding:6px 16px;border-bottom:1px solid #f0f0f0">
+          <div style="font-weight:600;color:${l.urgent ? '#991b1b' : '#1B2E1B'};font-size:13px;line-height:1.4">${escapeHtml(l.title)}</div>
+          <div style="color:#7a8a72;font-size:12px">${escapeHtml(l.meta)}</div>
+        </td></tr>`).join('')}
+      ${c.more ? `<tr><td></td><td style="padding:4px 16px 10px;color:#7a8a72;font-size:12px">… і ще ${c.more}</td></tr>` : ''}`).join('')
+  const urgent = clients.reduce((s, c) => s + c.urgent, 0)
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `👥 Клієнти цього тижня${urgent ? ` — ${urgent} терміново` : ''} — АгроПростір`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
+        <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
+        </div>
+        <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
+          <h2 style="margin:0 0 8px;font-size:20px">Привіт, ${escapeHtml(name)}!</h2>
+          <p style="color:#5B6B53;margin:0 0 20px;font-size:14px">Що варто обговорити з клієнтами цього тижня — за погодою, техкартою, фазою і строками збору:</p>
+          <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">${blocks}</table>
+          <div style="margin-top:24px;text-align:center">
+            <a href="https://agroprostir.com.ua/dashboard/clients-week"
+              style="display:inline-block;background:#2f5233;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">
+              Відкрити «Клієнти цього тижня» →
+            </a>
+          </div>
+          <p style="color:#aaa;font-size:12px;text-align:center;margin-top:20px">
+            <a href="https://agroprostir.com.ua/dashboard/settings#notifications" style="color:#aaa">Не надсилати цей лист</a>
+          </p>
+        </div>
+      </div>
+    `,
+  })
+}
+
 export async function sendSupportTicketEmail(opts: {
   ticketId: string; kind: 'support' | 'integration'; priority: string
   subject: string; body: string; userEmail: string; userName: string; plan: string
