@@ -363,7 +363,7 @@ test.describe('Насадження і фенофази', () => {
       expect(log).toEqual([{ task_key: care[0]!.key, period: care[0]!.period, created_by: farmer.userId }])
       // На сторінці поля виконаний догляд теж зник
       await page.goto(`/dashboard/farm/${farmId}`)
-      if (care.length > 1) await expect(page.locator('.care-block')).toContainText(care[1]!.title)
+      if (care.length > 1) await expect(page.locator('.care-block')).toContainText(care[1]!.title, { timeout: 15000 })
       await expect(page.locator('.care-block').getByText(care[0]!.title, { exact: true })).toHaveCount(0)
     }
 

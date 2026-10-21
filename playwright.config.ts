@@ -4,7 +4,9 @@ import { defineConfig, devices } from '@playwright/test'
 // без нього Playwright сам запускає dev-сервер на :3001 (CSP у dev вимкнений).
 const externalBase = process.env.E2E_BASE_URL
 
-const FARMER_FARM_SUITES = /(farm|planting|deal|inventory|harvest)-flow\.spec\.ts|team-access\.spec\.ts/
+const FARMER_FARM_SUITES = /(farm|planting|deal|inventory|harvest)-flow\.spec\.ts|team-access\.spec\.ts|inventory-ui\.spec\.ts/
+// Створюють і видаляють співпрацю між тими самими фермером і агрономом — паралельно один одному заважали
+const AGREEMENT_SUITES = /(agreement|chat|agronomist)-flow\.spec\.ts/
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -16,10 +18,11 @@ export default defineConfig({
     storageState: { cookies: [], origins: [] },
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: FARMER_FARM_SUITES },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [FARMER_FARM_SUITES, AGREEMENT_SUITES] },
     // Ці набори створюють і видаляють поля одного й того самого акаунта фермера. Паралельно вони заважали
     // один одному (ліміт гектарів, поле, видалене посеред завантаження сторінки), тому йдуть по черзі.
     { name: 'farmer-farms', use: { ...devices['Desktop Chrome'] }, testMatch: FARMER_FARM_SUITES, workers: 1 },
+    { name: 'agreements', use: { ...devices['Desktop Chrome'] }, testMatch: AGREEMENT_SUITES, workers: 1 },
   ],
   webServer: externalBase ? undefined : {
     command: 'npm run dev -- --port 3001',
