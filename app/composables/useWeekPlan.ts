@@ -3,8 +3,7 @@ import { isPerennialGroup } from '~/utils/cropGroups'
 import { regionKey } from '~~/shared/utils/regionCoords'
 import { addDays, type Forecast } from '~~/shared/utils/weatherRisks'
 import type { DegreeDays } from '~~/shared/utils/phaseEstimate'
-import { cropPlan, plantingNow, sortPlan, type PlanItem, type PlanTreatment } from '~~/shared/utils/weekPlan'
-import { plantingStage } from '~~/shared/utils/plantingStage'
+import { assemblePlan, type PlanItem } from '~~/shared/utils/weekPlan'
 import { seasonTips, TIP_REMINDER_TYPE, type SeasonTip, type TipCrop } from '~~/shared/utils/seasonTips'
 import { getActivePlan, isPaidFarmerPlan } from '~~/shared/utils/plan'
 
@@ -58,8 +57,8 @@ export function useWeekPlan() {
     const t = today.value
     const empty = Promise.resolve({ data: [] as any[] })
     const [phasesRes, programsRes, journalRes, careRes, remindersRes, subRes, calendarRes] = await Promise.all([
-      ids.length ? supabase.from('planting_phases').select('farm_crop_id, phase_key, observed_at')
-        .in('farm_crop_id', ids).order('observed_at', { ascending: false }).order('created_at', { ascending: false }) : empty,
+      crops.value.length ? supabase.from('planting_phases').select('farm_crop_id, phase_key, observed_at')
+        .in('farm_crop_id', crops.value.map(c => c.id)).order('observed_at', { ascending: false }).order('created_at', { ascending: false }) : empty,
       ids.length ? supabase.from('protection_programs')
         .select('farm_crop_id, program_treatments(id, product_name, dosage, phase, type, status, done_at, waiting_days)')
         .in('farm_crop_id', ids) : empty,
@@ -77,51 +76,23 @@ export function useWeekPlan() {
       weatherLoad,
     ])
     hasPaidPlan.value = isPaidFarmerPlan(getActivePlan(subRes.data))
-    const currentOf = (id: string) => (phasesRes.data || []).find((r: any) => r.farm_crop_id === id) ?? null
-    const tipCrops: TipCrop[] = []
 
-    const out: PlanItem[] = []
-    for (const crop of perennial) {
-      const farm = farms.value.find(f => f.id === crop.farm_id)
-      const w = weather[regionKey(farm?.region) ?? ''] ?? { dd: null, fc: null }
-      const program: PlanTreatment[] = (programsRes.data || []).filter((p: any) => p.farm_crop_id === crop.id)
-        .flatMap((p: any) => p.program_treatments || [])
-      const journal = (journalRes.data || [])
-        .filter((j: any) => j.farm_id === crop.farm_id && j.crop_type && crop.crop_type.startsWith(j.crop_type.split(' (')[0]))
-        .map((j: any) => ({ product_name: j.product_name, status: 'done', done_at: j.treatment_date, waiting_days: j.waiting_days }))
-      const input = {
-        crop,
-        group: growthPhases.groupForCrop(crop.crop_type),
-        phases: growthPhases.phasesForCrop(crop.crop_type).map(p => p.key),
-        current: currentOf(crop.id),
-        dd: w.dd,
-        forecast: w.fc,
-        program,
-        journal,
-        careDone: new Set<string>((careRes.data || []).filter((c: any) => c.farm_crop_id === crop.id).map((c: any) => `${c.task_key}:${c.period}`)),
-      }
-      out.push(...cropPlan(input, w.fc?.today ?? t))
-      const now = plantingNow(input)
-      tipCrops.push({ id: crop.id, farm_id: crop.farm_id, crop_type: crop.crop_type, group: input.group, phase: now.phase, stage: now.stage })
-    }
-    // Однорічні культури — лише відмічена фаза
-    for (const crop of crops.value.filter(c => !ids.includes(c.id))) {
-      const group = growthPhases.groupForCrop(crop.crop_type)
-      tipCrops.push({ id: crop.id, farm_id: crop.farm_id, crop_type: crop.crop_type, group, phase: currentOf(crop.id)?.phase_key ?? null, stage: plantingStage(group, crop.planting_year) })
-    }
-
-    for (const r of remindersRes.data || []) {
-      const date = new Date(r.scheduled_date).toLocaleDateString('sv-SE')
-      const crop = crops.value.find(c => c.id === r.farm_crop_id)
-      out.push({
-        id: `reminder:${r.id}`, kind: 'reminder', priority: date < t ? 'high' : 'normal', date,
-        icon: '🔔', title: r.description,
-        detail: date < t ? 'Прострочене нагадування' : `Нагадування · ${new Date(r.scheduled_date).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`,
-        farmId: r.farm_id ?? crop?.farm_id ?? null, cropId: crop?.id ?? null, reminderId: r.id,
-      })
-    }
-
-    items.value = sortPlan(out)
+    const plan = assemblePlan({
+      crops: crops.value,
+      farmRegion: id => farms.value.find(f => f.id === id)?.region ?? null,
+      groupOf: c => growthPhases.groupForCrop(c.crop_type),
+      isPerennial: isPerennialGroup,
+      phasesOf: c => growthPhases.phasesForCrop(c.crop_type).map(p => p.key),
+      phaseRows: phasesRes.data || [],
+      programs: programsRes.data || [],
+      journal: journalRes.data || [],
+      care: careRes.data || [],
+      reminders: remindersRes.data || [],
+      weather: region => weather[regionKey(region) ?? ''] ?? { dd: null, fc: null },
+      today: t,
+    })
+    items.value = plan.items
+    const tipCrops: TipCrop[] = plan.cropPhases
     tips.value = seasonTips(tipCrops, await loadPhaseTips(tipCrops), calendarRes.data || [])
     loading.value = false
   }

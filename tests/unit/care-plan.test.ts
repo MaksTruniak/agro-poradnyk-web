@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { careTasksDue, careWindow, CARE_TASKS, careTaskByKey } from '../../shared/utils/careTasks'
 import { plantingYields, formatKg } from '../../shared/utils/plantingYield'
-import { cropPlan, sortPlan, plantingNow, type PlanItem } from '../../shared/utils/weekPlan'
+import { cropPlan, sortPlan, plantingNow, planDigest, type PlanItem } from '../../shared/utils/weekPlan'
 import { samePhase } from '../../shared/utils/phaseEstimate'
 import { plantingStage } from '../../shared/utils/plantingStage'
 import { addDays, type Forecast } from '../../shared/utils/weatherRisks'
@@ -169,5 +169,33 @@ describe('план на тиждень', () => {
       it('frost', 'risk', 'high', '2026-05-15'), it('treat', 'treatment', 'normal', null), it('late', 'reminder', 'high', '2026-05-01'),
     ])
     expect(sorted.map(i => i.id)).toEqual(['late', 'frost', 'rem', 'treat', 'care'])
+  })
+})
+
+describe('щотижневий лист плану', () => {
+  it('рядки: культура · поле · строк; решта — «і ще N»', () => {
+    const it = (id: string, kind: PlanItem['kind'], priority: PlanItem['priority'], date: string | null): PlanItem =>
+      ({ id, kind, priority, date, icon: '•', title: id, detail: '', farmId: 'f1', cropId: 'c1' })
+    const d = planDigest(
+      [it('frost', 'risk', 'high', '2026-05-15'), it('rem', 'reminder', 'normal', '2026-05-14'), it('care', 'care', 'normal', '2026-05-31')],
+      { crop: id => (id === 'c1' ? 'Лохина' : null), farm: () => 'Сад' }, 2,
+    )
+    expect(d.lines).toEqual([
+      { icon: '•', title: 'frost', meta: 'Лохина · Сад', urgent: true },
+      { icon: '•', title: 'rem', meta: 'Лохина · Сад · 14.05', urgent: false },
+    ])
+    expect(d).toMatchObject({ more: 1, urgent: 1 })
+  })
+})
+
+describe('щотижневий лист: однаковий догляд', () => {
+  it('одна робота на кількох насадженнях — один рядок', () => {
+    const care = (cropId: string): PlanItem => ({ id: `care:${cropId}`, kind: 'care', priority: 'normal', date: '2026-10-31', icon: '🛠️',
+      title: 'Осіннє внесення', detail: '', farmId: 'f', cropId, careKey: 'autumn_pk', carePeriod: '2026-09' })
+    const names: Record<string, string> = { a: 'Полуниця', b: 'Смородина', c: 'Смородина', d: 'Лохина', e: 'Малина' }
+    const d = planDigest([care('a'), care('b'), care('c')], { crop: id => names[id!] ?? null, farm: () => 'Сад' })
+    expect(d.lines).toEqual([{ icon: '🛠️', title: 'Осіннє внесення', meta: 'Полуниця, Смородина · до 31.10', urgent: false }])
+    const many = planDigest(['a', 'b', 'd', 'e'].map(care), { crop: id => names[id!] ?? null, farm: () => null })
+    expect(many.lines[0]!.meta).toBe('Полуниця, Смородина, Лохина і ще 1 · до 31.10')
   })
 })

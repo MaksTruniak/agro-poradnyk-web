@@ -140,6 +140,19 @@
         <p v-if="saved" class="text-agro text-sm mt-2">✅ Збережено!</p>
       </div>
 
+      <!-- Листи -->
+      <div v-if="isFarmer" id="notifications" class="card">
+        <h2 class="dash-card-title bitter mb-1">Листи на пошту</h2>
+        <p class="text-sm text-agro-light mb-4">Про сильний заморозок і нагадування на день листи приходять завжди.</p>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input v-model="weekDigest" type="checkbox" class="mt-1 accent-agro" data-test="week-digest-toggle" :disabled="savingDigest" @change="saveDigest">
+          <span>
+            <span class="block text-sm font-semibold text-agro-dark">План на тиждень щопонеділка</span>
+            <span class="block text-xs text-agro-light mt-0.5">Погодні ризики, обробки за техкартою, догляд і нагадування по насадженнях</span>
+          </span>
+        </label>
+      </div>
+
       <!-- Зміна пароля -->
       <div class="card">
         <h2 class="dash-card-title bitter mb-5">Зміна пароля</h2>
@@ -391,6 +404,23 @@ const ROLE_SHORT_MAP: Record<string, string> = { farmer: 'Фермер', agronom
 const userRoles = ref<string[]>(profile?.roles?.length ? profile.roles : [profile?.role || 'farmer'])
 const isAgronomist = computed(() => role.value === 'agronomist' || userRoles.value.includes('agronomist'))
 const isSeller = computed(() => role.value === 'seller')
+const isFarmer = computed(() => role.value === 'farmer' || userRoles.value.includes('farmer'))
+
+// Щотижневий лист: рядка немає — лист увімкнено
+const weekDigest = ref(true)
+const savingDigest = ref(false)
+if (uid) {
+  const { data: ns } = await (supabase as any).from('notification_settings').select('week_digest').eq('user_id', uid).maybeSingle()
+  weekDigest.value = ns?.week_digest ?? true
+}
+const saveDigest = async () => {
+  if (!uid) return
+  savingDigest.value = true
+  const { error } = await (supabase as any).from('notification_settings')
+    .upsert({ user_id: uid, week_digest: weekDigest.value, updated_at: new Date().toISOString() })
+  savingDigest.value = false
+  if (error) { weekDigest.value = !weekDigest.value; showError('Не вдалося зберегти') }
+}
 const companyLabel = computed(() => {
   if (role.value === 'farmer') return 'Назва фермерського господарства'
   if (role.value === 'buyer') return 'Назва підприємства або ФОП'

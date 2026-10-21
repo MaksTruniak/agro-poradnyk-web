@@ -371,7 +371,7 @@ test.describe('Насадження і фенофази', () => {
     await expect(page.getByText('Актуально зараз')).toHaveCount(0)
 
     await page.goto('/dashboard')
-    await expect(page.locator('[data-test="week-plan-widget"]')).toBeVisible()
+    await expect(page.locator('[data-test="week-plan-widget"]')).toBeVisible({ timeout: 15000 })
     await expectNoErrors(errors, 'плані на тиждень')
     expect(apiErrors, apiErrors.join('\n')).toEqual([])
   })
@@ -458,5 +458,45 @@ test.describe('Насадження і фенофази', () => {
     await expect(popup.getByText('Відповідальна особа (ПІБ, підпис)')).toBeVisible()
     await popup.close()
     await expectNoErrors(errors, 'журналі обробок')
+  })
+
+  test('щотижневий лист: план у листі, вимикається в налаштуваннях', async ({ page, request }) => {
+    test.skip(!process.env.CRON_SECRET, 'потрібен CRON_SECRET')
+    const farmer = await asUser('farmer')
+    const admin = serviceClient()
+    const url = `/api/cron/week-digest?dry=1&user=${farmer.userId}`
+    const auth = { Authorization: `Bearer ${process.env.CRON_SECRET}` }
+    expect((await request.get(url)).status(), 'cron без секрету').toBe(401)
+
+    const { data: before } = await admin.from('notification_settings').select('week_digest').eq('user_id', farmer.userId).maybeSingle()
+    try {
+      await admin.from('notification_settings').delete().eq('user_id', farmer.userId)
+      const on = await (await request.get(url, { headers: auth })).json()
+      expect(on.users, 'лист не зібрано').toHaveLength(1)
+      expect(on.users[0].lines.length).toBeGreaterThan(0)
+      expect(JSON.stringify(on.users[0].lines), 'у листі немає тестового насадження').toContain('Лохина')
+
+      const errors = collectErrors(page)
+      await login(page, 'farmer')
+      await page.goto('/dashboard/settings#notifications')
+      const toggle = page.locator('[data-test="week-digest-toggle"]')
+      await expect(toggle).toBeChecked()
+      await toggle.uncheck()
+      await expect.poll(async () => (await admin.from('notification_settings').select('week_digest').eq('user_id', farmer.userId).maybeSingle()).data)
+        .toEqual({ week_digest: false })
+      const off = await (await request.get(url, { headers: auth })).json()
+      expect(off.users, 'лист зібрано попри вимкнення').toEqual([])
+
+      // Чужі налаштування не видно і не змінити
+      const stranger = await asUser('buyer')
+      const { data: seen } = await stranger.client.from('notification_settings').select('user_id').eq('user_id', farmer.userId)
+      expect(seen ?? []).toEqual([])
+      const forged = await stranger.client.from('notification_settings').upsert({ user_id: farmer.userId, week_digest: true })
+      expect(forged.error, 'сторонній змінив чужі налаштування').not.toBeNull()
+      await expectNoErrors(errors, 'налаштуваннях листів')
+    } finally {
+      await admin.from('notification_settings').delete().eq('user_id', farmer.userId)
+      if (before) await admin.from('notification_settings').insert({ user_id: farmer.userId, week_digest: before.week_digest })
+    }
   })
 })
