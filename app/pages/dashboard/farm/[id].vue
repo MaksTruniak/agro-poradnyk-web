@@ -965,6 +965,7 @@ const cropTreatments = ref<Record<string, WaitingTreatment[]>>({})
 const journalTreatments = ref<any[]>([])
 // Виконаний догляд: `${farm_crop_id}:${task_key}:${period}`
 const careDone = ref<Set<string>>(new Set())
+const varietyRows = ref<any[]>([])
 // Урожай і гроші по насадженнях: ручні записи, облік збору, витрати поля, продажі
 const yieldRows = ref<any[]>([])
 const harvestRows = ref<Record<string, any[]>>({})
@@ -1051,7 +1052,6 @@ await Promise.all([load(), loadCrops(), growthPhases.load()])
 
 const isPerennialCrop = (crop: any) => !!crop && isPerennialGroup(growthPhases.groupForCrop(crop.crop_type))
 // Орієнтовне вікно збору за строком стиглості сорту (лише плодоносним насадженням)
-const varietyRows = ref<any[]>([])
 const cropHarvest = (crop: any) => {
   const stage = cropStage(crop)
   if (stage && !stage.fruiting) return null
