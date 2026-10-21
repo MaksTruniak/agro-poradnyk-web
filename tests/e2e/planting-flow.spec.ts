@@ -404,7 +404,7 @@ test.describe('Насадження і фенофази', () => {
     await expect(row).toContainText('10')
     await expect(row).toContainText('внесено вручну')
     await modal.getByRole('button', { name: '✕' }).first().click()
-    await expect(page.getByRole('button', { name: `🧺 3,2 т у ${year} · 1,6 т/га · собівартість 10 грн/кг` })).toBeVisible()
+    await expect(page.getByRole('button', { name: `🧺 3,2 т у ${year} · 1,6 т/га · 0,48 кг/рослину · собівартість 10 грн/кг` })).toBeVisible()
 
     const { data: hidden } = await stranger.client.from('planting_yields').select('id').eq('farm_crop_id', cropId)
     expect(hidden ?? [], 'сторонній бачить урожай').toEqual([])
@@ -576,5 +576,56 @@ test.describe('Насадження і фенофази', () => {
       await farmer.client.from('farm_crops').update({ variety: null }).eq('id', cropId)
       await admin.from('varieties').delete().eq('id', v?.id ?? '00000000-0000-0000-0000-000000000000')
     }
+  })
+
+  test('квартали, випади й підсадка: живі рослини на картці; сторонній не бачить', async ({ page }) => {
+    const farmer = await asUser('farmer')
+    const stranger = await asUser('buyer')
+    const errors = collectErrors(page)
+    const apiErrors = collectApiErrors(page)
+    await login(page, 'farmer')
+    await page.goto(`/dashboard/farm/${farmId}`)
+    const chip = page.locator('[data-test="plants-chip"]')
+    await expect(chip).toHaveText('🌱 6 667 живих рослин')
+    await chip.click()
+    const modal = page.locator('[data-test="plants-modal"]')
+    await expect(modal.locator('[data-test="plants-alive"]')).toHaveText('6 667')
+
+    for (const [name, plants] of [['Квартал 1', '4000'], ['Квартал 2', '2667']] as const) {
+      await modal.locator('[data-test="block-add"]').click()
+      await expect(modal.locator('[data-test="block-name"]')).toHaveValue(name)
+      await modal.locator('[data-test="block-plants"]').fill(plants)
+      await modal.locator('[data-test="block-form"]').getByRole('button', { name: 'Зберегти' }).click()
+      await expect(modal.locator('[data-test="block-row"]').filter({ hasText: name })).toBeVisible()
+    }
+    await expect(modal.getByText(/Рахуємо за кварталами/)).toHaveCount(0) // 4000 + 2667 = 6667
+
+    const form = modal.locator('[data-test="event-form"]')
+    await form.locator('[data-test="event-count"]').fill('20')
+    await form.locator('[data-test="event-block"]').selectOption({ label: 'Квартал 1' })
+    await form.locator('[data-test="event-reason"]').selectOption('frost')
+    await form.locator('[data-test="event-save"]').click()
+    await expect(modal.locator('[data-test="event-row"]')).toHaveCount(1)
+    await form.getByRole('button', { name: 'Підсадили' }).click()
+    await form.locator('[data-test="event-count"]').fill('5')
+    await form.locator('[data-test="event-save"]').click()
+    await expect(modal.locator('[data-test="event-row"]')).toHaveCount(2)
+    await expect(modal.locator('[data-test="plants-alive"]')).toHaveText('6 652')
+    await expect(modal.locator('[data-test="block-row"]').filter({ hasText: 'Квартал 1' })).toContainText('3 980 живих')
+
+    await page.getByRole('button', { name: 'Закрити' }).click()
+    await expect(chip).toHaveText('🌱 6 652 живих рослин · випади 0,3% · 2 кв.')
+
+    const { data: ev } = await farmer.client.from('planting_plant_events').select('kind, count, reason, created_by').eq('farm_crop_id', cropId).order('kind')
+    expect(ev).toEqual([
+      { kind: 'loss', count: 20, reason: 'frost', created_by: farmer.userId },
+      { kind: 'replant', count: 5, reason: null, created_by: farmer.userId },
+    ])
+    const hidden = await stranger.client.from('planting_blocks').select('id').eq('farm_crop_id', cropId)
+    expect(hidden.data ?? [], 'сторонній бачить квартали').toEqual([])
+    const forged = await stranger.client.from('planting_plant_events').insert({ farm_crop_id: cropId, kind: 'loss', count: 1 })
+    expect(forged.error, 'сторонній записав випад').not.toBeNull()
+    await expectNoErrors(errors, 'обліку рослин')
+    expect(apiErrors, apiErrors.join('\n')).toEqual([])
   })
 })

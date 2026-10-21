@@ -218,6 +218,9 @@
                 <button v-if="yieldSummary(crop) || !isViewer" type="button" class="yield-chip" @click="openYields(crop)">
                   🧺 {{ yieldSummary(crop) ?? 'Внести урожай' }}
                 </button>
+                <button v-if="plantsSummary(crop) || !isViewer" type="button" class="harvest-chip" data-test="plants-chip" @click="plantsCrop = crop">
+                  🌱 {{ plantsSummary(crop) ?? 'Квартали й випади' }}
+                </button>
               </div>
             </div>
             <NuxtLink
@@ -717,6 +720,8 @@
     </Teleport>
 
     <!-- Урожайність насадження по роках -->
+    <DashboardPlantsModal v-if="plantsCrop" :crop="plantsCrop" :read-only="isViewer" @close="plantsCrop = null" @changed="load()" />
+
     <Teleport to="body">
       <div v-if="yieldCrop" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="yieldCrop = null" />
@@ -795,6 +800,7 @@ import { activeWaiting, HARVEST_PHASES, type WaitingTreatment } from '~~/shared/
 import { careTasksDue, type DueCareTask } from '~~/shared/utils/careTasks'
 import { plantingYields, formatKg } from '~~/shared/utils/plantingYield'
 import { findVariety, formatWindow, harvestWindow, RIPENING_LABELS, type Ripening } from '~~/shared/utils/ripening'
+import { plantCount } from '~~/shared/utils/plantCount'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -966,6 +972,9 @@ const journalTreatments = ref<any[]>([])
 // Виконаний догляд: `${farm_crop_id}:${task_key}:${period}`
 const careDone = ref<Set<string>>(new Set())
 const varietyRows = ref<any[]>([])
+const blockRowsAll = ref<any[]>([])
+const plantEvents = ref<any[]>([])
+const plantsCrop = ref<any>(null)
 // Урожай і гроші по насадженнях: ручні записи, облік збору, витрати поля, продажі
 const yieldRows = ref<any[]>([])
 const harvestRows = ref<Record<string, any[]>>({})
@@ -1020,7 +1029,7 @@ async function loadCropExtras(cropIds: string[]) {
   const rows = (r: { data: any[] | null }) => r.data || []
   const yearAgo = new Date(Date.now() - 366 * 86400000).toLocaleDateString('sv-SE')
   const varietyNames = [...new Set(crops.value.map((c: any) => c.variety).filter(Boolean))]
-  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties] = await Promise.all([
+  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties, blocks, plantEv] = await Promise.all([
     supabase.from('planting_care_log').select('farm_crop_id, task_key, period').in('farm_crop_id', cropIds),
     supabase.from('planting_yields').select('id, farm_crop_id, year, yield_kg, note').in('farm_crop_id', cropIds),
     supabase.from('harvest_seasons').select('farm_crop_id, harvest_records(weight_kg, recorded_at)').in('farm_crop_id', cropIds),
@@ -1033,8 +1042,12 @@ async function loadCropExtras(cropIds: string[]) {
     varietyNames.length
       ? supabase.from('varieties').select('crop_type, name, ripening, harvest_from, harvest_to').in('name', varietyNames).not('ripening', 'is', null)
       : Promise.resolve({ data: [] }),
+    supabase.from('planting_blocks').select('id, farm_crop_id, name, plants_count').in('farm_crop_id', cropIds),
+    supabase.from('planting_plant_events').select('farm_crop_id, block_id, event_date, kind, count').in('farm_crop_id', cropIds),
   ])
   varietyRows.value = rows(varieties as any)
+  blockRowsAll.value = rows(blocks as any)
+  plantEvents.value = rows(plantEv as any)
   careDone.value = new Set(rows(care).map((c: any) => `${c.farm_crop_id}:${c.task_key}:${c.period}`))
   yieldRows.value = rows(yields)
   const hr: Record<string, any[]> = {}
@@ -1134,11 +1147,26 @@ const cropYields = (crop: any) => plantingYields({
   expenses: expenseRows.value.filter(e => e.crop_type && crop.crop_type.startsWith(e.crop_type.split(' (')[0])),
   sales: salesRows.value[crop.id] || [],
 })
+// Живі рослини: квартали насадження, випади й підсадка
+const cropPlants = (crop: any) => plantCount(crop.plants_count,
+  blockRowsAll.value.filter(b => b.farm_crop_id === crop.id), plantEvents.value.filter(e => e.farm_crop_id === crop.id))
+const plantsSummary = (crop: any) => {
+  const c = cropPlants(crop)
+  if (!c.planted && !c.lost) return null
+  const parts = [`${c.alive.toLocaleString('uk-UA')} живих рослин`]
+  if (c.lost) parts.push(`випади ${c.lossPct != null ? String(c.lossPct).replace('.', ',') + '%' : c.lost.toLocaleString('uk-UA')}`)
+  const blocks = blockRowsAll.value.filter(b => b.farm_crop_id === crop.id).length
+  if (blocks) parts.push(`${blocks} кв.`)
+  return parts.join(' · ')
+}
+
 const yieldSummary = (crop: any) => {
   const [last] = cropYields(crop)
   if (!last || !last.kg) return null
   const parts = [`${formatKg(last.kg)} у ${last.year}`]
   if (last.tPerHa != null) parts.push(`${String(last.tPerHa).replace('.', ',')} т/га`)
+  const alive = cropPlants(crop).alive
+  if (alive > 0) parts.push(`${String(Math.round(last.kg / alive * 100) / 100).replace('.', ',')} кг/рослину`)
   if (last.change != null) parts.push(`${last.change > 0 ? '+' : ''}${last.change}% до попереднього`)
   if (last.costPerKg != null) parts.push(`собівартість ${String(last.costPerKg).replace('.', ',')} грн/кг`)
   return parts.join(' · ')
