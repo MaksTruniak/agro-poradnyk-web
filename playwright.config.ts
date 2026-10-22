@@ -6,7 +6,7 @@ const externalBase = process.env.E2E_BASE_URL
 
 const FARMER_FARM_SUITES = /(farm|planting|deal|inventory|harvest)-flow\.spec\.ts|team-access\.spec\.ts|inventory-ui\.spec\.ts|harvest-outlook\.spec\.ts|deal-passport\.spec\.ts/
 // Створюють і видаляють співпрацю між тими самими фермером і агрономом — паралельно один одному заважали
-const AGREEMENT_SUITES = /(agreement|chat|agronomist)-flow\.spec\.ts|agronomist-week\.spec\.ts|inspection\.spec\.ts/
+const AGREEMENT_SUITES = /(agreement|chat|agronomist)-flow\.spec\.ts|agronomist-week\.spec\.ts|inspection\.spec\.ts|techcard-templates\.spec\.ts/
 
 export default defineConfig({
   testDir: './tests/e2e',

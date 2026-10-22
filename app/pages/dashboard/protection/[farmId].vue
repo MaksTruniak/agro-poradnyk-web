@@ -64,12 +64,19 @@
       </div>
         <p class="font-bold text-agro-dark text-lg">Програму ще не створено</p>
         <p class="text-agro-light mt-1 mb-6">Створіть технологічну карту для цієї культури</p>
-        <button v-if="!readOnly" @click="createProgram" :disabled="saving" class="btn-primary inline-block">
-          {{ saving ? '...' : '➕ Створити програму' }}
-        </button>
+        <div v-if="!readOnly" class="flex flex-wrap justify-center gap-2">
+          <button @click="createProgram" :disabled="saving" class="btn-primary inline-block">
+            {{ saving ? '...' : '➕ Створити програму' }}
+          </button>
+          <button type="button" class="btn-outline" data-test="tpl-apply-open" @click="openApply">📋 З шаблону</button>
+        </div>
       </div>
 
       <template v-else>
+        <div v-if="!readOnly" class="flex flex-wrap justify-end gap-2 mb-3">
+          <button type="button" class="btn-outline text-sm" data-test="tpl-apply-open" @click="openApply">📋 Застосувати шаблон</button>
+          <button type="button" class="btn-outline text-sm" :disabled="!treatments.length" data-test="tpl-save-open" @click="openSave">💾 Зберегти як шаблон</button>
+        </div>
         <!-- Блоки активних фаз -->
         <div class="space-y-4 mb-4">
           <div v-for="phase in activePhases" :key="phase.key" class="card p-0 overflow-visible" :class="{ 'ring-2 ring-agro': phase.key === currentPhaseKey }">
@@ -291,9 +298,47 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- Шаблони техкарт -->
+  <Teleport to="body">
+    <div v-if="tplModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" @click="tplModal = null" />
+      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col" data-test="tpl-modal">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-agro-border">
+          <p class="font-bold text-agro-dark">{{ tplModal === 'save' ? 'Зберегти як шаблон' : 'Застосувати шаблон' }}</p>
+          <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-bg text-agro-light" aria-label="Закрити" @click="tplModal = null">✕</button>
+        </div>
+        <div v-if="tplModal === 'save'" class="p-5 space-y-3">
+          <input v-model="tplName" class="input" maxlength="120" placeholder="Назва шаблону" data-test="tpl-name">
+          <p class="text-xs text-agro-light">
+            {{ treatments.length }} {{ plural(treatments.length, 'обробка', 'обробки', 'обробок') }} за фазами — з дозами, примітками й строками очікування, без статусів і дат.
+            Шаблон бачите лише ви; застосувати його можна до будь-якої культури.
+          </p>
+          <button type="button" class="btn-primary w-full" :disabled="!tplName.trim() || tplBusy" data-test="tpl-save" @click="saveTemplate">
+            {{ tplBusy ? '...' : 'Зберегти' }}
+          </button>
+        </div>
+        <div v-else class="p-5 overflow-y-auto space-y-2">
+          <p v-if="!templates.length" class="text-sm text-agro-light text-center py-6">
+            Шаблонів ще немає. Складіть техкарту для однієї культури й натисніть «Зберегти як шаблон».
+          </p>
+          <button v-for="t in sortedTemplates" :key="t.id" type="button" :disabled="tplBusy" data-test="tpl-item"
+            class="w-full text-left px-4 py-3 rounded-xl border border-agro-border hover:border-agro transition-colors" @click="applyTemplate(t)">
+            <p class="font-semibold text-agro-dark text-sm">{{ t.name }}</p>
+            <p class="text-xs text-agro-light">{{ t.crop_type || 'будь-яка культура' }} · {{ t.items.length }} {{ plural(t.items.length, 'обробка', 'обробки', 'обробок') }}</p>
+          </button>
+          <p class="text-xs text-agro-light pt-2">
+            Обробки додаються як заплановані; ті, що вже є в техкарті (та сама фаза й препарат), не дублюються.
+            <NuxtLink to="/dashboard/techcard-templates" class="text-agro font-semibold hover:underline">Мої шаблони →</NuxtLink>
+          </p>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
+import { planTemplateApply, templateFromTreatments } from '~~/shared/utils/techcardTemplate'
 import { Trash2, X, Bell } from 'lucide-vue-next'
 import { TREATMENT_TYPES, TYPE_SVG, TYPE_BG, TYPE_BADGE } from '~/utils/treatmentTypes'
 import { phaseIcon } from '~/utils/phaseIcons'
@@ -415,6 +460,7 @@ const selectCrop = async (crop: any) => {
     const usedPhaseKeys = [...new Set(treatmentsData?.map((t: any) => t.phase).filter(Boolean) || [])]
     const savedPhaseKeys: string[] = programData.active_phases || []
     const allKeys = [...new Set([...savedPhaseKeys, ...usedPhaseKeys])]
+    ensurePhases(allKeys)
     activePhasesKeys.value = allKeys
     allKeys.forEach(ensureInlineT)
   }
@@ -551,6 +597,76 @@ const deleteTreatment = async (t: any) => {
   await supabase.from('program_treatments').delete().eq('id', t.id)
   treatments.value = treatments.value.filter(tr => tr.id !== t.id)
   delete treatmentReminders.value[t.id]
+}
+
+// Фази з шаблону іншої культури (або власні) показуємо, навіть якщо їх немає в наборі фаз цієї культури
+const ensurePhases = (keys: string[]) => {
+  const missing = keys.filter(k => !phases.value.some(p => p.key === k))
+  if (missing.length) phases.value = [...phases.value, ...missing.map(k => allPhases.value.find(p => p.key === k) || { key: k, emoji: '🌱', order: 99 })]
+}
+
+// ── Шаблони техкарт ──
+const toast = useToast()
+const tplModal = ref<'save' | 'apply' | null>(null)
+const tplName = ref('')
+const tplBusy = ref(false)
+const templates = ref<any[]>([])
+const sortedTemplates = computed(() => {
+  const ct = selectedCrop.value?.crop_type
+  return [...templates.value].sort((a, b) => Number(b.crop_type === ct) - Number(a.crop_type === ct))
+})
+const plural = (n: number, one: string, few: string, many: string) => {
+  const m10 = n % 10, m100 = n % 100
+  return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many
+}
+
+const openSave = () => {
+  const c = selectedCrop.value
+  tplName.value = c ? `${c.crop_type}${c.variety ? ` · ${c.variety}` : ''}` : ''
+  tplModal.value = 'save'
+}
+const saveTemplate = async () => {
+  tplBusy.value = true
+  const { phases: tplPhases, items } = templateFromTreatments(treatments.value, activePhasesKeys.value)
+  const { error } = await supabase.from('techcard_templates').insert({
+    name: tplName.value.trim(), crop_type: selectedCrop.value?.crop_type || null, phases: tplPhases, items,
+  } as any)
+  tplBusy.value = false
+  if (error) { toast.error(error.message.includes('100') ? 'Не більше 100 шаблонів' : 'Не вдалося зберегти шаблон'); return }
+  toast.success('Шаблон збережено')
+  tplModal.value = null
+}
+
+const openApply = async () => {
+  tplModal.value = 'apply'
+  const { data } = await supabase.from('techcard_templates').select('id, name, crop_type, phases, items').order('updated_at', { ascending: false })
+  templates.value = data || []
+}
+const applyTemplate = async (tpl: any) => {
+  if (farmerProgramLimitReached.value) { toast.error('Ліміт технічних карт фермера вичерпано'); return }
+  tplBusy.value = true
+  if (!program.value) await createProgram()
+  if (!program.value) { tplBusy.value = false; toast.error('Не вдалося створити програму'); return }
+  const plan = planTemplateApply(tpl, treatments.value, activePhasesKeys.value)
+  if (plan.toInsert.length) {
+    const rows = plan.toInsert.map(i => ({
+      program_id: program.value.id, phase: i.phase,
+      phase_order: i.phase ? (phases.value.find(p => p.key === i.phase)?.order ?? growthPhases.orderFor(i.phase)) : (i.phase_order ?? 99),
+      type: i.type, product_name: i.product_name, dosage: i.dosage, notes: i.notes, waiting_days: i.waiting_days,
+    }))
+    const { data, error } = await supabase.from('program_treatments').insert(rows as any).select()
+    if (error) { tplBusy.value = false; toast.error('Не вдалося додати обробки'); return }
+    treatments.value = [...treatments.value, ...(data || [])].sort((a, b) => (a.phase_order ?? 99) - (b.phase_order ?? 99))
+  }
+  ensurePhases(plan.phases)
+  activePhasesKeys.value = plan.phases
+  plan.phases.forEach(ensureInlineT)
+  await saveActivePhasesToDb()
+  tplBusy.value = false
+  tplModal.value = null
+  toast.success(plan.toInsert.length
+    ? `Додано ${plan.toInsert.length} ${plural(plan.toInsert.length, 'обробку', 'обробки', 'обробок')}${plan.skipped ? `, ${plan.skipped} уже були` : ''}`
+    : 'Усі обробки шаблону вже є в техкарті')
 }
 
 const searchProducts = (phaseKey: string) => {
