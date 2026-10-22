@@ -73,6 +73,11 @@
               <div class="text-right shrink-0 min-w-[100px]">
                 <p class="font-extrabold text-agro">{{ deal.total_price?.toLocaleString('uk-UA') }} грн</p>
               </div>
+              <NuxtLink v-if="deal.status !== 'cancelled'" :to="`/dashboard/deal-passport/${deal.id}`" data-test="deal-passport-link"
+                class="shrink-0 inline-flex items-center gap-1.5 text-xs border border-agro-border text-agro rounded-xl px-3 py-1.5 hover:border-agro transition-colors font-medium">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                Паспорт
+              </NuxtLink>
               <span v-if="deal.status === 'cancelled'" class="shrink-0 inline-flex items-center gap-1.5 text-xs bg-red-50 border border-red-200 text-red-500 rounded-xl px-3 py-1.5 font-medium">
                 Скасовано
               </span>
