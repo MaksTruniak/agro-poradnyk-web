@@ -141,20 +141,20 @@
       </div>
 
       <!-- Листи -->
-      <div v-if="isFarmer || isAgronomist" id="notifications" class="card">
+      <div v-if="isFarmer || isAgronomist || isBuyer" id="notifications" class="card">
         <h2 class="dash-card-title bitter mb-1">Листи на пошту</h2>
         <p class="text-sm text-agro-light mb-4">Про сильний заморозок і нагадування на день листи приходять завжди.</p>
         <label class="flex items-start gap-3 cursor-pointer">
           <input v-model="weekDigest" type="checkbox" class="mt-1 accent-agro" data-test="week-digest-toggle" :disabled="savingDigest" @change="saveDigest">
           <span>
-            <span class="block text-sm font-semibold text-agro-dark">{{ isFarmer ? 'План на тиждень щопонеділка' : 'Клієнти цього тижня щопонеділка' }}</span>
-            <span class="block text-xs text-agro-light mt-0.5">{{ isFarmer ? 'Погодні ризики, обробки за техкартою, догляд і нагадування по насадженнях' : 'Ризики, строки очікування й обробки в насадженнях клієнтів (Агроном Про)' }}</span>
+            <span class="block text-sm font-semibold text-agro-dark">{{ isFarmer ? 'План на тиждень щопонеділка' : isAgronomist ? 'Клієнти цього тижня щопонеділка' : 'Скоро урожай щопонеділка' }}</span>
+            <span class="block text-xs text-agro-light mt-0.5">{{ isFarmer ? 'Погодні ризики, обробки за техкартою, догляд і нагадування по насадженнях' : isAgronomist ? 'Ризики, строки очікування й обробки в насадженнях клієнтів (Агроном Про)' : 'У кого найближчими тижнями збір того, що ви закуповуєте' }}</span>
           </span>
         </label>
       </div>
 
       <!-- Telegram -->
-      <div v-if="isFarmer || isAgronomist" id="telegram" class="card" data-test="telegram-card">
+      <div v-if="isFarmer || isAgronomist || isBuyer" id="telegram" class="card" data-test="telegram-card">
         <h2 class="dash-card-title bitter mb-1">Telegram</h2>
         <template v-if="tgLink">
           <p class="text-sm text-agro-dark mb-4">
@@ -438,6 +438,7 @@ const userRoles = ref<string[]>(profile?.roles?.length ? profile.roles : [profil
 const isAgronomist = computed(() => role.value === 'agronomist' || userRoles.value.includes('agronomist'))
 const isSeller = computed(() => role.value === 'seller')
 const isFarmer = computed(() => role.value === 'farmer' || userRoles.value.includes('farmer'))
+const isBuyer = computed(() => role.value === 'buyer' || userRoles.value.includes('buyer'))
 
 // Щотижневий лист і Telegram: рядка немає — усе увімкнено
 const weekDigest = ref(true)

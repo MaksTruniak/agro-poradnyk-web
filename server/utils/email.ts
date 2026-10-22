@@ -351,6 +351,37 @@ export async function sendWeekPlanEmail(to: string, name: string, lines: WeekPla
   })
 }
 
+/** Щопонеділка заготівельнику: у кого найближчими тижнями почнеться збір того, що він закуповує */
+export async function sendBuyerOutlookEmail(to: string, name: string, lines: string[], more: number) {
+  const rows = lines.map(l => `<tr><td style="padding:10px 16px;border-bottom:1px solid #eee;color:#1B2E1B;font-size:14px;line-height:1.45">🧺 ${escapeHtml(l)}</td></tr>`).join('')
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: '🧺 Скоро урожай — АгроПростір',
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
+        <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
+        </div>
+        <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
+          <h2 style="margin:0 0 8px;font-size:20px">Привіт, ${escapeHtml(name)}!</h2>
+          <p style="color:#5B6B53;margin:0 0 20px;font-size:14px">Найближчі 3 тижні почнеться збір того, що ви закуповуєте. Домовтеся з фермерами заздалегідь:</p>
+          <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)">${rows}</table>
+          ${more ? `<p style="color:#5B6B53;margin:12px 0 0;font-size:13px">І ще ${more} — на сайті.</p>` : ''}
+          <div style="margin-top:24px;text-align:center">
+            <a href="https://agroprostir.com.ua/dashboard/harvest-outlook"
+              style="display:inline-block;background:#2f5233;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Відкрити «Скоро урожай» →</a>
+          </div>
+          <p style="color:#aaa;font-size:12px;text-align:center;margin-top:20px">
+            Строки орієнтовні; обсяг — за плановою врожайністю фермера.<br>
+            <a href="https://agroprostir.com.ua/dashboard/settings#notifications" style="color:#aaa">Не надсилати цей лист</a>
+          </p>
+        </div>
+      </div>
+    `,
+  })
+}
+
 /** Щопонеділка агроному Про: що відбувається в насадженнях клієнтів */
 export async function sendClientsPlanEmail(to: string, name: string, clients: { name: string; urgent: number; lines: WeekPlanEmailLine[]; more: number }[]) {
   const blocks = clients.map(c => `

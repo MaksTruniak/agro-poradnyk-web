@@ -4,10 +4,12 @@ import { addDays } from '../../../shared/utils/weatherRisks'
 import { assemblePlan, planDigest } from '../../../shared/utils/weekPlan'
 import { findVariety } from '../../../shared/utils/ripening'
 import { guessCropGroup, isPerennialGroup } from '../../../app/utils/cropGroups'
-import { sendClientsPlanEmail, sendWeekPlanEmail } from '../../utils/email'
+import { sendBuyerOutlookEmail, sendClientsPlanEmail, sendWeekPlanEmail } from '../../utils/email'
 import { KYIV_TZ, notifyUser } from '../../utils/notify'
 import { notifyTelegram, SITE_URL, tgEscape } from '../../utils/telegram'
 import { getActivePlan, isAgronomistPro } from '../../../shared/utils/plan'
+import { demandMatches, harvestOutlook, whenLabel } from '../../../shared/utils/harvestOutlook'
+import { formatWindow } from '../../../shared/utils/ripening'
 
 // Щопонеділка: план на тиждень по багаторічних насадженнях — лист і сповіщення в кабінет.
 // Той самий план, що на сторінці /dashboard/week (assemblePlan). Лист вимикається в налаштуваннях (week_digest),
@@ -181,5 +183,45 @@ export default defineEventHandler(async (event) => {
       }
     }
   }
-  return dry ? { ok: true, today, users: report, agronomists: agroReport } : { ok: true, users: owners.size, emails, telegrams, agronomists: agroSent }
+  // ── Заготівельникам: у кого за 3 тижні почнеться збір того, що вони закуповують ──
+  const buyerReport: { buyerId: string; lines: string[] }[] = []
+  let buyersSent = 0
+  const { data: demand } = await supabase.from('buyer_crops').select('user_id, crop_type')
+  const buyers = new Map<string, string[]>()
+  for (const d of demand || []) buyers.set(d.user_id, [...(buyers.get(d.user_id) ?? []), d.crop_type])
+  if (buyers.size) {
+    const { data: pub } = await supabase.from('farm_crops').select('id, farm_id, crop_type, variety, area_ha, planting_year, planned_yield_t')
+      .or('show_in_catalog.is.null,show_in_catalog.eq.true')
+    const perennial = (pub || []).filter((c: any) => isPerennialGroup(groupOf(c)))
+    const outlook = harvestOutlook(perennial, { today, horizon: 21, groupOf: ct => groupOf({ crop_type: ct }), varietyOf: c => findVariety(varieties || [], c.crop_type, c.variety) })
+    const farmIds = [...new Set(outlook.map(i => i.crop.farm_id))]
+    const { data: pf } = farmIds.length ? await supabase.from('public_farms').select('id, user_id, region').in('id', farmIds) : { data: [] as any[] }
+    for (const [buyerId, cropsWanted] of buyers) {
+      if (onlyUser && buyerId !== onlyUser) continue
+      const mine = outlook.filter(i => cropsWanted.some(w => demandMatches(w, i.crop.crop_type)) && (pf || []).find((f: any) => f.id === i.crop.farm_id)?.user_id !== buyerId)
+      if (!mine.length) continue
+      const lines = mine.slice(0, 12).map(i => {
+        const region = (pf || []).find((f: any) => f.id === i.crop.farm_id)?.region
+        return `${i.crop.crop_type}${i.crop.variety ? ` ${i.crop.variety}` : ''} — ${whenLabel(i.inDays)} (~${formatWindow(i.window)})${region ? `, ${region}` : ''}${i.tons ? `, ~${String(i.tons).replace('.', ',')} т` : ''}`
+      })
+      if (dry) { buyerReport.push({ buyerId, lines }); continue }
+      try {
+        await notifyTelegram(supabase, buyerId, 'week_plan',
+          `🧺 <b>Скоро урожай</b> — ${mine.length} ${mine.length === 1 ? 'насадження' : 'насаджень'} за 3 тижні\n\n${lines.map(l => `• ${tgEscape(l)}`).join('\n')}`,
+          { text: 'Відкрити', url: `${SITE_URL}/dashboard/harvest-outlook` })
+        if (noEmail.has(buyerId)) continue
+        const { data: userData } = await supabase.auth.admin.getUserById(buyerId)
+        if (!userData?.user?.email) continue
+        const name = userData.user.user_metadata?.name || userData.user.user_metadata?.full_name || userData.user.email.split('@')[0]
+        await sendBuyerOutlookEmail(userData.user.email, name, lines, Math.max(0, mine.length - lines.length))
+        buyersSent++
+      } catch (e) {
+        console.error('[week-digest cron] buyer', buyerId, e)
+      }
+    }
+  }
+
+  return dry
+    ? { ok: true, today, users: report, agronomists: agroReport, buyers: buyerReport }
+    : { ok: true, users: owners.size, emails, telegrams, agronomists: agroSent, buyers: buyersSent }
 })

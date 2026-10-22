@@ -68,6 +68,7 @@ const link = computed(() => {
   }
   if (item.kind === 'reminder') return { to: '/dashboard/reminders', label: 'Нагадування →' }
   if (item.kind === 'phase' && item.farmId) return { to: `/dashboard/farm/${item.farmId}`, label: 'Відмітити фазу →' }
+  if (item.kind === 'harvest' && crop) return { to: `/dashboard/demand?crop=${encodeURIComponent(crop.crop_type)}`, label: 'Хто купує →' }
   if ((item.kind === 'risk' || item.kind === 'waiting' || item.kind === 'harvest') && item.farmId) return { to: `/dashboard/farm/${item.farmId}`, label: 'До поля →' }
   return null
 })

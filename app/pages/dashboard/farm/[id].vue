@@ -221,6 +221,9 @@
                 <NuxtLink v-if="lastInspection(crop)" :to="`/dashboard/inspection/${lastInspection(crop)!.id}`" class="harvest-chip" :data-cond="lastInspection(crop)!.condition" data-test="inspection-chip">
                   📝 Огляд {{ formatPhaseDate(lastInspection(crop)!.visited_at) }} · {{ INSPECTION_LABEL[lastInspection(crop)!.condition] }}
                 </NuxtLink>
+                <NuxtLink v-if="demandCount(crop)" :to="`/dashboard/demand?crop=${encodeURIComponent(crop.crop_type)}`" class="harvest-chip" data-test="demand-chip">
+                  🤝 Шукають: {{ demandCount(crop) }} {{ demandCount(crop) === 1 ? 'заготівельник' : demandCount(crop) < 5 ? 'заготівельники' : 'заготівельників' }}
+                </NuxtLink>
                 <NuxtLink v-if="isClientAgronomist" :to="`/dashboard/inspection/edit?cropId=${crop.id}`" class="harvest-chip" data-test="inspection-new">
                   + Акт огляду
                 </NuxtLink>
@@ -807,6 +810,7 @@ import { careTasksDue, type DueCareTask } from '~~/shared/utils/careTasks'
 import { plantingYields, formatKg } from '~~/shared/utils/plantingYield'
 import { findVariety, formatWindow, harvestWindow, RIPENING_LABELS, type Ripening } from '~~/shared/utils/ripening'
 import { plantCount } from '~~/shared/utils/plantCount'
+import { demandMatches } from '~~/shared/utils/harvestOutlook'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Поле — АгроПростір' })
@@ -985,6 +989,9 @@ const plantsCrop = ref<any>(null)
 const inspections = ref<any[]>([])
 const isClientAgronomist = ref(false)
 const INSPECTION_LABEL: Record<string, string> = { good: 'добрий стан', attention: 'потребує уваги', bad: 'термінові дії' }
+// Попит: заготівельники, що шукають цю культуру (крім самого власника)
+const buyerDemand = ref<any[]>([])
+const demandCount = (crop: any) => new Set(buyerDemand.value.filter(d => demandMatches(d.crop_type, crop.crop_type)).map(d => d.user_id)).size
 const lastInspection = (crop: any) => inspections.value.find(i => i.farm_crop_id === crop.id) ?? null
 // Урожай і гроші по насадженнях: ручні записи, облік збору, витрати поля, продажі
 const yieldRows = ref<any[]>([])
@@ -1042,7 +1049,7 @@ async function loadCropExtras(cropIds: string[]) {
   const varietyNames = [...new Set(crops.value.map((c: any) => c.variety).filter(Boolean))]
   const { data: { session: sess } } = await supabase.auth.getSession()
   const me = sess?.user?.id
-  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties, blocks, plantEv, insp, agr] = await Promise.all([
+  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties, blocks, plantEv, insp, agr, demandRows] = await Promise.all([
     supabase.from('planting_care_log').select('farm_crop_id, task_key, period').in('farm_crop_id', cropIds),
     supabase.from('planting_yields').select('id, farm_crop_id, year, yield_kg, note').in('farm_crop_id', cropIds),
     supabase.from('harvest_seasons').select('farm_crop_id, harvest_records(weight_kg, recorded_at)').in('farm_crop_id', cropIds),
@@ -1061,7 +1068,9 @@ async function loadCropExtras(cropIds: string[]) {
     me && farm.value?.user_id && farm.value.user_id !== me
       ? supabase.from('agreements').select('id').eq('agronomist_id', me).eq('farmer_id', farm.value.user_id).eq('status', 'active').limit(1)
       : Promise.resolve({ data: [] }),
+    supabase.from('buyer_crops').select('user_id, crop_type'),
   ])
+  buyerDemand.value = rows(demandRows as any).filter((d: any) => d.user_id !== farm.value?.user_id)
   inspections.value = rows(insp as any)
   isClientAgronomist.value = rows(agr as any).length > 0
   varietyRows.value = rows(varieties as any)

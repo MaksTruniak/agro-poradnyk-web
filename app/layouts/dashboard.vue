@@ -214,6 +214,7 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/dashboard/buyer-crops':       { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', sw: 1.6, lj: 'round' }] },
   '/dashboard/inventory':         { paths: [{ d: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18', sw: 1.6, lj: 'round' }] },
   '/dashboard/clients-week':      { paths: [{ d: 'M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18', sw: 1.6, lj: 'round' }, { d: 'M9 15l2 2 4-4', sw: 1.7, lc: 'round', lj: 'round' }] },
+  '/dashboard/harvest-outlook':   { paths: [{ d: 'M4 8h16l-1.5 11a2 2 0 01-2 1.7h-9a2 2 0 01-2-1.7L4 8z', sw: 1.6, lj: 'round' }, { d: 'M8 8V6a4 4 0 018 0v2', sw: 1.6, lc: 'round' }] },
   '/dashboard/week':              { paths: [{ d: 'M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18', sw: 1.6, lj: 'round' }, { d: 'M9 15l2 2 4-4', sw: 1.7, lc: 'round', lj: 'round' }] },
   '/dashboard/treatments':        { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4', sw: 1.6, lj: 'round' }] },
   '/dashboard/harvest':           { paths: [{ d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h2M9 16h2M13 12h2M13 16h2', sw: 1.6, lj: 'round' }] },
@@ -519,6 +520,7 @@ const navItems = computed(() => {
   if (role.value === 'buyer') return [
     { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
     { label: 'Закупівлі', items: [
+      { to: '/dashboard/harvest-outlook', label: 'Скоро урожай' },
       { to: '/farmers', label: 'Фермери' },
       { to: '/dashboard/buyer-crops', label: 'Що закуповую' },
       { to: '/dashboard/deals', label: 'Угоди' },
