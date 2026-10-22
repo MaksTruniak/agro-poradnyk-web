@@ -143,7 +143,7 @@ test.describe('Поля, культури, техкарта', () => {
     treatmentId = t!.id
 
     const st = await farmer.client.from('program_treatments').update({ status: 'done' }).eq('id', treatmentId).select('status').single()
-    expect(st.data?.status).toBe('done')
+    expect(st.data?.status, JSON.stringify(st.error)).toBe('done')
 
     const { data: progHidden } = await stranger.client.from('protection_programs').select('id').eq('id', programId)
     expect(progHidden ?? [], 'сторонній бачить техкарту фермера').toEqual([])

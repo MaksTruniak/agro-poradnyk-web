@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 import { addDays } from '../../shared/utils/weatherRisks'
+import { createClient } from '@supabase/supabase-js'
 
 // «Скоро урожай» для заготівельника і «Хто купує» для фермера. ПИШЕ в базу — лише з E2E_WRITE=1; усе прибирається.
 // Потрібна міграція 20261023_variety_ripening.sql.
@@ -39,6 +40,17 @@ test.describe('Скоро урожай і попит', () => {
       { farm_id: farmId, crop_type: 'Лохина', variety, area_ha: 1, planting_year: 2018, planned_yield_t: 5, show_in_catalog: false },
     ])
     expect(error).toBeNull()
+
+    // Прихована культура: не видно ні без входу, ні сторонньому (міграція 20261026_farm_crops_privacy.sql)
+    const { data: own } = await farmer.client.from('farm_crops').select('id, show_in_catalog').eq('farm_id', farmId)
+    const hiddenId = own!.find((c: any) => c.show_in_catalog === false)!.id
+    const anon = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!, { auth: { persistSession: false } })
+    expect((await anon.from('farm_crops').select('id').eq('id', hiddenId)).data ?? [], 'прихована культура видна без входу').toEqual([])
+    expect((await buyer.client.from('farm_crops').select('id').eq('id', hiddenId)).data ?? [], 'прихована культура видна сторонньому').toEqual([])
+    expect((await anon.from('farm_crops').select('id').eq('farm_id', farmId)).data, 'відкрита культура не видна без входу').toHaveLength(1)
+    const { data: catalog } = await anon.rpc('get_farmers_with_crops')
+    expect((catalog || []).find((f: any) => f.id === farmer.userId)?.crops ?? [], 'каталог фермерів без культур').toContain('Лохина')
+
     const { data: d, error: dErr } = await buyer.client.from('buyer_crops').insert({ user_id: buyer.userId, crop_type: 'Лохина', min_qty: 2, max_qty: 10, unit: 'т', notes: `${TAG} купую` }).select('id').single()
     expect(dErr).toBeNull()
     demandId = d!.id
