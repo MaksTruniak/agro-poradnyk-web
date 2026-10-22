@@ -218,6 +218,12 @@
                 <button v-if="yieldSummary(crop) || !isViewer" type="button" class="yield-chip" @click="openYields(crop)">
                   🧺 {{ yieldSummary(crop) ?? 'Внести урожай' }}
                 </button>
+                <NuxtLink v-if="lastInspection(crop)" :to="`/dashboard/inspection/${lastInspection(crop)!.id}`" class="harvest-chip" :data-cond="lastInspection(crop)!.condition" data-test="inspection-chip">
+                  📝 Огляд {{ formatPhaseDate(lastInspection(crop)!.visited_at) }} · {{ INSPECTION_LABEL[lastInspection(crop)!.condition] }}
+                </NuxtLink>
+                <NuxtLink v-if="isClientAgronomist" :to="`/dashboard/inspection/edit?cropId=${crop.id}`" class="harvest-chip" data-test="inspection-new">
+                  + Акт огляду
+                </NuxtLink>
                 <button v-if="plantsSummary(crop) || !isViewer" type="button" class="harvest-chip" data-test="plants-chip" @click="plantsCrop = crop">
                   🌱 {{ plantsSummary(crop) ?? 'Квартали й випади' }}
                 </button>
@@ -975,6 +981,11 @@ const varietyRows = ref<any[]>([])
 const blockRowsAll = ref<any[]>([])
 const plantEvents = ref<any[]>([])
 const plantsCrop = ref<any>(null)
+// Акти огляду агронома: останній на насадження; агроном клієнта може скласти новий
+const inspections = ref<any[]>([])
+const isClientAgronomist = ref(false)
+const INSPECTION_LABEL: Record<string, string> = { good: 'добрий стан', attention: 'потребує уваги', bad: 'термінові дії' }
+const lastInspection = (crop: any) => inspections.value.find(i => i.farm_crop_id === crop.id) ?? null
 // Урожай і гроші по насадженнях: ручні записи, облік збору, витрати поля, продажі
 const yieldRows = ref<any[]>([])
 const harvestRows = ref<Record<string, any[]>>({})
@@ -1029,7 +1040,9 @@ async function loadCropExtras(cropIds: string[]) {
   const rows = (r: { data: any[] | null }) => r.data || []
   const yearAgo = new Date(Date.now() - 366 * 86400000).toLocaleDateString('sv-SE')
   const varietyNames = [...new Set(crops.value.map((c: any) => c.variety).filter(Boolean))]
-  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties, blocks, plantEv] = await Promise.all([
+  const { data: { session: sess } } = await supabase.auth.getSession()
+  const me = sess?.user?.id
+  const [care, yields, seasons, expenses, manualSales, deals, journal, varieties, blocks, plantEv, insp, agr] = await Promise.all([
     supabase.from('planting_care_log').select('farm_crop_id, task_key, period').in('farm_crop_id', cropIds),
     supabase.from('planting_yields').select('id, farm_crop_id, year, yield_kg, note').in('farm_crop_id', cropIds),
     supabase.from('harvest_seasons').select('farm_crop_id, harvest_records(weight_kg, recorded_at)').in('farm_crop_id', cropIds),
@@ -1044,7 +1057,13 @@ async function loadCropExtras(cropIds: string[]) {
       : Promise.resolve({ data: [] }),
     supabase.from('planting_blocks').select('id, farm_crop_id, name, plants_count').in('farm_crop_id', cropIds),
     supabase.from('planting_plant_events').select('farm_crop_id, block_id, event_date, kind, count').in('farm_crop_id', cropIds),
+    supabase.from('planting_inspections').select('id, farm_crop_id, visited_at, condition').in('farm_crop_id', cropIds).order('visited_at', { ascending: false }),
+    me && farm.value?.user_id && farm.value.user_id !== me
+      ? supabase.from('agreements').select('id').eq('agronomist_id', me).eq('farmer_id', farm.value.user_id).eq('status', 'active').limit(1)
+      : Promise.resolve({ data: [] }),
   ])
+  inspections.value = rows(insp as any)
+  isClientAgronomist.value = rows(agr as any).length > 0
   varietyRows.value = rows(varieties as any)
   blockRowsAll.value = rows(blocks as any)
   plantEvents.value = rows(plantEv as any)
@@ -1725,6 +1744,8 @@ const saveCropEdit = async () => {
   text-align: left;
 }
 .yield-chip:hover { background: rgb(245, 236, 214); }
+.harvest-chip[data-cond="attention"] { background: rgb(253, 240, 214); border-color: rgb(240, 214, 160); color: rgb(130, 80, 10); }
+.harvest-chip[data-cond="bad"] { background: rgb(253, 226, 226); border-color: rgb(245, 190, 190); color: rgb(150, 30, 30); }
 .harvest-chip {
   display: inline-flex;
   padding: 3px 10px;

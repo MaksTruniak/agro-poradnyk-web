@@ -131,6 +131,7 @@ const ClientActions = defineComponent({
         farm && item.kind === 'treatment'
           ? h(resolveComponent('NuxtLink') as any, { to: `/dashboard/protection/${farm.id}`, class: 'plan-btn' }, () => 'Техкарта →')
           : farm ? h(resolveComponent('NuxtLink') as any, { to: `/dashboard/farm/${farm.id}?readOnly=1`, class: 'plan-btn' }, () => 'Поле →') : null,
+        item.cropId ? h(resolveComponent('NuxtLink') as any, { to: `/dashboard/inspection/edit?cropId=${item.cropId}`, class: 'plan-btn', 'data-test': 'new-inspection' }, () => '📝 Акт огляду') : null,
       ])
     }
   },

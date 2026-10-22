@@ -34,7 +34,7 @@
         class="card flex items-start gap-4 transition-all"
         :class="!n.is_read ? 'border-l-4 border-l-amber-400' : 'opacity-70'">
         <div class="text-2xl shrink-0 mt-0.5">
-          {{ n.type === 'inventory_low' ? '🧪' : n.type === 'treatment_soon' ? '🔔' : n.type === 'weather_risk' ? '🌦️' : n.type === 'week_plan' ? '🗓️' : '📋' }}
+          {{ n.type === 'inventory_low' ? '🧪' : n.type === 'treatment_soon' ? '🔔' : n.type === 'weather_risk' ? '🌦️' : n.type === 'week_plan' ? '🗓️' : n.type === 'inspection' ? '📝' : '📋' }}
         </div>
         <div class="flex-1 min-w-0">
           <p class="font-bold text-agro-dark text-sm">{{ n.title }}</p>
@@ -57,6 +57,10 @@
           <NuxtLink v-else-if="n.type === 'week_plan'" to="/dashboard/week"
             class="text-xs text-agro hover:underline font-medium">
             До плану →
+          </NuxtLink>
+          <NuxtLink v-else-if="n.type === 'inspection' && n.data?.inspectionId" :to="`/dashboard/inspection/${n.data.inspectionId}`"
+            class="text-xs text-agro hover:underline font-medium">
+            До акта →
           </NuxtLink>
           <button v-if="!n.is_read" @click="markRead(n)"
             class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-agro-hover text-agro-light hover:text-agro transition-colors"

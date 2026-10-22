@@ -37,7 +37,8 @@ export function sendTelegram(chatId: number | string, html: string, button?: { t
   })
 }
 
-export type TelegramKind = 'week_plan' | 'frost' | 'reminders'
+/** null — особисте повідомлення (акт огляду від агронома), без перемикача в налаштуваннях */
+export type TelegramKind = 'week_plan' | 'frost' | 'reminders' | null
 
 /**
  * Надіслати користувачу в Telegram, якщо чат прив'язано і цей вид не вимкнено.
@@ -52,7 +53,7 @@ export async function notifyTelegram(
     supabase.from('notification_settings').select('tg_week_plan, tg_frost, tg_reminders').eq('user_id', userId).maybeSingle(),
   ])
   if (!link?.chat_id) return false
-  if ((settings as any)?.[`tg_${kind}`] === false) return false
+  if (kind && (settings as any)?.[`tg_${kind}`] === false) return false
   try {
     await sendTelegram(link.chat_id, html, button)
     return true
