@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
   const { data: reminders } = await supabase
     .from('reminders')
     .select('id, user_id, description, scheduled_date, type')
-    .eq('from_agronomist', false)
     .gte('scheduled_date', todayStart.toISOString())
     .lte('scheduled_date', todayEnd.toISOString())
     .order('scheduled_date', { ascending: true })

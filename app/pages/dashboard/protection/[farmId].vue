@@ -118,7 +118,7 @@
                   <DashboardTreatmentWaiting v-if="t.type !== 'полив'" :t="t" :read-only="readOnly" />
                 </div>
                 <div class="relative shrink-0 reminder-info-wrap">
-                  <button @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                  <button data-test="reminder-open" @click="toggleReminderInfo(t)" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
                     :class="futureRemindersCount(t.id) ? 'bg-agro/10 text-agro hover:bg-agro/20' : 'hover:bg-agro-hover text-agro-light hover:text-agro'"
                     title="Нагадування">
                     <Bell :size="14" />
@@ -131,7 +131,7 @@
                     class="absolute right-0 top-9 z-30 w-64 bg-white rounded-2xl shadow-xl border border-agro-border p-3">
                     <div class="flex items-center justify-between mb-2">
                       <p class="text-xs font-bold text-agro-dark">🔔 Нагадування фермеру</p>
-                      <button @click="openReminderFor(t); activeReminderInfo = null"
+                      <button data-test="reminder-add" @click="openReminderFor(t); activeReminderInfo = null"
                         class="text-xs text-agro font-medium hover:underline">+ Додати</button>
                     </div>
                     <div v-if="!treatmentReminders[t.id]?.length" class="text-xs text-agro-light py-2 text-center">
@@ -250,14 +250,14 @@
                 <div class="flex items-center justify-between mb-4">
                   <button @click="rPrevMonth" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors text-agro-dark font-bold">‹</button>
                   <span class="font-semibold text-agro-dark text-sm">{{ rMonthLabel }}</span>
-                  <button @click="rNextMonth" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors text-agro-dark font-bold">›</button>
+                  <button data-test="reminder-next-month" @click="rNextMonth" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors text-agro-dark font-bold">›</button>
                 </div>
                 <div class="grid grid-cols-7 mb-1">
                   <div v-for="d in ['Пн','Вт','Ср','Чт','Пт','Сб','Нд']" :key="d" class="text-center text-xs font-medium text-agro-light py-1">{{ d }}</div>
                 </div>
                 <div class="grid grid-cols-7 gap-0.5">
                   <div v-for="blank in rFirstDayOffset" :key="'b'+blank" />
-                  <button v-for="day in rDaysInMonth" :key="day"
+                  <button v-for="day in rDaysInMonth" :key="day" data-test="reminder-day"
                     @click="!rIsPastDay(day) && rSelectDay(day)" :disabled="rIsPastDay(day)"
                     class="aspect-square flex items-center justify-center text-sm rounded-xl transition-colors font-medium"
                     :class="[rIsPastDay(day) ? 'text-gray-300 cursor-not-allowed' : '', rIsSelectedDay(day) ? 'bg-agro text-white' : (!rIsPastDay(day) ? 'hover:bg-white text-agro-dark' : ''), rIsToday(day) && !rIsSelectedDay(day) ? 'text-agro font-bold' : '']">
@@ -289,7 +289,7 @@
           </div>
           <div class="sticky bottom-0 bg-white border-t border-agro-border px-6 py-4 flex gap-3">
             <button @click="reminderTreatment = null" class="btn-outline flex-1">Скасувати</button>
-            <button @click="saveReminder" :disabled="!rDate || rSaving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
+            <button data-test="reminder-save" @click="saveReminder" :disabled="!rDate || rSaving" class="btn-primary flex-1 inline-flex items-center justify-center gap-1.5">
               <svg v-if="!rSaving" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
               {{ rSaving ? '...' : 'Додати' }}
             </button>
@@ -308,7 +308,13 @@
           <p class="font-bold text-agro-dark">{{ tplModal === 'save' ? 'Зберегти як шаблон' : 'Застосувати шаблон' }}</p>
           <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-agro-bg text-agro-light" aria-label="Закрити" @click="tplModal = null">✕</button>
         </div>
-        <div v-if="tplModal === 'save'" class="p-5 space-y-3">
+        <div v-if="!agroPro" class="p-5 text-center space-y-3" data-test="tpl-locked">
+          <p class="text-3xl">🔒</p>
+          <p class="font-semibold text-agro-dark">Шаблони техкарт — на тарифі Агроном Про</p>
+          <p class="text-sm text-agro-light">Зберігайте схеми обробок і застосовуйте їх до культур клієнтів одним натиском.</p>
+          <NuxtLink to="/dashboard/agronomist-subscription" class="dash-btn-primary inline-block text-sm">Агроном Про →</NuxtLink>
+        </div>
+        <div v-else-if="tplModal === 'save'" class="p-5 space-y-3">
           <input v-model="tplName" class="input" maxlength="120" placeholder="Назва шаблону" data-test="tpl-name">
           <p class="text-xs text-agro-light">
             {{ treatments.length }} {{ plural(treatments.length, 'обробка', 'обробки', 'обробок') }} за фазами — з дозами, примітками й строками очікування, без статусів і дат.
@@ -339,6 +345,7 @@
 
 <script setup lang="ts">
 import { planTemplateApply, templateFromTreatments } from '~~/shared/utils/techcardTemplate'
+import { getActivePlan, isAgronomistPro } from '~~/shared/utils/plan'
 import { Trash2, X, Bell } from 'lucide-vue-next'
 import { TREATMENT_TYPES, TYPE_SVG, TYPE_BG, TYPE_BADGE } from '~/utils/treatmentTypes'
 import { phaseIcon } from '~/utils/phaseIcons'
@@ -409,12 +416,17 @@ onMounted(async () => {
   await growthPhases.load()
 
   if (uid) {
-    const { data: profile } = await supabase.from('users').select('role').eq('id', uid).single()
+    const [{ data: profile }, { data: agroSub }] = await Promise.all([
+      supabase.from('users').select('role').eq('id', uid).single(),
+      supabase.from('subscriptions').select('plan, expires_at').eq('user_id', uid).eq('profile', 'agronomist').maybeSingle(),
+    ])
     backLink.value = profile?.role === 'agronomist' ? '/dashboard/agronomist-fields' : '/dashboard/fields'
+    agroPro.value = isAgronomistPro(getActivePlan(agroSub as any))
   }
 
   const { data: farmData } = await supabase.from('farms').select('name, user_id, farm_crops(id, crop_type, variety)').eq('id', farmId).single()
   farmName.value = farmData?.name || ''
+  farmOwnerId.value = farmData?.user_id || null
   crops.value = farmData?.farm_crops || []
 
   // Перевіряємо тариф фермера (підписку клієнта агроном не читає — лише так/ні з бази)
@@ -607,6 +619,9 @@ const ensurePhases = (keys: string[]) => {
 
 // ── Шаблони техкарт ──
 const toast = useToast()
+const farmOwnerId = ref<string | null>(null)
+// Шаблони техкарт — на тарифі Агроном Про (база теж не дасть зберегти шаблон без нього)
+const agroPro = ref(false)
 const tplModal = ref<'save' | 'apply' | null>(null)
 const tplName = ref('')
 const tplBusy = ref(false)
@@ -632,17 +647,22 @@ const saveTemplate = async () => {
     name: tplName.value.trim(), crop_type: selectedCrop.value?.crop_type || null, phases: tplPhases, items,
   } as any)
   tplBusy.value = false
-  if (error) { toast.error(error.message.includes('100') ? 'Не більше 100 шаблонів' : 'Не вдалося зберегти шаблон'); return }
+  if (error) {
+    toast.error(error.message.includes('100') ? 'Не більше 100 шаблонів' : error.message.includes('Про') ? 'Шаблони техкарт — на тарифі Агроном Про' : 'Не вдалося зберегти шаблон')
+    return
+  }
   toast.success('Шаблон збережено')
   tplModal.value = null
 }
 
 const openApply = async () => {
   tplModal.value = 'apply'
+  if (!agroPro.value) return
   const { data } = await supabase.from('techcard_templates').select('id, name, crop_type, phases, items').order('updated_at', { ascending: false })
   templates.value = data || []
 }
 const applyTemplate = async (tpl: any) => {
+  if (!agroPro.value) return
   if (farmerProgramLimitReached.value) { toast.error('Ліміт технічних карт фермера вичерпано'); return }
   tplBusy.value = true
   if (!program.value) await createProgram()
@@ -769,20 +789,23 @@ const openReminderFor = (t: any) => {
 }
 
 const saveReminder = async () => {
-  if (!rDate.value || !reminderTreatment.value) return
+  if (!rDate.value || !reminderTreatment.value || !farmOwnerId.value) return
   rSaving.value = true
   const [y,m,d] = rDate.value.split('-').map(Number)
   const iso = new Date(y, m-1, d, Number(rHour.value), Number(rMinute.value), 0).toISOString()
-  await supabase.from('reminders').insert({
-    user_id: session?.user?.id,
-    created_by: session?.user?.id,
+  // Нагадування — фермеру, власнику поля (раніше записувалось на самого агронома, і фермер його не бачив)
+  const { error } = await supabase.from('reminders').insert({
+    user_id: farmOwnerId.value,
+    created_by: uid,
     treatment_id: reminderTreatment.value.id,
     description: reminderTreatment.value.product_name,
     scheduled_date: iso,
     type: 'обробка',
-    from_agronomist: true,
+    from_agronomist: farmOwnerId.value !== uid,
   })
   rSaving.value = false
+  if (error) { toast.error('Не вдалося створити нагадування'); return }
+  toast.success('Нагадування надіслано фермеру')
   reminderTreatment.value = null
   await loadTreatmentReminders(treatments.value)
 }

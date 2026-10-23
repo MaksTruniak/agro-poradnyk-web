@@ -281,7 +281,6 @@ const aiCreditsLine = (plan: string) => {
 }
 
 const BASIC_FEATURES = computed(() => [
-  aiCreditsLine('basic').replace('на місяць', 'на пробу щомісяця'),
   'До 2 га полів',
   '1 культура',
   '1 технологічна карта',
@@ -293,6 +292,7 @@ const BASIC_FEATURES = computed(() => [
 ])
 
 const BASIC_DISABLED = [
+  'AI агроном',
   'Аналітика',
   'Співробітники',
   'Інтеграції',

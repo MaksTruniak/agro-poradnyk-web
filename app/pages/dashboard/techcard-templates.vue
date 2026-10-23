@@ -12,6 +12,15 @@
       </div>
     </div>
 
+    <div v-if="!loading && !isPro" class="card flex flex-wrap items-center gap-4 py-4 px-5 mb-6 max-w-3xl" data-test="tpl-page-locked">
+      <div class="w-11 h-11 rounded-xl bg-agro-hover flex items-center justify-center shrink-0 text-xl">🔒</div>
+      <div class="flex-1 min-w-[220px]">
+        <p class="font-semibold text-agro-dark text-sm">Шаблони техкарт — на тарифі Агроном Про</p>
+        <p class="text-xs text-agro-light mt-0.5">Зберігайте схеми обробок і застосовуйте їх до культур клієнтів одним натиском. Збережені шаблони лишаються — їх можна переглянути, перейменувати чи видалити.</p>
+      </div>
+      <NuxtLink to="/dashboard/agronomist-subscription" class="dash-btn-primary shrink-0 text-sm whitespace-nowrap">Агроном Про →</NuxtLink>
+    </div>
+
     <div v-if="loading" class="space-y-3"><div v-for="i in 3" :key="i" class="card animate-pulse h-20" /></div>
 
     <div v-else-if="!templates.length" class="card text-center py-14">
@@ -67,6 +76,7 @@
 
 <script setup lang="ts">
 import type { TemplateItem } from '~~/shared/utils/techcardTemplate'
+import { getActivePlan, isAgronomistPro } from '~~/shared/utils/plan'
 
 definePageMeta({ layout: 'dashboard', middleware: 'auth' })
 useHead({ title: 'Шаблони техкарт — АгроПростір' })
@@ -76,6 +86,7 @@ const toast = useToast()
 const { confirm } = useConfirm()
 
 const loading = ref(true)
+const isPro = ref(true)
 const templates = ref<any[]>([])
 const open = reactive<Record<string, boolean>>({})
 const editing = ref('')
@@ -96,8 +107,13 @@ const groups = (t: any) => {
 }
 
 const load = async () => {
-  const { data } = await supabase.from('techcard_templates').select('id, name, crop_type, items, updated_at').order('updated_at', { ascending: false })
+  const { data: { session } } = await supabase.auth.getSession()
+  const [{ data }, { data: sub }] = await Promise.all([
+    supabase.from('techcard_templates').select('id, name, crop_type, items, updated_at').order('updated_at', { ascending: false }),
+    supabase.from('subscriptions').select('plan, expires_at').eq('user_id', session?.user?.id).eq('profile', 'agronomist').maybeSingle(),
+  ])
   templates.value = data || []
+  isPro.value = isAgronomistPro(getActivePlan(sub))
   loading.value = false
 }
 

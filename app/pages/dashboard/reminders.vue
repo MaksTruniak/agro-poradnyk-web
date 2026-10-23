@@ -26,10 +26,10 @@
             </svg>
           </div>
           <p class="font-bold text-agro-dark text-lg mb-2">Нагадувань ще немає</p>
-          <p class="text-agro-light">Надсилайте нагадування фермерам через чат або картку поля</p>
+          <p class="text-agro-light">Відкрийте техкарту поля клієнта й натисніть 🔔 біля обробки — нагадування прийде фермеру</p>
         </div>
         <div v-else class="space-y-3">
-          <div v-for="r in sentReminders" :key="r.id"
+          <div v-for="r in sentReminders" :key="r.id" data-test="reminder-sent"
             class="card flex items-start gap-4"
             :class="isPast(r.scheduled_date) ? 'opacity-60' : ''">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -38,6 +38,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-agro-dark">{{ r.description }}</p>
+              <p v-if="farmerNames[r.user_id]" class="text-xs text-agro-light mt-0.5">Для: {{ farmerNames[r.user_id] }}</p>
               <p class="text-xs mt-1 flex items-center gap-1" :class="isPast(r.scheduled_date) ? 'text-gray-400' : 'text-amber-600'">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 {{ formatDate(r.scheduled_date) }}
@@ -72,7 +73,7 @@
         <template v-else>
           <!-- Активні нагадування -->
           <div class="space-y-2 mb-5">
-            <div v-for="r in activeReminders" :key="r.id"
+            <div v-for="r in activeReminders" :key="r.id" data-test="reminder-item"
               class="card flex items-center gap-4"
               :class="isPast(r.scheduled_date) ? 'border border-orange-200 bg-orange-50/30' : ''">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -279,6 +280,7 @@ const saving = ref(false)
 const showAdd = ref(false)
 const reminders = ref<any[]>([])
 const sentReminders = ref<any[]>([])
+const farmerNames = ref<Record<string, string>>({})
 const farms = ref<any[]>([])
 const savingJournal = ref(false)
 const hasPaidPlan = ref(false)
@@ -370,7 +372,7 @@ const load = async () => {
   if (!queryUid) { loading.value = false; return }
 
   const [{ data: own }, { data: farmsData }, { data: sub }] = await Promise.all([
-    supabase.from('reminders').select('*').eq('user_id', queryUid).eq('from_agronomist', false).order('scheduled_date', { ascending: true }),
+    supabase.from('reminders').select('*').eq('user_id', queryUid).order('scheduled_date', { ascending: true }),
     supabase.from('farms').select('*, farm_crops(*)').eq('user_id', queryUid).order('name'),
     supabase.from('subscriptions').select('plan, expires_at').eq('user_id', queryUid).eq('profile', 'farmer').maybeSingle(),
   ])
@@ -385,6 +387,11 @@ const load = async () => {
       .eq('from_agronomist', true)
       .order('scheduled_date', { ascending: true })
     sentReminders.value = sent || []
+    const ids = [...new Set((sent || []).map((r: any) => r.user_id).filter((id: string) => id !== queryUid))]
+    if (ids.length) {
+      const { data: profiles } = await supabase.from('public_profiles').select('id, name').in('id', ids)
+      farmerNames.value = Object.fromEntries((profiles || []).map((p: any) => [p.id, p.name]))
+    }
   }
 
   loading.value = false

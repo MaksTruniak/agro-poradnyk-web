@@ -42,8 +42,10 @@ async function creditAllowance(ownerId: string, profile: SubscriptionProfile, su
     db.from('ai_credit_topups').select('credits').eq('owner_id', ownerId).eq('profile', profile).eq('month', month),
   ])
   const hectares = (farms || []).reduce((s: number, f: any) => s + (Number(f.hectares) || 0), 0)
+  // AI — лише в платних тарифах (фермер Бізнес / Бізнес Про, Агроном Про); без тарифу — лише індивідуальний ліміт чи пакети
   const fromPlan = sub?.ai_text_limit != null
     ? Number(sub.ai_text_limit)  // індивідуальний ліміт (кастомний тариф) — у кредитах
+    : plan === 'basic' ? 0
     : Math.floor((limits?.credits_base || 0) + (Number(limits?.credits_per_ha) || 0) * Math.min(hectares, limits?.credits_ha_cap || 0))
   const extra = (topups || []).reduce((s: number, t: any) => s + (t.credits || 0), 0)
   return { plan, allowance: fromPlan + extra }

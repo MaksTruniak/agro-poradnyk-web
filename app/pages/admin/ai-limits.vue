@@ -66,6 +66,7 @@
         </div>
       </div>
 
+      <p class="text-xs text-agro-light mt-3">На безкоштовних тарифах (фермер Basic, агроном без PRO) AI вимкнено. Окремому користувачу можна дати індивідуальний ліміт або пакет кредитів нижче.</p>
       <p v-if="savedPlans" class="text-sm text-agro mt-4 flex items-center gap-1.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         Збережено
@@ -233,7 +234,8 @@ const savingPlans  = ref(false)
 const savedPlans   = ref(false)
 
 interface PlanCredits { plan: string; credits_base: number; credits_per_ha: number; credits_ha_cap: number }
-const PLAN_ORDER = ['basic', 'business', 'business_pro', 'agronomist_basic', 'pro']
+// На безкоштовних тарифах (фермер Basic, агроном без PRO) AI вимкнено в коді — їх тут немає
+const PLAN_ORDER = ['business', 'business_pro', 'pro']
 const planLimits = ref<PlanCredits[]>([])
 
 const creditsFor = (row: PlanCredits | undefined, ha: number) =>

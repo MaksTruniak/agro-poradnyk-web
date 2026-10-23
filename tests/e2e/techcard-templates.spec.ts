@@ -3,6 +3,7 @@ import { asUser, collectErrors, expectNoErrors, hasAccount, login, serviceClient
 import { planTemplateApply, templateFromTreatments } from '../../shared/utils/techcardTemplate'
 
 // Шаблони техкарт агронома: зберегти техкарту клієнта як шаблон, застосувати до іншої культури, керувати шаблонами.
+// Нагадування агронома з техкарти приходить фермеру. Шаблони — на тарифі Агроном Про.
 // ПИШЕ в базу (поля фермера, співпраця, техкарти, шаблон) — лише з E2E_WRITE=1; усе прибирається.
 
 const TAG = `E2E шаблон ${Date.now()}`
@@ -29,9 +30,11 @@ test.describe('Шаблони техкарт', () => {
 
   const farmIds: string[] = []
   let agreementId = ''
+  let sub: { id: string; plan: string; expires_at: string | null } | null = null
 
   test.afterAll(async () => {
     const admin = serviceClient()
+    if (sub) await admin.from('subscriptions').update({ plan: sub.plan, expires_at: sub.expires_at }).eq('id', sub.id)
     await admin.from('techcard_templates').delete().like('name', `${TAG}%`)
     if (agreementId) await admin.from('agreements').delete().eq('id', agreementId)
     for (const farmId of farmIds) {
@@ -47,10 +50,14 @@ test.describe('Шаблони техкарт', () => {
     }
   })
 
-  test('агроном зберігає техкарту клієнта як шаблон і застосовує до іншої культури', async ({ page }) => {
+  test('агроном зберігає техкарту клієнта як шаблон і застосовує до іншої культури', async ({ page, browser, request }) => {
     const farmer = await asUser('farmer')
     const agronomist = await asUser('agronomist')
     const admin = serviceClient()
+    const { data: s } = await admin.from('subscriptions').select('id, plan, expires_at').eq('user_id', agronomist.userId).eq('profile', 'agronomist').maybeSingle()
+    test.skip(!s, 'у тестового агронома немає підписки агронома')
+    sub = s
+    await admin.from('subscriptions').update({ plan: 'pro', expires_at: new Date(Date.now() + 30 * 864e5).toISOString() }).eq('id', sub!.id)
     const { data: existing } = await admin.from('agreements').select('id')
       .eq('agronomist_id', agronomist.userId).eq('farmer_id', farmer.userId).in('status', ['pending', 'active'])
     test.skip(!!existing?.length, 'між тестовими акаунтами вже є співпраця')
@@ -119,6 +126,34 @@ test.describe('Шаблони техкарт', () => {
     pb = await progB()
     expect(pb.program_treatments).toHaveLength(2)
 
+    // Нагадування з техкарти приходить фермеру, а не агрономові
+    const row = page.locator('[data-test="reminder-open"]').first()
+    await row.click()
+    await page.locator('[data-test="reminder-add"]').click()
+    await page.locator('[data-test="reminder-next-month"]').click()
+    await page.locator('[data-test="reminder-day"]').nth(14).click()
+    await page.locator('[data-test="reminder-save"]').click()
+    await expect(page.locator('[data-test="reminder-save"]')).toHaveCount(0)
+    const { data: rems } = await farmer.client.from('reminders').select('user_id, created_by, from_agronomist, description')
+      .in('description', [`${TAG} Світч`, `${TAG} Бор`])
+    expect(rems).toHaveLength(1)
+    expect(rems![0]).toMatchObject({ user_id: farmer.userId, created_by: agronomist.userId, from_agronomist: true })
+    // Без обробки клієнта агроном нагадування фермеру не поставить
+    const forgedRem = await agronomist.client.from('reminders').insert({
+      user_id: farmer.userId, created_by: agronomist.userId, from_agronomist: true, description: `${TAG} без обробки`, scheduled_date: new Date().toISOString(), type: 'обробка',
+    })
+    expect(forgedRem.error, 'нагадування без обробки клієнта записалось').not.toBeNull()
+
+    const farmerCtx = await browser.newContext()
+    const farmerPage = await farmerCtx.newPage()
+    await login(farmerPage, 'farmer')
+    await farmerPage.goto('/dashboard/reminders')
+    await expect(farmerPage.locator('[data-test="reminder-item"]').filter({ hasText: rems![0].description })).toContainText('від агронома', { timeout: 15000 })
+    await farmerCtx.close()
+    await page.goto('/dashboard/reminders')
+    const { data: farmerProfile } = await admin.from('public_profiles').select('name').eq('id', farmer.userId).single()
+    await expect(page.locator('[data-test="reminder-sent"]').filter({ hasText: rems![0].description })).toContainText(farmerProfile!.name)
+
     // Мої шаблони: перейменувати й видалити
     await page.goto('/dashboard/techcard-templates')
     const card = page.locator('[data-test="tpl-card"]').filter({ hasText: `${TAG} лохина` })
@@ -131,6 +166,25 @@ test.describe('Шаблони техкарт', () => {
     await card2.locator('[data-test="tpl-delete"]').click()
     await page.getByRole('button', { name: 'Видалити', exact: true }).last().click()
     await expect(page.locator('[data-test="tpl-card"]').filter({ hasText: `${TAG} лохина` })).toHaveCount(0)
+
+    // Без Агроном Про шаблон не зберегти — ні в техкарті, ні в обхід сторінки
+    await admin.from('subscriptions').update({ expires_at: '2000-01-01T00:00:00Z' }).eq('id', sub!.id)
+    const noPro = await agronomist.client.from('techcard_templates').insert({ name: `${TAG} без про` })
+    expect(noPro.error, 'шаблон збережено без Про').not.toBeNull()
+    await page.reload()
+    await expect(page.locator('[data-test="tpl-page-locked"]')).toBeVisible()
+    await page.goto(`/dashboard/protection/${a.farmId}`)
+    await page.locator('[data-test="tpl-save-open"]').click()
+    await expect(page.locator('[data-test="tpl-locked"]')).toBeVisible()
+
+    // AI агроном без Про: кредитів немає, сервер відмовляє до виклику моделі
+    const headers = { Authorization: `Bearer ${agronomist.token}`, 'X-Agro-Profile': 'agronomist' }
+    const credits = await (await request.get('/api/ai-credits', { headers })).json()
+    expect(credits.allowance).toBe(0)
+    const chat = await request.post('/api/ai-chat', { headers, data: { messages: [{ role: 'user', content: 'тест' }] } })
+    expect(chat.status(), 'AI без Про').toBe(403)
+    await page.goto('/dashboard/ai-chat')
+    await expect(page.locator('[data-test="ai-locked"]').first()).toContainText('Агроном Про', { timeout: 15000 })
     await expectNoErrors(errors, 'шаблонах техкарт')
   })
 })

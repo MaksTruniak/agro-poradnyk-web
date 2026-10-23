@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
         supabase.from('planting_care_log').select('farm_crop_id, task_key, period').in('farm_crop_id', ids)
           .gte('period', `${Number(today.slice(0, 4)) - 1}-01`),
         supabase.from('reminders').select('id, description, scheduled_date, farm_id, farm_crop_id')
-          .eq('user_id', userId).eq('from_agronomist', false).is('completed_at', null)
+          .eq('user_id', userId).is('completed_at', null)
           .gte('scheduled_date', new Date(`${addDays(today, -14)}T00:00:00Z`).toISOString())
           .lte('scheduled_date', new Date(`${addDays(today, 8)}T00:00:00Z`).toISOString())
           .order('scheduled_date'),

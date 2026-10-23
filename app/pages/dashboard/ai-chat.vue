@@ -91,8 +91,8 @@
           </svg>
         </div>
         <p class="font-bold text-agro-dark text-lg mb-2">AI агроном</p>
-        <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Необмежені консультації, аналіз фото, захист культур — доступні на тарифі Бізнес</p>
-        <NuxtLink :to="proLink" class="dash-btn-primary inline-flex">Перейти на Бізнес →</NuxtLink>
+        <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Консультації, аналіз фото, захист культур — доступні на тарифі {{ paidPlanName }}</p>
+        <NuxtLink :to="proLink" class="dash-btn-primary inline-flex" data-test="ai-locked">Перейти на {{ paidPlanName }} →</NuxtLink>
       </div>
       <div v-else-if="chatSessions.length === 0" class="flex flex-col items-center justify-center h-full text-center py-12">
         <div class="dash-empty-icon">
@@ -182,7 +182,7 @@
               <p class="font-medium text-amber-800">Показано лише 7 днів історії</p>
               <p class="text-amber-600 text-xs mt-0.5">Перейдіть на Бізнес щоб бачити повну історію</p>
             </div>
-            <NuxtLink :to="proLink" class="text-xs font-bold text-amber-700 hover:text-amber-900 shrink-0">Бізнес →</NuxtLink>
+            <NuxtLink :to="proLink" class="text-xs font-bold text-amber-700 hover:text-amber-900 shrink-0">{{ paidPlanName }} →</NuxtLink>
           </div>
 
           <div v-for="(msg, i) in messages" :key="i" class="flex gap-3" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
@@ -258,10 +258,10 @@
 
       <!-- Basic — AI недоступний -->
       <div v-if="!isPro" class="px-6 py-5 border-t border-agro-border bg-white shrink-0 text-center">
-        <p class="font-semibold text-agro-dark mb-1">🌿 AI агроном — у тарифі Бізнес</p>
-        <p class="text-sm text-agro-light mb-3">Необмежені консультації, аналіз фото, захист культур — доступні на платному тарифі.</p>
-        <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5">
-          Перейти на Бізнес →
+        <p class="font-semibold text-agro-dark mb-1">🌿 AI агроном — у тарифі {{ paidPlanName }}</p>
+        <p class="text-sm text-agro-light mb-3">Консультації, аналіз фото, захист культур — доступні на платному тарифі.</p>
+        <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5" data-test="ai-locked">
+          Перейти на {{ paidPlanName }} →
         </NuxtLink>
       </div>
 
@@ -511,7 +511,8 @@ const isPro = computed(() => credits.value.allowance > 0)
 const isAgronomist = import.meta.client
   ? (localStorage.getItem('agro_active_profile') || localStorage.getItem('agro_user_role')) === 'agronomist'
   : false
-const proLink = isAgronomist ? '/dashboard/promotion' : '/dashboard/subscription'
+const proLink = isAgronomist ? '/dashboard/agronomist-subscription' : '/dashboard/subscription'
+const paidPlanName = isAgronomist ? 'Агроном Про' : 'Бізнес'
 const hasOlderHistory = ref(false)
 
 // Кредити AI (рахує сервер: /api/ai-credits і метадані відповіді чату)
