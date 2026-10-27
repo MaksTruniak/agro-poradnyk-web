@@ -32,10 +32,10 @@ test.describe('Telegram', () => {
       const errors = collectErrors(page)
       await login(page, 'farmer')
       await page.goto('/dashboard/settings#telegram')
-      if (before) await page.getByTestId('tg-unlink').click()
+      if (before) await page.locator('[data-test="tg-unlink"]').click()
       // Посилання на бота відкривається в новій вкладці — перехоплюємо, у Telegram не йдемо
       await context.route('https://t.me/**', route => route.fulfill({ status: 200, body: 'ok' }))
-      const [popup] = await Promise.all([context.waitForEvent('page'), page.getByTestId('tg-link').click()])
+      const [popup] = await Promise.all([context.waitForEvent('page'), page.locator('[data-test="tg-link"]').click()])
       await popup.waitForURL(/t\.me\/agroprostir_bot\?start=/)
       const code = new URL(popup.url()).searchParams.get('start')!
       await popup.close()
@@ -56,12 +56,12 @@ test.describe('Telegram', () => {
       expect((await admin.from('telegram_link_codes').select('code').eq('code', code)).data).toEqual([])
 
       await expect(page.getByText(/Підключено — @e2e_tester/)).toBeVisible({ timeout: 10000 })
-      await page.getByTestId('tg-tg_frost').uncheck()
+      await page.locator('[data-test="tg-tg_frost"]').uncheck()
       await expect.poll(async () => (await admin.from('notification_settings').select('tg_frost').eq('user_id', farmer.userId).maybeSingle()).data)
         .toEqual({ tg_frost: false })
 
-      await page.getByTestId('tg-unlink').click()
-      await expect(page.getByTestId('tg-link')).toBeVisible()
+      await page.locator('[data-test="tg-unlink"]').click()
+      await expect(page.locator('[data-test="tg-link"]')).toBeVisible()
       expect((await admin.from('telegram_links').select('user_id').eq('user_id', farmer.userId)).data).toEqual([])
       await expectNoErrors(errors, 'налаштуваннях Telegram')
     } finally {
