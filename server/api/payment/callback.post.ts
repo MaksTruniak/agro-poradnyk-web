@@ -133,10 +133,13 @@ export default defineEventHandler(async (event) => {
   const subPlan = SUBSCRIPTION_PLANS[plan]
   const aiPack = subPlan || PROMO_PLANS.includes(plan) ? null : await findAiPack(supabase, plan)
   if (aiPack) {
-    // AI-пакет: кредити на aiPack.days днів від оплати; межа собівартості — у $ за курсом на момент покупки.
+    // AI-пакет: кредити на місяць від оплати; межа собівартості — у $ за курсом на момент покупки.
+    // Одночасно діє один пакет: якщо інший ще діє (дві оплати навздогін) — новий починається після нього.
     // payment_reference унікальний — повторний callback пакет не задвоїть (і платіж вище теж)
-    const startsAt = new Date()
-    const expiresAt = new Date(startsAt.getTime() + aiPack.days * 864e5)
+    const current = await latestAiPack(supabase, userId, aiPack.profile)
+    const startsAt = current ? new Date(current.expires_at) : new Date()
+    const expiresAt = new Date(startsAt)
+    expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 1)
     const { error } = await supabase.from('ai_credit_topups').insert({
       owner_id:          userId,
       profile:           aiPack.profile,

@@ -8,9 +8,13 @@
       </div>
       <div class="flex-1 min-w-0">
         <p class="font-bold text-agro-dark">AI-пакети</p>
-        <p class="text-xs text-agro-light">Додаткові кредити AI на {{ packs[0]!.days }} днів — до тарифу або без нього</p>
+        <p class="text-xs text-agro-light">Додаткові кредити AI на місяць — до тарифу або без нього</p>
       </div>
     </div>
+
+    <p v-if="active" class="text-sm bg-agro-hover text-agro-dark rounded-xl px-3 py-2 mt-4" data-test="ai-pack-active">
+      Діє {{ active.label }} до {{ formatDay(active.expiresAt) }}. Новий пакет можна купити після цієї дати.
+    </p>
 
     <div class="grid sm:grid-cols-2 gap-3 mt-4">
       <div v-for="p in packs" :key="p.id" class="rounded-xl border border-agro-border p-4 flex flex-col gap-2" data-test="ai-pack">
@@ -19,34 +23,45 @@
           <p class="text-agro font-extrabold text-lg whitespace-nowrap">{{ p.price_uah }} грн</p>
         </div>
         <p class="text-sm text-agro-light">
-          +{{ p.credits }} кредитів на {{ p.days }} днів — ≈ {{ p.credits }} питань або {{ Math.floor(p.credits / 5) }} AI техкарт
+          +{{ p.credits }} кредитів на місяць — ≈ {{ p.credits }} питань або {{ Math.floor(p.credits / 5) }} AI техкарт
         </p>
-        <button type="button" class="btn-primary text-sm mt-auto" :disabled="!!paying" :data-test="`ai-pack-buy-${p.id}`" @click="buy(p.id)">
+        <button type="button" class="btn-primary text-sm mt-auto" :disabled="!!paying || !!active" :data-test="`ai-pack-buy-${p.id}`" @click="buy(p.id)">
           {{ paying === p.id ? '...' : 'Купити' }}
         </button>
       </div>
     </div>
     <p v-if="error" class="text-sm text-red-500 mt-3">{{ error }}</p>
     <p class="text-xs text-agro-light mt-3">
-      Спершу витрачаються кредити тарифу, потім пакета. Пакет діє {{ packs[0]!.days }} днів від оплати, невикористані кредити згоряють.
-      Можна купити кілька пакетів — вони додаються.
+      Спершу витрачаються кредити тарифу, потім пакета. Пакет діє місяць від дня оплати, невикористані кредити згоряють.
+      Одночасно може діяти лише один пакет.
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
-// AI-пакети (ai_packs) для профілю сторінки: оплата через WayForPay, як і тарифи (/api/payment/create)
+// AI-пакети (ai_packs) для профілю сторінки: оплата через WayForPay, як і тарифи (/api/payment/create).
+// Одночасно діє лише один пакет — поки він діє, купити новий не можна (сервер теж не дасть).
 const props = defineProps<{ profile: SubscriptionProfile }>()
 
 const supabase = useSupabaseClient() as any
 const packs = ref<any[]>([])
+const active = ref<{ label: string; expiresAt: string } | null>(null)
+const formatDay = (iso: string) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })
 const paying = ref('')
 const error = ref('')
 
 onMounted(async () => {
-  const { data } = await supabase.from('ai_packs').select('id, label, price_uah, credits, days')
-    .eq('profile', props.profile).eq('is_active', true).order('sort')
+  const { data: { session } } = await supabase.auth.getSession()
+  const [{ data }, { data: current }] = await Promise.all([
+    supabase.from('ai_packs').select('id, label, price_uah, credits')
+      .eq('profile', props.profile).eq('is_active', true).order('sort'),
+    session ? supabase.from('ai_credit_topups').select('expires_at, ai_packs(label)')
+      .eq('owner_id', session.user.id).eq('profile', props.profile).not('pack_id', 'is', null)
+      .gt('expires_at', new Date().toISOString()).order('expires_at', { ascending: false }).limit(1).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
   packs.value = data || []
+  active.value = current ? { label: current.ai_packs?.label || 'AI-пакет', expiresAt: current.expires_at } : null
 })
 
 const buy = async (id: string) => {

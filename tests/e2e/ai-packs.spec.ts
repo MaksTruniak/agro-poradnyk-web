@@ -82,13 +82,13 @@ test.describe('AI-пакети', () => {
     expect((await c.rpc('ai_charge', { p_owner: farmer.userId, p_profile: 'farmer', p_month: MONTH, p_credits: -100, p_plan_allowance: 0, p_plan_cap_usd: 0 })).error).not.toBeNull()
   })
 
-  test('оплата пакета: ціна з каталогу без купонів, callback видає пакет один раз', async ({ request }) => {
+  test('оплата пакета: ціна з каталогу без купонів, callback видає пакет один раз, одночасно — один пакет', async ({ request }) => {
     test.skip(!process.env.WFP_SECRET_KEY, 'потрібен WFP_SECRET_KEY')
     const farmer = await asUser('farmer')
     const admin = serviceClient()
     const headers = { Authorization: `Bearer ${farmer.token}` }
     const [{ data: pack }, { data: settings }] = await Promise.all([
-      admin.from('ai_packs').select('price_uah, credits, cost_cap_uah, days').eq('id', 'ai_plus').single(),
+      admin.from('ai_packs').select('price_uah, credits, cost_cap_uah').eq('id', 'ai_plus').single(),
       admin.from('ai_settings').select('usd_uah').single(),
     ])
 
@@ -100,21 +100,35 @@ test.describe('AI-пакети', () => {
     expect(body.formData.orderReference).toMatch(/^agro-ai_plus-/)
     expect((await request.post('/api/payment/create', { headers, data: { plan: 'ai_nope' } })).status()).toBe(400)
 
+    const paid = async (orderReference: string) => {
+      refs.push(orderReference)
+      const f = { merchantAccount: process.env.WFP_MERCHANT_ACCOUNT || 'test', orderReference, amount: pack!.price_uah, currency: 'UAH', authCode: 'E2E', cardPan: '41****1111', transactionStatus: 'Approved', reasonCode: 1100 }
+      const payload = { ...f, merchantSignature: sign([f.merchantAccount, orderReference, f.amount, f.currency, f.authCode, f.cardPan, f.transactionStatus, f.reasonCode]), merchantOptions: { userId: farmer.userId } }
+      return Promise.all([1, 2, 3].map(() => request.post('/api/payment/callback', { data: payload, headers: SILENT })))
+    }
     const orderReference = `agro-ai_plus-${farmer.userId.slice(0, 8)}-${Date.now()}`
-    refs.push(orderReference)
-    const f = { merchantAccount: process.env.WFP_MERCHANT_ACCOUNT || 'test', orderReference, amount: pack!.price_uah, currency: 'UAH', authCode: 'E2E', cardPan: '41****1111', transactionStatus: 'Approved', reasonCode: 1100 }
-    const payload = { ...f, merchantSignature: sign([f.merchantAccount, orderReference, f.amount, f.currency, f.authCode, f.cardPan, f.transactionStatus, f.reasonCode]), merchantOptions: { userId: farmer.userId } }
-    const results = await Promise.all([1, 2, 3].map(() => request.post('/api/payment/callback', { data: payload, headers: SILENT })))
-    for (const r of results) expect(r.status()).toBe(200)
+    for (const r of await paid(orderReference)) expect(r.status()).toBe(200)
 
     const { data: topups } = await admin.from('ai_credit_topups').select('owner_id, profile, credits, pack_id, source, starts_at, expires_at, cost_cap_usd')
       .eq('payment_reference', orderReference)
     expect(topups, 'пакет видано не один раз').toHaveLength(1)
     const t = topups![0]!
     expect(t).toMatchObject({ owner_id: farmer.userId, profile: 'farmer', credits: pack!.credits, pack_id: 'ai_plus', source: 'pack' })
-    const days = (new Date(t.expires_at).getTime() - new Date(t.starts_at).getTime()) / 864e5
-    expect(Math.round(days)).toBe(pack!.days)
+    // Пакет — на календарний місяць від оплати
+    const month = new Date(t.starts_at); month.setUTCMonth(month.getUTCMonth() + 1)
+    expect(new Date(t.expires_at).getTime()).toBe(month.getTime())
     expect(Number(t.cost_cap_usd)).toBeCloseTo(Number(pack!.cost_cap_uah) / Number(settings!.usd_uah), 4)
+
+    // Поки пакет діє, новий не купити
+    const again = await request.post('/api/payment/create', { headers, data: { plan: 'ai_max' } })
+    expect(again.status(), 'другий пакет при активному').toBe(400)
+    expect((await again.json()).message).toContain('уже діє AI-пакет')
+
+    // Оплата навздогін (друга вкладка) — гроші не пропадають: другий пакет починається після першого
+    const second = `agro-ai_plus-${farmer.userId.slice(0, 8)}-${Date.now() + 1}`
+    for (const r of await paid(second)) expect(r.status()).toBe(200)
+    const { data: queued } = await admin.from('ai_credit_topups').select('starts_at').eq('payment_reference', second).single()
+    expect(new Date(queued!.starts_at).getTime()).toBe(new Date(t.expires_at).getTime())
   })
 
   test('сторінка підписки: пакети на продаж і гаманці кредитів', async ({ page }) => {
@@ -122,7 +136,9 @@ test.describe('AI-пакети', () => {
     await login(page, 'farmer')
     await page.goto('/dashboard/subscription')
     await expect(page.locator('[data-test="ai-packs"] [data-test="ai-pack"]')).toHaveCount(2, { timeout: 15000 })
-    await expect(page.locator('[data-test="ai-pack-buy-ai_plus"]')).toBeEnabled()
+    // Пакет з попереднього тесту діє — купити ще один не можна
+    await expect(page.locator('[data-test="ai-pack-active"]')).toContainText('AI Плюс')
+    await expect(page.locator('[data-test="ai-pack-buy-ai_plus"]')).toBeDisabled()
     // Пакети з попередніх тестів активні — у лічильнику кредитів вони окремими рядками з терміном
     await expect(page.locator('[data-test="ai-wallet"]').filter({ hasText: 'до ' }).first()).toBeVisible()
     await expect(page.locator('[data-test="ai-wallet"]').filter({ hasText: 'ліміт вичерпано' }).first()).toBeVisible()

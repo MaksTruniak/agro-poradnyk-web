@@ -12,11 +12,20 @@ export const SUBSCRIPTION_PLANS: Record<string, { profile: 'farmer' | 'agronomis
 // Просування («Топ») — окремо від підписок
 export const PROMO_PLANS = ['top_agronomist', 'top_seller']
 
-// AI-пакети — окремо від тарифів (таблиця ai_packs): кредити на N днів з межею собівартості
+// AI-пакети — окремо від тарифів (таблиця ai_packs): кредити на місяць з межею собівартості.
+// Одночасно діє лише один пакет на профіль.
 export async function findAiPack(supabase: SupabaseClient, id: string) {
   if (!/^[a-z0-9_]+$/.test(id)) return null
-  const { data } = await supabase.from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, days, is_active').eq('id', id).maybeSingle()
+  const { data } = await supabase.from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, is_active').eq('id', id).maybeSingle()
   return data
+}
+
+/** Пакет, що діє зараз або вже оплачений наперед (закінчується найпізніше) */
+export async function latestAiPack(supabase: SupabaseClient, ownerId: string, profile: 'farmer' | 'agronomist') {
+  const { data } = await supabase.from('ai_credit_topups').select('id, expires_at, ai_packs(label)')
+    .eq('owner_id', ownerId).eq('profile', profile).not('pack_id', 'is', null)
+    .gt('expires_at', new Date().toISOString()).order('expires_at', { ascending: false }).limit(1).maybeSingle()
+  return data as { id: string; expires_at: string; ai_packs: { label: string } | null } | null
 }
 
 const YEAR_MS = 365.25 * 24 * 3600 * 1000

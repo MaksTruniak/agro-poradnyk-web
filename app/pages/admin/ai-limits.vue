@@ -87,8 +87,9 @@
         </button>
       </div>
       <p class="text-xs text-agro-light mb-4">
-        «Межа собівартості» — скільки максимум AI цього пакета може коштувати платформі (у грн за курсом нижче). Коли її досягнуто,
-        пакет більше не списується, навіть якщо кредити лишились. Межа фіксується в $ у момент покупки.
+        Пакет діє місяць від дня оплати; одночасно в користувача може бути лише один. «Межа собівартості» — скільки максимум AI
+        цього пакета може коштувати платформі (у грн за курсом нижче). Коли її досягнуто, пакет більше не списується, навіть якщо
+        кредити лишились. Межа фіксується в $ у момент покупки.
       </p>
       <label class="flex items-center gap-3 mb-4 text-sm text-agro-dark">
         Курс, грн за $1
@@ -99,7 +100,7 @@
           <thead>
             <tr class="text-left text-xs text-agro-light">
               <th class="py-2 pr-3">Пакет</th><th class="py-2 pr-3">Профіль</th><th class="py-2 pr-3">Ціна, грн</th><th class="py-2 pr-3">Кредитів</th>
-              <th class="py-2 pr-3">Межа собівартості, грн</th><th class="py-2 pr-3">Днів</th><th class="py-2 pr-3">Продається</th>
+              <th class="py-2 pr-3">Межа собівартості, грн</th><th class="py-2 pr-3">Продається</th>
             </tr>
           </thead>
           <tbody>
@@ -112,7 +113,6 @@
                 <input v-model.number="p.cost_cap_uah" type="number" min="0" class="input text-sm py-1.5 w-24" />
                 <span class="text-[11px] text-agro-light block mt-0.5">{{ p.price_uah ? Math.round((p.cost_cap_uah / p.price_uah) * 100) : 0 }}% ціни</span>
               </td>
-              <td class="py-2 pr-3"><input v-model.number="p.days" type="number" min="1" max="366" class="input text-sm py-1.5 w-20" /></td>
               <td class="py-2 pr-3"><input v-model="p.is_active" type="checkbox" class="w-4 h-4 accent-[rgb(47,82,51)]" /></td>
             </tr>
           </tbody>
@@ -337,21 +337,21 @@ const usdUah = ref(45.5)
 const savingPacks = ref(false)
 const loadPacks = async () => {
   const [{ data }, { data: settings }] = await Promise.all([
-    (supabase as any).from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, days, is_active, sort').order('profile').order('sort'),
+    (supabase as any).from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, is_active, sort').order('profile').order('sort'),
     (supabase as any).from('ai_settings').select('usd_uah').maybeSingle(),
   ])
   packs.value = data || []
   if (settings?.usd_uah) usdUah.value = Number(settings.usd_uah)
 }
 const savePacks = async () => {
-  const bad = packs.value.some(p => !(p.price_uah > 0) || !(p.credits > 0) || !(p.cost_cap_uah >= 0) || !(p.days >= 1) || !String(p.label || '').trim())
-  if (bad || !(usdUah.value > 0)) { useToast().error('Перевірте ціни, кредити, межі, дні й курс'); return }
+  const bad = packs.value.some(p => !(p.price_uah > 0) || !(p.credits > 0) || !(p.cost_cap_uah >= 0) || !String(p.label || '').trim())
+  if (bad || !(usdUah.value > 0)) { useToast().error('Перевірте ціни, кредити, межі й курс'); return }
   savingPacks.value = true
   const now = new Date().toISOString()
   const [res, rateRes] = await Promise.all([
     (supabase as any).from('ai_packs').upsert(packs.value.map(p => ({
       id: p.id, profile: p.profile, label: String(p.label).trim(), price_uah: Math.floor(p.price_uah), credits: Math.floor(p.credits),
-      cost_cap_uah: Number(p.cost_cap_uah), days: Math.floor(p.days), is_active: !!p.is_active, sort: p.sort, updated_at: now,
+      cost_cap_uah: Number(p.cost_cap_uah), is_active: !!p.is_active, sort: p.sort, updated_at: now,
     })), { onConflict: 'id' }).select('id'),
     (supabase as any).from('ai_settings').update({ usd_uah: Number(usdUah.value), updated_at: now }).eq('id', true).select('id'),
   ])

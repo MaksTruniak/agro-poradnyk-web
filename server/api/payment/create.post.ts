@@ -44,9 +44,18 @@ export default defineEventHandler(async (event) => {
   const clientLastName  = profile?.last_name  || profile?.name?.split(' ').slice(1).join(' ') || ''
   const clientEmail     = profile?.email || user.email || ''
 
+  // Одночасно — лише один AI-пакет: новий можна купити, коли закінчиться поточний
+  if (aiPack) {
+    const active = await latestAiPack(supabase, user.id, aiPack.profile)
+    if (active) {
+      const till = new Date(active.expires_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', timeZone: 'Europe/Kyiv' })
+      throw createError({ statusCode: 400, message: `У вас уже діє AI-пакет до ${till}. Новий можна купити після його закінчення.` })
+    }
+  }
+
   // Беремо план з БД (AI-пакет — з ai_packs: фіксована ціна, без гектарів)
   const { data: planData } = aiPack
-    ? { data: { label: `${aiPack.label} — ${aiPack.credits} кредитів AI на ${aiPack.days} днів`, base_price: aiPack.price_uah, price_uah: aiPack.price_uah, ha_rate: 0, is_active: aiPack.is_active } }
+    ? { data: { label: `${aiPack.label} — ${aiPack.credits} кредитів AI на місяць`, base_price: aiPack.price_uah, price_uah: aiPack.price_uah, ha_rate: 0, is_active: aiPack.is_active } }
     : await supabase
       .from('plans')
       .select('label, base_price, price_uah, ha_rate, is_active')
