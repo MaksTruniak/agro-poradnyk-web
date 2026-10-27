@@ -12,8 +12,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { plan, couponCode, hectares } = body
 
-  // Лише тарифи, які продаються на сайті (кастомні плани з ціною 0 оформлює адмін, а не оплата)
-  if (!plan || !(plan in SUBSCRIPTION_PLANS || PROMO_PLANS.includes(plan))) throw createError({ statusCode: 400, message: 'Invalid plan' })
+  if (!plan || typeof plan !== 'string') throw createError({ statusCode: 400, message: 'Invalid plan' })
 
   const merchantAccount = process.env.WFP_MERCHANT_ACCOUNT!
   const merchantDomain  = process.env.WFP_MERCHANT_DOMAIN!
@@ -28,6 +27,10 @@ export default defineEventHandler(async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Лише тарифи, які продаються на сайті (кастомні плани з ціною 0 оформлює адмін, а не оплата), і активні AI-пакети
+  const aiPack = plan in SUBSCRIPTION_PLANS || PROMO_PLANS.includes(plan) ? null : await findAiPack(supabase, plan)
+  if (!(plan in SUBSCRIPTION_PLANS || PROMO_PLANS.includes(plan) || aiPack?.is_active)) throw createError({ statusCode: 400, message: 'Invalid plan' })
+
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
   if (authErr || !user) throw createError({ statusCode: 401, message: 'Unauthorized' })
 
@@ -41,12 +44,14 @@ export default defineEventHandler(async (event) => {
   const clientLastName  = profile?.last_name  || profile?.name?.split(' ').slice(1).join(' ') || ''
   const clientEmail     = profile?.email || user.email || ''
 
-  // Беремо план з БД
-  const { data: planData } = await supabase
-    .from('plans')
-    .select('label, base_price, price_uah, ha_rate, is_active')
-    .eq('id', plan)
-    .single()
+  // Беремо план з БД (AI-пакет — з ai_packs: фіксована ціна, без гектарів)
+  const { data: planData } = aiPack
+    ? { data: { label: `${aiPack.label} — ${aiPack.credits} кредитів AI на ${aiPack.days} днів`, base_price: aiPack.price_uah, price_uah: aiPack.price_uah, ha_rate: 0, is_active: aiPack.is_active } }
+    : await supabase
+      .from('plans')
+      .select('label, base_price, price_uah, ha_rate, is_active')
+      .eq('id', plan)
+      .single()
 
   if (!planData || !planData.is_active) throw createError({ statusCode: 400, message: 'Plan not found or inactive' })
 
@@ -77,7 +82,8 @@ export default defineEventHandler(async (event) => {
 
   // Купон
   let couponId: string | null = null
-  if (couponCode) {
+  // На AI-пакети купони не діють: межа собівартості пакета рахується від повної ціни
+  if (couponCode && !aiPack) {
     const { data: coupon } = await supabase.from('coupons')
       .select('id, discount_percent, is_used, expires_at')
       .eq('code', String(couponCode).toUpperCase())

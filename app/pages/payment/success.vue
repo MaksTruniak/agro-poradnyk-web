@@ -25,7 +25,7 @@
           </svg>
         </div>
         <h1 class="text-2xl font-extrabold text-agro-dark bitter mb-2">Оплата успішна!</h1>
-        <p class="text-agro-light mb-1">Ваш тариф <strong class="text-agro-dark">{{ planLabel }}</strong> активовано.</p>
+        <p class="text-agro-light mb-1">{{ isAiPack ? 'Ваш AI-пакет' : 'Ваш тариф' }} <strong class="text-agro-dark">{{ planLabel }}</strong> активовано.</p>
         <p class="text-agro-light text-sm mb-8">Дякуємо за довіру!</p>
         <NuxtLink to="/dashboard" class="btn-primary inline-flex">
           Перейти в дашборд →
@@ -69,7 +69,10 @@ const PLAN_LABELS: Record<string, string> = {
   top_seller: 'Топ продавця',
 }
 
-const planLabel = computed(() => PLAN_LABELS[plan] || plan || 'PRO')
+// AI-пакети (ai_packs) — окремо від тарифів: ai_plus, ai_max_agro…
+const isAiPack = /^ai_[a-z0-9_]+$/.test(plan || '')
+const packLabel = ref('')
+const planLabel = computed(() => (isAiPack ? packLabel.value || 'AI-пакет' : PLAN_LABELS[plan] || plan || 'PRO'))
 const status = ref<'checking' | 'success' | 'pending'>('checking')
 
 const PAID_PLANS = ['business', 'business_pro', 'pro', 'premium']
@@ -78,6 +81,16 @@ const check = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { status.value = 'pending'; return }
+
+    if (isAiPack) {
+      // Пакет, оплачений щойно (callback міг прийти раніше за повернення на сайт)
+      const { data: pack } = await (supabase as any).from('ai_credit_topups').select('id, ai_packs(label)')
+        .eq('owner_id', session.user.id).eq('pack_id', plan)
+        .gte('created_at', new Date(Date.now() - 3600_000).toISOString()).limit(1).maybeSingle()
+      packLabel.value = pack?.ai_packs?.label || ''
+      status.value = pack ? 'success' : 'pending'
+      return
+    }
 
     const { data: sub } = await supabase
       .from('subscriptions')

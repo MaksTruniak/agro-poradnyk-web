@@ -45,7 +45,7 @@
 
       <div v-else class="space-y-3">
         <div v-for="row in planLimits" :key="row.plan"
-          class="grid grid-cols-[140px_1fr_1fr_1fr] gap-4 items-center p-4 bg-agro-bg rounded-xl">
+          class="grid grid-cols-[140px_1fr_1fr_1fr_1fr] gap-4 items-center p-4 bg-agro-bg rounded-xl">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full" :class="planDot(row.plan)"></span>
             <span class="font-semibold text-agro-dark capitalize text-sm">{{ PLAN_LABELS[row.plan] }}</span>
@@ -63,6 +63,11 @@
             <input v-model.number="row.credits_ha_cap" type="number" min="0" class="input text-sm py-1.5 w-full" />
             <p class="text-[11px] text-agro-light mt-1">10 га: {{ creditsFor(row, 10) }} · 100 га: {{ creditsFor(row, 100) }}</p>
           </div>
+          <div>
+            <label class="block text-xs text-agro-light mb-1">Межа собівартості, грн / кредит</label>
+            <input v-model.number="row.cost_cap_uah_per_credit" type="number" min="0" step="0.1" class="input text-sm py-1.5 w-full" />
+            <p class="text-[11px] text-agro-light mt-1">10 га: до {{ Math.round(creditsFor(row, 10) * (row.cost_cap_uah_per_credit || 0)) }} грн/міс</p>
+          </div>
         </div>
       </div>
 
@@ -71,6 +76,48 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         Збережено
       </p>
+    </div>
+
+    <!-- AI-пакети й курс -->
+    <div class="card mb-6" data-test="admin-ai-packs">
+      <div class="flex items-center justify-between mb-2 gap-3 flex-wrap">
+        <p class="font-bold text-agro-dark">AI-пакети за доплату</p>
+        <button @click="savePacks" :disabled="savingPacks" class="btn-primary text-sm py-2 px-4 disabled:opacity-50">
+          {{ savingPacks ? 'Збереження...' : 'Зберегти' }}
+        </button>
+      </div>
+      <p class="text-xs text-agro-light mb-4">
+        «Межа собівартості» — скільки максимум AI цього пакета може коштувати платформі (у грн за курсом нижче). Коли її досягнуто,
+        пакет більше не списується, навіть якщо кредити лишились. Межа фіксується в $ у момент покупки.
+      </p>
+      <label class="flex items-center gap-3 mb-4 text-sm text-agro-dark">
+        Курс, грн за $1
+        <input v-model.number="usdUah" type="number" min="1" step="0.01" class="input text-sm py-1.5 w-28" data-test="admin-usd-uah" />
+      </label>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-agro-light">
+              <th class="py-2 pr-3">Пакет</th><th class="py-2 pr-3">Профіль</th><th class="py-2 pr-3">Ціна, грн</th><th class="py-2 pr-3">Кредитів</th>
+              <th class="py-2 pr-3">Межа собівартості, грн</th><th class="py-2 pr-3">Днів</th><th class="py-2 pr-3">Продається</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in packs" :key="p.id" class="border-t border-agro-border">
+              <td class="py-2 pr-3"><input v-model="p.label" class="input text-sm py-1.5 w-36" /></td>
+              <td class="py-2 pr-3 text-agro-light whitespace-nowrap">{{ p.profile === 'agronomist' ? 'Агроном' : 'Фермер' }}</td>
+              <td class="py-2 pr-3"><input v-model.number="p.price_uah" type="number" min="1" class="input text-sm py-1.5 w-24" /></td>
+              <td class="py-2 pr-3"><input v-model.number="p.credits" type="number" min="1" class="input text-sm py-1.5 w-24" /></td>
+              <td class="py-2 pr-3">
+                <input v-model.number="p.cost_cap_uah" type="number" min="0" class="input text-sm py-1.5 w-24" />
+                <span class="text-[11px] text-agro-light block mt-0.5">{{ p.price_uah ? Math.round((p.cost_cap_uah / p.price_uah) * 100) : 0 }}% ціни</span>
+              </td>
+              <td class="py-2 pr-3"><input v-model.number="p.days" type="number" min="1" max="366" class="input text-sm py-1.5 w-20" /></td>
+              <td class="py-2 pr-3"><input v-model="p.is_active" type="checkbox" class="w-4 h-4 accent-[rgb(47,82,51)]" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Per-user override -->
@@ -140,19 +187,19 @@
               <p class="text-xs text-agro-light mt-1">Порожнє — за тарифом (з урахуванням гектарів)</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-agro-dark mb-1">Видати пакет кредитів (цей місяць)</label>
+              <label class="block text-sm font-medium text-agro-dark mb-1">Видати кредити (до кінця місяця)</label>
               <div class="flex gap-2">
                 <input v-model.number="topupCredits" type="number" min="1" class="input text-sm" placeholder="напр. 50" />
                 <button @click="grantTopup" :disabled="!topupCredits || grantingTopup" class="btn-outline text-sm px-3 disabled:opacity-50">Видати</button>
               </div>
-              <p class="text-xs text-agro-light mt-1">Пакети цього місяця: {{ topupsThisMonth }}</p>
+              <p class="text-xs text-agro-light mt-1">Активні пакети: {{ topupsThisMonth }} кредитів</p>
             </div>
           </div>
         </div>
 
         <!-- Поточне використання -->
         <div v-if="userUsage" class="bg-white rounded-xl p-4 mb-4 border border-agro-border">
-          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">Використання цього місяця</p>
+          <p class="text-xs font-bold uppercase tracking-wider text-agro-light mb-3">Кредити тарифу цього місяця</p>
           <div class="flex items-end gap-2">
             <span class="text-2xl font-bold text-agro-dark">{{ userUsage.credits_used }}</span>
             <span class="text-sm text-agro-light mb-0.5">/ {{ effectiveCredits }} кредитів</span>
@@ -233,7 +280,7 @@ const loadingPlans = ref(true)
 const savingPlans  = ref(false)
 const savedPlans   = ref(false)
 
-interface PlanCredits { plan: string; credits_base: number; credits_per_ha: number; credits_ha_cap: number }
+interface PlanCredits { plan: string; credits_base: number; credits_per_ha: number; credits_ha_cap: number; cost_cap_uah_per_credit: number }
 // На безкоштовних тарифах (фермер Basic, агроном без PRO) AI вимкнено в коді — їх тут немає
 const PLAN_ORDER = ['business', 'business_pro', 'pro']
 const planLimits = ref<PlanCredits[]>([])
@@ -258,10 +305,10 @@ const loadSpend = async () => {
 }
 
 onMounted(async () => {
-  const { data } = await supabase.from('ai_plan_limits').select('plan, credits_base, credits_per_ha, credits_ha_cap')
-  planLimits.value = PLAN_ORDER.map(plan => data?.find(r => r.plan === plan) || { plan, credits_base: 0, credits_per_ha: 0, credits_ha_cap: 0 })
+  const { data } = await supabase.from('ai_plan_limits').select('plan, credits_base, credits_per_ha, credits_ha_cap, cost_cap_uah_per_credit')
+  planLimits.value = PLAN_ORDER.map(plan => data?.find(r => r.plan === plan) || { plan, credits_base: 0, credits_per_ha: 0, credits_ha_cap: 0, cost_cap_uah_per_credit: 2 })
   loadingPlans.value = false
-  await Promise.all([loadOverrides(), loadSpend()])
+  await Promise.all([loadOverrides(), loadSpend(), loadPacks()])
 })
 
 const savePlanLimits = async () => {
@@ -274,6 +321,7 @@ const savePlanLimits = async () => {
     credits_base: Math.floor(Number(row.credits_base) || 0),
     credits_per_ha: Number(row.credits_per_ha) || 0,
     credits_ha_cap: Math.floor(Number(row.credits_ha_cap) || 0),
+    cost_cap_uah_per_credit: Number(row.cost_cap_uah_per_credit) || 0,
     updated_at: new Date().toISOString(),
   })), { onConflict: 'plan' }).select('plan')
   savingPlans.value = false
@@ -282,6 +330,35 @@ const savePlanLimits = async () => {
   setTimeout(() => savedPlans.value = false, 3000)
 }
 
+// ─── AI-пакети й курс ────────────────────────────────────────────────────────
+
+const packs = ref<any[]>([])
+const usdUah = ref(45.5)
+const savingPacks = ref(false)
+const loadPacks = async () => {
+  const [{ data }, { data: settings }] = await Promise.all([
+    (supabase as any).from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, days, is_active, sort').order('profile').order('sort'),
+    (supabase as any).from('ai_settings').select('usd_uah').maybeSingle(),
+  ])
+  packs.value = data || []
+  if (settings?.usd_uah) usdUah.value = Number(settings.usd_uah)
+}
+const savePacks = async () => {
+  const bad = packs.value.some(p => !(p.price_uah > 0) || !(p.credits > 0) || !(p.cost_cap_uah >= 0) || !(p.days >= 1) || !String(p.label || '').trim())
+  if (bad || !(usdUah.value > 0)) { useToast().error('Перевірте ціни, кредити, межі, дні й курс'); return }
+  savingPacks.value = true
+  const now = new Date().toISOString()
+  const [res, rateRes] = await Promise.all([
+    (supabase as any).from('ai_packs').upsert(packs.value.map(p => ({
+      id: p.id, profile: p.profile, label: String(p.label).trim(), price_uah: Math.floor(p.price_uah), credits: Math.floor(p.credits),
+      cost_cap_uah: Number(p.cost_cap_uah), days: Math.floor(p.days), is_active: !!p.is_active, sort: p.sort, updated_at: now,
+    })), { onConflict: 'id' }).select('id'),
+    (supabase as any).from('ai_settings').update({ usd_uah: Number(usdUah.value), updated_at: now }).eq('id', true).select('id'),
+  ])
+  savingPacks.value = false
+  if (!adminWriteOk(res, 'Не вдалося зберегти пакети') || !adminWriteOk(rateRes, 'Не вдалося зберегти курс')) return
+  useToast().success('Збережено')
+}
 
 // ─── Пошук користувачів ──────────────────────────────────────────────────────
 
@@ -321,7 +398,8 @@ const grantingTopup = ref(false)
 
 // Кредити за тарифом (з гектарами господарства) і з урахуванням індивідуального ліміту та пакетів
 const defaultCredits = computed(() => creditsFor(planLimits.value.find(r => r.plan === aiLimitKey(userForm.plan as PlanId, userForm.profile)), userForm.profile === 'farmer' ? userHectares.value : 0))
-const effectiveCredits = computed(() => (userForm.ai_text_limit ?? defaultCredits.value) + topupsThisMonth.value)
+// Кредити тарифу (пакети — окремо, зі своїм терміном і лічильником)
+const effectiveCredits = computed(() => userForm.ai_text_limit ?? defaultCredits.value)
 
 const currentMonth = new Date().toISOString().slice(0, 7)
 
@@ -336,7 +414,8 @@ const loadUserProfileData = async () => {
     supabase.from('ai_usage').select('credits_used')
       .eq('user_id', uid).eq('profile', userForm.profile).eq('month', currentMonth).maybeSingle(),
     supabase.from('farms').select('hectares').eq('user_id', uid),
-    supabase.from('ai_credit_topups').select('credits').eq('owner_id', uid).eq('profile', userForm.profile).eq('month', currentMonth),
+    (supabase as any).from('ai_credit_topups').select('credits, credits_used').eq('owner_id', uid).eq('profile', userForm.profile)
+      .lte('starts_at', new Date().toISOString()).gt('expires_at', new Date().toISOString()),
     supabase.from('ai_requests').select('cost_usd').eq('owner_id', uid).gte('created_at', monthStart.toISOString()),
   ])
   // Діючий тариф (прострочений = Basic) — від нього рахуються кредити
@@ -344,7 +423,7 @@ const loadUserProfileData = async () => {
   userSubId.value        = sub?.id ?? null
   userForm.ai_text_limit = sub?.ai_text_limit ?? null
   userHectares.value = (farms || []).reduce((a: number, f: any) => a + (Number(f.hectares) || 0), 0)
-  topupsThisMonth.value = (topups || []).reduce((a: number, t: any) => a + (t.credits || 0), 0)
+  topupsThisMonth.value = (topups || []).reduce((a: number, t: any) => a + Math.max(0, (t.credits || 0) - (t.credits_used || 0)), 0)
   userUsage.value = { credits_used: usage?.credits_used || 0, cost: (reqs || []).reduce((a: number, r: any) => a + Number(r.cost_usd), 0) }
 }
 
@@ -368,8 +447,12 @@ const grantTopup = async () => {
   const credits = Math.floor(Number(topupCredits.value))
   if (!(credits > 0)) { useToast().error('Кількість кредитів має бути більше 0'); return }
   grantingTopup.value = true
-  const res = await supabase.from('ai_credit_topups').insert({
+  // Кредити від адміна — до кінця поточного місяця (UTC), без межі собівартості
+  const now = new Date()
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
+  const res = await (supabase as any).from('ai_credit_topups').insert({
     owner_id: selectedUser.value.id, profile: userForm.profile, credits, month: currentMonth, source: 'admin',
+    starts_at: now.toISOString(), expires_at: monthEnd.toISOString(),
   }).select('id')
   grantingTopup.value = false
   if (!adminWriteOk(res, 'Не вдалося видати кредити')) return

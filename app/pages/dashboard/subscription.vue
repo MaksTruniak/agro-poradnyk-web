@@ -41,6 +41,7 @@
 
       <!-- AI-кредити поточного місяця -->
       <DashboardAiCreditsCard profile="farmer" />
+      <DashboardAiPacks profile="farmer" />
 
       <!-- Перемикач місяць / рік -->
       <div class="flex items-center justify-center gap-3 mb-6">

@@ -8,7 +8,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <p class="font-bold text-agro-dark">AI-кредити</p>
-        <p class="text-xs text-agro-light">Оновлюються {{ resetDate }}</p>
+        <p class="text-xs text-agro-light">Кредити тарифу оновлюються {{ resetDate }}</p>
       </div>
       <p v-if="data" class="text-right shrink-0">
         <span class="text-2xl font-extrabold" :class="data.remaining > 0 ? 'text-agro' : 'text-red-500'">{{ data.remaining }}</span>
@@ -22,12 +22,24 @@
         <div class="h-full rounded-full transition-all" :class="usedPct >= 90 ? 'bg-red-400' : usedPct >= 70 ? 'bg-amber-400' : 'bg-agro'"
           :style="`width: ${usedPct}%`"></div>
       </div>
-      <p class="text-xs text-agro-light mb-4">Використано {{ data.used }} з {{ data.allowance }} цього місяця</p>
+      <p class="text-xs text-agro-light mb-3">Використано {{ data.used }} з {{ data.allowance }}</p>
+
+      <!-- Гаманці: кредити тарифу на місяць і AI-пакети зі своїм терміном -->
+      <div v-if="data.wallets?.length > 1 || data.wallets?.some(w => w.kind === 'pack')" class="space-y-1.5 mb-4" data-test="ai-wallets">
+        <div v-for="(w, i) in data.wallets" :key="i" class="flex items-center justify-between gap-3 text-sm bg-agro-bg rounded-xl px-3 py-2" data-test="ai-wallet">
+          <span class="text-agro-dark font-medium min-w-0 truncate">
+            {{ w.label }}<span v-if="w.expiresAt" class="text-agro-light font-normal"> · до {{ formatDay(w.expiresAt) }}</span>
+          </span>
+          <span class="shrink-0 tabular-nums" :class="w.capReached ? 'text-red-500' : 'text-agro-dark'">
+            {{ w.capReached ? 'ліміт вичерпано' : `${Math.max(0, w.credits - w.used)} з ${w.credits}` }}
+          </span>
+        </div>
+      </div>
 
       <p v-if="data.allowance > 0 && data.remaining <= 0" class="text-sm text-agro-dark bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
-        Кредити вичерпано. Прості питання AI агроному працюють в економ-режимі — до {{ data.fallbackDaily }} на день. Фото, техкарти й звіти — з нового місяця.
+        Кредити вичерпано. Прості питання AI агроному працюють в економ-режимі — до {{ data.fallbackDaily }} на день. Фото, техкарти й звіти — з нового місяця або з AI-пакетом.
       </p>
-      <p v-else-if="data.allowance <= 0" class="text-sm text-agro-light mb-4">AI агроном доступний у платних тарифах.</p>
+      <p v-else-if="data.allowance <= 0" class="text-sm text-agro-light mb-4">AI агроном доступний у платних тарифах і з AI-пакетом.</p>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div v-for="item in costList" :key="item.key" class="bg-agro-bg rounded-xl px-3 py-2">
@@ -44,7 +56,8 @@
 <script setup lang="ts">
 const props = defineProps<{ profile: SubscriptionProfile }>()
 
-interface CreditsResponse { allowance: number; used: number; remaining: number; fallbackDaily: number; costs: Record<string, { credits: number; label: string }> }
+interface Wallet { kind: 'plan' | 'pack'; label: string; credits: number; used: number; capReached: boolean; expiresAt: string | null }
+interface CreditsResponse { allowance: number; used: number; remaining: number; wallets: Wallet[]; fallbackDaily: number; costs: Record<string, { credits: number; label: string }> }
 
 const authHeader = useAuthHeader()
 const data = ref<CreditsResponse | null>(null)
@@ -64,6 +77,8 @@ const creditsWord = (n: number) => {
   if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'кредити'
   return 'кредитів'
 }
+
+const formatDay = (iso: string) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })
 
 const resetDate = computed(() => {
   const d = new Date()

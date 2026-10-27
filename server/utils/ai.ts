@@ -21,6 +21,7 @@ export const AI_MAX_OUTPUT_TOKENS = 1000
 // Межі вхідних даних (захист від довільних запитів за рахунок платформи)
 export const AI_LIMITS = {
   chatMessages: 20,        // скільки останніх повідомлень розмови йде в модель
+  historyChars: 12000,     // і не більше стільки символів разом (≈ 5 тис. токенів): старше покриває пам'ять розмови
   messageChars: 4000,      // довжина одного повідомлення
   contextChars: 4000,      // farmContext, prevSummary, memory
   reportChars: 30000,      // текст консультацій для звіту за сезон
@@ -113,7 +114,16 @@ export function sanitizeChatMessages(raw: unknown): { messages: ChatMessage[]; h
   if (!out.length || out[out.length - 1]!.role !== 'user') {
     throw createError({ statusCode: 400, message: 'Останнє повідомлення має бути від користувача' })
   }
-  return { messages: out, hasImage }
+  // Довга розмова — найдорожча частина питання (вхідні токени), а питання коштує 1 кредит незалежно від довжини:
+  // лишаємо найновіші повідомлення в межах historyChars; останнє (саме питання) — завжди
+  const textLen = (m: ChatMessage) => typeof m.content === 'string' ? m.content.length
+    : m.content.reduce((s, p: any) => s + (p.type === 'text' ? (p.text?.length || 0) : 0), 0)
+  let total = textLen(out[out.length - 1]!)
+  let from = out.length - 1
+  while (from > 0 && total + textLen(out[from - 1]!) <= AI_LIMITS.historyChars) total += textLen(out[--from]!)
+  const trimmed = out.slice(from)
+  while (trimmed.length > 1 && trimmed[0]!.role !== 'user') trimmed.shift()  // розмова починається з питання
+  return { messages: trimmed, hasImage }
 }
 
 const isRateLimit = (err: any) => err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'

@@ -131,7 +131,26 @@ export default defineEventHandler(async (event) => {
   }
 
   const subPlan = SUBSCRIPTION_PLANS[plan]
-  if (plan === 'top_agronomist') {
+  const aiPack = subPlan || PROMO_PLANS.includes(plan) ? null : await findAiPack(supabase, plan)
+  if (aiPack) {
+    // AI-пакет: кредити на aiPack.days днів від оплати; межа собівартості — у $ за курсом на момент покупки.
+    // payment_reference унікальний — повторний callback пакет не задвоїть (і платіж вище теж)
+    const startsAt = new Date()
+    const expiresAt = new Date(startsAt.getTime() + aiPack.days * 864e5)
+    const { error } = await supabase.from('ai_credit_topups').insert({
+      owner_id:          userId,
+      profile:           aiPack.profile,
+      credits:           aiPack.credits,
+      month:             startsAt.toISOString().slice(0, 7),
+      source:            'pack',
+      pack_id:           aiPack.id,
+      payment_reference: orderReference,
+      starts_at:         startsAt.toISOString(),
+      expires_at:        expiresAt.toISOString(),
+      cost_cap_usd:      Number(aiPack.cost_cap_uah) / await usdUahRate(),
+    })
+    if (error && error.code !== '23505') console.error('[WFP callback] AI pack insert error:', error)
+  } else if (plan === 'top_agronomist') {
     const expiresAt = new Date()
     expiresAt.setMonth(expiresAt.getMonth() + 1)
     await supabase.from('agronomist_profiles').update({

@@ -91,7 +91,7 @@
           </svg>
         </div>
         <p class="font-bold text-agro-dark text-lg mb-2">AI агроном</p>
-        <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Консультації, аналіз фото, захист культур — доступні на тарифі {{ paidPlanName }}</p>
+        <p class="text-agro-light text-sm mb-5 max-w-sm mx-auto">Консультації, аналіз фото, захист культур — на тарифі {{ paidPlanName }} або з AI-пакетом</p>
         <NuxtLink :to="proLink" class="dash-btn-primary inline-flex" data-test="ai-locked">Перейти на {{ paidPlanName }} →</NuxtLink>
       </div>
       <div v-else-if="chatSessions.length === 0" class="flex flex-col items-center justify-center h-full text-center py-12">
@@ -259,7 +259,7 @@
       <!-- Basic — AI недоступний -->
       <div v-if="!isPro" class="px-6 py-5 border-t border-agro-border bg-white shrink-0 text-center">
         <p class="font-semibold text-agro-dark mb-1">🌿 AI агроном — у тарифі {{ paidPlanName }}</p>
-        <p class="text-sm text-agro-light mb-3">Консультації, аналіз фото, захист культур — доступні на платному тарифі.</p>
+        <p class="text-sm text-agro-light mb-3">Консультації, аналіз фото, захист культур — на платному тарифі або з AI-пакетом.</p>
         <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5" data-test="ai-locked">
           Перейти на {{ paidPlanName }} →
         </NuxtLink>

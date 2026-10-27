@@ -12,6 +12,13 @@ export const SUBSCRIPTION_PLANS: Record<string, { profile: 'farmer' | 'agronomis
 // Просування («Топ») — окремо від підписок
 export const PROMO_PLANS = ['top_agronomist', 'top_seller']
 
+// AI-пакети — окремо від тарифів (таблиця ai_packs): кредити на N днів з межею собівартості
+export async function findAiPack(supabase: SupabaseClient, id: string) {
+  if (!/^[a-z0-9_]+$/.test(id)) return null
+  const { data } = await supabase.from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, days, is_active').eq('id', id).maybeSingle()
+  return data
+}
+
 const YEAR_MS = 365.25 * 24 * 3600 * 1000
 
 /** Рік клієнта з першої оплати: 1 — перший рік, 2 — другий… (знижка лояльності — «з другого року») */

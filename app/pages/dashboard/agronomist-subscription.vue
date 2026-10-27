@@ -37,6 +37,7 @@
 
       <!-- AI-кредити поточного місяця (профіль агронома) -->
       <DashboardAiCreditsCard profile="agronomist" />
+      <DashboardAiPacks profile="agronomist" />
 
       <!-- Плани -->
       <div class="grid md:grid-cols-2 gap-4 mb-8">
