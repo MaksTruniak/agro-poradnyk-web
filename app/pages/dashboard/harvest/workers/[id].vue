@@ -21,6 +21,31 @@
     </div>
 
     <template v-else>
+      <!-- Telegram збирача: зважування й виплати приходять одразу, вхід без пароля -->
+      <div v-if="tg.enabled" class="card mb-6" data-test="worker-telegram">
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="w-10 h-10 rounded-xl bg-[#e6f3fb] flex items-center justify-center shrink-0 text-lg">✈️</div>
+          <div class="flex-1 min-w-[200px]">
+            <p class="font-semibold text-agro-dark text-sm">Telegram збирача</p>
+            <p v-if="tg.linked" class="text-xs text-agro mt-0.5" data-test="worker-telegram-linked">Підключено — зважування й виплати приходять у Telegram</p>
+            <p v-else class="text-xs text-agro-light mt-0.5">Без застосунку й пароля: свій QR, кожне зважування, виплати з кнопкою «Отримав»</p>
+          </div>
+          <button v-if="!tg.url" type="button" class="btn-outline text-sm shrink-0" :disabled="tg.loading" data-test="worker-telegram-link" @click="makeTgLink">
+            {{ tg.loading ? '...' : tg.linked ? 'Підключити інший телефон' : 'Підключити Telegram' }}
+          </button>
+        </div>
+        <div v-if="tg.url" class="mt-4 flex flex-wrap items-center gap-4 border-t border-agro-border pt-4">
+          <canvas ref="tgQr" class="rounded-xl border border-agro-border shrink-0" />
+          <div class="flex-1 min-w-[200px] space-y-2 text-sm">
+            <p class="text-agro-dark">Збирач сканує QR камерою свого телефону або відкриває посилання й натискає «Почати» в Telegram.</p>
+            <a :href="tg.url" target="_blank" class="text-agro font-semibold break-all hover:underline" data-test="worker-telegram-url">{{ tg.url }}</a>
+            <p class="text-xs text-agro-light">Посилання діє 15 хвилин.</p>
+            <button type="button" class="btn-outline text-xs" @click="copyTg">{{ tg.copied ? 'Скопійовано' : 'Скопіювати посилання' }}</button>
+          </div>
+        </div>
+        <p v-if="tg.error" class="text-sm text-red-500 mt-3">{{ tg.error }}</p>
+      </div>
+
       <!-- Зведення по всіх обліках -->
       <div class="grid grid-cols-3 gap-4 mb-6">
         <div class="card text-center">
@@ -131,5 +156,37 @@ const load = async () => {
   loading.value = false
 }
 
-onMounted(load)
+// ─── Telegram збирача ─────────────────────────────────────────────────────────
+const authHeader = useAuthHeader()
+const tg = reactive({ enabled: false, linked: false, url: '', loading: false, copied: false, error: '' })
+const tgQr = ref<HTMLCanvasElement | null>(null)
+const loadTg = async () => {
+  try {
+    const res = await $fetch<{ linked: boolean; enabled: boolean }>('/api/harvest/worker-telegram', { method: 'POST', headers: await authHeader(), body: { workerId } })
+    tg.enabled = res.enabled
+    tg.linked = res.linked
+  } catch { /* у збирача немає входу — блок не показуємо */ }
+}
+const makeTgLink = async () => {
+  tg.loading = true
+  tg.error = ''
+  try {
+    const res = await $fetch<{ url: string }>('/api/harvest/worker-telegram', { method: 'POST', headers: await authHeader(), body: { workerId, link: true } })
+    tg.url = res.url
+    await nextTick()
+    if (tgQr.value) {
+      const QRCode = (await import('qrcode')).default
+      await QRCode.toCanvas(tgQr.value, res.url, { width: 160, margin: 1 })
+    }
+  } catch (e: any) {
+    tg.error = e?.data?.message || 'Не вдалося створити посилання'
+  } finally {
+    tg.loading = false
+  }
+}
+const copyTg = async () => {
+  try { await navigator.clipboard.writeText(tg.url); tg.copied = true } catch { /* виділить вручну */ }
+}
+
+onMounted(() => { load(); loadTg() })
 </script>

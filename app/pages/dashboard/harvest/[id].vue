@@ -543,16 +543,23 @@ const saveRecord = async () => {
   rSaving.value = true
   const currentUserId = await getQueryUserId()
   const price = effectivePrice(rForm.worker_id)
-  await supabase.from('harvest_records').insert({
+  const { data: rec } = await supabase.from('harvest_records').insert({
     worker_id: rForm.worker_id,
     season_id: seasonId,
     weight_kg: Number(rForm.weight_kg),
     price_per_kg: price,
     recorded_by: currentUserId,
-  })
+  }).select('id').single()
+  if (rec) notifyWorker({ recordId: rec.id })
   rSaving.value = false
   showRecordModal.value = false
   await load()
+}
+
+// Збирач із підключеним Telegram одразу отримує зважування / виплату (у фоні; без Telegram — нічого)
+const authHeader = useAuthHeader()
+const notifyWorker = async (body: { recordId?: string; paymentId?: string }) => {
+  $fetch('/api/harvest/notify', { method: 'POST', headers: await authHeader(), body }).catch(() => {})
 }
 
 const openPay = (w: any) => {
@@ -564,12 +571,13 @@ const openPay = (w: any) => {
 const savePay = async () => {
   if (!payAmount.value) return
   paySaving.value = true
-  await supabase.from('harvest_payments').insert({
+  const { data: pay } = await supabase.from('harvest_payments').insert({
     worker_id: payWorker.value.id,
     season_id: seasonId,
     amount: Number(payAmount.value),
     status: 'pending',
-  })
+  }).select('id').single()
+  if (pay) notifyWorker({ paymentId: pay.id })
   paySaving.value = false
   showPayModal.value = false
   load()

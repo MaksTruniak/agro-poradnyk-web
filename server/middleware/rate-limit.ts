@@ -13,6 +13,8 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/email/welcome':         { max: 3,  windowMs: 60_000 },
   '/api/team/invite':           { max: 5,  windowMs: 60_000 },
   '/api/harvest/create-worker': { max: 10, windowMs: 60_000 },
+  '/api/harvest/worker-telegram': { max: 20, windowMs: 60_000 },
+  '/api/harvest/notify':        { max: 120, windowMs: 60_000 },
   '/api/ai-generate-card':      { max: 10, windowMs: 60_000 },
   '/api/ai-summary':            { max: 10, windowMs: 60_000 },
   '/api/ai-season-report':      { max: 5,  windowMs: 60_000 },

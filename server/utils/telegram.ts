@@ -37,6 +37,54 @@ export function sendTelegram(chatId: number | string, html: string, button?: { t
   })
 }
 
+type InlineButton = { text: string; url: string } | { text: string; callback_data: string }
+
+/** Повідомлення з довільною клавіатурою (inline-кнопки з callback або постійна клавіатура внизу чату) */
+export function sendTelegramMarkup(chatId: number | string, html: string, replyMarkup: Record<string, unknown>) {
+  return telegramApi('sendMessage', { chat_id: chatId, text: html, parse_mode: 'HTML', disable_web_page_preview: true, reply_markup: replyMarkup })
+}
+
+export const inlineKeyboard = (rows: InlineButton[][]) => ({ inline_keyboard: rows })
+
+/** Картинка (PNG) з підписом — multipart, бо JSON не передає файл */
+export async function sendTelegramPhoto(chatId: number | string, png: Buffer, caption: string, replyMarkup?: Record<string, unknown>) {
+  const form = new FormData()
+  form.append('chat_id', String(chatId))
+  form.append('caption', caption)
+  form.append('parse_mode', 'HTML')
+  if (replyMarkup) form.append('reply_markup', JSON.stringify(replyMarkup))
+  form.append('photo', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'qr.png')
+  const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`, { method: 'POST', body: form })
+  const json: any = await res.json().catch(() => null)
+  if (!json?.ok) {
+    const err: any = new Error(`Telegram sendPhoto: ${json?.description ?? res.status}`)
+    err.telegram = json
+    throw err
+  }
+  return json.result
+}
+
+/**
+ * Вебхук бота має вказувати на цей сайт і приймати повідомлення й натискання inline-кнопок.
+ * Лише на продакшні; помилки лише в лог (не заважаємо отримати посилання).
+ */
+export async function ensureTelegramWebhook() {
+  if (process.env.VERCEL_ENV !== 'production') return
+  const url = `${SITE_URL}/api/telegram/webhook`
+  try {
+    const info = await telegramApi<{ url: string; allowed_updates?: string[] }>('getWebhookInfo', {})
+    if (info.url !== url || !info.allowed_updates?.includes('callback_query')) {
+      await telegramApi('setWebhook', { url, secret_token: telegramWebhookSecret(), allowed_updates: ['message', 'callback_query'] })
+      await telegramApi('setMyCommands', { commands: [
+        { command: 'status', description: 'Що надсилає бот' },
+        { command: 'stop', description: 'Відключити акаунт' },
+      ] })
+    }
+  } catch (e) {
+    console.error('[telegram] webhook setup', e)
+  }
+}
+
 /** null — особисте повідомлення (акт огляду від агронома), без перемикача в налаштуваннях */
 export type TelegramKind = 'week_plan' | 'frost' | 'reminders' | null
 

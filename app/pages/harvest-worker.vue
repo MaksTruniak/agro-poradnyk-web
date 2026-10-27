@@ -56,6 +56,17 @@
         </button>
       </div>
 
+      <!-- Telegram: зважування й виплати приходять самі, QR — у боті -->
+      <div v-if="!tgLinked" class="bg-white rounded-2xl border border-[#E0EDCC] p-4 mb-4 flex items-center gap-3" data-test="worker-cabinet-telegram">
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-[#1A3A06] text-sm">Підключіть Telegram</p>
+          <p class="text-xs text-[#6B7A64]">Кожне зважування й виплата прийдуть повідомленням, QR — завжди під рукою</p>
+        </div>
+        <button @click="connectTelegram" :disabled="tgLoading" class="shrink-0 bg-[#2F5233] text-[#FAF6EC] font-semibold rounded-xl px-4 py-2 text-sm">
+          {{ tgLoading ? '...' : 'Підключити' }}
+        </button>
+      </div>
+
       <!-- Підтвердження виплат по всіх обліках -->
       <div v-if="allPendingPayments.length" class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
         <p class="font-semibold text-amber-800 text-sm mb-3">Очікують підтвердження виплати</p>
@@ -198,6 +209,28 @@ const supabase = useSupabaseClient()
 const checking = ref(true)
 const worker = ref<any>(null)
 const showQRModal = ref(false)
+
+// Telegram збирача: посилання t.me/agroprostir_bot?start=<код> відкриває бота, «Почати» — і чат підключено
+const tgLinked = ref(true)
+const tgLoading = ref(false)
+const authHeader = useAuthHeader()
+const loadTgStatus = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+  const { data } = await (supabase as any).from('telegram_links').select('chat_id').eq('user_id', session.user.id).maybeSingle()
+  tgLinked.value = !!data
+}
+const connectTelegram = async () => {
+  tgLoading.value = true
+  try {
+    const res = await $fetch<{ url: string }>('/api/telegram/link', { method: 'POST', headers: await authHeader() })
+    window.location.href = res.url
+  } catch (e: any) {
+    alert(e?.data?.message || 'Не вдалося підключити Telegram')
+  } finally {
+    tgLoading.value = false
+  }
+}
 const myQrCanvas = ref<HTMLCanvasElement | null>(null)
 
 watch(showQRModal, async (v) => {
@@ -269,6 +302,7 @@ const doLogin = async () => {
     return
   }
   worker.value = data
+  loadTgStatus()
   await loadSeasons()
 }
 
@@ -381,6 +415,7 @@ onMounted(async () => {
 
     if (data) {
       worker.value = data
+      loadTgStatus()
       await loadSeasons()
     }
   } finally {
