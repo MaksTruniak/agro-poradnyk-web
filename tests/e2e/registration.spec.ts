@@ -1,10 +1,24 @@
 import { test, expect, type Page } from '@playwright/test'
+import { serviceClient } from './helpers'
 
 const uid = () => Date.now()
 const STRONG_PASSWORD = 'TestPass1!'
 
-// Тести створюють нові акаунти в базі — лише з E2E_WRITE=1
+// Тести створюють нові акаунти в базі — лише з E2E_WRITE=1; після тестів акаунти видаляються
 test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест реєструє нові акаунти)')
+
+const created: string[] = []
+const newEmail = (role: string) => {
+  const email = `${role}_${uid()}@test.com`
+  created.push(email)
+  return email
+}
+test.afterAll(async () => {
+  if (!created.length) return
+  const admin = serviceClient()
+  const { data } = await admin.auth.admin.listUsers({ perPage: 1000 })
+  for (const u of data.users.filter(u => created.includes(u.email || ''))) await admin.auth.admin.deleteUser(u.id)
+})
 
 // Очищаємо cookies і localStorage перед кожним тестом без навігації
 test.beforeEach(async ({ context }) => {
@@ -99,7 +113,7 @@ test.describe('Реєстрація: Фермер', () => {
     await page.getByTestId('reg-first-name').fill('Іван')
     await page.getByTestId('reg-last-name').fill('Фермеренко')
     await page.getByTestId('reg-company').fill('ФГ "Зоря"')
-    await fillCredentials(page, `farmer_${uid()}@test.com`)
+    await fillCredentials(page, newEmail('farmer'))
     await page.getByTestId('reg-submit').click()
     await expect(page).toHaveURL('/dashboard', { timeout: 15000 })
   })
@@ -119,7 +133,7 @@ test.describe('Реєстрація: Агроном', () => {
     await page.getByTestId('reg-first-name').fill('Олег')
     await page.getByTestId('reg-last-name').fill('Агрономенко')
     await page.getByTestId('reg-region').selectOption('Київська')
-    await fillCredentials(page, `agro_${uid()}@test.com`)
+    await fillCredentials(page, newEmail('agro'))
     await page.getByTestId('reg-submit').click()
     await expect(page).toHaveURL('/dashboard', { timeout: 15000 })
   })
@@ -139,7 +153,7 @@ test.describe('Реєстрація: Заготівельник', () => {
     await page.getByTestId('reg-first-name').fill('Петро')
     await page.getByTestId('reg-last-name').fill('Заготівельниченко')
     await page.getByTestId('reg-company').fill('ТОВ "АгроТрейд"')
-    await fillCredentials(page, `buyer_${uid()}@test.com`)
+    await fillCredentials(page, newEmail('buyer'))
     await page.getByTestId('reg-submit').click()
     await expect(page).toHaveURL('/dashboard', { timeout: 15000 })
   })
