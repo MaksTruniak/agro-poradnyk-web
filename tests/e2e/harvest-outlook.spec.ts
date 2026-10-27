@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test'
 import { asUser, collectApiErrors, collectErrors, expectNoErrors, hasAccount, login, serviceClient } from './helpers'
 import { addDays } from '../../shared/utils/weatherRisks'
+import { formatWindow } from '../../shared/utils/ripening'
 import { createClient } from '@supabase/supabase-js'
 
 // «Скоро урожай» для заготівельника і «Хто купує» для фермера. ПИШЕ в базу — лише з E2E_WRITE=1; усе прибирається.
 // Потрібна міграція 20261023_variety_ripening.sql.
 
 const TAG = `E2E ${Date.now()}`
-const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`
 
 test.describe('Скоро урожай і попит', () => {
   test.skip(process.env.E2E_WRITE !== '1', 'увімкніть E2E_WRITE=1 (тест створює і видаляє записи)')
@@ -65,7 +65,8 @@ test.describe('Скоро урожай і попит', () => {
     const rows = bp.locator('[data-test="outlook-row"]').filter({ hasText: variety })
     await expect(rows, 'прихована культура потрапила в «Скоро урожай»').toHaveCount(1, { timeout: 15000 })
     await expect(rows).toContainText('через 5 днів')
-    await expect(rows).toContainText(`збір ~${ddmm(from)}`)
+    // Той самий формат, що й на сторінці: в межах місяця — «01–16.11», інакше «28.10–12.11»
+    await expect(rows).toContainText(`збір ~${formatWindow({ from, to })}`)
     await expect(rows).toContainText('~10 т за планом')
     await expect(rows).toContainText('Київська')
     await expectNoErrors(errors, '«Скоро урожай»')
