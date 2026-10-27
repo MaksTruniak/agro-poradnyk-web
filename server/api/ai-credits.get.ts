@@ -4,9 +4,9 @@ export default defineEventHandler(async (event) => {
   try {
     const access = await requireAiAccess(event)
     const wallets = access.wallets.map(({ kind, label, credits, used, capReached, expiresAt }) => ({ kind, label, credits, used, capReached, expiresAt }))
-    return { ...access.credits, plan: access.plan, wallets, costs, fallbackDaily: AI_FALLBACK.dailyLimit }
+    return { ...access.credits, plan: access.plan, wallets, trialAiEnded: access.trialAiEnded, costs, fallbackDaily: AI_FALLBACK.dailyLimit }
   } catch (e: any) {
-    if (e?.statusCode === 403) return { allowance: 0, used: 0, remaining: 0, wallets: [], costs, fallbackDaily: 0 }
+    if (e?.statusCode === 403) return { allowance: 0, used: 0, remaining: 0, wallets: [], trialAiEnded: !!e.data?.trialAiEnded, costs, fallbackDaily: 0 }
     throw e
   }
 })

@@ -25,7 +25,7 @@
       <p class="text-xs text-agro-light mb-3">Використано {{ data.used }} з {{ data.allowance }}</p>
 
       <!-- Гаманці: кредити тарифу на місяць і AI-пакети зі своїм терміном -->
-      <div v-if="data.wallets?.length > 1 || data.wallets?.some(w => w.kind === 'pack')" class="space-y-1.5 mb-4" data-test="ai-wallets">
+      <div v-if="data.wallets?.length > 1 || data.wallets?.some(w => w.kind === 'pack' || w.expiresAt)" class="space-y-1.5 mb-4" data-test="ai-wallets">
         <div v-for="(w, i) in data.wallets" :key="i" class="flex items-center justify-between gap-3 text-sm bg-agro-bg rounded-xl px-3 py-2" data-test="ai-wallet">
           <span class="text-agro-dark font-medium min-w-0 truncate">
             {{ w.label }}<span v-if="w.expiresAt" class="text-agro-light font-normal"> · до {{ formatDay(w.expiresAt) }}</span>
@@ -38,6 +38,9 @@
 
       <p v-if="data.allowance > 0 && data.remaining <= 0" class="text-sm text-agro-dark bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
         Кредити вичерпано. Прості питання AI агроному працюють в економ-режимі — до {{ data.fallbackDaily }} на день. Фото, техкарти й звіти — з нового місяця або з AI-пакетом.
+      </p>
+      <p v-else-if="data.allowance <= 0 && data.trialAiEnded" class="text-sm text-agro-dark bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4" data-test="ai-trial-ended">
+        Пробні 7 днів AI агронома закінчились. Тариф діє далі, а AI — після оплати тарифу або з AI-пакетом.
       </p>
       <p v-else-if="data.allowance <= 0" class="text-sm text-agro-light mb-4">AI агроном доступний у платних тарифах і з AI-пакетом.</p>
 
@@ -57,7 +60,7 @@
 const props = defineProps<{ profile: SubscriptionProfile }>()
 
 interface Wallet { kind: 'plan' | 'pack'; label: string; credits: number; used: number; capReached: boolean; expiresAt: string | null }
-interface CreditsResponse { allowance: number; used: number; remaining: number; wallets: Wallet[]; fallbackDaily: number; costs: Record<string, { credits: number; label: string }> }
+interface CreditsResponse { allowance: number; used: number; remaining: number; wallets: Wallet[]; trialAiEnded?: boolean; fallbackDaily: number; costs: Record<string, { credits: number; label: string }> }
 
 const authHeader = useAuthHeader()
 const data = ref<CreditsResponse | null>(null)

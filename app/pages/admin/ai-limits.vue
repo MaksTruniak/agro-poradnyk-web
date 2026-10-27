@@ -95,6 +95,11 @@
         Курс, грн за $1
         <input v-model.number="usdUah" type="number" min="1" step="0.01" class="input text-sm py-1.5 w-28" data-test="admin-usd-uah" />
       </label>
+      <label class="flex items-center gap-3 mb-4 text-sm text-agro-dark flex-wrap">
+        AI у пробному періоді, днів
+        <input v-model.number="trialAiDays" type="number" min="0" max="186" class="input text-sm py-1.5 w-20" data-test="admin-trial-ai-days" />
+        <span class="text-xs text-agro-light">Пробний тариф діє 6 місяців, а кредити AI тарифу — лише ці перші дні. Після оплати — без обмеження.</span>
+      </label>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
@@ -334,18 +339,21 @@ const savePlanLimits = async () => {
 
 const packs = ref<any[]>([])
 const usdUah = ref(45.5)
+const trialAiDays = ref(7)
 const savingPacks = ref(false)
 const loadPacks = async () => {
   const [{ data }, { data: settings }] = await Promise.all([
     (supabase as any).from('ai_packs').select('id, profile, label, price_uah, credits, cost_cap_uah, is_active, sort').order('profile').order('sort'),
-    (supabase as any).from('ai_settings').select('usd_uah').maybeSingle(),
+    (supabase as any).from('ai_settings').select('usd_uah, trial_ai_days').maybeSingle(),
   ])
   packs.value = data || []
   if (settings?.usd_uah) usdUah.value = Number(settings.usd_uah)
+  if (settings?.trial_ai_days != null) trialAiDays.value = settings.trial_ai_days
 }
 const savePacks = async () => {
   const bad = packs.value.some(p => !(p.price_uah > 0) || !(p.credits > 0) || !(p.cost_cap_uah >= 0) || !String(p.label || '').trim())
-  if (bad || !(usdUah.value > 0)) { useToast().error('Перевірте ціни, кредити, межі й курс'); return }
+  const days = Math.floor(Number(trialAiDays.value))
+  if (bad || !(usdUah.value > 0) || !(days >= 0 && days <= 186)) { useToast().error('Перевірте ціни, кредити, межі, курс і дні AI'); return }
   savingPacks.value = true
   const now = new Date().toISOString()
   const [res, rateRes] = await Promise.all([
@@ -353,7 +361,7 @@ const savePacks = async () => {
       id: p.id, profile: p.profile, label: String(p.label).trim(), price_uah: Math.floor(p.price_uah), credits: Math.floor(p.credits),
       cost_cap_uah: Number(p.cost_cap_uah), is_active: !!p.is_active, sort: p.sort, updated_at: now,
     })), { onConflict: 'id' }).select('id'),
-    (supabase as any).from('ai_settings').update({ usd_uah: Number(usdUah.value), updated_at: now }).eq('id', true).select('id'),
+    (supabase as any).from('ai_settings').update({ usd_uah: Number(usdUah.value), trial_ai_days: days, updated_at: now }).eq('id', true).select('id'),
   ])
   savingPacks.value = false
   if (!adminWriteOk(res, 'Не вдалося зберегти пакети') || !adminWriteOk(rateRes, 'Не вдалося зберегти курс')) return

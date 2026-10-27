@@ -25,6 +25,8 @@ export interface AiAccess {
   plan: PlanId
   credits: AiCredits
   wallets: AiWallet[]
+  /** Пробний період: AI тарифу вже закінчився (діє лише перші trial_ai_days днів) */
+  trialAiEnded: boolean
   /** Для дії: маршрут моделі, скільки кредитів списано, з якого пакета (null — з тарифу), чи це запасна модель */
   action?: AiAction
   route?: AiRoute
@@ -45,15 +47,16 @@ async function monthBudgetExceeded(): Promise<boolean> {
   return budgetCache.spent >= budget
 }
 
-// ── Курс $ → грн для меж собівартості (ai_settings, адмінка); кешується на хвилину ──────
-let rateCache: { at: number; rate: number } | null = null
-export async function usdUahRate(): Promise<number> {
-  if (!rateCache || Date.now() - rateCache.at > 60_000) {
-    const { data } = await service().from('ai_settings').select('usd_uah').maybeSingle()
-    rateCache = { at: Date.now(), rate: Number(data?.usd_uah) || 45.5 }
+// ── Налаштування AI (ai_settings, адмінка): курс $ → грн і дні AI в пробному періоді; кеш на хвилину ──
+let settingsCache: { at: number; rate: number; trialAiDays: number } | null = null
+async function aiSettings() {
+  if (!settingsCache || Date.now() - settingsCache.at > 60_000) {
+    const { data } = await service().from('ai_settings').select('usd_uah, trial_ai_days').maybeSingle()
+    settingsCache = { at: Date.now(), rate: Number(data?.usd_uah) || 45.5, trialAiDays: data?.trial_ai_days ?? 7 }
   }
-  return rateCache.rate
+  return settingsCache
 }
+export const usdUahRate = async () => (await aiSettings()).rate
 
 const PLAN_WALLET_LABEL = 'Кредити тарифу'
 
@@ -66,19 +69,23 @@ async function loadWallets(ownerId: string, profile: SubscriptionProfile, sub: a
   const plan = getActivePlan(sub)
   const key = aiLimitKey(plan, profile)
   const now = new Date().toISOString()
-  const [{ data: limits }, { data: farms }, { data: topups }, { data: usage }, rate] = await Promise.all([
+  const [{ data: limits }, { data: farms }, { data: topups }, { data: usage }, { rate, trialAiDays }] = await Promise.all([
     db.from('ai_plan_limits').select('credits_base, credits_per_ha, credits_ha_cap, cost_cap_uah_per_credit').eq('plan', key).maybeSingle(),
     profile === 'farmer' ? db.from('farms').select('hectares').eq('user_id', ownerId) : Promise.resolve({ data: [] as any[] }),
     db.from('ai_credit_topups').select('id, credits, credits_used, cost_cap_usd, expires_at, pack_id, ai_packs(label)')
       .eq('owner_id', ownerId).eq('profile', profile).lte('starts_at', now).gt('expires_at', now).order('expires_at'),
     db.from('ai_usage').select('credits_used').eq('user_id', ownerId).eq('profile', profile).eq('month', month).maybeSingle(),
-    usdUahRate(),
+    aiSettings(),
   ])
   const hectares = (farms || []).reduce((s: number, f: any) => s + (Number(f.hectares) || 0), 0)
   // AI у тарифі — лише платні тарифи (фермер Бізнес / Бізнес Про, Агроном Про) або індивідуальний ліміт; інакше — лише пакети
+  // Пробний період (trial_started_at): тариф діє 6 місяців, а AI тарифу — лише перші trialAiDays днів
+  const trialAiEndsAt = plan !== 'basic' && sub?.trial_started_at && sub?.ai_text_limit == null
+    ? new Date(new Date(sub.trial_started_at).getTime() + trialAiDays * 864e5) : null
+  const trialAiEnded = !!trialAiEndsAt && trialAiEndsAt <= new Date()
   const planCredits = sub?.ai_text_limit != null
     ? Number(sub.ai_text_limit)  // індивідуальний ліміт (кастомний тариф) — у кредитах
-    : plan === 'basic' ? 0
+    : plan === 'basic' || trialAiEnded ? 0
     : Math.floor((limits?.credits_base || 0) + (Number(limits?.credits_per_ha) || 0) * Math.min(hectares, limits?.credits_ha_cap || 0))
   const capPerCredit = limits?.cost_cap_uah_per_credit != null ? Number(limits.cost_cap_uah_per_credit) : 2
   const planCapUsd = (planCredits * capPerCredit) / rate
@@ -91,14 +98,14 @@ async function loadWallets(ownerId: string, profile: SubscriptionProfile, sub: a
 
   const wallets: AiWallet[] = []
   if (planCredits > 0) {
-    wallets.push({ kind: 'plan', topupId: null, label: PLAN_WALLET_LABEL, credits: planCredits, used: usage?.credits_used || 0,
-      capReached: planSpent >= planCapUsd, expiresAt: null })
+    wallets.push({ kind: 'plan', topupId: null, label: trialAiEndsAt ? 'Пробні кредити тарифу' : PLAN_WALLET_LABEL, credits: planCredits,
+      used: usage?.credits_used || 0, capReached: planSpent >= planCapUsd, expiresAt: trialAiEndsAt?.toISOString() ?? null })
   }
   ;(topups || []).forEach((t: any, i: number) => {
     wallets.push({ kind: 'pack', topupId: t.id, label: t.ai_packs?.label || 'Пакет кредитів', credits: t.credits, used: t.credits_used || 0,
       capReached: t.cost_cap_usd != null && topupSpent[i]! >= Number(t.cost_cap_usd), expiresAt: t.expires_at })
   })
-  return { plan, wallets, planCredits, planCapUsd }
+  return { plan, wallets, planCredits, planCapUsd, trialAiEnded }
 }
 
 /** Підсумок для лічильника: доступні кредити — лише з гаманців, де ще є запас собівартості */
@@ -137,14 +144,20 @@ export async function requireAiAccess(event: H3Event, action?: AiAction): Promis
   }
 
   const month = currentUsageMonth()
-  const { data: sub } = await db.from('subscriptions').select('plan, expires_at, ai_text_limit').eq('user_id', ownerId).eq('profile', profile).maybeSingle()
-  const { plan, wallets, planCredits, planCapUsd } = await loadWallets(ownerId, profile, sub, month)
+  const subQuery = (cols: string) => db.from('subscriptions').select(cols).eq('user_id', ownerId).eq('profile', profile).maybeSingle()
+  let { data: sub, error: subErr } = await subQuery('plan, expires_at, ai_text_limit, trial_started_at') as { data: any; error: any }
+  // До міграції 20261101 колонки trial_started_at немає — працюємо без обмеження пробних днів, а не вимикаємо AI всім
+  if (subErr) ({ data: sub } = await subQuery('plan, expires_at, ai_text_limit') as { data: any; error: any })
+  const { plan, wallets, planCredits, planCapUsd, trialAiEnded } = await loadWallets(ownerId, profile, sub, month)
   const credits = summarize(wallets)
-  const base: AiAccess = { userId: user.id, ownerId, profile, plan, credits, wallets, charged: 0, topupId: null, fallback: false }
+  const base: AiAccess = { userId: user.id, ownerId, profile, plan, credits, wallets, trialAiEnded, charged: 0, topupId: null, fallback: false }
   const hasAi = credits.allowance > 0
+  const noAiMessage = trialAiEnded
+    ? 'Пробний доступ до AI агронома закінчився. AI — після оплати тарифу або з AI-пакетом на сторінці підписки.'
+    : 'AI агроном доступний у платних тарифах і з AI-пакетом'
 
   if (!action) {
-    if (!hasAi) throw createError({ statusCode: 403, message: 'AI агроном доступний у платних тарифах і з AI-пакетом' })
+    if (!hasAi) throw createError({ statusCode: 403, message: noAiMessage, data: { trialAiEnded } })
     return base
   }
 
@@ -174,7 +187,7 @@ export async function requireAiAccess(event: H3Event, action?: AiAction): Promis
     if ((count || 0) < AI_FALLBACK.dailyLimit) return { ...base, action, route: AI_FALLBACK, fallback: true }
   }
 
-  if (!hasAi) throw createError({ statusCode: 403, message: 'AI агроном доступний у платних тарифах і з AI-пакетом' })
+  if (!hasAi) throw createError({ statusCode: 403, message: noAiMessage, data: { trialAiEnded } })
   throw createError({ statusCode: 403, message: 'Кредити AI вичерпано. Нові кредити тарифу — з початку місяця, або докупіть AI-пакет на сторінці підписки.' })
 }
 

@@ -282,14 +282,20 @@ async function savePlan() {
     if (modal.plan === 'business' && ha !== null && !(Number.isInteger(ha) && ha >= BUSINESS_MIN_HA && ha <= BUSINESS_MAX_HA)) {
       throw new Error(`Гектари для «Бізнесу» — від ${BUSINESS_MIN_HA} до ${BUSINESS_MAX_HA}`)
     }
-    const { error } = await supabase.from('subscriptions').upsert({
+    const row: Record<string, any> = {
       user_id: modal.userId,
       profile: modal.profile,
       plan: modal.plan,
       status: modal.plan === 'basic' ? 'expired' : 'active',
       expires_at: expiresAt,
+      trial_started_at: null,  // тариф від адміна — не пробний період (AI без обмеження в днях)
       ...(modal.profile === 'farmer' && modal.plan === 'business' ? { custom_hectares: ha } : {}),
-    }, { onConflict: 'user_id,profile' })
+    }
+    let { error } = await (supabase as any).from('subscriptions').upsert(row, { onConflict: 'user_id,profile' })
+    if (error?.code === 'PGRST204') {  // до міграції 20261101 колонки trial_started_at немає
+      delete row.trial_started_at
+      ;({ error } = await (supabase as any).from('subscriptions').upsert(row, { onConflict: 'user_id,profile' }))
+    }
     if (error) throw new Error(error.message)
     // Оновлюємо значок тарифу в списку
     const u = users.value.find(x => x.id === modal.userId)

@@ -21,7 +21,7 @@ test.describe('Оплата WayForPay', () => {
 
   test.beforeAll(async () => {
     const { userId } = await asUser('agronomist')
-    const { data } = await serviceClient().from('subscriptions').select('id, plan, expires_at, renewal_count, first_paid_at')
+    const { data } = await serviceClient().from('subscriptions').select('id, plan, expires_at, renewal_count, first_paid_at, trial_started_at')
       .eq('user_id', userId).eq('profile', 'agronomist').maybeSingle()
     original = data
   })

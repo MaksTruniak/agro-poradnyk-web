@@ -177,16 +177,24 @@ export default defineEventHandler(async (event) => {
 
     // Продовження до кінця терміну — від дати закінчення, інакше від сьогодні
     const expiresAt = nextExpiry(existingSub, subPlan.plan, subPlan.months)
-    const { error } = await supabase.from('subscriptions').upsert({
+    const upsertSub = (row: Record<string, any>) => supabase.from('subscriptions').upsert(row, { onConflict: 'user_id,profile' })
+    const row: Record<string, any> = {
       user_id:       userId,
       profile:       subPlan.profile,
       plan:          subPlan.plan,
       expires_at:    expiresAt.toISOString(),
       renewal_count: (existingSub?.renewal_count ?? 0) + 1,
       first_paid_at: existingSub?.first_paid_at ?? new Date().toISOString(),  // від неї рахується знижка лояльності
+      trial_started_at: null,  // оплачено — більше не пробний період (AI тарифу без обмеження в днях)
       // Оплачені гектари — ліміт площі полів для «Бізнесу» (hectareLimitFor)
       ...(subPlan.profile === 'farmer' && hectares ? { custom_hectares: hectares } : {}),
-    }, { onConflict: 'user_id,profile' })
+    }
+    let { error } = await upsertSub(row)
+    // До міграції 20261101 колонки trial_started_at немає — підписку все одно продовжуємо
+    if (error?.code === 'PGRST204') {
+      const { trial_started_at: _, ...rest } = row
+      ;({ error } = await upsertSub(rest))
+    }
     if (error) console.error('[WFP callback] Supabase error:', error)
   } else {
     // Такий тариф не продається (create.post.ts його не пропустить) — гроші отримано, але нічого не видаємо автоматично

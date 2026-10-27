@@ -33,7 +33,7 @@ test.describe('Термін дії тарифу й AI-пакета', () => {
 
   const saveSub = async (userId: string, profile: 'farmer' | 'agronomist') => {
     const { data } = await serviceClient().from('subscriptions')
-      .select('id, plan, expires_at, renewal_count, first_paid_at, custom_hectares').eq('user_id', userId).eq('profile', profile).maybeSingle()
+      .select('id, plan, expires_at, renewal_count, first_paid_at, custom_hectares, trial_started_at').eq('user_id', userId).eq('profile', profile).maybeSingle()
     test.skip(!data, `у тестового акаунта немає підписки ${profile}`)
     originals.push(data!)
     return data!
@@ -57,7 +57,7 @@ test.describe('Термін дії тарифу й AI-пакета', () => {
     const admin = serviceClient()
     const sub = await saveSub(ag.userId, 'agronomist')
 
-    await admin.from('subscriptions').update({ plan: 'pro', expires_at: soon() }).eq('id', sub.id)
+    await admin.from('subscriptions').update({ plan: 'pro', expires_at: soon(), trial_started_at: null }).eq('id', sub.id)
     const before = await credits(request, ag.token, 'agronomist')
     expect(before.wallets.some((w: any) => w.kind === 'plan'), 'PRO ще діє, а кредитів тарифу немає').toBe(true)
 
@@ -78,7 +78,7 @@ test.describe('Термін дії тарифу й AI-пакета', () => {
     const admin = serviceClient()
     const sub = await saveSub(farmer.userId, 'farmer')
 
-    await admin.from('subscriptions').update({ plan: 'business', expires_at: soon() }).eq('id', sub.id)
+    await admin.from('subscriptions').update({ plan: 'business', expires_at: soon(), trial_started_at: null }).eq('id', sub.id)
     expect((await credits(request, farmer.token, 'farmer')).wallets.some((w: any) => w.kind === 'plan')).toBe(true)
 
     await sleep(WAIT_MS)
@@ -87,6 +87,47 @@ test.describe('Термін дії тарифу й AI-пакета', () => {
     await login(page, 'farmer')
     await page.goto('/dashboard/subscription')
     await expect(page.getByText('Поточний план', { exact: true }).first().locator('..')).toContainText('Звичайний', { timeout: 15000 })
+  })
+
+  test('пробний період: тариф діє, а AI тарифу — лише перші 7 днів; оплата знімає обмеження', async ({ request, page }) => {
+    const ag = await asUser('agronomist')
+    const admin = serviceClient()
+    // Підписку агронома збережено в першому тесті (afterAll її відновить)
+    const { data: sub } = await admin.from('subscriptions').select('id').eq('user_id', ag.userId).eq('profile', 'agronomist').single()
+    const { data: settings } = await admin.from('ai_settings').select('trial_ai_days').single()
+    const days = settings!.trial_ai_days
+    const headers = { Authorization: `Bearer ${ag.token}`, 'X-Agro-Profile': 'agronomist' }
+    const halfYear = new Date(Date.now() + 150 * 864e5).toISOString()
+
+    // День 2 пробного періоду: кредити тарифу є, «пробні … до» дати кінця AI
+    const started = new Date(Date.now() - 864e5).toISOString()
+    await admin.from('subscriptions').update({ plan: 'pro', expires_at: halfYear, trial_started_at: started }).eq('id', sub!.id)
+    const early = await credits(request, ag.token, 'agronomist')
+    const planWallet = early.wallets.find((w: any) => w.kind === 'plan')
+    expect(planWallet, 'на початку пробного періоду немає AI').toBeTruthy()
+    expect(new Date(planWallet.expiresAt).getTime()).toBe(new Date(started).getTime() + days * 864e5)
+
+    // Після 7 днів: тариф Про діє (шаблони техкарт працюють), а AI тарифу — ні
+    await admin.from('subscriptions').update({ trial_started_at: new Date(Date.now() - (days + 1) * 864e5).toISOString() }).eq('id', sub!.id)
+    const late = await credits(request, ag.token, 'agronomist')
+    expect(late.wallets.some((w: any) => w.kind === 'plan'), 'пробні дні AI минули, а кредити тарифу лишились').toBe(false)
+    expect(late.trialAiEnded).toBe(true)
+    const chat = await request.post('/api/ai-chat', { headers, data: { messages: [{ role: 'user', content: 'тест' }] } })
+    expect(chat.status()).toBe(403)
+    expect((await chat.json()).message).toContain('Пробний доступ до AI')
+    const { data: tpl, error: tplErr } = await ag.client.from('techcard_templates').insert({ name: 'E2E пробний Про' }).select('id').single()
+    expect(tplErr, 'Про в пробному періоді не діє').toBeNull()
+    await admin.from('techcard_templates').delete().eq('id', tpl!.id)
+
+    await login(page, 'agronomist')
+    await page.goto('/dashboard/agronomist-subscription')
+    await expect(page.locator('[data-test="ai-trial-ended"]')).toBeVisible({ timeout: 15000 })
+
+    // Оплата Про — пробний період знято, AI тарифу знову є
+    await paid(request, 'agronomist_pro_month', ag.userId, 350)
+    const { data: after } = await admin.from('subscriptions').select('trial_started_at').eq('id', sub!.id).single()
+    expect(after!.trial_started_at).toBeNull()
+    expect((await credits(request, ag.token, 'agronomist')).wallets.some((w: any) => w.kind === 'plan')).toBe(true)
   })
 
   test('оплата тарифу: місяць — рівно 1 календарний місяць, рік — 12', async ({ request }) => {
