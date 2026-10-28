@@ -22,6 +22,7 @@ export const AI_MAX_OUTPUT_TOKENS = 1000
 export const AI_LIMITS = {
   chatMessages: 20,        // скільки останніх повідомлень розмови йде в модель
   historyChars: 12000,     // і не більше стільки символів разом (≈ 5 тис. токенів): старше покриває пам'ять розмови
+  historyStep: 6,          // початок вікна історії зсувається кроками (стабільний префікс для кешу)
   messageChars: 4000,      // довжина одного повідомлення
   contextChars: 4000,      // farmContext, prevSummary, memory
   reportChars: 30000,      // текст консультацій для звіту за сезон
@@ -91,39 +92,41 @@ const isAllowedImage = (url: unknown): url is string =>
  */
 export function sanitizeChatMessages(raw: unknown): { messages: ChatMessage[]; hasImage: boolean } {
   if (!Array.isArray(raw)) throw createError({ statusCode: 400, message: 'messages required' })
-  const recent = raw.slice(-AI_LIMITS.chatMessages)
-  const out: ChatMessage[] = []
-  let hasImage = false
-  recent.forEach((m: any, i: number) => {
-    if (m?.role !== 'user' && m?.role !== 'assistant') return
-    const isLast = i === recent.length - 1
-    if (typeof m.content === 'string') {
-      out.push({ role: m.role, content: clampText(m.content, AI_LIMITS.messageChars) })
-      return
-    }
-    if (!Array.isArray(m.content)) return
+  const last = raw.length - 1
+  const convert = (m: any, i: number): ChatMessage | null => {
+    if (m?.role !== 'user' && m?.role !== 'assistant') return null
+    if (typeof m.content === 'string') return { role: m.role, content: clampText(m.content, AI_LIMITS.messageChars) }
+    if (!Array.isArray(m.content)) return null
     const text = m.content.filter((p: any) => p?.type === 'text').map((p: any) => clampText(p.text, AI_LIMITS.messageChars)).join('\n')
     const image = m.content.find((p: any) => p?.type === 'image_url')?.image_url?.url
-    if (isLast && m.role === 'user' && isAllowedImage(image)) {
-      hasImage = true
-      out.push({ role: 'user', content: [{ type: 'image_url', image_url: { url: image } }, { type: 'text', text: text || 'Що на фото?' }] })
-    } else {
-      out.push({ role: m.role, content: image ? `[фото] ${text}`.trim() : text })
+    if (i === last && m.role === 'user' && isAllowedImage(image)) {
+      return { role: 'user', content: [{ type: 'image_url', image_url: { url: image } }, { type: 'text', text: text || 'Що на фото?' }] }
     }
-  })
+    return { role: m.role, content: image ? `[фото] ${text}`.trim() : text }
+  }
+  const textLen = (m: ChatMessage | null) => !m ? 0 : typeof m.content === 'string' ? m.content.length
+    : m.content.reduce((s, p: any) => s + (p.type === 'text' ? (p.text?.length || 0) : 0), 0)
+
+  // Довга розмова — найдорожча частина питання (вхідні токени): не більше chatMessages повідомлень і historyChars символів;
+  // останнє (саме питання) — завжди
+  const lo = Math.max(0, raw.length - AI_LIMITS.chatMessages)
+  const converted = new Map<number, ChatMessage | null>()
+  for (let i = lo; i <= last; i++) converted.set(i, convert(raw[i], i))
+  let from = last
+  let total = textLen(converted.get(last) ?? null)
+  while (from > lo && total + textLen(converted.get(from - 1) ?? null) <= AI_LIMITS.historyChars) total += textLen(converted.get(--from) ?? null)
+  // Початок вікна зсувається кроками по historyStep повідомлень від початку розмови, а не на одне щоразу:
+  // поки він той самий, попередня частина розмови береться з кешу Claude (читання в 20 разів дешевше за вхід)
+  from = Math.min(last, Math.ceil(from / AI_LIMITS.historyStep) * AI_LIMITS.historyStep)
+
+  const out: ChatMessage[] = []
+  for (let i = from; i <= last; i++) { const m = converted.get(i); if (m) out.push(m) }
   if (!out.length || out[out.length - 1]!.role !== 'user') {
     throw createError({ statusCode: 400, message: 'Останнє повідомлення має бути від користувача' })
   }
-  // Довга розмова — найдорожча частина питання (вхідні токени), а питання коштує 1 кредит незалежно від довжини:
-  // лишаємо найновіші повідомлення в межах historyChars; останнє (саме питання) — завжди
-  const textLen = (m: ChatMessage) => typeof m.content === 'string' ? m.content.length
-    : m.content.reduce((s, p: any) => s + (p.type === 'text' ? (p.text?.length || 0) : 0), 0)
-  let total = textLen(out[out.length - 1]!)
-  let from = out.length - 1
-  while (from > 0 && total + textLen(out[from - 1]!) <= AI_LIMITS.historyChars) total += textLen(out[--from]!)
-  const trimmed = out.slice(from)
-  while (trimmed.length > 1 && trimmed[0]!.role !== 'user') trimmed.shift()  // розмова починається з питання
-  return { messages: trimmed, hasImage }
+  while (out.length > 1 && out[0]!.role !== 'user') out.shift()  // розмова починається з питання
+  const lastMsg = out[out.length - 1]!
+  return { messages: out, hasImage: typeof lastMsg.content !== 'string' }
 }
 
 const isRateLimit = (err: any) => err?.status === 429 || err?.error?.type === 'rate_limit_exceeded'
@@ -153,6 +156,8 @@ export interface AiCallInput {
   /** Змінна частина: дата, погода, дані господарства — після кешованої */
   context?: string
   messages: ChatMessage[]
+  /** Кешувати розмову (чат): наступне питання читає попередні повідомлення з кешу */
+  cacheHistory?: boolean
 }
 
 export interface AiResult { text: string; usage: AiUsage; refused: boolean; model: string }
@@ -181,6 +186,18 @@ function toClaudeMessages(messages: ChatMessage[]): Anthropic.Beta.BetaMessagePa
   })
 }
 
+/**
+ * Кеш розмови: позначка на останньому повідомленні — наступне питання читає всю попередню розмову з кешу
+ * (0,05× ціни входу замість 1×; запис нової частини — 1,25×). Для розмов, а не для разових запитів (техкарта, звіт).
+ */
+function withHistoryCache(messages: Anthropic.Beta.BetaMessageParam[]): Anthropic.Beta.BetaMessageParam[] {
+  const lastMsg = messages[messages.length - 1]
+  if (!lastMsg) return messages
+  const blocks: any[] = typeof lastMsg.content === 'string' ? [{ type: 'text', text: lastMsg.content }] : [...lastMsg.content]
+  blocks[blocks.length - 1] = { ...blocks[blocks.length - 1], cache_control: { type: 'ephemeral' } }
+  return [...messages.slice(0, -1), { ...lastMsg, content: blocks }]
+}
+
 function claudeParams(route: AiRoute, input: AiCallInput) {
   const system: Anthropic.Beta.BetaTextBlockParam[] = [{ type: 'text', text: input.system, cache_control: { type: 'ephemeral' } }]
   if (input.context) system.push({ type: 'text', text: input.context })
@@ -190,7 +207,7 @@ function claudeParams(route: AiRoute, input: AiCallInput) {
     // 'none' — без параметра effort (так і для моделей, що його не підтримують, як Haiku)
     ...(route.effort === 'none' ? {} : { output_config: { effort: route.effort } }),
     system,
-    messages: toClaudeMessages(input.messages),
+    messages: input.cacheHistory ? withHistoryCache(toClaudeMessages(input.messages)) : toClaudeMessages(input.messages),
     // Якщо модель відхилить запит фільтрами безпеки — API сам повторить його на іншій моделі Claude
     betas: ['server-side-fallback-2026-07-01'],
     fallbacks: 'default',
@@ -202,6 +219,7 @@ const claudeUsage = (u: any): AiUsage => ({
   output: u?.output_tokens || 0,
   cacheRead: u?.cache_read_input_tokens || 0,
   cacheWrite: u?.cache_creation_input_tokens || 0,
+  thinking: u?.output_tokens_details?.thinking_tokens || 0,
 })
 
 function claudeError(err: any, tag: string): never {

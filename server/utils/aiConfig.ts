@@ -48,7 +48,8 @@ export const MODEL_PRICES: Record<string, { in: number; out: number; cacheRead: 
   'qwen/qwen3.8-27b':  { in: 0.8, out: 4,  cacheRead: 0.8,  cacheWrite: 0.8 },
 }
 
-export interface AiUsage { input: number; output: number; cacheRead: number; cacheWrite: number }
+/** thinking — скільки з output припало на приховані міркування (вже в output, окремо не оплачується) */
+export interface AiUsage { input: number; output: number; cacheRead: number; cacheWrite: number; thinking?: number }
 
 export function aiCostUsd(model: string, u: AiUsage) {
   const p = MODEL_PRICES[model]

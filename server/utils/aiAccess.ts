@@ -196,7 +196,7 @@ export async function releaseAiUsage(access: AiAccess) {
 }
 
 /** Записати запит у журнал: фактичні токени й вартість (маржа, бюджет, межа собівартості гаманців) */
-/** extra — додаткові колонки (products_found/products_unknown); без міграції запис іде без них */
+/** extra — додаткові колонки (products_found/products_unknown); без міграції запис іде без них і без thinking_tokens */
 export async function recordAiRequest(access: AiAccess, usage: AiUsage | null, status: 'ok' | 'error' | 'refused' = 'ok', extra?: Record<string, unknown>) {
   if (!access.route || !access.action) return
   const u = usage || { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
@@ -218,8 +218,10 @@ export async function recordAiRequest(access: AiAccess, usage: AiUsage | null, s
     status,
   }
   try {
-    let { error } = await service().from('ai_requests').insert({ ...row, ...extra })
-    if (error?.code === 'PGRST204' && extra) ({ error } = await service().from('ai_requests').insert(row))
+    const more = { ...(u.thinking != null ? { thinking_tokens: u.thinking } : {}), ...extra }
+    let { error } = await service().from('ai_requests').insert({ ...row, ...more })
+    // До міграції 20261103 нових колонок немає — пишемо без них
+    if (error?.code === 'PGRST204' && Object.keys(more).length) ({ error } = await service().from('ai_requests').insert(row))
     if (error) console.error('[ai-requests] record failed:', error.message)
   } catch (e) {
     console.error('[ai-requests] record failed:', e)

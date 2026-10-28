@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
 
   let result: Awaited<ReturnType<typeof aiStream>>
   try {
-    result = await aiStream(access.route!, { system: SYSTEM_PROMPT, context, messages }, 'ai-chat')
+    result = await aiStream(access.route!, { system: SYSTEM_PROMPT, context, messages, cacheHistory: true }, 'ai-chat')
   } catch (err) {
     // AI не відповів — кредити повертаємо
     await releaseAiUsage(access)

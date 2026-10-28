@@ -150,6 +150,8 @@ test.describe('AI-пакети', () => {
     // Пакети з попередніх тестів активні — у лічильнику кредитів вони окремими рядками з терміном
     await expect(page.locator('[data-test="ai-wallet"]').filter({ hasText: 'до ' }).first()).toBeVisible()
     await expect(page.locator('[data-test="ai-wallet"]').filter({ hasText: 'ліміт вичерпано' }).first()).toBeVisible()
+    // Кредити є, а межу собівартості досягнуто — пояснення замість голого «0»
+    await expect(page.locator('[data-test="ai-cap-reached"]')).toContainText('ліміт використання AI')
     await expectNoErrors(errors, 'підписка з AI-пакетами')
   })
 })

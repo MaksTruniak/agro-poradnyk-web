@@ -73,6 +73,20 @@ describe('sanitizeChatMessages', () => {
     expect(Math.max(...messages.map(m => (m.content as string).length))).toBeLessThanOrEqual(AI_LIMITS.messageChars)
   })
 
+  it('початок вікна історії стабільний між питаннями — префікс береться з кешу', () => {
+    const talk = (n: number) => Array.from({ length: n }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: `${i} ${'x'.repeat(1500)}` }))
+    const first = (n: number) => sanitizeChatMessages(talk(n)).messages[0]!.content as string
+    // Розмова росте на 2 повідомлення за питання: початок змінюється не щоразу, а кроками
+    const starts = [21, 23, 25, 27, 29, 31, 33].map(first)
+    expect(new Set(starts).size).toBeLessThan(starts.length - 2)
+    for (const n of [21, 27, 33]) {
+      const { messages } = sanitizeChatMessages(talk(n))
+      expect(messages[0]!.role).toBe('user')
+      expect(messages.reduce((s, m) => s + (m.content as string).length, 0)).toBeLessThanOrEqual(AI_LIMITS.historyChars)
+      expect(messages.length).toBeLessThanOrEqual(AI_LIMITS.chatMessages)
+    }
+  })
+
   it('останнє повідомлення має бути від користувача', () => {
     expect(() => sanitizeChatMessages([{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }])).toThrow()
     expect(() => sanitizeChatMessages('не масив')).toThrow()

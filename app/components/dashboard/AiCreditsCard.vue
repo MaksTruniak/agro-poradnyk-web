@@ -36,6 +36,10 @@
         </div>
       </div>
 
+      <p v-if="capReachedWithCredits" class="text-xs text-agro-light bg-agro-bg rounded-xl px-3 py-2 mb-4" data-test="ai-cap-reached">
+        «Ліміт вичерпано» — кредити в гаманці ще лишились, але його місячний ліміт використання AI вже вичерпано:
+        довгі розмови й фото витрачають більше, ніж звичайні питання. Нові кредити тарифу — {{ resetDate }}{{ hasPackWallet ? '' : ', або докупіть AI-пакет' }}.
+      </p>
       <p v-if="data.allowance > 0 && data.remaining <= 0" class="text-sm text-agro-dark bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
         Кредити вичерпано. Нові кредити тарифу — {{ resetDate }}, або докупіть AI-пакет.
       </p>
@@ -83,6 +87,8 @@ const creditsWord = (n: number) => {
 
 const formatDay = (iso: string) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })
 
+const capReachedWithCredits = computed(() => !!data.value?.wallets?.some(w => w.capReached && w.used < w.credits))
+const hasPackWallet = computed(() => !!data.value?.wallets?.some(w => w.kind === 'pack' && !w.capReached && w.used < w.credits))
 const resetDate = computed(() => {
   const d = new Date()
   const next = new Date(d.getFullYear(), d.getMonth() + 1, 1)
