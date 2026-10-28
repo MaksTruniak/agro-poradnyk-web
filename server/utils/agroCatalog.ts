@@ -94,10 +94,14 @@ function catalogIndex(catalog: Catalog) {
   let idx = indexes.get(catalog)
   if (!idx) {
     idx = { exact: new Map(), stem: new Map() }
+    // Дублі в каталозі («Хорус» і «Фунгіцид Хорус 75 WG») — беремо коротшу, чистішу назву
+    const put = (map: Map<string, CatalogProduct>, key: string, p: CatalogProduct) => {
+      const cur = map.get(key)
+      if (!cur || p.name.length < cur.name.length) map.set(key, p)
+    }
     for (const p of catalog.products) {
-      if (!idx.exact.has(p.norm)) idx.exact.set(p.norm, p)
-      const s = stemName(p.norm)
-      if (!idx.stem.has(s)) idx.stem.set(s, p)
+      put(idx.exact, p.norm, p)
+      put(idx.stem, stemName(p.norm), p)
     }
     indexes.set(catalog, idx)
   }
