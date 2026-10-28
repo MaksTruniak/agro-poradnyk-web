@@ -28,60 +28,8 @@
           </NuxtLink>
         </nav>
 
-        <!-- Права: Каталог, Інформація + кнопки -->
+        <!-- Права: кнопки -->
         <nav class="hidden md:flex items-center gap-5 flex-1 justify-end">
-          <!-- Каталог з dropdown -->
-          <div class="relative" @mouseenter="catalogOpen = true" @mouseleave="catalogOpen = false">
-            <button class="flex items-center gap-1 font-medium transition-colors text-sm py-1 text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)]">
-              Каталог
-              <svg class="w-3.5 h-3.5 transition-transform" :class="catalogOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-            <Transition name="dropdown">
-              <div v-if="catalogOpen" class="absolute left-0 top-full pt-2 z-50">
-                <div class="bg-[#FAF6EC] rounded-2xl shadow-xl border border-[#e2ddd0] py-2 w-52">
-                  <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" :to="item.to"
-                    class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <span v-html="item.icon"></span>
-                    <span>{{ item.label }}</span>
-                  </NuxtLink>
-                </div>
-              </div>
-            </Transition>
-          </div>
-
-          <!-- Інформація з dropdown -->
-          <div class="relative" @mouseenter="infoOpen = true" @mouseleave="infoOpen = false">
-            <button class="flex items-center gap-1 font-medium transition-colors text-sm py-1 text-[rgb(27,46,27)]/70 hover:text-[rgb(27,46,27)]">
-              Інформація
-              <svg class="w-3.5 h-3.5 transition-transform" :class="infoOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-            <Transition name="dropdown">
-              <div v-if="infoOpen" class="absolute right-0 top-full pt-2 z-50">
-                <div class="bg-[#FAF6EC] rounded-2xl shadow-xl border border-[#e2ddd0] py-2 w-52">
-                  <NuxtLink to="/ingredients" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg><span>Діючі речовини</span>
-                  </NuxtLink>
-                  <NuxtLink to="/weeds" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg><span>Бур'яни</span>
-                  </NuxtLink>
-                  <NuxtLink to="/diseases" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg><span>Хвороби рослин</span>
-                  </NuxtLink>
-                  <NuxtLink to="/pests" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg><span>Шкідники</span>
-                  </NuxtLink>
-                  <NuxtLink to="/brands" class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-[rgb(27,46,27)] hover:bg-[#f0ebe0] transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg><span>Виробники</span>
-                  </NuxtLink>
-                </div>
-              </div>
-            </Transition>
-          </div>
-
           <div class="flex items-center gap-2 ml-2">
             <NuxtLink v-if="!user" to="/auth"
               class="text-sm font-semibold px-5 py-2 rounded-full border border-[rgb(27,46,27)] text-[rgb(27,46,27)] hover:bg-[rgb(27,46,27)] hover:text-[#FAF6EC] transition-colors">
@@ -111,18 +59,6 @@
       <!-- Мобільне меню -->
       <Transition name="slide">
         <div v-if="mobileMenu" class="md:hidden bg-[#FAF6EC] border-t border-[#e2ddd0] px-4 py-4 space-y-1">
-          <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Каталог</p>
-          <NuxtLink v-for="item in CATALOG_MENU" :key="item.to" @click="mobileMenu = false" :to="item.to"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors">
-            <span v-html="item.icon"></span> {{ item.label }}
-          </NuxtLink>
-          <div class="border-t border-agro-border my-2"></div>
-          <p class="text-xs font-semibold text-agro-light uppercase tracking-wide px-3 pt-1 pb-2">Інформація</p>
-          <NuxtLink @click="mobileMenu = false" to="/ingredients" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg> Діючі речовини</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/weeds" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 9 5 5c4 0 6 2 7 7z"/><path d="M12 12c0 0 5-3 7-7-4 0-6 2-7 7z"/></svg> Бур'яни</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/diseases" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Хвороби рослин</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/pests" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="5" ry="6"/><path d="M12 7V3"/><path d="M7 14H4M20 14h-3"/><path d="M8.5 20L6 22M15.5 20L18 22"/></svg> Шкідники</NuxtLink>
-          <NuxtLink @click="mobileMenu = false" to="/brands" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg> Виробники</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/agronomists" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/><path d="M16 3.5c1.5.5 3 2 3 4.5"/></svg> Агрономи</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/farmers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg> Фермери</NuxtLink>
           <NuxtLink @click="mobileMenu = false" to="/buyers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-agro-dark font-medium hover:bg-agro-bg transition-colors"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20V8l6-4v4l6-4v4l6-4v16H2z"/></svg> Заготівельники</NuxtLink>
@@ -203,8 +139,6 @@ const CATALOG_MENU = [
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const mobileMenu = ref(false)
-const catalogOpen = ref(false)
-const infoOpen = ref(false)
 const route = useRoute()
 const scrolled = ref(false)
 const isHome = computed(() => route.path === '/')
@@ -226,7 +160,7 @@ const loadCartCount = async () => {
 }
 
 onMounted(loadCartCount)
-watch(() => route.path, () => { mobileMenu.value = false; catalogOpen.value = false; infoOpen.value = false; loadCartCount() })
+watch(() => route.path, () => { mobileMenu.value = false; loadCartCount() })
 useNuxtApp().hooks.hook('cart:updated' as any, loadCartCount)
 </script>
 

@@ -540,7 +540,6 @@ const navItems = computed(() => {
       { to: '/dashboard/clients-week', label: 'Клієнти цього тижня' },
       { to: '/dashboard/agronomist-fields', label: 'Поля клієнтів' },
       { to: '/dashboard/techcard-templates', label: 'Шаблони техкарт' },
-      { to: '/pesticides', label: 'Каталог' },
       { to: '/dashboard/ai-chat', label: 'AI агроном' },
       { to: '/dashboard/reminders', label: 'Надіслані фермерам' },
     ]},
@@ -574,7 +573,6 @@ const navItems = computed(() => {
       { label: '', items: [{ to: '/dashboard', label: 'Головна' }] },
       { label: 'Моє господарство', items: mainItems2 },
       { label: 'Агрономія', items: [
-        { to: '/pesticides', label: 'Каталог' },
         { to: '/dashboard/ai-chat', label: 'AI агроном' },
         { to: '/dashboard/reminders', label: 'Нагадування' },
         { to: '/dashboard/treatments', label: 'Журнал обробок' },
@@ -626,7 +624,6 @@ const navItems = computed(() => {
       { to: '/dashboard/treatments', label: 'Журнал обробок' },
     ]},
     { label: 'Агрономія', items: [
-      { to: '/pesticides', label: 'Каталог' },
       { to: '/dashboard/ai-chat', label: 'AI агроном' },
     ]},
     { label: 'Комунікація', items: [
@@ -679,7 +676,7 @@ const bottomNavItems = computed(() => {
     { to: '/dashboard/agronomist-fields', icon: '🌾', label: 'Клієнти' },
     { to: '/dashboard/ai-chat', icon: '🤖', label: 'AI' },
     { to: '/dashboard/chats', icon: '💬', label: 'Чати' },
-    { to: '/pesticides', icon: '📖', label: 'Каталог' },
+    { to: '/dashboard/agreements', icon: '🤝', label: 'Угоди' },
   ]
   return [
     { to: '/dashboard', icon: '🏠', label: 'Головна' },
