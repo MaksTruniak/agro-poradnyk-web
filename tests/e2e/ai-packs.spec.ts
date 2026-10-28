@@ -124,11 +124,19 @@ test.describe('AI-пакети', () => {
     expect(again.status(), 'другий пакет при активному').toBe(400)
     expect((await again.json()).message).toContain('уже діє AI-пакет')
 
-    // Оплата навздогін (друга вкладка) — гроші не пропадають: другий пакет починається після першого
+    // Кредити пакета закінчились — новий можна купити одразу, і він діє з дня оплати
+    await admin.from('ai_credit_topups').update({ credits_used: pack!.credits }).eq('payment_reference', orderReference)
+    expect((await request.post('/api/payment/create', { headers, data: { plan: 'ai_max' } })).status(), 'новий пакет після вичерпаного').toBe(200)
     const second = `agro-ai_plus-${farmer.userId.slice(0, 8)}-${Date.now() + 1}`
     for (const r of await paid(second)) expect(r.status()).toBe(200)
-    const { data: queued } = await admin.from('ai_credit_topups').select('starts_at').eq('payment_reference', second).single()
-    expect(new Date(queued!.starts_at).getTime()).toBe(new Date(t.expires_at).getTime())
+    const { data: fresh } = await admin.from('ai_credit_topups').select('starts_at, expires_at').eq('payment_reference', second).single()
+    expect(Math.abs(new Date(fresh!.starts_at).getTime() - Date.now()), 'новий пакет не діє одразу').toBeLessThan(5 * 60_000)
+
+    // Оплата навздогін (друга вкладка) — гроші не пропадають: наступний пакет починається після чинного
+    const third = `agro-ai_plus-${farmer.userId.slice(0, 8)}-${Date.now() + 2}`
+    for (const r of await paid(third)) expect(r.status()).toBe(200)
+    const { data: queued } = await admin.from('ai_credit_topups').select('starts_at').eq('payment_reference', third).single()
+    expect(new Date(queued!.starts_at).getTime()).toBe(new Date(fresh!.expires_at).getTime())
   })
 
   test('сторінка підписки: пакети на продаж і гаманці кредитів', async ({ page }) => {

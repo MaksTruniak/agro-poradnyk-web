@@ -27,7 +27,7 @@ export interface AiAccess {
   wallets: AiWallet[]
   /** Пробний період: AI тарифу вже закінчився (діє лише перші trial_ai_days днів) */
   trialAiEnded: boolean
-  /** Для дії: маршрут моделі, скільки кредитів списано, з якого пакета (null — з тарифу), чи це запасна модель */
+  /** Для дії: маршрут моделі, скільки кредитів списано, з якого пакета (null — з тарифу); fallback — завжди false (колонка лишилась для історії) */
   action?: AiAction
   route?: AiRoute
   charged: number
@@ -120,7 +120,7 @@ const summarize = (wallets: AiWallet[]): AiCredits => {
  * Перевіряє вхід і кредити активного профілю (або фермерського профілю власника команди).
  * З action — атомарно списує кредити дії з одного гаманця (спершу тариф, потім пакет, що закінчується
  * найраніше; гаманець з вичерпаною межею собівартості пропускається). Якщо списати нема з чого, просте
- * питання (chat) отримує запасну дешеву модель (обмежено на день), інше — 403. Без action — лише перевірка доступу.
+ * — 403 з data.reason: 'no_credits' (браузер пропонує AI-пакет). Без action — лише перевірка доступу.
  * Активний профіль клієнт передає в заголовку X-Agro-Profile ('farmer' | 'agronomist').
  */
 export async function requireAiAccess(event: H3Event, action?: AiAction): Promise<AiAccess> {
@@ -179,16 +179,10 @@ export async function requireAiAccess(event: H3Event, action?: AiAction): Promis
     return { ...base, action, route: cfg }  // службова дія без кредитів (пам'ять розмови)
   }
 
-  // Кредитів немає: прості питання — дешевою моделлю, обмежено на день
-  if (action === 'chat' && hasAi) {
-    const since = new Date(); since.setHours(0, 0, 0, 0)
-    const { count } = await db.from('ai_requests').select('id', { count: 'exact', head: true })
-      .eq('owner_id', ownerId).eq('fallback', true).gte('created_at', since.toISOString())
-    if ((count || 0) < AI_FALLBACK.dailyLimit) return { ...base, action, route: AI_FALLBACK, fallback: true }
-  }
-
   if (!hasAi) throw createError({ statusCode: 403, message: noAiMessage, data: { trialAiEnded } })
-  throw createError({ statusCode: 403, message: 'Кредити AI вичерпано. Нові кредити тарифу — з початку місяця, або докупіть AI-пакет на сторінці підписки.' })
+  // Бюджет платформи на місяць вичерпано — кредити користувача тут ні до чого
+  if (overBudget) throw createError({ statusCode: 503, message: 'AI агроном тимчасово недоступний. Спробуйте пізніше — кредити не списано.', data: { reason: 'budget' } })
+  throw createError({ statusCode: 403, message: 'Кредити AI вичерпано. Нові кредити тарифу — з початку місяця, або докупіть AI-пакет.', data: { reason: 'no_credits' } })
 }
 
 /** Повернути кредити, якщо AI не відповів (помилка моделі чи мережі) */
@@ -201,7 +195,7 @@ export async function releaseAiUsage(access: AiAccess) {
   }
 }
 
-/** Записати запит у журнал: фактичні токени й вартість (маржа, бюджет, ліміт запасної моделі) */
+/** Записати запит у журнал: фактичні токени й вартість (маржа, бюджет, межа собівартості гаманців) */
 /** extra — додаткові колонки (products_found/products_unknown); без міграції запис іде без них */
 export async function recordAiRequest(access: AiAccess, usage: AiUsage | null, status: 'ok' | 'error' | 'refused' = 'ok', extra?: Record<string, unknown>) {
   if (!access.route || !access.action) return

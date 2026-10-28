@@ -44,10 +44,10 @@ export default defineEventHandler(async (event) => {
   const clientLastName  = profile?.last_name  || profile?.name?.split(' ').slice(1).join(' ') || ''
   const clientEmail     = profile?.email || user.email || ''
 
-  // Одночасно — лише один AI-пакет: новий можна купити, коли закінчиться поточний
+  // Одночасно — лише один AI-пакет: новий можна купити, коли закінчиться поточний або з нього вже нічого не списати
   if (aiPack) {
     const active = await latestAiPack(supabase, user.id, aiPack.profile)
-    if (active) {
+    if (active && !(await aiPackExhausted(supabase, active))) {
       const till = new Date(active.expires_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', timeZone: 'Europe/Kyiv' })
       throw createError({ statusCode: 400, message: `У вас уже діє AI-пакет до ${till}. Новий можна купити після його закінчення.` })
     }

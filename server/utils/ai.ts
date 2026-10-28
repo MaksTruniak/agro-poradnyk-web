@@ -187,8 +187,8 @@ function claudeParams(route: AiRoute, input: AiCallInput) {
   return {
     model: route.model,
     max_tokens: route.maxTokens,
-    // У Claude немає рівня 'none' — найменший 'low'
-    output_config: { effort: route.effort === 'none' ? 'low' : route.effort },
+    // 'none' — без параметра effort (так і для моделей, що його не підтримують, як Haiku)
+    ...(route.effort === 'none' ? {} : { output_config: { effort: route.effort } }),
     system,
     messages: toClaudeMessages(input.messages),
     // Якщо модель відхилить запит фільтрами безпеки — API сам повторить його на іншій моделі Claude

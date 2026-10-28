@@ -40,7 +40,17 @@ ${dialog}
 
 Відповідай тільки підсумком без зайвих слів і вступу.`
 
-  const res = await aiComplete(access.route!, { system: 'Ти агрономічний асистент. Відповідаєш українською.', messages: [{ role: 'user', content: prompt }] }, 'ai-summary')
-  await recordAiRequest(access, res.usage, res.refused ? 'refused' : 'ok')
+  const input = { system: 'Ти агрономічний асистент. Відповідаєш українською.', messages: [{ role: 'user' as const, content: prompt }] }
+  let route = access.route!
+  let res: Awaited<ReturnType<typeof aiComplete>>
+  try {
+    res = await aiComplete(route, input, 'ai-summary')
+  } catch (err: any) {
+    // Groq вичерпав денний ліміт організації — підсумок робить найдешевша модель Claude
+    if (err?.statusCode !== 429) throw err
+    route = SUMMARY_BACKUP
+    res = await aiComplete(route, input, 'ai-summary')
+  }
+  await recordAiRequest({ ...access, route }, res.usage, res.refused ? 'refused' : 'ok')
   return { summary: res.text }
 })

@@ -37,7 +37,7 @@
       </div>
 
       <p v-if="data.allowance > 0 && data.remaining <= 0" class="text-sm text-agro-dark bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4">
-        Кредити вичерпано. Прості питання AI агроному працюють в економ-режимі — до {{ data.fallbackDaily }} на день. Фото, техкарти й звіти — з нового місяця або з AI-пакетом.
+        Кредити вичерпано. Нові кредити тарифу — {{ resetDate }}, або докупіть AI-пакет.
       </p>
       <p v-else-if="data.allowance <= 0 && data.trialAiEnded" class="text-sm text-agro-dark bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4" data-test="ai-trial-ended">
         Пробні 7 днів AI агронома закінчились. Тариф діє далі, а AI — після оплати тарифу або з AI-пакетом.
@@ -60,7 +60,7 @@
 const props = defineProps<{ profile: SubscriptionProfile }>()
 
 interface Wallet { kind: 'plan' | 'pack'; label: string; credits: number; used: number; capReached: boolean; expiresAt: string | null }
-interface CreditsResponse { allowance: number; used: number; remaining: number; wallets: Wallet[]; trialAiEnded?: boolean; fallbackDaily: number; costs: Record<string, { credits: number; label: string }> }
+interface CreditsResponse { allowance: number; used: number; remaining: number; wallets: Wallet[]; trialAiEnded?: boolean; costs: Record<string, { credits: number; label: string }> }
 
 const authHeader = useAuthHeader()
 const data = ref<CreditsResponse | null>(null)

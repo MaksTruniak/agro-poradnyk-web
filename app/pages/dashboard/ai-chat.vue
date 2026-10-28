@@ -273,12 +273,11 @@
       </div>
 
       <!-- Ліміт вичерпано -->
-      <div v-else-if="creditsBlocked" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center">
-        <p class="font-semibold text-agro-dark mb-1">🔒 Кредити AI на цей місяць вичерпано</p>
-        <p class="text-sm text-agro-light mb-3">У тарифі {{ credits.allowance }} кредитів на місяць. Нові — з початку місяця.</p>
-        <NuxtLink :to="proLink" class="btn-primary inline-flex items-center gap-1.5">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="rgb(180,130,40)" stroke="rgb(180,130,40)" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Переглянути тарифи
+      <div v-else-if="creditsBlocked" class="px-6 py-4 border-t border-agro-border bg-white shrink-0 text-center" data-test="ai-no-credits">
+        <p class="font-semibold text-agro-dark mb-1">🔒 Кредити AI вичерпано</p>
+        <p class="text-sm text-agro-light mb-3">Нові кредити тарифу — {{ creditsResetDate }}. Або докупіть AI-пакет — кредити додадуться одразу.</p>
+        <NuxtLink :to="`${proLink}#ai-packs`" class="btn-primary inline-flex items-center gap-1.5" data-test="ai-no-credits-packs">
+          Докупити AI-пакет →
         </NuxtLink>
       </div>
 
@@ -339,8 +338,7 @@
           </button>
         </div>
         <p class="text-xs text-agro-light mt-2 text-center">
-          <span v-if="credits.remaining > 0">{{ credits.remaining }} з {{ credits.allowance }} кредитів AI · питання — {{ chatCost }}, фото — {{ photoCost }} · </span>
-          <span v-else>Кредити вичерпано — відповідає економ-модель (до {{ fallbackDaily }} питань на день) · </span>Відповіді є рекомендаційними. Завжди консультуйтесь з агрономом.
+          <span v-if="credits.remaining > 0">{{ credits.remaining }} з {{ credits.allowance }} кредитів AI · питання — {{ chatCost }}, фото — {{ photoCost }} · </span>Відповіді є рекомендаційними. Завжди консультуйтесь з агрономом.
         </p>
       </div>
     </template>
@@ -526,8 +524,13 @@ const hasOlderHistory = ref(false)
 const credits = ref({ allowance: 0, used: 0, remaining: 0 })
 const chatCost = ref(1)
 const photoCost = ref(3)
-const fallbackDaily = ref(0)
-const creditsBlocked = ref(false)
+// Кредитів немає — замість поля вводу пропозиція AI-пакета (сервер однаково відмовить до виклику моделі)
+const noCreditsReply = ref(false)
+const creditsBlocked = computed(() => noCreditsReply.value || (credits.value.allowance > 0 && credits.value.remaining < chatCost.value))
+const creditsResetDate = (() => {
+  const d = new Date()
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })
+})()
 const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
 const farmName = ref('')
 const farmHectares = ref<number | null>(null)
@@ -673,6 +676,19 @@ const loadWeather = async (region: string) => {
   } catch {}
 }
 
+const applyCredits = (res: any) => {
+  if (!res) return
+  credits.value = { allowance: res.allowance, used: res.used, remaining: res.remaining }
+  chatCost.value = res.costs?.chat?.credits ?? 1
+  photoCost.value = res.costs?.photo?.credits ?? 3
+  if (res.remaining >= chatCost.value) noCreditsReply.value = false
+}
+const refreshCreditsOnReturn = async () => {
+  if (document.visibilityState !== 'visible' || !creditsBlocked.value) return
+  applyCredits(await $fetch('/api/ai-credits', { headers: await authHeader() }).catch(() => null))
+}
+onBeforeUnmount(() => document.removeEventListener('visibilitychange', refreshCreditsOnReturn))
+
 onMounted(async () => {
   try {
   uid.value = await getQueryUserId()
@@ -686,12 +702,9 @@ onMounted(async () => {
     $fetch('/api/ai-credits', { headers: await authHeader() }).catch(() => null) as Promise<any>,
   ])
   currentPlan.value = getActivePlan(subRes.data)
-  if (creditsRes) {
-    credits.value = { allowance: creditsRes.allowance, used: creditsRes.used, remaining: creditsRes.remaining }
-    chatCost.value = creditsRes.costs?.chat?.credits ?? 1
-    photoCost.value = creditsRes.costs?.photo?.credits ?? 3
-    fallbackDaily.value = creditsRes.fallbackDaily ?? 0
-  }
+  applyCredits(creditsRes)
+  // Повернулися на вкладку (наприклад, після оплати AI-пакета) — кредити оновлюються без перезавантаження
+  document.addEventListener('visibilitychange', refreshCreditsOnReturn)
 
   if (farmId.value) {
     const { data } = await supabase
@@ -1398,8 +1411,13 @@ const send = async () => {
       }
       if (res.status === 401 || res.status === 403) {
         let msg = 'Немає доступу до AI агронома.'
-        try { msg = JSON.parse(errText).message || msg } catch {}
-        if (/вичерпано/.test(msg)) creditsBlocked.value = true
+        let reason = ''
+        try { const j = JSON.parse(errText); msg = j.message || msg; reason = j.data?.reason || '' } catch {}
+        if (reason === 'no_credits') {
+          // Замість поля вводу — пропозиція AI-пакета
+          noCreditsReply.value = true
+          streaming.value = false; streamingText.value = ''; return
+        }
         messages.value.push({ role: 'assistant', content: msg })
         streaming.value = false; streamingText.value = ''; return
       }

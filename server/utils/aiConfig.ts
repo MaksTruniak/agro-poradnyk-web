@@ -33,17 +33,17 @@ export const AI_ACTIONS: Record<AiAction, AiActionConfig> = {
 }
 
 /**
- * Коли кредити місяця закінчились — прості питання не блокуємо, а відповідаємо дешевою моделлю
- * (обмежено на день, щоб не з'їсти бюджет). Фото, техкарти й звіти — лише за кредити.
+ * Пам'ять розмови, коли безкоштовний Groq відповів 429 (ліміт токенів на день на всю організацію):
+ * повтор на найдешевшій моделі Claude, щоб підсумок розмови не губився.
  */
-export const AI_FALLBACK: AiRoute & { dailyLimit: number } = {
-  provider: 'groq', model: GROQ, effort: 'none', maxTokens: 900, dailyLimit: 10,
-}
+export const SUMMARY_BACKUP: AiRoute = { provider: 'anthropic', model: 'claude-haiku-5-5', effort: 'none', maxTokens: 600 }
 
 /** Ціни моделей, $ за 1 млн токенів (вхід, вихід, читання з кешу, запис у кеш) */
 export const MODEL_PRICES: Record<string, { in: number; out: number; cacheRead: number; cacheWrite: number }> = {
   'claude-opus-5-5':   { in: 4,   out: 20, cacheRead: 0.2,  cacheWrite: 5 },
   'claude-sonnet-5-5': { in: 2,   out: 10, cacheRead: 0.2,  cacheWrite: 2.5 },
+  // Haiku 5.5 — ціни для промптів до 100 тис. токенів (platform.claude.com/docs/en/about-claude/pricing, жовтень 2026)
+  'claude-haiku-5-5':  { in: 0.1, out: 0.5, cacheRead: 0.01, cacheWrite: 0.125 },
   'claude-haiku-4-5':  { in: 1,   out: 5,  cacheRead: 0.1,  cacheWrite: 1.25 },
   'qwen/qwen3.8-27b':  { in: 0.8, out: 4,  cacheRead: 0.8,  cacheWrite: 0.8 },
 }

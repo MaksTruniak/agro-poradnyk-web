@@ -20,12 +20,27 @@ export async function findAiPack(supabase: SupabaseClient, id: string) {
   return data
 }
 
+interface ActivePack { id: string; starts_at: string | null; expires_at: string; credits: number; credits_used: number; cost_cap_usd: number | null; ai_packs: { label: string } | null }
+
 /** Пакет, що діє зараз або вже оплачений наперед (закінчується найпізніше) */
 export async function latestAiPack(supabase: SupabaseClient, ownerId: string, profile: 'farmer' | 'agronomist') {
-  const { data } = await supabase.from('ai_credit_topups').select('id, expires_at, ai_packs(label)')
+  const { data } = await supabase.from('ai_credit_topups').select('id, starts_at, expires_at, credits, credits_used, cost_cap_usd, ai_packs(label)')
     .eq('owner_id', ownerId).eq('profile', profile).not('pack_id', 'is', null)
     .gt('expires_at', new Date().toISOString()).order('expires_at', { ascending: false }).limit(1).maybeSingle()
-  return data as { id: string; expires_at: string; ai_packs: { label: string } | null } | null
+  return data as ActivePack | null
+}
+
+/**
+ * Пакет уже діє, але з нього нічого не списати: кредити закінчились або досягнуто межі собівартості.
+ * Тоді новий пакет можна купити одразу, і він починає діяти з дня оплати (а не після старого).
+ */
+export async function aiPackExhausted(supabase: SupabaseClient, pack: ActivePack) {
+  if (pack.starts_at && new Date(pack.starts_at) > new Date()) return false
+  if (pack.credits_used >= pack.credits) return true
+  if (pack.cost_cap_usd == null) return false
+  const { data } = await supabase.from('ai_requests').select('cost_usd').eq('topup_id', pack.id)
+  const spent = (data || []).reduce((s: number, r: any) => s + (Number(r.cost_usd) || 0), 0)
+  return spent >= Number(pack.cost_cap_usd)
 }
 
 const YEAR_MS = 365.25 * 24 * 3600 * 1000

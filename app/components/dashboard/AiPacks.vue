@@ -1,5 +1,5 @@
 <template>
-  <div v-if="packs.length" class="card mb-8" data-test="ai-packs">
+  <div v-if="packs.length" id="ai-packs" class="card mb-8 scroll-mt-6" data-test="ai-packs">
     <div class="flex items-center gap-3 mb-1">
       <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: rgb(238,241,227)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgb(47,82,51)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -12,8 +12,11 @@
       </div>
     </div>
 
-    <p v-if="active" class="text-sm bg-agro-hover text-agro-dark rounded-xl px-3 py-2 mt-4" data-test="ai-pack-active">
-      Діє {{ active.label }} до {{ formatDay(active.expiresAt) }}. Новий пакет можна купити після цієї дати.
+    <p v-if="active?.exhausted" class="text-sm bg-amber-50 border border-amber-200 text-agro-dark rounded-xl px-3 py-2 mt-4" data-test="ai-pack-exhausted">
+      {{ active.label }} використано. Новий пакет можна купити вже зараз — він діятиме місяць від дня оплати.
+    </p>
+    <p v-else-if="active" class="text-sm bg-agro-hover text-agro-dark rounded-xl px-3 py-2 mt-4" data-test="ai-pack-active">
+      Діє {{ active.label }} до {{ formatDay(active.expiresAt) }}. Новий пакет можна купити після цієї дати або коли закінчаться його кредити.
     </p>
 
     <div class="grid sm:grid-cols-2 gap-3 mt-4">
@@ -25,7 +28,7 @@
         <p class="text-sm text-agro-light">
           +{{ p.credits }} кредитів на місяць — ≈ {{ p.credits }} питань або {{ Math.floor(p.credits / 5) }} AI техкарт
         </p>
-        <button type="button" class="btn-primary text-sm mt-auto" :disabled="!!paying || !!active" :data-test="`ai-pack-buy-${p.id}`" @click="buy(p.id)">
+        <button type="button" class="btn-primary text-sm mt-auto" :disabled="!!paying || (!!active && !active.exhausted)" :data-test="`ai-pack-buy-${p.id}`" @click="buy(p.id)">
           {{ paying === p.id ? '...' : 'Купити' }}
         </button>
       </div>
@@ -33,19 +36,21 @@
     <p v-if="error" class="text-sm text-red-500 mt-3">{{ error }}</p>
     <p class="text-xs text-agro-light mt-3">
       Спершу витрачаються кредити тарифу, потім пакета. Пакет діє місяць від дня оплати, невикористані кредити згоряють.
-      Одночасно може діяти лише один пакет.
+      Одночасно може діяти лише один пакет; коли його кредити закінчились — можна купити наступний.
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
 // AI-пакети (ai_packs) для профілю сторінки: оплата через WayForPay, як і тарифи (/api/payment/create).
-// Одночасно діє лише один пакет — поки він діє, купити новий не можна (сервер теж не дасть).
+// Одночасно діє лише один пакет — поки він діє, купити новий не можна (сервер теж не дасть),
+// крім випадку, коли з нього вже нічого не списати: тоді новий діє одразу.
 const props = defineProps<{ profile: SubscriptionProfile }>()
 
 const supabase = useSupabaseClient() as any
 const packs = ref<any[]>([])
-const active = ref<{ label: string; expiresAt: string } | null>(null)
+const active = ref<{ label: string; expiresAt: string; exhausted: boolean } | null>(null)
+const authHeader = useAuthHeader()
 const formatDay = (iso: string) => new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })
 const paying = ref('')
 const error = ref('')
@@ -55,13 +60,23 @@ onMounted(async () => {
   const [{ data }, { data: current }] = await Promise.all([
     supabase.from('ai_packs').select('id, label, price_uah, credits')
       .eq('profile', props.profile).eq('is_active', true).order('sort'),
-    session ? supabase.from('ai_credit_topups').select('expires_at, ai_packs(label)')
+    session ? supabase.from('ai_credit_topups').select('starts_at, expires_at, credits, credits_used, ai_packs(label)')
       .eq('owner_id', session.user.id).eq('profile', props.profile).not('pack_id', 'is', null)
       .gt('expires_at', new Date().toISOString()).order('expires_at', { ascending: false }).limit(1).maybeSingle()
       : Promise.resolve({ data: null }),
   ])
   packs.value = data || []
-  active.value = current ? { label: current.ai_packs?.label || 'AI-пакет', expiresAt: current.expires_at } : null
+  // Посилання «Докупити AI-пакет» з чату веде на #ai-packs — блок з'являється після завантаження
+  if (location.hash === '#ai-packs') nextTick(() => document.getElementById('ai-packs')?.scrollIntoView({ behavior: 'smooth' }))
+  if (!current) { active.value = null; return }
+  // Межу собівартості знає лише сервер — беремо стан гаманця пакета з /api/ai-credits
+  let exhausted = current.credits_used >= current.credits
+  if (!exhausted && (!current.starts_at || new Date(current.starts_at) <= new Date())) {
+    const credits: any = await $fetch('/api/ai-credits', { headers: { ...(await authHeader()), 'X-Agro-Profile': props.profile } }).catch(() => null)
+    const wallet = credits?.wallets?.find((w: any) => w.kind === 'pack' && w.expiresAt === current.expires_at)
+    exhausted = !!wallet?.capReached
+  }
+  active.value = { label: current.ai_packs?.label || 'AI-пакет', expiresAt: current.expires_at, exhausted }
 })
 
 const buy = async (id: string) => {

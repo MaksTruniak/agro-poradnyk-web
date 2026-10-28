@@ -15,7 +15,6 @@ test.describe('Ліміти AI', () => {
 
   let original: { credits_used: number } | null = null
   let userId = ''
-  const fallbackRowIds: string[] = []
 
   test.afterAll(async () => {
     if (!userId) return
@@ -23,10 +22,9 @@ test.describe('Ліміти AI', () => {
     const q = admin.from('ai_usage')
     if (original) await q.update(original).eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
     else await q.delete().eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
-    if (fallbackRowIds.length) await admin.from('ai_requests').delete().in('id', fallbackRowIds)
   })
 
-  test('вичерпані кредити: сервер відмовляє до виклику AI і не списує кредити', async ({ request }) => {
+  test('вичерпані кредити: сервер відмовляє до виклику AI і не списує кредити, чат пропонує AI-пакет', async ({ request, page }) => {
     const farmer = await asUser('farmer')
     userId = farmer.userId
     const admin = serviceClient()
@@ -48,25 +46,35 @@ test.describe('Ліміти AI', () => {
     const card = await request.post('/api/ai-generate-card', { headers, data: { cropType: 'Пшениця озима' } })
     expect(card.status(), 'техкарта без кредитів').toBe(403)
 
-    // Чат без кредитів іде на запасну дешеву модель — вичерпуємо її денний ліміт, щоб не викликати AI
-    const daily = credits.fallbackDaily || 0
-    if (daily > 0) {
-      const { data: rows } = await admin.from('ai_requests').insert(Array.from({ length: daily }, () => ({
-        user_id: userId, owner_id: userId, profile: 'farmer', action: 'chat', provider: 'groq', model: 'qwen/qwen3.8-27b', fallback: true,
-      }))).select('id')
-      fallbackRowIds.push(...(rows ?? []).map(r => r.id))
-    }
+    // Економ-режиму немає: питання без кредитів не йде в жодну модель, браузер отримує reason для пропозиції пакета
     const chat = await request.post('/api/ai-chat', { headers, data: { messages: [{ role: 'user', content: 'тест' }] } })
-    expect(chat.status(), 'чат без кредитів і запасних питань').toBe(403)
+    expect(chat.status(), 'чат без кредитів').toBe(403)
+    expect((await chat.json()).data?.reason).toBe('no_credits')
+    const { count: calls } = await admin.from('ai_requests').select('id', { count: 'exact', head: true })
+      .eq('owner_id', userId).gte('created_at', new Date(Date.now() - 60_000).toISOString())
+    expect(calls, 'запит без кредитів пішов у модель').toBe(0)
 
     const { data: after } = await admin.from('ai_usage').select('credits_used')
       .eq('user_id', userId).eq('profile', 'farmer').eq('month', month).single()
     expect(after!.credits_used, 'відхилений запит списав кредити').toBe(exhausted)
 
+    // Чат замість поля вводу показує пропозицію AI-пакета з датою нових кредитів
+    const errors = collectErrors(page)
+    await login(page, 'farmer')
+    await page.goto('/dashboard/ai-chat')
+    const fresh = page.getByRole('button', { name: 'Нова розмова' }).first()
+    const block = page.locator('[data-test="ai-no-credits"]')
+    await expect(fresh.or(block).first()).toBeVisible({ timeout: 15000 })
+    if (await fresh.isVisible()) await fresh.click()
+    await expect(block).toContainText('Нові кредити тарифу')
+    await expect(page.locator('[data-test="ai-no-credits-packs"]')).toHaveAttribute('href', '/dashboard/subscription#ai-packs')
+    await expect(page.getByPlaceholder('Запитайте про агрономію...')).toHaveCount(0)
+    await expect(page.getByText(/економ/i)).toHaveCount(0)
+    await expectNoErrors(errors, 'чаті без кредитів')
+
     // Повертаємо кредити одразу — наступні тести користуються ними
     if (original) await admin.from('ai_usage').update(original).eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
     else await admin.from('ai_usage').delete().eq('user_id', userId).eq('profile', 'farmer').eq('month', month)
-    if (fallbackRowIds.length) await admin.from('ai_requests').delete().in('id', fallbackRowIds.splice(0))
   })
 
   test('клієнт не може дати собі кредити', async () => {

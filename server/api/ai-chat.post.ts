@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const farmContext = clampText(body?.farmContext, AI_LIMITS.contextChars)
   const region = clampText(body?.region, 100)
 
-  // Фото — окрема дія (3 кредити); без кредитів просте питання отримає запасну дешеву модель
+  // Фото — окрема дія (3 кредити); без кредитів — 403 до виклику моделі
   const access = await requireAiAccess(event, hasImage ? 'photo' : 'chat')
 
   // Каталог для звірки препаратів вантажимо паралельно з відповіддю (на холодному екземплярі — кілька секунд)
@@ -96,8 +96,8 @@ export default defineEventHandler(async (event) => {
     controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
   const readable = new ReadableStream({
     async start(controller) {
-      // Спершу — скільки кредитів лишилось і чи відповідає запасна модель (для лічильника на екрані)
-      send(controller, { meta: { credits: access.credits, fallback: access.fallback, charged: access.charged } })
+      // Спершу — скільки кредитів лишилось (для лічильника на екрані)
+      send(controller, { meta: { credits: access.credits, charged: access.charged } })
       let ok = true
       let full = ''
       let counts: Record<string, number> | undefined
