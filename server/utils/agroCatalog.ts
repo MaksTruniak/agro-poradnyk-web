@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { extractMentions, type AiProduct } from '../../shared/utils/aiProducts'
 
 // Звірка препаратів, які запропонувала модель, з каталогом платформи (agro_products, agro_fertilizers).
 // Каталог кешується в пам'яті серверного екземпляра на годину — ~9 тис. назв, звірка без запитів до БД.
@@ -72,6 +73,53 @@ export function findByName(catalog: Catalog, name: string): CatalogProduct | nul
     if (words.length && words.every(w => w.length > 1 && ` ${norm} `.includes(` ${w} `)) && (!best || p.norm.length > best.norm.length)) best = p
   }
   return best
+}
+
+// Відмінкові закінчення: «@Децисом», «@Раундапу», «@Амістаром Екстра» → основа, як у каталозі
+const ENDINGS = /(ами|ями|ові|еві|ою|ею|єю|ом|ем|ам|ям|ах|ях|у|ю|а|я|і|и|е|ї)$/u
+export const stemWord = (w: string) => (w.length >= 5 ? w.replace(ENDINGS, '') : w)
+// і/и плутають у транслітерації («Квадрис» ↔ «Квадріс») — у порівнянні за основою їх не розрізняємо
+const stemName = (norm: string) => norm.split(' ').map(stemWord).join(' ').replace(/і/g, 'и')
+
+const indexes = new WeakMap<Catalog, { exact: Map<string, CatalogProduct>; stem: Map<string, CatalogProduct> }>()
+function catalogIndex(catalog: Catalog) {
+  let idx = indexes.get(catalog)
+  if (!idx) {
+    idx = { exact: new Map(), stem: new Map() }
+    for (const p of catalog.products) {
+      if (!idx.exact.has(p.norm)) idx.exact.set(p.norm, p)
+      const s = stemName(p.norm)
+      if (!idx.stem.has(s)) idx.stem.set(s, p)
+    }
+    indexes.set(catalog, idx)
+  }
+  return idx
+}
+
+/** Препарати з @ у відповіді: найдовша назва каталогу на початку згадки (точно або з урахуванням відмінка) */
+export function matchMentions(catalog: Catalog, text: string): AiProduct[] {
+  const idx = catalogIndex(catalog)
+  const out = new Map<string, AiProduct>()
+  for (const raw of extractMentions(text)) {
+    if (out.has(raw)) continue
+    const words = raw.split(' ')
+    let hit: AiProduct | null = null
+    for (let n = words.length; n >= 1 && !hit; n--) {
+      const mention = words.slice(0, n).join(' ')
+      const norm = normalizeName(mention)
+      const p = norm ? idx.exact.get(norm) || idx.stem.get(stemName(norm)) : null
+      if (p) hit = { mention, name: p.name, found: true, slug: p.slug, kind: p.kind }
+    }
+    if (!hit) {
+      // Немає в каталозі: назва — перше слово й наступні з великої літери чи цифри («Фітоспорин Паста», «Хом 80»)
+      let n = 1
+      while (n < words.length && /^[\p{Lu}\p{N}]/u.test(words[n]!)) n++
+      const mention = words.slice(0, n).join(' ')
+      hit = { mention, name: mention, found: false, ...(isGenericFertilizer(mention) ? { generic: true } : {}) }
+    }
+    out.set(raw, hit)
+  }
+  return [...out.values()]
 }
 
 // Класи з поля notes / type моделі → типи каталогу

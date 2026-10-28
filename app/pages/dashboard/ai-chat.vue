@@ -200,7 +200,7 @@
                   <span v-if="msg.content && msg.content.trim() && msg.content !== ' '" class="whitespace-pre-wrap">{{ msg.content }}</span>
                 </div>
                 <!-- AI: з посиланнями на препарати -->
-                <span v-else class="whitespace-pre-wrap" v-html="renderMessage(msg.content)"></span>
+                <span v-else class="whitespace-pre-wrap" v-html="renderMessage(msg.content, msg.catalog)"></span>
               </div>
               <!-- Кнопка нагадування від AI -->
               <div v-if="msg.role === 'assistant' && msg.reminder" class="mt-2">
@@ -228,16 +228,23 @@
                 </button>
               </div>
               <!-- Препарати: посилання на каталог + кнопка в схему -->
-              <div v-if="msg.role === 'assistant' && msg.products?.length" class="mt-2 flex gap-2 flex-wrap">
-                <div v-for="p in msg.products" :key="p" class="flex items-center gap-0.5">
-                  <NuxtLink
-                    :to="`/pesticides?q=${encodeURIComponent(p)}`"
+              <div v-if="msg.role === 'assistant' && msg.products?.length" class="mt-2 flex gap-2 flex-wrap" data-test="ai-products">
+                <div v-for="c in productChips(msg)" :key="c.name" class="flex items-center gap-0.5">
+                  <NuxtLink v-if="c.href"
+                    :to="c.href"
                     target="_blank"
+                    data-test="ai-product-found"
                     class="text-xs px-3 py-1.5 bg-agro-hover text-agro border border-agro/30 rounded-l-lg hover:bg-agro hover:text-white transition-colors font-medium">
-                    🔍 {{ p }}
+                    {{ c.found ? '' : '🔍 ' }}{{ c.name }}
                   </NuxtLink>
+                  <span v-else
+                    :title="NOT_IN_CATALOG"
+                    data-test="ai-product-unknown"
+                    class="text-xs px-3 py-1.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-l-lg cursor-help">
+                    {{ c.name }} · немає в каталозі
+                  </span>
                   <button
-                    @click="openSchemeModalForProduct(p)"
+                    @click="openSchemeModalForProduct(c.name)"
                     class="text-xs px-2 py-1.5 bg-agro-hover text-agro border border-l-0 border-agro/30 rounded-r-lg hover:bg-agro hover:text-white transition-colors"
                     title="Додати до технологічної карти">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -325,7 +332,7 @@
             :class="['w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border transition-colors', isListening ? 'bg-red-50 border-red-300 text-red-500 animate-pulse' : 'border-agro-border hover:bg-agro-hover text-agro-light hover:text-agro']">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
           </button>
-          <button @click="send" :disabled="(!input.trim() && !imageFile) || streaming"
+          <button @click="send" :disabled="(!input.trim() && !imageFile) || streaming || (!!imageFile && !imagePreview)"
             class="w-11 h-11 shrink-0 disabled:opacity-50 flex items-center justify-center rounded-xl bg-agro text-white hover:bg-agro/90 transition-colors">
             <svg v-if="!streaming" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             <span v-else class="text-sm">...</span>
@@ -543,7 +550,7 @@ watch(currentChatId, (id) => {
 })
 const uid = ref<string | null>(null)
 
-const messages = ref<{ role: 'user' | 'assistant'; content: string; image_url?: string; products?: string[]; hasScheme?: boolean; rating?: number; reminderSaved?: boolean }[]>([])
+const messages = ref<{ role: 'user' | 'assistant'; content: string; image_url?: string; products?: string[]; catalog?: AiProduct[]; hasScheme?: boolean; rating?: number; reminderSaved?: boolean }[]>([])
 const generatingSummary = ref(false)
 const generatingReport = ref(false)
 const aiMemory = ref<string | null>(null)
@@ -855,6 +862,7 @@ const openSession = async (chatId: string) => {
       hasScheme: m.content.includes('SCHEME_DETECTED'),
     }))
     await scrollToBottom()
+    loadCatalogLinks()
   }
 }
 
@@ -1008,6 +1016,7 @@ const loadHistory = async (farmCropId: string | null) => {
       hasScheme: m.content.includes('SCHEME_DETECTED'),
     }))
     await scrollToBottom()
+    loadCatalogLinks()
   }
 }
 
@@ -1045,12 +1054,49 @@ const addReminderFromAi = async (reminder: { text: string; days: number }) => {
   alert(`✅ Нагадування додано на ${date.toLocaleDateString('uk-UA')}`)
 }
 
-const renderMessage = (text: string) => {
+// Посилання для @препарату: знайдений у каталозі — на його сторінку; немає — сіра позначка;
+// звірки ще немає (стрім, стара відповідь) — пошук за першим словом, як раніше
+const productLink = (name: string, p: AiProduct | null) => {
+  const label = escapeHtml(name)
+  if (p?.found) return `<a href="${productHref(p)}" target="_blank" class="text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">${label}</a>`
+  if (p?.generic) return `<b>${label}</b>`
+  if (p) return `<span class="text-gray-500 border-b border-dashed border-gray-400 cursor-help" title="${NOT_IN_CATALOG}" data-test="ai-product-unknown-inline">${label} <span aria-hidden="true">ⓘ</span></span>`
+  return `<a href="/pesticides?q=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${label}</a>`
+}
+
+const renderMessage = (text: string, catalog?: AiProduct[]) => {
   const clean = fixLanguage(text).replace(/SCHEME_DETECTED/g, '').replace(/REMINDER:[^\n]+/g, '').trim()
-  // Відповідь AI може містити HTML (зокрема через підказки користувача) — спершу екрануємо
-  return escapeHtml(clean).replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, (_, name) =>
-    `<a href="/pesticides?q=${encodeURIComponent(name)}" target="_blank" class="inline-flex items-center gap-1 text-agro font-semibold underline underline-offset-2 hover:text-agro/80 transition-colors">🔍 ${name}</a>`
-  )
+  // Відповідь AI може містити HTML (зокрема через підказки користувача) — екрануємо все, крім наших посилань
+  let html = ''
+  let last = 0
+  for (const m of clean.matchAll(mentionRe())) {
+    const raw = m[1]!
+    const p = catalog ? productForMention(raw, catalog) : null
+    const name = p ? p.mention : raw.split(' ')[0]!
+    html += escapeHtml(clean.slice(last, m.index)) + productLink(name, p) + escapeHtml(raw.slice(name.length))
+    last = m.index! + m[0].length
+  }
+  return html + escapeHtml(clean.slice(last))
+}
+
+const productChips = (msg: { products?: string[]; catalog?: AiProduct[] }) => {
+  if (!msg.catalog) return (msg.products || []).map(name => ({ name, found: false, href: `/pesticides?q=${encodeURIComponent(name)}` }))
+  return uniqueProducts(msg.catalog).filter(p => !p.generic)
+    .map(p => ({ name: p.name, found: p.found, href: p.found ? productHref(p) : null }))
+}
+
+// Звірка препаратів у збережених відповідях (історія) — ті самі посилання, що й у новій відповіді
+const loadCatalogLinks = async () => {
+  const targets = messages.value.filter(m => m.role === 'assistant' && !m.catalog && m.content.includes('@'))
+  if (!targets.length) return
+  try {
+    const res = await $fetch<{ products: AiProduct[][] }>('/api/ai-products', {
+      method: 'POST', headers: await authHeader(), body: { texts: targets.map(m => m.content) },
+    })
+    targets.forEach((m, i) => { if (res.products[i]) m.catalog = res.products[i] })
+  } catch (e) {
+    console.error('[ai-chat] catalog links:', e)
+  }
 }
 
 const extractProducts = (text: string): string[] => {
@@ -1060,6 +1106,8 @@ const extractProducts = (text: string): string[] => {
 }
 
 import { TREATMENT_TYPES } from '~/utils/treatmentTypes'
+import { compressImage } from '~/utils/compressImage'
+import { mentionRe, productForMention, productHref, uniqueProducts, NOT_IN_CATALOG, type AiProduct } from '~~/shared/utils/aiProducts'
 import { phaseIcon } from '~/utils/phaseIcons'
 import { plantingSummary } from '~/utils/planting'
 
@@ -1232,9 +1280,21 @@ const setImageFile = (file: File) => {
     return
   }
   imageFile.value = file
-  const reader = new FileReader()
-  reader.onload = (ev) => { imagePreview.value = ev.target?.result as string }
-  reader.readAsDataURL(file)
+  // Фото з телефона (4–8 МБ) стискаємо до ~1500 px JPEG: швидше з поля і менше вхідних токенів.
+  // Не вдалося (старий браузер, HEIC) — надсилаємо як є.
+  compressImage(file).catch(() => null).then((small) => {
+    if (imageFile.value !== file) return
+    if (small) { imagePreview.value = small; return }
+    // Запит понад ~4,5 МБ сервер не прийме (base64 додає третину) — краще сказати одразу
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Фото завелике (понад 3 МБ), а стиснути його в цьому браузері не вдалося. Зробіть знімок меншої роздільності або скріншот.')
+      clearImage()
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => { if (imageFile.value === file) imagePreview.value = ev.target?.result as string }
+    reader.readAsDataURL(file)
+  })
 }
 
 const onDrop = (e: DragEvent) => {
@@ -1272,6 +1332,8 @@ const saveReminderFromModal = async () => {
 const send = async () => {
   const text = input.value.trim()
   if ((!text && !imageFile.value) || streaming.value) return
+  // Фото ще стискається — без нього питання пішло б без фото
+  if (imageFile.value && !imagePreview.value) return
 
   if (imagePreview.value && credits.value.remaining < photoCost.value) return
 
@@ -1349,6 +1411,7 @@ const send = async () => {
 
     // Рядок SSE може розірватися між шматками — недочитаний хвіст тримаємо в буфері
     let pending = ''
+    let streamCatalog: AiProduct[] | undefined
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -1363,6 +1426,7 @@ const send = async () => {
           const parsed = JSON.parse(data)
           if (parsed.meta?.credits) credits.value = parsed.meta.credits
           if (parsed.text) { streamingText.value += parsed.text; await scrollToBottom() }
+          if (Array.isArray(parsed.products)) streamCatalog = parsed.products
         } catch {}
       }
     }
@@ -1372,6 +1436,7 @@ const send = async () => {
       role: 'assistant',
       content: fullText,
       products: extractProducts(fullText),
+      catalog: streamCatalog,
       hasScheme: fullText.includes('SCHEME_DETECTED'),
       reminder: extractReminder(fullText),
     })

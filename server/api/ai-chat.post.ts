@@ -1,3 +1,5 @@
+import { uniqueProducts } from '~~/shared/utils/aiProducts'
+
 const REGION_COORDS: Record<string, { lat: number; lon: number }> = {
   'Вінницька': { lat: 49.23, lon: 28.47 },
   'Волинська': { lat: 50.74, lon: 25.32 },
@@ -58,6 +60,8 @@ export default defineEventHandler(async (event) => {
   // Фото — окрема дія (3 кредити); без кредитів просте питання отримає запасну дешеву модель
   const access = await requireAiAccess(event, hasImage ? 'photo' : 'chat')
 
+  // Каталог для звірки препаратів вантажимо паралельно з відповіддю (на холодному екземплярі — кілька секунд)
+  const catalog = getCatalog().catch((e) => { console.error('[ai-chat] catalog:', e); return null })
   const weatherInfo = region ? await getWeather(region) : null
 
   const now = new Date()
@@ -95,14 +99,24 @@ export default defineEventHandler(async (event) => {
       // Спершу — скільки кредитів лишилось і чи відповідає запасна модель (для лічильника на екрані)
       send(controller, { meta: { credits: access.credits, fallback: access.fallback, charged: access.charged } })
       let ok = true
+      let full = ''
+      let counts: Record<string, number> | undefined
       try {
-        for await (const text of result.text) if (text) send(controller, { text })
+        for await (const text of result.text) if (text) { full += text; send(controller, { text }) }
       } catch (streamErr) {
         ok = false
         console.error('[ai-chat] stream error:', streamErr)
       } finally {
         const fin = result.finish()
-        await recordAiRequest(access, fin.usage, !ok ? 'error' : fin.refused ? 'refused' : 'ok')
+        // Препарати з @ — звіряємо з каталогом після тексту: посилання на сторінку або «немає в каталозі»
+        const cat = ok && !fin.refused ? await catalog : null
+        if (cat) {
+          const products = matchMentions(cat, full)
+          if (products.length) send(controller, { products })
+          const unique = uniqueProducts(products)
+          counts = { products_found: unique.filter(p => p.found).length, products_unknown: unique.filter(p => !p.found && !p.generic).length }
+        }
+        await recordAiRequest(access, fin.usage, !ok ? 'error' : fin.refused ? 'refused' : 'ok', counts)
         if (!ok || fin.refused) await releaseAiUsage(access)
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()
@@ -139,8 +153,9 @@ const SYSTEM_PROMPT = `Ти AI агроном платформи АгроПро�
 ФОРМАТУВАННЯ ПРЕПАРАТІВ — ОБОВ'ЯЗКОВО:
 Кожну конкретну комерційну назву препарату, фунгіциду, інсектициду, гербіциду або добрива пиши з символом @.
 Приклади: @Раундап, @Реглон, @Карате Зеон, @Нутрівант Плюс, @КАС-32, @Амістар Екстра.
+Назву після @ пиши точно як зареєстровано, у називному відмінку, без змін: «обробіть @Децис», а не «@Децисом».
 НЕ додавай @ до загальних термінів: фунгіцид, інсектицид, добриво, сечовина як клас.
 
 СПЕЦІАЛЬНІ МАРКЕРИ (лише якщо умова виконана):
 1. Якщо відповідь містить схему обробки або живлення з кількома препаратами і фазами → додай окремим рядком в кінці: SCHEME_DETECTED
-2. Якщо рекомендуєш конкретну дію через N днів → додай: REMINDER:Назва дії|кількість_днів (наприклад: REMINDER:Повторна обробка @Децисом|10). Тільки якщо є чіткий строк.`
+2. Якщо рекомендуєш конкретну дію через N днів → додай: REMINDER:Назва дії|кількість_днів (наприклад: REMINDER:Повторна обробка @Децис|10). Тільки якщо є чіткий строк.`

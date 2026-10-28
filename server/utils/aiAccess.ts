@@ -202,27 +202,31 @@ export async function releaseAiUsage(access: AiAccess) {
 }
 
 /** Записати запит у журнал: фактичні токени й вартість (маржа, бюджет, ліміт запасної моделі) */
-export async function recordAiRequest(access: AiAccess, usage: AiUsage | null, status: 'ok' | 'error' | 'refused' = 'ok') {
+/** extra — додаткові колонки (products_found/products_unknown); без міграції запис іде без них */
+export async function recordAiRequest(access: AiAccess, usage: AiUsage | null, status: 'ok' | 'error' | 'refused' = 'ok', extra?: Record<string, unknown>) {
   if (!access.route || !access.action) return
   const u = usage || { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+  const row = {
+    user_id: access.userId,
+    owner_id: access.ownerId,
+    profile: access.profile,
+    action: access.action,
+    provider: access.route.provider,
+    model: access.route.model,
+    input_tokens: u.input,
+    cache_read_tokens: u.cacheRead,
+    cache_write_tokens: u.cacheWrite,
+    output_tokens: u.output,
+    cost_usd: aiCostUsd(access.route.model, u),
+    credits: status === 'ok' ? access.charged : 0,
+    fallback: access.fallback,
+    topup_id: access.topupId,
+    status,
+  }
   try {
-    await service().from('ai_requests').insert({
-      user_id: access.userId,
-      owner_id: access.ownerId,
-      profile: access.profile,
-      action: access.action,
-      provider: access.route.provider,
-      model: access.route.model,
-      input_tokens: u.input,
-      cache_read_tokens: u.cacheRead,
-      cache_write_tokens: u.cacheWrite,
-      output_tokens: u.output,
-      cost_usd: aiCostUsd(access.route.model, u),
-      credits: status === 'ok' ? access.charged : 0,
-      fallback: access.fallback,
-      topup_id: access.topupId,
-      status,
-    })
+    let { error } = await service().from('ai_requests').insert({ ...row, ...extra })
+    if (error?.code === 'PGRST204' && extra) ({ error } = await service().from('ai_requests').insert(row))
+    if (error) console.error('[ai-requests] record failed:', error.message)
   } catch (e) {
     console.error('[ai-requests] record failed:', e)
   }

@@ -8,6 +8,7 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/payment/create':        { max: 10, windowMs: 60_000 },
   '/api/calendar-explain':      { max: 20, windowMs: 60_000 },
   '/api/ai-chat':               { max: 30, windowMs: 60_000 },
+  '/api/ai-products':           { max: 60, windowMs: 60_000 },
   '/api/upload-image':          { max: 20, windowMs: 60_000 },
   '/api/deals/send-invoice':    { max: 5,  windowMs: 60_000 },
   '/api/email/welcome':         { max: 3,  windowMs: 60_000 },
