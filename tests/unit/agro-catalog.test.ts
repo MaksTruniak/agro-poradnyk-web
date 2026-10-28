@@ -134,7 +134,8 @@ describe('@препарати у відповіді чату', () => {
     expect(matchMentions(more, '@Тілт Турбо')[0]).toMatchObject({ found: true })
     expect(matchMentions(more, '@Брексил Са')[0]).toMatchObject({ name: 'Брексил Ca', found: true })
     expect(matchMentions(more, '@Челлендж')[0]).toMatchObject({ name: 'Челендж', found: true })
-    const misspelled = { ...catalog, products: [...catalog.products, p('Світч', 'fungicide'), p('МОСПІЛАН', 'insecticide'), p('Луна Експіріенс', 'fungicide')] }
+    const misspelled = { ...catalog, products: [...catalog.products, p('Світч', 'fungicide'), p('МОСПІЛАН', 'insecticide'), p('Луна Експіріенс', 'fungicide'), p('Тельдор', 'fungicide')] }
+    expect(matchMentions(misspelled, '@Телдор')[0]).toMatchObject({ name: 'Тельдор', found: true })
     expect(matchMentions(misspelled, '@Свічем')[0]).toMatchObject({ name: 'Світч', found: true })
     expect(matchMentions(misspelled, '@Мospilan 20 SP')[0]).toMatchObject({ name: 'МОСПІЛАН', found: true })
     expect(matchMentions(misspelled, '@Люна Експеріенс')[0]).toMatchObject({ name: 'Луна Експіріенс', found: true })

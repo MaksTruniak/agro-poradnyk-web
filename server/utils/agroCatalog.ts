@@ -87,12 +87,13 @@ export function findByName(catalog: Catalog, name: string): CatalogProduct | nul
 const ENDINGS = /(ами|ями|ові|еві|ою|ею|єю|ом|ем|ам|ям|ах|ях|у|ю|а|я|і|и|е|ї)$/u
 export const stemWord = (w: string) => (w.length >= 5 ? w.replace(ENDINGS, '') : w)
 // Ключ порівняння за основою: латинські літери-двійники кирилиці («Брексил Ca» ↔ «Брексил Са»),
-// подвоєні літери («Челлендж» ↔ «Челендж») і і/и («Квадрис» ↔ «Квадріс») не розрізняємо
+// подвоєні літери («Челлендж» ↔ «Челендж»), і/и («Квадрис» ↔ «Квадріс») і м'який знак («Телдор» ↔ «Тельдор») не розрізняємо
 const HOMOGLYPHS: Record<string, string> = { a: 'а', c: 'с', e: 'е', i: 'і', o: 'о', p: 'р', x: 'х', y: 'у', k: 'к', m: 'м', t: 'т', b: 'в', h: 'н' }
 const stemName = (norm: string) => norm.split(' ').map(stemWord).join(' ')
   .replace(/[aceiopxykmtbh]/g, c => HOMOGLYPHS[c]!)
   .replace(/(\p{L})\1/gu, '$1')
   .replace(/і/g, 'и')
+  .replace(/ь/g, '')
 
 // Типові помилки моделі в назвах, які є в каталозі (пословно, після normalizeName)
 const MISSPELLINGS: Record<string, string> = {
