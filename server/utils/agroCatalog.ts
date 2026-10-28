@@ -94,6 +94,18 @@ const stemName = (norm: string) => norm.split(' ').map(stemWord).join(' ')
   .replace(/(\p{L})\1/gu, '$1')
   .replace(/і/g, 'и')
 
+// Типові помилки моделі в назвах, які є в каталозі (пословно, після normalizeName)
+const MISSPELLINGS: Record<string, string> = {
+  свіч: 'світч', calypso: 'каліпсо', mospilan: 'моспілан', teldor: 'тельдор', люна: 'луна', експеріенс: 'експіріенс',
+}
+// «Мospilan», «Теldor» — кирилиця вперемішку з латиницею: зводимо до латиниці
+const TO_LATIN: Record<string, string> = Object.fromEntries(Object.entries(HOMOGLYPHS).map(([lat, cyr]) => [cyr, lat]))
+const unmix = (w: string) => (/\p{Script=Latin}/u.test(w) && /\p{Script=Cyrillic}/u.test(w) ? w.replace(/\p{Script=Cyrillic}/gu, c => TO_LATIN[c] || c) : w)
+const fixSpelling = (norm: string) => norm.split(' ').map((w) => {
+  const u = unmix(w)
+  return MISSPELLINGS[u] || MISSPELLINGS[stemWord(u)] || u
+}).join(' ')
+
 const indexes = new WeakMap<Catalog, { exact: Map<string, CatalogProduct>; stem: Map<string, CatalogProduct> }>()
 function catalogIndex(catalog: Catalog) {
   let idx = indexes.get(catalog)
@@ -123,7 +135,7 @@ export function matchMentions(catalog: Catalog, text: string): AiProduct[] {
     let hit: AiProduct | null = null
     for (let n = words.length; n >= 1 && !hit; n--) {
       const mention = words.slice(0, n).join(' ')
-      const norm = normalizeName(mention)
+      const norm = fixSpelling(normalizeName(mention))
       const p = norm ? idx.exact.get(norm) || idx.stem.get(stemName(norm)) : null
       if (p) hit = { mention, name: p.name, found: true, slug: p.slug, kind: p.kind }
     }
