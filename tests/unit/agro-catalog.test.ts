@@ -130,6 +130,10 @@ describe('@препарати у відповіді чату', () => {
     expect(matchMentions(catalog, '@Квадрисом')[0]).toMatchObject({ name: 'Квадріс', found: true })
     expect(matchMentions(catalog, '@Вертимек 1,8 КЕ')[0]).toMatchObject({ mention: 'Вертимек', found: false })
     expect(matchMentions(catalog, '@Бордоська суміш')[0]).toMatchObject({ found: false, generic: true })
+    const more = { ...catalog, products: [...catalog.products, p('Фунгіцид Тілт Турбо 575 ЕС', 'fungicide'), p('Брексил Ca', 'fertilizer', [], 'fertilizer'), p('Челендж', 'herbicide')] }
+    expect(matchMentions(more, '@Тілт Турбо')[0]).toMatchObject({ found: true })
+    expect(matchMentions(more, '@Брексил Са')[0]).toMatchObject({ name: 'Брексил Ca', found: true })
+    expect(matchMentions(more, '@Челлендж')[0]).toMatchObject({ name: 'Челендж', found: true })
     const withClass = { ...catalog, products: [...catalog.products, p('Фунгіцид Косайд 2000', 'fungicide')] }
     expect(matchMentions(withClass, '@Косайд 2000 по листу')[0]).toMatchObject({ name: 'Фунгіцид Косайд 2000', found: true, mention: 'Косайд 2000' })
   })

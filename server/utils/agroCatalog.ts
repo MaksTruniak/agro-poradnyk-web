@@ -24,7 +24,7 @@ export function normalizeName(name: string): string {
     .replace(/[«»"'’`®™©]/g, ' ')
     .replace(/\d+([.,]\d+)?\s*(%|г\/л|г\/кг|кг\/л)?/g, ' ')
     // \b у JS не працює з кирилицею — межі слова через \p{L}
-    .replace(/(?<!\p{L})(к\.?\s?с|к\.?\s?е|в\.?\s?г|в\.?\s?р\.?\s?к|з\.?\s?п|т\.?\s?к\.?\s?с|м\.?\s?е|sc|ec|wg|wp|sl|se|od|ew|fs|cs|me|sg|ws)\.?(?!\p{L})/giu, ' ')
+    .replace(/(?<!\p{L})(к\.?\s?с|к\.?\s?е|в\.?\s?г|в\.?\s?р\.?\s?к|з\.?\s?п|т\.?\s?к\.?\s?с|м\.?\s?е|sc|ec|wg|wp|sl|se|od|ew|fs|cs|me|sg|ws|sp|ес|кс|вг|вдг|вр|зп|ке|ме|сп|рк)\.?(?!\p{L})/giu, ' ')
     .replace(/[^\p{L}\p{N}+\- ]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -86,8 +86,13 @@ export function findByName(catalog: Catalog, name: string): CatalogProduct | nul
 // Відмінкові закінчення: «@Децисом», «@Раундапу», «@Амістаром Екстра» → основа, як у каталозі
 const ENDINGS = /(ами|ями|ові|еві|ою|ею|єю|ом|ем|ам|ям|ах|ях|у|ю|а|я|і|и|е|ї)$/u
 export const stemWord = (w: string) => (w.length >= 5 ? w.replace(ENDINGS, '') : w)
-// і/и плутають у транслітерації («Квадрис» ↔ «Квадріс») — у порівнянні за основою їх не розрізняємо
-const stemName = (norm: string) => norm.split(' ').map(stemWord).join(' ').replace(/і/g, 'и')
+// Ключ порівняння за основою: латинські літери-двійники кирилиці («Брексил Ca» ↔ «Брексил Са»),
+// подвоєні літери («Челлендж» ↔ «Челендж») і і/и («Квадрис» ↔ «Квадріс») не розрізняємо
+const HOMOGLYPHS: Record<string, string> = { a: 'а', c: 'с', e: 'е', i: 'і', o: 'о', p: 'р', x: 'х', y: 'у', k: 'к', m: 'м', t: 'т', b: 'в', h: 'н' }
+const stemName = (norm: string) => norm.split(' ').map(stemWord).join(' ')
+  .replace(/[aceiopxykmtbh]/g, c => HOMOGLYPHS[c]!)
+  .replace(/(\p{L})\1/gu, '$1')
+  .replace(/і/g, 'и')
 
 const indexes = new WeakMap<Catalog, { exact: Map<string, CatalogProduct>; stem: Map<string, CatalogProduct> }>()
 function catalogIndex(catalog: Catalog) {
@@ -170,7 +175,7 @@ export function findByIngredient(catalog: Catalog, ingredient: string, classHint
 }
 
 // Загальні назви добрив, яких немає в каталозі як окремих товарів
-const GENERIC_FERTILIZER = /^(бордоськ\p{L}*|хелат\p{L}*|калімагнез\p{L}*|кальцій нітрат|нітрат кальцію|монофосфат\p{L}*|сечовина|карбамід|аміачна селітра|аммиачная селитра|селітра|кас|сульфат амонію|сульфат калію|хлористий калій|калій хлористий|суперфосфат|амм?офос|діамм?офоска|нітроамм?офоска|азофоска|npk|н\s?п\s?к|гній|компост|вапно|доломітове борошно|бор|сульфат магнію|магній сірчанокислий|монокалійфосфат|монофосфат калію|сірка)(?!\p{L})/iu
+const GENERIC_FERTILIZER = /^(бордоськ\p{L}*|хелат\p{L}*|калімагнез\p{L}*|кальцій нітрат|нітрат кальцію|монофосфат\p{L}*|монокалій\p{L}*|сечовина|карбамід|аміачна селітра|аммиачная селитра|селітра|кас|сульфат амонію|сульфат калію|хлористий калій|калій хлористий|суперфосфат|амм?офос|діамм?офоска|нітроамм?офоска|азофоска|npk|н\s?п\s?к|гній|компост|вапно|доломітове борошно|бор|сульфат магнію|магній сірчанокислий|монокалійфосфат|монофосфат калію|сірка)(?!\p{L})/iu
 
 export const isGenericFertilizer = (name: string) => GENERIC_FERTILIZER.test(normalizeName(name))
 
