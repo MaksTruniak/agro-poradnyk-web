@@ -30,7 +30,8 @@ export const AI_ACTIONS: Record<AiAction, AiActionConfig> = {
   // maxTokens — запобіжник від надто довгих (дорогих) відповідей; стислість задає промпт чату
   chat:     { label: 'Питання AI агроному', credits: 1, provider: 'anthropic', model: CHAT_MODEL, effort: 'low', maxTokens: 1500 },
   photo:    { label: 'Діагностика за фото', credits: 3, provider: 'anthropic', model: CLAUDE, effort: 'medium', maxTokens: 4000 },
-  card:     { label: 'AI техкарта',         credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'medium', maxTokens: 8000 },
+  // Техкарта — шаблонний перелік препаратів і доз: low вдвічі дешевший і швидший за medium за тієї ж повноти (заміри 28.10.2026)
+  card:     { label: 'AI техкарта',         credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 8000 },
   report:   { label: 'Звіт за сезон',       credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 6000 },
   // Службове й коротке — дешева модель
   summary:  { label: 'Пам\'ять розмови',    credits: 0, provider: 'groq',      model: GROQ,   effort: 'none',   maxTokens: 600 },
