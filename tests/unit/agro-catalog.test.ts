@@ -22,6 +22,13 @@ describe('normalizeName', () => {
   it('прибирає препаративні форми, концентрації й знаки', () => {
     expect(normalizeName('Амістар® Екстра 280 SC, к.с.')).toBe('амістар екстра')
     expect(normalizeName('«Карате Зеон» 050 CS')).toBe('карате зеон')
+    // Клас препарату на початку назви каталогу
+    expect(normalizeName('Фунгіцид Косайд 2000')).toBe('косайд')
+    expect(normalizeName('Фунгіцид, протруйник Максим Стар 025 FS')).toBe('максим стар')
+    expect(normalizeName('Регулятор росту Агрозин')).toBe('агрозин')
+    expect(normalizeName("Ад'ювант Тренд 90")).toBe('тренд')
+    expect(normalizeName('Гербіцид, десикант (з ПАР Споднам 554) Клінік')).toBe('клінік')
+    expect(normalizeName('Добриво')).toBe('добриво')
   })
 })
 
@@ -121,5 +128,9 @@ describe('@препарати у відповіді чату', () => {
     expect(productForMention('Раундап проти бурʼянів', found)?.name).toBe('Раундап')
     expect(matchMentions(catalog, '@Хомус для винограду')[0]).toMatchObject({ mention: 'Хомус', found: false })
     expect(matchMentions(catalog, '@Квадрисом')[0]).toMatchObject({ name: 'Квадріс', found: true })
+    expect(matchMentions(catalog, '@Вертимек 1,8 КЕ')[0]).toMatchObject({ mention: 'Вертимек', found: false })
+    expect(matchMentions(catalog, '@Бордоська суміш')[0]).toMatchObject({ found: false, generic: true })
+    const withClass = { ...catalog, products: [...catalog.products, p('Фунгіцид Косайд 2000', 'fungicide')] }
+    expect(matchMentions(withClass, '@Косайд 2000 по листу')[0]).toMatchObject({ name: 'Фунгіцид Косайд 2000', found: true, mention: 'Косайд 2000' })
   })
 })

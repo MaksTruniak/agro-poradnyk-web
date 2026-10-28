@@ -20,10 +20,15 @@ export interface AiActionConfig extends AiRoute {
 const CLAUDE = 'claude-opus-5-5'
 const GROQ = 'qwen/qwen3.8-27b'
 
+// Модель текстових питань можна змінити змінною середовища AI_CHAT_MODEL (відкат — без деплою коду).
+// Лише моделі з цінами в MODEL_PRICES, інакше облік вартості й межі собівартості не працюватимуть.
+const CHAT_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']
+const CHAT_MODEL = CHAT_MODELS.includes(process.env.AI_CHAT_MODEL || '') ? process.env.AI_CHAT_MODEL! : CLAUDE
+
 export const AI_ACTIONS: Record<AiAction, AiActionConfig> = {
   // Відповіді фермеру — Claude (у тесті Groq-модель вигадувала назви хвороб і вставляла русизми)
   // maxTokens — запобіжник від надто довгих (дорогих) відповідей; стислість задає промпт чату
-  chat:     { label: 'Питання AI агроному', credits: 1, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 1500 },
+  chat:     { label: 'Питання AI агроному', credits: 1, provider: 'anthropic', model: CHAT_MODEL, effort: 'low', maxTokens: 1500 },
   photo:    { label: 'Діагностика за фото', credits: 3, provider: 'anthropic', model: CLAUDE, effort: 'medium', maxTokens: 4000 },
   card:     { label: 'AI техкарта',         credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'medium', maxTokens: 8000 },
   report:   { label: 'Звіт за сезон',       credits: 5, provider: 'anthropic', model: CLAUDE, effort: 'low',    maxTokens: 6000 },
