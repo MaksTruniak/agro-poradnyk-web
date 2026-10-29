@@ -206,7 +206,7 @@ const NAV_ICONS: Record<string, SvgDef> = {
   '/dashboard/integrations':      { paths: [{ d: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z', sw: 1.5, lj: 'round' }] },
   '/dashboard/settings':          { paths: [{ d: 'M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z', sw: 1.5, lj: 'round' }], circles: [{ cx: 12, cy: 12, r: 3, sw: 1.6 }] },
   '/dashboard/agronomist-fields': { paths: [{ d: 'M3 14l5-4 4 3 4-5 5 4', sw: 1.6, lc: 'round', lj: 'round' }], circles: [] },
-  '/dashboard/agronomist-profile':{ paths: [{ d: 'M20 20c0-3.3-4-5-6-5M4 20c0-3.9 2.7-6 6-6', sw: 1.6, lc: 'round' }], circles: [{ cx: 10, cy: 9, r: 4.5, sw: 1.6 }] },
+  '/dashboard/agronomist-profile':{ paths: [{ d: 'M4 21c0-4 3.6-7 8-7s8 3 8 7', sw: 1.6, lc: 'round' }], circles: [{ cx: 12, cy: 8, r: 4, sw: 1.6 }] },
   '/dashboard/promotion':         { paths: [{ d: 'M5 12H3l9-9 9 9h-2M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7', sw: 1.6, lc: 'round', lj: 'round' }] },
   '/dashboard/products':          { paths: [{ d: 'M3 8l2-3h14l2 3M3 8v10a1 1 0 001 1h16a1 1 0 001-1V8M3 8h18', sw: 1.6, lj: 'round' }] },
   '/dashboard/orders':            { paths: [{ d: 'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0', sw: 1.6, lj: 'round' }] },
@@ -549,7 +549,7 @@ const navItems = computed(() => {
     ]},
     { label: 'Кабінет', items: [
       { to: '/dashboard/agronomist-profile', label: 'Кабінет агронома' },
-      { to: '/dashboard/agronomist-subscription', label: 'Підписка' },
+      { to: '/dashboard/agronomist-subscription', label: 'Підписка', svgKey: '/dashboard/subscription' },
       { to: '/dashboard/invoices', label: 'Платежі' },
       { to: '/dashboard/settings', label: 'Налаштування' },
     ]},
