@@ -7,11 +7,11 @@
         <p class="hero-eyebrow text-sm font-semibold uppercase tracking-[0.18em] mb-5">
           Для фермерів
         </p>
-        <h1 class="hero-title text-6xl md:text-7xl font-black leading-none mb-6">
+        <h1 class="hero-title text-[40px] sm:text-6xl md:text-7xl font-black leading-none mb-6">
           Все господарство —<br>в одному місці
         </h1>
         <p class="text-white/80 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-          Облік полів і культур, технологічні карти, консультації агрономів і продаж врожаю — без паперів і зайвих дзвінків
+          Ягідники, сади й виноградники: насадження, техкарти, план робіт на тиждень, агрономи й продаж урожаю — без паперів і зайвих дзвінків
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <NuxtLink to="/auth?mode=register"
@@ -27,149 +27,62 @@
     </section>
 
     <!-- Кроки -->
-    <section class="px-14 py-[110px] bg-[rgb(238,241,227)]">
+    <section class="px-4 sm:px-14 py-[90px] bg-[rgb(238,241,227)]">
       <div class="max-w-[920px] mx-auto">
-        <div class="text-center mb-16">
-          <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Як це працює</h2>
-          <p class="text-base text-[rgb(91,107,83)]">4 кроки до повного обліку господарства</p>
+        <div class="text-center mb-14">
+          <h2 class="bitter text-[32px] sm:text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Як це працює</h2>
+          <p class="text-base text-[rgb(91,107,83)]">Від першого поля до плану робіт — за один вечір</p>
         </div>
-
-        <div class="flex flex-col gap-11">
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">1</div>
+        <div class="flex flex-col gap-10">
+          <div v-for="(step, i) in steps" :key="step.title" class="flex gap-5 sm:gap-6">
+            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">{{ i + 1 }}</div>
             <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#2F5233" stroke-width="1.6"/><path d="M3 14l5-4 4 3 4-5 5 4" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Додайте свої поля</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Введіть назву поля, площу в гектарах і регіон. Вкажіть кадастровий номер якщо є. Можна додати скільки завгодно полів.</p>
+              <h3 class="text-[19px] font-bold text-[rgb(27,46,27)] mb-2">{{ step.title }}</h3>
+              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">{{ step.desc }}</p>
               <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Назва і площа', 'Кадастровий номер', 'Регіон']" :key="tag" class="step-tag">{{ tag }}</span>
+                <span v-for="tag in step.tags" :key="tag" class="step-tag">{{ tag }}</span>
               </div>
             </div>
           </div>
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">2</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Вкажіть культури і сорти</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Для кожного поля додайте що вирощуєте — пшеницю, кукурудзу, соняшник тощо. Обирайте сорти з бази або додавайте свої. Система перевірить щоб сума площ не перевищувала площу поля.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['База культур', 'Сорти', 'Площа культури']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">3</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="4" width="14" height="17" rx="2" stroke="#2F5233" stroke-width="1.6"/><rect x="9" y="2.5" width="6" height="3" rx="1" fill="#2F5233"/><path d="M8 11h8M8 15h5" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Отримайте технологічну карту</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Для кожної культури сформуйте схему обробки — фунгіциди, інсектициди, гербіциди по фазах розвитку. Або запитайте агронома напряму в чаті.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Схема обробки', 'Фази розвитку', 'Чат з агрономом']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">4</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Продавайте врожай напряму</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Розміщуйте пропозиції на продаж зерна, овочів або ягід і отримуйте запити від заготівельників без посередників.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Пропозиція на продаж', 'Прямий контакт', 'Без посередників']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
     </section>
 
-    <!-- Фічі -->
-    <section class="px-14 py-[110px]">
+    <!-- Можливості -->
+    <section class="px-4 sm:px-14 py-[90px]">
       <div class="max-w-[1180px] mx-auto">
-        <h2 class="bitter text-[38px] font-bold text-center text-[rgb(27,46,27)] mb-16">Що ви отримуєте</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-14 gap-y-12">
-
-          <div class="flex gap-[18px]">
-            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 20V10M12 20V4M18 20v-7" stroke="#2F5233" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <div class="text-center mb-14 max-w-2xl mx-auto">
+          <h2 class="bitter text-[32px] sm:text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Що ви можете і що отримуєте</h2>
+          <p class="text-base text-[rgb(91,107,83)]">Для ягідників, садів і виноградників: усе, що зараз у зошитах, таблицях і в голові, — в одному кабінеті з телефона чи комп'ютера</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div v-for="g in groups" :key="g.title" class="feature-card">
+            <div class="flex items-start gap-4 mb-4">
+              <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] text-[#2F5233] flex items-center justify-center" v-html="g.icon" />
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">{{ g.title }}</h3>
+                  <span v-if="g.plan" class="plan-badge">{{ g.plan }}</span>
+                </div>
+                <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)] mt-1">{{ g.lead }}</p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Аналітика господарства</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Загальна площа, розбивка по культурах, порівняння по роках — все на одному екрані</p>
-            </div>
+            <ul class="flex flex-col gap-2.5 mb-5">
+              <li v-for="item in g.can" :key="item" class="flex gap-2.5 items-start text-[14px] leading-relaxed text-[rgb(62,79,59)]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-[3px]"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+            <p class="feature-result"><b>Що отримуєте:</b> {{ g.result }}</p>
           </div>
-
-          <div class="flex gap-[18px]">
-            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 20V13a6 6 0 0112 0v7" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 20h16" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </div>
-            <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Нагадування про обробки</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Встановіть дату і отримайте нагадування — більше ніяких пропущених обробок</p>
-            </div>
-          </div>
-
-          <div class="flex gap-[18px]">
-            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z" stroke="#2F5233" stroke-width="1.5" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">AI агроном 24/7</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Задайте питання AI-асистенту і отримайте відповідь одразу — у будь-який час доби</p>
-            </div>
-          </div>
-
-          <div class="flex gap-[18px]">
-            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="9" r="4.5" stroke="#2F5233" stroke-width="1.6"/><path d="M20 20c0-3.3-4-5-6-5M4 20c0-3.9 2.7-6 6-6" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </div>
-            <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Живий агроном</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Знайдіть перевіреного агронома у вашому регіоні і консультуйтесь у чаті</p>
-            </div>
-          </div>
-
-          <div class="flex gap-[18px]">
-            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#2F5233" stroke-width="1.6"/><path d="M8 2.5v3M16 2.5v3" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/><path d="M8.5 14l2 2 4-4.5" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Поділіться полями з агрономом</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Надайте агроному доступ до ваших полів щоб він бачив культури і міг давати точніші рекомендації</p>
-            </div>
-          </div>
-
-          <div class="flex gap-[18px]">
-            <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>
-            </div>
-            <div>
-              <h3 class="text-[17px] font-bold text-[rgb(27,46,27)] mt-0.5 mb-2">Продаж врожаю</h3>
-              <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)]">Розміщуйте пропозиції на продаж і отримуйте запити від заготівельників напряму — без посередників</p>
-            </div>
-          </div>
-
         </div>
       </div>
     </section>
 
     <!-- Плани -->
-    <section class="px-14 py-[100px] bg-[rgb(238,241,227)]">
+    <section class="px-4 sm:px-14 py-[100px] bg-[rgb(238,241,227)]">
       <div class="max-w-[1180px] mx-auto text-center">
-        <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Тарифи</h2>
+        <h2 class="bitter text-[32px] sm:text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Тарифи</h2>
         <p class="text-base text-[rgb(91,107,83)] mb-12">Базовий план безкоштовний назавжди. Business і Business Pro відкривають розширені можливості для вашого господарства.</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-[900px] mx-auto">
@@ -288,9 +201,9 @@
     </Teleport>
 
     <!-- CTA -->
-    <section class="px-14 py-[100px] text-center" style="background: linear-gradient(rgb(238,241,227), rgb(220,230,203));">
+    <section class="px-4 sm:px-14 py-[100px] text-center" style="background: linear-gradient(rgb(238,241,227), rgb(220,230,203));">
       <span class="text-[13px] font-extrabold tracking-[0.1em] text-[#C98A3C] uppercase">Безкоштовно для фермерів</span>
-      <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mt-4 mb-3.5">Реєстрація займе 1 хвилину</h2>
+      <h2 class="bitter text-[32px] sm:text-[38px] font-bold text-[rgb(27,46,27)] mt-4 mb-3.5">Реєстрація займе 1 хвилину</h2>
       <p class="text-[17px] text-[rgb(76,90,70)] mb-8">Додайте перше поле вже сьогодні</p>
       <NuxtLink to="/auth?mode=register"
         class="inline-flex items-center gap-2 px-[34px] py-[17px] rounded-full bg-[#2F5233] text-[#FAF6EC] font-bold text-base shadow-[0_14px_30px_-10px_rgba(47,82,51,0.5)] hover:bg-[#3d6b42] transition-colors">
@@ -303,6 +216,32 @@
 
 <style scoped>
 .bitter { font-family: 'Bitter', Georgia, serif; }
+.feature-card {
+  background: #fff;
+  border: 1px solid rgb(225, 219, 198);
+  border-radius: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+}
+.feature-card ul { flex: 1; }
+.feature-result {
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgb(47, 82, 51);
+  background: rgb(238, 241, 227);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.plan-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #8a5a12;
+  background: #fbf0db;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+@media (max-width: 640px) { .feature-card { padding: 20px; } }
 .step-tag {
   padding: 7px 14px;
   border-radius: 999px;
@@ -373,43 +312,139 @@ const submitContact = async () => {
   contactSent.value = true
 }
 useSeoMeta({
-  title: 'АгроПростір для фермерів — облік полів і культур',
-  description: 'Ведіть облік полів, культур і сортів, отримуйте консультації агрономів і замовляйте препарати онлайн.',
+  title: 'АгроПростір для фермерів — ягідники, сади й виноградники',
+  description: 'Насадження, техкарти, журнал обробок, план робіт на тиждень, AI агроном, угоди з агрономами, облік збору й продаж урожаю — в одному кабінеті.',
 })
 
 const steps = [
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>',
-    title: 'Додайте свої поля',
-    desc: 'Введіть назву поля, площу в гектарах і регіон. Вкажіть кадастровий номер якщо є. Можна додати скільки завгодно полів.',
-    tags: ['Назва і площа', 'Кадастровий номер', 'Регіон'],
+    title: 'Додайте поля',
+    desc: 'Назва, площа, регіон і населений пункт, за бажання — кадастровий номер. Регіон потрібен, щоб підтягнути погоду саме для вашого господарства.',
+    tags: ['Площа і регіон', 'Кадастровий номер', 'Погода по регіону'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 12 8 10 6 7c3 0 5 1 6 5z"/><path d="M12 12c0 0 4-2 6-5-3 0-5 1-6 5z"/></svg>',
-    title: 'Вкажіть культури і сорти',
-    desc: 'Для кожного поля додайте що вирощуєте — пшеницю, кукурудзу, соняшник тощо. Обирайте сорти з бази або додавайте свої. Система перевірить щоб сума площ не перевищувала площу поля.',
-    tags: ['База культур', 'Сорти', 'Площа культури'],
+    title: 'Опишіть насадження',
+    desc: 'Лохина, малина, полуниця, смородина, яблуня, груша, черешня, виноград та інші: сорт, рік посадки, площа, схема, зрошення. Велике насадження можна поділити на квартали.',
+    tags: ['Культура і сорт', 'Рік посадки', 'Квартали', 'Зрошення'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-    title: 'Отримайте технологічну карту',
-    desc: 'Для кожної культури сформуйте схему обробки — фунгіциди, інсектициди, гербіциди по фазах розвитку. Або запитайте агронома напряму в чаті.',
-    tags: ['Схема обробки', 'Фази розвитку', 'Чат з агрономом'],
+    title: 'Отримайте техкарту',
+    desc: 'AI агроном складе технологічну карту захисту й живлення під культуру: обробки по фенофазах з препаратами й нормами. Її можна правити під себе або попросити агронома.',
+    tags: ['Обробки по фазах', 'Препарати і норми', 'Правки під себе'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>',
-    title: 'Продавайте врожай напряму',
-    desc: 'Розміщуйте пропозиції на продаж зерна, овочів або ягід і отримуйте запити від заготівельників без посередників.',
-    tags: ['Пропозиція на продаж', 'Прямий контакт', 'Без посередників'],
+    title: 'Працюйте за планом на тиждень',
+    desc: 'Щопонеділка — що робити на кожному насадженні: обробки з техкарти, догляд, поради на сезон і нагадування з урахуванням погоди. Виконали — відмітили, і запис іде в журнал.',
+    tags: ['План робіт', 'Погода', 'Журнал обробок'],
   },
 ]
 
-const features = [
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>', title: 'Аналітика господарства', desc: 'Загальна площа, розбивка по культурах, порівняння по роках — все на одному екрані' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>', title: 'Нагадування про обробки', desc: 'Встановіть дату і отримайте нагадування — більше ніяких пропущених обробок' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M9 18h6"/></svg>', title: 'AI агроном 24/7', desc: 'Задайте питання AI-асистенту і отримайте відповідь одразу — в будь-який час доби' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>', title: 'Живий агроном', desc: 'Знайдіть перевіреного агронома у вашому регіоні і консультуйтесь у чаті' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>', title: 'Поділіться полями з агрономом', desc: 'Надайте агроному доступ до ваших полів щоб він бачив культури і міг давати точніші рекомендації' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.5-5.7M20 12a8 8 0 01-13.5 5.7"/><path d="M17.5 3v3.5H14M6.5 21v-3.5H10"/></svg>', title: 'Журнал сівозміни', desc: 'Ведіть облік культур по роках на кожному полі і відстежуйте врожайність т/га' },
+const ICON = (d: string) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`
+
+const groups = [
+  {
+    icon: ICON('<path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z"/>'),
+    title: 'Насадження під контролем',
+    lead: 'Повна картка кожного насадження — не лише площа, а вся його історія.',
+    can: [
+      'Вести поля й насадження: культура, сорт, рік посадки, площа, схема садіння, тип зрошення',
+      'Ділити насадження на квартали і бачити, що відбувається в кожному',
+      'Відмічати фенофази — система підкаже орієнтовну фазу за сумою активних температур',
+      'Записувати випади й підсадки рослин з причиною: мороз, хвороби, посуха',
+      'Зберігати врожайність по роках і журнал догляду',
+    ],
+    result: 'історію кожного насадження за всі роки в одному місці — замість зошитів і пам\'яті.',
+  },
+  {
+    icon: ICON('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 002 2h2a2 2 0 002-2 2 2 0 00-2-2h-2a2 2 0 00-2 2zM9 12h6M9 16h4"/>'),
+    title: 'Техкарта і журнал обробок',
+    lead: 'Що, коли, чим і скільки — від плану до відмітки «виконано».',
+    can: [
+      'Отримати технологічну карту від AI за хвилину: обробки по фенофазах, препарати й норми',
+      'Препарати з техкарти пов\'язані з каталогом, для кожної обробки вказано строк очікування',
+      'Вести журнал обробок: препарат, норма, площа, фаза, строк очікування',
+      'Бачити дату «збір не раніше» для кожної обробки',
+      'Роздрукувати журнал обробок для перевірок і покупців',
+    ],
+    result: 'жодної пропущеної обробки і жодного збору раніше строку очікування.',
+  },
+  {
+    icon: ICON('<path d="M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18"/><path d="M9 15l2 2 4-4"/>'),
+    title: 'План на тиждень',
+    lead: 'Одна сторінка, з якої починається робочий тиждень.',
+    can: [
+      'Бачити обробки з техкарти, які настали за фазою, по всіх полях одразу',
+      'Отримувати роботи з догляду й поради на сезон для ваших культур',
+      'Враховувати прогноз погоди для вашого регіону',
+      'Ставити нагадування на потрібну дату одним натиском',
+      'Отримувати план, нагадування й попередження про сильний заморозок у Telegram',
+    ],
+    result: 'зрозумілий список справ на тиждень — не треба тримати все в голові.',
+  },
+  {
+    icon: ICON('<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/>'),
+    title: 'AI агроном 24/7',
+    plan: 'Business',
+    lead: 'Відповідає вдень і вночі та знає ваше господарство.',
+    can: [
+      'Ставити питання своїми словами — AI враховує ваше насадження: культуру, сорт, вік, схему, зрошення',
+      'Надсилати фото листка чи плоду і отримувати ймовірну причину та що робити',
+      'Препарати у відповіді — з посиланням на каталог',
+      'Додавати пораду в техкарту або зберігати нагадування прямо з чату',
+      'AI пам\'ятає попередні розмови, а наприкінці сезону складе звіт: проблеми, рішення, висновки',
+    ],
+    result: 'швидку консультацію в момент, коли проблема на полі, а не через тиждень.',
+  },
+  {
+    icon: ICON('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>'),
+    title: 'Живий агроном поруч',
+    lead: 'Перевірені агрономи вашого регіону з прозорими умовами співпраці.',
+    can: [
+      'Знайти агронома в каталозі: регіон, досвід, культури, вартість',
+      'Укласти угоду: щомісячна, сезонна або разова оплата',
+      'Агроном бачить ваші поля, техкарти й журнал — не треба нічого пересилати',
+      'Отримувати акти огляду з фото знахідок, ступенем ураження і рекомендаціями',
+      'Додавати рекомендації агронома в техкарту одним натиском; чат з агрономом',
+    ],
+    result: 'фахову підтримку без поїздок і дзвінків, а всі поради — збережені й під рукою.',
+  },
+  {
+    icon: ICON('<path d="M4 8h16l-1.5 11a2 2 0 01-2 1.7h-9a2 2 0 01-2-1.7L4 8z"/><path d="M8 8V6a4 4 0 018 0v2"/>'),
+    title: 'Облік збору врожаю',
+    plan: 'Business',
+    lead: 'Для ягід і фруктів, які збирають наймані збирачі.',
+    can: [
+      'Відкрити облік сезону збору і додати збирачів',
+      'Зважувати врожай з QR-кодом збирача — без паперових відомостей',
+      'Ставити ціну за кілограм: загальну або індивідуальну',
+      'Вести виплати і бачити, скільки кому нараховано',
+      'Збирач бачить свої зважування у Telegram',
+    ],
+    result: 'чесні розрахунки зі збирачами і точний облік, скільки зібрано з кожного насадження.',
+  },
+  {
+    icon: ICON('<path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>'),
+    title: 'Продаж урожаю',
+    lead: 'Покупці знаходять вас заздалегідь, а не в день збору.',
+    can: [
+      'Заготівельники бачать, коли й де ви збиратимете ягоди, фрукти чи виноград',
+      'Домовлятися про угоду з закупівельником у кабінеті',
+      'Відкривати покупцю паспорт партії: обробки за сезон, фенофази, огляди агронома',
+      'Формувати накладну і вести продажі, укладені поза платформою',
+    ],
+    result: 'довіру покупця і кращу ціну за продукцію з підтвердженою історією вирощування.',
+  },
+  {
+    icon: ICON('<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'),
+    title: 'Гроші, склад і команда',
+    lead: 'Економіка господарства без окремих таблиць.',
+    can: [
+      'Записувати витрати й доходи по полях і культурах',
+      'Бачити аналітику: площі, культури, прибуток по роках',
+      'Вести склад: препарати й добрива, пальне, техніка, продукція',
+      'Додавати співробітників з різними правами: менеджер, агроном',
+    ],
+    result: 'розуміння, яке насадження заробляє, а яке з\'їдає гроші.',
+  },
 ]
 </script>
