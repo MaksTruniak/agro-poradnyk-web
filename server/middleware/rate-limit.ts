@@ -39,14 +39,16 @@ export default defineEventHandler(async (event) => {
   const rule = LIMITS[path]
   if (!rule) return
 
-  // На Vercel реальну IP-адресу клієнта дає x-vercel-forwarded-for / x-real-ip
+  // Ліміт рахується на користувача: на презентації чи в одному господарстві багато людей сидять за однією IP.
+  // Без входу (форма контактів, лист після реєстрації) — по IP; на Vercel її дає x-vercel-forwarded-for / x-real-ip
+  const user = await userFromRequest(event).catch(() => null)
   const ip =
     getRequestHeader(event, 'x-vercel-forwarded-for')?.split(',')[0]?.trim() ||
     getRequestHeader(event, 'x-real-ip') ||
     getRequestHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() ||
     'unknown'
 
-  const key = `${ip}:${path}`
+  const key = user ? `user:${user.id}:${path}` : `${ip}:${path}`
   let allowed: boolean | null = null
   try {
     const { data, error } = await serviceClient().rpc('hit_rate_limit', {

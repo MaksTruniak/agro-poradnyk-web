@@ -124,12 +124,9 @@ const summarize = (wallets: AiWallet[]): AiCredits => {
  * Активний профіль клієнт передає в заголовку X-Agro-Profile ('farmer' | 'agronomist').
  */
 export async function requireAiAccess(event: H3Event, action?: AiAction): Promise<AiAccess> {
-  const token = (getHeader(event, 'Authorization') || '').replace(/^Bearer\s+/i, '')
-  if (!token) throw createError({ statusCode: 401, message: 'Потрібно увійти в акаунт' })
-
+  const user = await userFromRequest(event)
+  if (!user) throw createError({ statusCode: 401, message: 'Потрібно увійти в акаунт' })
   const db = service()
-  const { data: { user }, error: authErr } = await db.auth.getUser(token)
-  if (authErr || !user) throw createError({ statusCode: 401, message: 'Потрібно увійти в акаунт' })
 
   // Член команди працює за тарифом власника
   const { data: membership } = await db.from('team_members').select('owner_id')
