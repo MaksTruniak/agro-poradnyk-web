@@ -21,13 +21,10 @@
       <!-- Огляд -->
       <section class="card space-y-4">
         <div class="grid sm:grid-cols-2 gap-3">
-          <label class="block"><span class="ins-label">Дата огляду</span>
-            <input v-model="form.visited_at" type="date" class="input" :max="today" required data-test="ins-date"></label>
-          <label class="block"><span class="ins-label">Фенофаза на час огляду</span>
-            <select v-model="form.phase_key" class="input" data-test="ins-phase">
-              <option value="">— не вказувати</option>
-              <option v-for="p in phaseOptions" :key="p" :value="p">{{ p }}{{ p === currentPhase ? ' (у журналі)' : '' }}</option>
-            </select></label>
+          <div data-test="ins-date"><span class="ins-label">Дата огляду</span>
+            <UiAppCalendar v-model="form.visited_at" :max="today" /></div>
+          <div data-test="ins-phase"><span class="ins-label">Фенофаза на час огляду</span>
+            <UiAppSelect v-model="form.phase_key" :options="phaseSelectOptions" /></div>
         </div>
         <div>
           <span class="ins-label">Загальний стан</span>
@@ -161,6 +158,10 @@ let removedPhotos: string[] = []
 let originalPhotos: string[] = []
 
 const phaseOptions = computed(() => crop.value ? growthPhases.phasesForCrop(crop.value.crop_type).map(p => p.key) : [])
+const phaseSelectOptions = computed(() => [
+  { value: '', label: '— не вказувати' },
+  ...phaseOptions.value.map(p => ({ value: p, label: p === currentPhase.value ? `${p} (у журналі)` : p })),
+])
 const key = () => Math.random().toString(36).slice(2)
 
 const addFinding = () => form.findings.push({ key: key(), kind: 'disease', name: '', severity: 'low', affected_pct: '', note: '', photos: [] })
