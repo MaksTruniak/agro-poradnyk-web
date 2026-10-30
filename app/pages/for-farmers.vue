@@ -26,58 +26,9 @@
       </div>
     </section>
 
-    <!-- Кроки -->
-    <section class="px-4 sm:px-14 py-[90px] bg-[rgb(238,241,227)]">
-      <div class="max-w-[920px] mx-auto">
-        <div class="text-center mb-14">
-          <h2 class="bitter text-[32px] sm:text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Як це працює</h2>
-          <p class="text-base text-[rgb(91,107,83)]">Від першого поля до плану робіт — за один вечір</p>
-        </div>
-        <div class="flex flex-col gap-10">
-          <div v-for="(step, i) in steps" :key="step.title" class="flex gap-5 sm:gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">{{ i + 1 }}</div>
-            <div>
-              <h3 class="text-[18px] font-bold text-[rgb(27,46,27)] mb-2">{{ step.title }}</h3>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">{{ step.desc }}</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in step.tags" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <LandingRoleSteps subtitle="Від першого поля до плану робіт — за один вечір" :steps="steps" />
 
-    <!-- Можливості -->
-    <section class="px-4 sm:px-14 py-[90px]">
-      <div class="max-w-[1180px] mx-auto">
-        <div class="text-center mb-14 max-w-2xl mx-auto">
-          <h2 class="bitter text-[32px] sm:text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Що ви можете і що отримуєте</h2>
-          <p class="text-base text-[rgb(91,107,83)]">Для ягідників, садів і виноградників: усе, що зараз у зошитах, таблицях і в голові, — в одному кабінеті з телефона чи комп'ютера</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <div v-for="g in groups" :key="g.title" class="feature-card">
-            <div class="flex items-start gap-4 mb-4">
-              <div class="shrink-0 w-[52px] h-[52px] rounded-[14px] bg-[rgb(238,241,227)] text-[#2F5233] flex items-center justify-center" v-html="g.icon" />
-              <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h3 class="text-[18px] font-bold text-[rgb(27,46,27)]">{{ g.title }}</h3>
-                  <span v-if="g.plan" class="plan-badge">{{ g.plan }}</span>
-                </div>
-                <p class="text-[14.5px] leading-relaxed text-[rgb(91,107,83)] mt-1">{{ g.lead }}</p>
-              </div>
-            </div>
-            <ul class="flex flex-col gap-2.5 mb-5">
-              <li v-for="item in g.can" :key="item" class="flex gap-2.5 items-start text-[14px] leading-relaxed text-[rgb(62,79,59)]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="shrink-0 mt-[3px]"><circle cx="12" cy="12" r="10" fill="#2F5233"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>{{ item }}</span>
-              </li>
-            </ul>
-            <p class="feature-result"><b>Що отримуєте:</b> {{ g.result }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
+    <LandingRoleFeatures subtitle="Для ягідників, садів і виноградників: усе, що зараз у зошитах, таблицях і в голові, — в одному кабінеті з телефона чи комп'ютера" :groups="groups" />
 
     <!-- Плани -->
     <section class="px-4 sm:px-14 py-[100px] bg-[rgb(238,241,227)]">
@@ -216,41 +167,6 @@
 
 <style scoped>
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.feature-card {
-  background: #fff;
-  border: 1px solid rgb(225, 219, 198);
-  border-radius: 20px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-}
-.feature-card ul { flex: 1; }
-.feature-result {
-  font-size: 14px;
-  line-height: 1.55;
-  color: rgb(47, 82, 51);
-  background: rgb(238, 241, 227);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-.plan-badge {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #8a5a12;
-  background: #fbf0db;
-  border-radius: 999px;
-  padding: 2px 9px;
-}
-@media (max-width: 640px) { .feature-card { padding: 20px; } }
-.step-tag {
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid rgb(225, 219, 198);
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(62, 79, 59);
-}
 .hero-farmer {
   min-height: 100svh;
   background:
@@ -339,11 +255,9 @@ const steps = [
   },
 ]
 
-const ICON = (d: string) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`
-
 const groups = [
   {
-    icon: ICON('<path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z"/>'),
+    icon: '<path d="M12 3c0 8-4 10-4 14a4 4 0 008 0c0-4-4-6-4-14z"/>',
     title: 'Поля і насадження',
     lead: 'Картка кожного насадження з усією його історією.',
     can: [
@@ -354,7 +268,7 @@ const groups = [
     result: 'усе про насадження в одному місці, а не в зошитах.',
   },
   {
-    icon: ICON('<path d="M12 22V12"/><path d="M12 12C12 12 7 10 7 5a5 5 0 0110 0c0 5-5 7-5 7z"/>'),
+    icon: '<path d="M12 22V12"/><path d="M12 12C12 12 7 10 7 5a5 5 0 0110 0c0 5-5 7-5 7z"/>',
     title: 'Фенофази',
     lead: 'Знаєте, на якій фазі кожна культура, — і що на ній робити.',
     can: [
@@ -365,7 +279,7 @@ const groups = [
     result: 'обробки вчасно — саме тоді, коли це потрібно рослині.',
   },
   {
-    icon: ICON('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 002 2h2a2 2 0 002-2 2 2 0 00-2-2h-2a2 2 0 00-2 2zM9 12h6M9 16h4"/>'),
+    icon: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 002 2h2a2 2 0 002-2 2 2 0 00-2-2h-2a2 2 0 00-2 2zM9 12h6M9 16h4"/>',
     title: 'Техкарта',
     lead: 'План захисту й живлення на сезон, складений під вашу культуру.',
     can: [
@@ -376,7 +290,7 @@ const groups = [
     result: 'готовий план сезону без пошуку схем в інтернеті.',
   },
   {
-    icon: ICON('<path d="M9 3h6"/><path d="M10 3v5L5 17.5A1 1 0 006 19h12a1 1 0 00.87-1.5L14 8V3"/><line x1="8" y1="13" x2="16" y2="13"/>'),
+    icon: '<path d="M9 3h6"/><path d="M10 3v5L5 17.5A1 1 0 006 19h12a1 1 0 00.87-1.5L14 8V3"/><line x1="8" y1="13" x2="16" y2="13"/>',
     title: 'Журнал обробок',
     lead: 'Кожна обробка записана: що, коли, чим і скільки.',
     can: [
@@ -387,7 +301,7 @@ const groups = [
     result: 'жодного збору раніше строку і готовий документ на вимогу.',
   },
   {
-    icon: ICON('<path d="M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18"/><path d="M9 15l2 2 4-4"/>'),
+    icon: '<path d="M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18"/><path d="M9 15l2 2 4-4"/>',
     title: 'План на тиждень',
     lead: 'Одна сторінка, з якої починається робочий тиждень.',
     can: [
@@ -398,7 +312,7 @@ const groups = [
     result: 'зрозумілий список справ — не треба тримати все в голові.',
   },
   {
-    icon: ICON('<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>'),
+    icon: '<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
     title: 'Нагадування',
     lead: 'Не забудете про обробку, підживлення, полив чи збір.',
     can: [
@@ -409,7 +323,7 @@ const groups = [
     result: 'жодної пропущеної справи, навіть у розпал сезону.',
   },
   {
-    icon: ICON('<path d="M17.5 19H9a7 7 0 116.7-9h1.8a4.5 4.5 0 010 9z"/>'),
+    icon: '<path d="M17.5 19H9a7 7 0 116.7-9h1.8a4.5 4.5 0 010 9z"/>',
     title: 'Погода і ризики',
     lead: 'Прогноз для вашого регіону з поясненням, що він означає для саду.',
     can: [
@@ -420,7 +334,7 @@ const groups = [
     result: 'встигнете захистити врожай до заморозку чи спалаху хвороби.',
   },
   {
-    icon: ICON('<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/>'),
+    icon: '<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/>',
     title: 'AI агроном 24/7',
     plan: 'Business',
     lead: 'Відповідає вдень і вночі та знає ваші насадження.',
@@ -432,7 +346,7 @@ const groups = [
     result: 'консультацію одразу, коли проблема на полі.',
   },
   {
-    icon: ICON('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>'),
+    icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
     title: 'Живий агроном',
     lead: 'Перевірені агрономи з прозорими умовами співпраці.',
     can: [
@@ -443,7 +357,7 @@ const groups = [
     result: 'фахову підтримку без поїздок, усі поради збережені.',
   },
   {
-    icon: ICON('<path d="M4 8h16l-1.5 11a2 2 0 01-2 1.7h-9a2 2 0 01-2-1.7L4 8z"/><path d="M8 8V6a4 4 0 018 0v2"/>'),
+    icon: '<path d="M4 8h16l-1.5 11a2 2 0 01-2 1.7h-9a2 2 0 01-2-1.7L4 8z"/><path d="M8 8V6a4 4 0 018 0v2"/>',
     title: 'Облік збору врожаю',
     plan: 'Business',
     lead: 'Для ягід і фруктів, які збирають наймані збирачі.',
@@ -455,7 +369,7 @@ const groups = [
     result: 'чесні розрахунки і точно відомо, скільки зібрано з кожного насадження.',
   },
   {
-    icon: ICON('<path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>'),
+    icon: '<path d="M4 12l4-8h8l4 8-4 8H8l-4-8z"/><path d="M9 12l2 2 4-4"/>',
     title: 'Продаж урожаю',
     lead: 'Покупці знаходять вас заздалегідь, а не в день збору.',
     can: [
@@ -466,7 +380,7 @@ const groups = [
     result: 'довіру покупця і кращу ціну за продукцію з історією.',
   },
   {
-    icon: ICON('<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'),
+    icon: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
     title: 'Витрати та доходи',
     lead: 'Скільки вкладено і скільки зароблено — по кожному полю.',
     can: [
@@ -477,7 +391,7 @@ const groups = [
     result: 'розуміння, яке насадження заробляє, а яке з\'їдає гроші.',
   },
   {
-    icon: ICON('<path d="M3 9l9-6 9 6v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M9 21v-7h6v7"/>'),
+    icon: '<path d="M3 9l9-6 9 6v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M9 21v-7h6v7"/>',
     title: 'Склад',
     lead: 'Що є в наявності — без походу в ангар.',
     can: [
@@ -488,7 +402,7 @@ const groups = [
     result: 'вчасно докупите потрібне і не переплатите за зайве.',
   },
   {
-    icon: ICON('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18.5 14.5c1.9.8 3 2.7 3 5.5"/>'),
+    icon: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18.5 14.5c1.9.8 3 2.7 3 5.5"/>',
     title: 'Співробітники',
     lead: 'Команда працює в одному кабінеті з вами.',
     can: [
@@ -499,7 +413,7 @@ const groups = [
     result: 'кожен бачить свої задачі, а ви — всю картину.',
   },
   {
-    icon: ICON('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+    icon: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     title: 'Аналітика',
     lead: 'Господарство в цифрах на одній сторінці.',
     can: [

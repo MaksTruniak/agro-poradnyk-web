@@ -7,11 +7,11 @@
         <p class="hero-eyebrow text-sm font-semibold uppercase tracking-[0.18em] mb-5">
           Для агрономів
         </p>
-        <h1 class="hero-title text-6xl md:text-7xl font-black leading-none mb-6">
+        <h1 class="hero-title text-[40px] sm:text-6xl md:text-7xl font-black leading-none mb-6">
           Ваші знання —<br>ваш бізнес
         </h1>
         <p class="text-white/80 text-lg md:text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-          Консультуйте фермерів онлайн, ведіть базу клієнтів і заробляйте на своїх знаннях — без поїздок і паперової роботи
+          Супроводжуйте ягідники, сади й виноградники онлайн: поля клієнтів, техкарти, акти огляду й консультації — в одному кабінеті
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <NuxtLink to="/auth?mode=register"
@@ -26,89 +26,9 @@
       </div>
     </section>
 
-    <!-- Кроки -->
-    <section class="px-14 py-[110px] bg-[rgb(238,241,227)]">
-      <div class="max-w-[920px] mx-auto">
-        <div class="text-center mb-16">
-          <h2 class="bitter text-[38px] font-bold text-[rgb(27,46,27)] mb-3">Як це працює</h2>
-          <p class="text-base text-[rgb(91,107,83)]">Від реєстрації до першого клієнта — 4 кроки</p>
-        </div>
+    <LandingRoleSteps subtitle="Від профілю до постійних клієнтів — 4 кроки" :steps="steps" />
 
-        <div class="flex flex-col gap-11">
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">1</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="9" r="4.5" stroke="#2F5233" stroke-width="1.6"/><path d="M20 20c0-3.3-4-5-6-5M4 20c0-3.9 2.7-6 6-6" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Створіть профіль агронома</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Вкажіть спеціалізацію, досвід, регіон роботи і культури з якими працюєте. Завантажте фото — профілі з фото отримують вдвічі більше звернень.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Спеціалізація', 'Досвід', 'Культури', 'Регіон']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">2</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#2F5233" stroke-width="1.6"/><path d="M16.2 16.2L21 21" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Фермери знаходять вас</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Ваш профіль відображається в каталозі агрономів. Фермери шукають за регіоном і культурами і пишуть напряму в чат.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Каталог агрономів', 'Пошук за регіоном', 'Пошук за культурою']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">3</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#2F5233" stroke-width="1.6"/><path d="M3 14l5-4 4 3 4-5 5 4" stroke="#2F5233" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Отримайте доступ до полів клієнта</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Фермер може поділитись полями з вами. Ви бачите всі культури, сорти і площі — і можете давати точніші рекомендації без зайвих запитань.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Поля клієнта', 'Культури і сорти', 'Площі']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-6">
-            <div class="shrink-0 w-11 h-11 rounded-xl bg-[#2F5233] text-[#FAF6EC] flex items-center justify-center bitter font-bold text-lg">4</div>
-            <div>
-              <div class="flex items-center gap-2.5 mb-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5z" stroke="#2F5233" stroke-width="1.6" stroke-linejoin="round"/></svg>
-                <h3 class="text-[19px] font-bold text-[rgb(27,46,27)]">Консультуйте в чаті</h3>
-              </div>
-              <p class="text-[15px] leading-relaxed text-[rgb(91,107,83)] mb-3.5">Спілкуйтесь з фермерами у вбудованому чаті. Рекомендуйте препарати, схеми обробки, терміни проведення робіт — все в одному місці.</p>
-              <div class="flex flex-wrap gap-2.5">
-                <span v-for="tag in ['Чат', 'Рекомендації препаратів', 'Схеми обробки']" :key="tag" class="step-tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Фічі -->
-    <section class="py-20 px-4 bg-white border-t border-agro-border">
-      <div class="max-w-7xl mx-auto">
-        <h2 class="text-3xl font-extrabold text-center text-agro-dark mb-12">Ваші інструменти</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="f in features" :key="f.title" class="card hover:shadow-md transition-shadow">
-            <div class="mb-3"><span v-html="f.icon"></span></div>
-            <h3 class="font-bold text-agro-dark mb-2">{{ f.title }}</h3>
-            <p class="text-agro-light text-sm leading-relaxed">{{ f.desc }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
+    <LandingRoleFeatures subtitle="Ягідники, сади й виноградники ваших клієнтів — поля, техкарти, огляди й консультації в одному кабінеті" :groups="groups" />
 
     <!-- Плани -->
     <section class="py-20 px-4 border-t border-agro-border">
@@ -169,15 +89,6 @@
 
 <style scoped>
 .bitter { font-family: 'Bitter', Georgia, serif; }
-.step-tag {
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid rgb(225, 219, 198);
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(62, 79, 59);
-}
 .hero-agronomist {
   min-height: 100svh;
   background:
@@ -203,43 +114,169 @@
 const { month: proMonth, year: proYear, yearSaving, yearDiscount, fmt } = await useAgronomistPrices()
 definePageMeta({ layout: 'default' })
 useSeoMeta({
-  title: 'АгроПростір для агрономів — консультуйте фермерів онлайн',
-  description: 'Створіть профіль агронома, консультуйте фермерів у чаті і розвивайте клієнтську базу онлайн.',
+  title: 'АгроПростір для агрономів — супровід ягідників, садів і виноградників',
+  description: 'Профіль у каталозі агрономів, угоди з фермерами, поля й техкарти клієнтів, акти огляду, нагадування і консультації в чаті.',
 })
 
 const steps = [
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-3"/><rect x="9" y="1" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>',
     title: 'Створіть профіль агронома',
-    desc: 'Вкажіть спеціалізацію, досвід, регіон роботи і культури з якими працюєте. Завантажте фото — профілі з фото отримують вдвічі більше звернень.',
-    tags: ['Спеціалізація', 'Досвід', 'Культури', 'Регіон'],
+    desc: 'Спеціальність, освіта, досвід, культури, з якими працюєте, регіон і ставка. Профіль з фото й описом досвіду отримує більше звернень.',
+    tags: ['Спеціальність і освіта', 'Культури', 'Регіон', 'Ставка'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>',
     title: 'Фермери знаходять вас',
-    desc: 'Ваш профіль відображається в каталозі агрономів. Фермери шукають за регіоном і культурами і пишуть напряму в чат.',
-    tags: ['Каталог агрономів', 'Пошук за регіоном', 'Пошук за культурою'],
+    desc: 'Профіль з\'являється в каталозі агрономів. Фермери шукають за регіоном і культурами та пишуть вам напряму в чат.',
+    tags: ['Каталог агрономів', 'Пошук за регіоном', 'Чат'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>',
-    title: 'Отримайте доступ до полів клієнта',
-    desc: 'Фермер може поділитись полями з вами. Ви бачите всі культури, сорти і площі — і можете давати точніші рекомендації без зайвих запитань.',
-    tags: ['Поля клієнта', 'Культури і сорти', 'Площі'],
+    title: 'Укладіть угоду',
+    desc: 'Щомісячна, сезонна або разова оплата — умови видно обом сторонам. Після підтвердження угоди ви бачите поля й насадження клієнта.',
+    tags: ['Щомісячна', 'Сезонна', 'Разова'],
   },
   {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
-    title: 'Консультуйте в чаті',
-    desc: 'Спілкуйтесь з фермерами у вбудованому чаті. Рекомендуйте препарати, схеми обробки, терміни проведення робіт — все в одному місці.',
-    tags: ['Чат', 'Рекомендації препаратів', 'Схеми обробки'],
+    title: 'Ведіть клієнтів',
+    desc: 'Техкарти, акти огляду, нагадування й консультації — без поїздок заради кожного питання. Після завершення угоди фермер залишає відгук.',
+    tags: ['Техкарти', 'Акти огляду', 'Відгуки'],
   },
 ]
 
-const features = [
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>', title: 'Чат з клієнтами', desc: 'Вбудований месенджер для консультацій — без сторонніх програм і передачі номерів телефонів' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/></svg>', title: 'Поля клієнтів', desc: 'Фермери діляться полями і ви бачите всі дані — культури, сорти, площі по кожному полю' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'Програми захисту', desc: 'Складайте схеми обробки для клієнтів прямо в системі — по фазах розвитку культури' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg>', title: 'Топ-просування', desc: 'Виходьте першими в результатах пошуку і отримуйте більше звернень від фермерів' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>', title: 'Статистика профілю', desc: 'Бачте скільки фермерів переглянули ваш профіль і написали в чат' },
-  { icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V10M12 10C12 10 8 9 6 6c2 0 4.5.5 6 4zM12 10c0 0 4-1 6-4-2 0-4.5.5-6 4z"/><path d="M12 14c0 0-3-1-4-4M12 14c0 0 3-1 4-4"/></svg>', title: 'Власні поля', desc: 'Ведіть облік власного господарства паралельно з консультаційною діяльністю' },
+const groups = [
+  {
+    icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
+    title: 'Профіль у каталозі',
+    lead: 'Ваша візитка для фермерів усієї України.',
+    can: [
+      'Спеціальність, освіта, досвід роботи в полі',
+      'Культури, регіон роботи і ставка за годину',
+      'Позначка «приймаю нових клієнтів»',
+    ],
+    result: 'фермери знаходять вас самі — без реклами й сарафанного радіо.',
+  },
+  {
+    icon: '<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13l2 2 4-4"/>',
+    title: 'Угоди з фермерами',
+    lead: 'Прозорі умови співпраці замість домовленостей на словах.',
+    can: [
+      'Оплата щомісячно, за сезон або разово',
+      'Дати початку й завершення угоди',
+      'Підтвердження — і доступ до полів клієнта відкривається',
+    ],
+    result: 'зрозумілі умови для обох сторін і жодних суперечок про оплату.',
+  },
+  {
+    icon: '<path d="M3 6l4.5 2 5-4 4.5 2 4-2v12l-4 2-4.5-2-5 4-4.5-2L3 6z"/>',
+    title: 'Поля клієнтів',
+    lead: 'Усі господарства клієнтів — в одному списку.',
+    can: [
+      'Поля й насадження: культура, сорт, рік посадки, площа',
+      'Фенофази й журнал обробок кожного насадження',
+      'Перехід у техкарту поля одним натиском',
+    ],
+    result: 'точні поради без десятка уточнюючих питань.',
+  },
+  {
+    icon: '<path d="M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM16 2v4M8 2v4M3 10h18"/><path d="M9 15l2 2 4-4"/>',
+    title: 'Клієнти цього тижня',
+    plan: 'Про',
+    lead: 'Що потребує уваги у ваших клієнтів саме зараз.',
+    can: [
+      'Погодні ризики: заморозки, парша, мілдью, гнилі',
+      'Обробки на черзі за фазою і строки очікування перед збором',
+      'Порада клієнту в чат одним натиском',
+    ],
+    result: 'встигаєте попередити клієнта до того, як проблема стала збитком.',
+  },
+  {
+    icon: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M9 5a2 2 0 002 2h2a2 2 0 002-2 2 2 0 00-2-2h-2a2 2 0 00-2 2zM9 12h6M9 16h4"/>',
+    title: 'Техкарти клієнтів',
+    lead: 'Програма захисту й живлення, яку фермер бачить одразу.',
+    can: [
+      'Обробки по фенофазах з препаратами й нормами',
+      'Правки й доповнення в техкарті клієнта',
+      'Строк очікування для кожної обробки',
+    ],
+    result: 'ваша програма у фермера в кабінеті, а не на папірці.',
+  },
+  {
+    icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/>',
+    title: 'Шаблони техкарт',
+    plan: 'Про',
+    lead: 'Перевірені схеми — один раз склали, далі застосовуєте.',
+    can: [
+      'Збереження техкарти як шаблону',
+      'Застосування шаблону до культури клієнта одним натиском',
+      'Шаблони бачите лише ви',
+    ],
+    result: 'нового клієнта ведете за хвилини, а не за вечір.',
+  },
+  {
+    icon: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    title: 'Акти огляду',
+    lead: 'Огляд насадження оформлений як документ.',
+    can: [
+      'Дата огляду, фенофаза, знахідки зі ступенем ураження',
+      'До 6 фото на кожну знахідку',
+      'Рекомендації — одразу в техкарту клієнта',
+    ],
+    result: 'фермер бачить результат вашої роботи, а історія оглядів зберігається.',
+  },
+  {
+    icon: '<path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
+    title: 'Нагадування фермерам',
+    lead: 'Клієнт не пропустить обробку, яку ви призначили.',
+    can: [
+      'Нагадування з техкарти — дзвіночок біля обробки',
+      'Приходить фермеру в кабінет і в Telegram',
+      'Список усіх надісланих нагадувань',
+    ],
+    result: 'рекомендації виконуються вчасно — і результат видно в полі.',
+  },
+  {
+    icon: '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',
+    title: 'Консультації в чаті',
+    lead: 'Вбудований месенджер з кожним клієнтом.',
+    can: [
+      'Переписка з фермером без обміну номерами',
+      'Фото від клієнта прямо в чаті',
+      'Нові звернення від фермерів з каталогу',
+    ],
+    result: 'усі консультації в одному місці, а не розкидані по месенджерах.',
+  },
+  {
+    icon: '<path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/>',
+    title: 'AI агроном',
+    plan: 'Про',
+    lead: 'Помічник, який економить ваш час.',
+    can: [
+      'Аналіз фото листка чи плоду',
+      'Аналіз техкарти: слабкі місця й що покращити',
+      'Кредити щомісяця в тарифі Агроном Про',
+    ],
+    result: 'швидша перевірка гіпотез і більше клієнтів за той самий час.',
+  },
+  {
+    icon: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+    title: 'Рейтинг і відгуки',
+    lead: 'Репутація, яка працює на вас.',
+    can: [
+      'Відгук фермера після завершення угоди',
+      'Яку проблему було вирішено — у кожному відгуку',
+      'Рейтинг і кількість відгуків у профілі',
+    ],
+    result: 'нові клієнти довіряють вам ще до першого повідомлення.',
+  },
+  {
+    icon: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+    title: 'Просування',
+    plan: 'Про',
+    lead: 'Більше уваги до профілю в каталозі.',
+    can: [
+      'Автопідняття вгору кожні 5 днів',
+      'Виділена картка профілю',
+      'Необмежена кількість клієнтів',
+    ],
+    result: 'більше звернень від фермерів і стабільний потік клієнтів.',
+  },
 ]
 </script>
