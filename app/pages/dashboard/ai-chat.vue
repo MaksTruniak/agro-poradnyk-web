@@ -907,7 +907,7 @@ const generateSeasonReport = async () => {
     p{line-height:1.7}ul{line-height:1.9}
     .meta{color:#888;margin-bottom:28px}
     footer{margin-top:48px;text-align:center;color:#aaa;font-size:12px;border-top:1px solid #e0edcc;padding-top:16px}</style></head>
-    <body><h1>Звіт сезону</h1>
+    <body>${printBrand()}<h1>Звіт сезону</h1>
     <p class="meta">${escapeHtml(farmName.value || 'Загальна консультація')} · Сформовано ${date}</p>
     <div>${rawReport.replace(/\n/g, '<br>')}</div>
     <footer>Сформовано через АгроПростір · agroprostir.com.ua</footer></body></html>`
@@ -987,6 +987,7 @@ const exportChat = () => {
   .role{font-weight:700;margin-bottom:6px;font-size:13px;color:#5a7a5a}
   p{margin:0;white-space:pre-wrap;line-height:1.6}
   footer{margin-top:40px;text-align:center;color:#999;font-size:12px}</style></head><body>
+  ${printBrand()}
   <h1>Консультація AI Агронома</h1><p style="color:#888;margin-bottom:24px">${farmName.value || 'Загальна консультація'} · ${date}</p>
   ${messages.value.map(m => `<div class="msg ${m.role === 'user' ? 'user' : 'ai'}"><div class="role">${m.role === 'user' ? '👨‍🌾 Фермер' : '🤖 AI Агроном'}</div><p>${m.content.replace(/@([\wА-ЯҐЄІЇа-яґєії'-]+)/g, '$1').replace(/SCHEME_DETECTED/g, '').trim()}</p></div>`).join('')}
   <footer>Сформовано через АгроПростір · agroprostir.com.ua</footer></body></html>`

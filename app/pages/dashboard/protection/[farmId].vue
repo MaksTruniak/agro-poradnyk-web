@@ -523,7 +523,7 @@ const exportPdf = () => {
   const title = selectedCrop.value ? `${selectedCrop.value.crop_type}${selectedCrop.value.variety ? ' · ' + selectedCrop.value.variety : ''}` : farmName.value
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Технічна карта — ${title}</title>
   <style>body{font-family:Arial,sans-serif;padding:30px;color:#1a3a06}h1{font-size:20px;margin-bottom:4px}p{color:#666;font-size:13px;margin:0 0 20px}table{width:100%;border-collapse:collapse}th{background:#2F5233;color:#fff;padding:8px 10px;text-align:left;font-size:12px}tr:nth-child(even){background:#f9fdf4}td{border-bottom:1px solid #e0edcc}@media print{body{padding:15px}}</style>
-  </head><body><h1>Технічна карта</h1><p>${title} · АгроПростір · ${new Date().toLocaleDateString('uk-UA')}</p>
+  </head><body>${printBrand()}<h1>Технічна карта</h1><p>${title} · АгроПростір · ${new Date().toLocaleDateString('uk-UA')}</p>
   <table><thead><tr><th>Препарат</th><th>Тип</th><th>Доза</th><th>Статус</th><th>Примітки</th></tr></thead>
   <tbody>${rows}</tbody></table></body></html>`
   const w = window.open('', '_blank')

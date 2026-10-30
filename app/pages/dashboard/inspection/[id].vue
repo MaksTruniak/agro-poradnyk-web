@@ -190,7 +190,7 @@ const print = () => {
     .m{color:#5b6b53} table{width:100%;border-collapse:collapse} td,th{border:1px solid #cfd8c4;padding:6px 8px;vertical-align:top;text-align:left}
     th{background:#eef1e3;font-size:12px} .n{color:#5b6b53;font-size:12px;margin-top:2px} img{height:90px;margin:4px 4px 0 0;border-radius:4px}
     .sig{margin-top:40px;display:flex;gap:40px} .sig div{flex:1;border-top:1px solid #1b2e1b;padding-top:4px;font-size:12px}
-    @page{size:A4;margin:14mm}</style></head><body>
+    @page{size:A4;margin:14mm}</style></head><body>${printBrand()}
     <h1>Акт огляду насадження</h1>
     <p class="m">${dmy(i.visited_at)} · ${e(c?.crop_type)}${c?.variety ? `, сорт ${e(c.variety)}` : ''} · ${e(c?.farms?.name)}${c?.area_ha ? ` · ${e(c.area_ha)} га` : ''}${c?.farms?.cadastral_number ? ` · кадастр ${e(c.farms.cadastral_number)}` : ''}</p>
     <p><b>Стан:</b> ${e(CONDITIONS[i.condition])}${i.phase_key ? ` · <b>Фаза:</b> ${e(i.phase_key)}` : ''}</p>

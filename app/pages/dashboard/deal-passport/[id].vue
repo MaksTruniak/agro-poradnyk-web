@@ -183,7 +183,7 @@ const print = () => {
     body{font:13px/1.45 system-ui,sans-serif;color:#1b2e1b;margin:24px} h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px}
     .m{color:#5b6b53} table{width:100%;border-collapse:collapse} td,th{border:1px solid #cfd8c4;padding:6px 8px;vertical-align:top;text-align:left}
     th{background:#eef1e3;font-size:12px} .n{color:#5b6b53;font-size:12px;margin-top:2px} .s{padding:8px 10px;border:1px solid #cfd8c4;border-radius:6px}
-    @page{size:A4;margin:14mm}</style></head><body>
+    @page{size:A4;margin:14mm}</style></head><body>${printBrand()}
     <h1>Паспорт партії</h1>
     <p class="m">${e(v.deal.crop_type)} · ${fmtNum(v.deal.quantity_tons)} т · угода від ${dmy((v.deal.confirmed_at || v.deal.created_at).slice(0, 10))}</p>
     <p><b>Насадження:</b> ${e(c.crop_type)}${c.variety ? `, сорт ${e(c.variety)}` : ''}${c.planting_year ? `, садіння ${e(c.planting_year)}` : ''}${c.area_ha ? `, ${fmtNum(c.area_ha)} га` : ''} · ${e([c.farm_name, c.city, c.region].filter(Boolean).join(', '))}</p>

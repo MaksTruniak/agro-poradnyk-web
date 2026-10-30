@@ -18,6 +18,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -64,6 +65,7 @@ export async function sendPaymentConfirmEmail(
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
           <p style="color:#a8c5a0;margin:8px 0 0;font-size:14px">agroprostir.com.ua</p>
         </div>
@@ -121,6 +123,7 @@ export async function sendSubscriptionReminderEmail(to: string, name: string, pl
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -152,6 +155,7 @@ export async function sendNewMessageEmail(to: string, recipientName: string, sen
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
+          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">

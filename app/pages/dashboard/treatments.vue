@@ -641,6 +641,7 @@ th{background:#f0f2ea;font-size:10px}
 .sign{margin-top:32px;display:flex;gap:48px}.sign div{flex:1;border-top:1px solid #333;padding-top:4px;color:#555}
 @page{size:A4 landscape;margin:12mm}
 </style></head><body>
+${printBrand()}
 <h1>Журнал обробок насаджень</h1>
 <p class="sub">Період: ${e(period)} · записів: ${list.length} · сформовано ${e(formatShort(todayIso))} в АгроПростір</p>
 ${sections}

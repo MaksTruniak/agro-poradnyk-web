@@ -154,7 +154,7 @@ const downloadInvoice = (p: any) => {
 <body>
 <div class="header">
   <div>
-    <div class="header-brand">AgroProstir</div>
+    <div class="header-brand" style="display:flex;align-items:center;gap:10px">${brandMarkSvg(28, 'dark', '#2f5233')}АгроПростір</div>
     <div class="header-sub">agroprostir.com.ua<br>info@agroprostir.com.ua</div>
   </div>
   <div class="header-right">
