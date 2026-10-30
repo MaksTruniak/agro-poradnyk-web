@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
 const FROM = 'АгроПростір <info@agroprostir.com.ua>'
+// Знак у шапці листа: PNG з сайту, бо поштові клієнти не показують SVG
+const LOGO_IMG = '<img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">'
 // Куди приходять звернення з сайту (форма контактів, підтримка, запити на інтеграцію)
 export const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || 'maks-935@ukr.net'
 
@@ -18,7 +20,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
-          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -65,7 +67,7 @@ export async function sendPaymentConfirmEmail(
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
-          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
           <p style="color:#a8c5a0;margin:8px 0 0;font-size:14px">agroprostir.com.ua</p>
         </div>
@@ -123,7 +125,7 @@ export async function sendSubscriptionReminderEmail(to: string, name: string, pl
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
-          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -155,7 +157,7 @@ export async function sendNewMessageEmail(to: string, recipientName: string, sen
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:32px 40px;border-radius:16px 16px 0 0;text-align:center">
-          <img src="https://agroprostir.com.ua/icon-192.png" width="56" height="56" alt="" style="display:block;margin:0 auto 12px;border-radius:14px">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:26px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -198,7 +200,8 @@ export async function sendLowStockEmail(
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#faf6ec;padding:32px 24px;border-radius:16px">
         <div style="text-align:center;margin-bottom:24px">
-          <span style="font-size:28px;font-weight:900;color:#1b2e1b">🌿 АгроПростір</span>
+          ${LOGO_IMG}
+          <span style="font-size:28px;font-weight:900;color:#1b2e1b">АгроПростір</span>
         </div>
         <div style="background:#fff;border-radius:12px;padding:28px">
           <p style="color:#1b2e1b;font-size:16px;margin:0 0 8px">Привіт, <strong>${escapeHtml(name)}</strong>!</p>
@@ -250,6 +253,7 @@ export async function sendReminderEmail(to: string, name: string, reminders: { d
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -285,6 +289,7 @@ export async function sendWeatherRiskEmail(to: string, name: string, lines: stri
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -328,6 +333,7 @@ export async function sendWeekPlanEmail(to: string, name: string, lines: WeekPla
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -365,6 +371,7 @@ export async function sendBuyerOutlookEmail(to: string, name: string, lines: str
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
@@ -405,6 +412,7 @@ export async function sendClientsPlanEmail(to: string, name: string, clients: { 
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1B2E1B">
         <div style="background:#2F5233;padding:28px 40px;border-radius:16px 16px 0 0;text-align:center">
+          ${LOGO_IMG}
           <h1 style="color:#fff;margin:0;font-size:22px">АгроПростір</h1>
         </div>
         <div style="background:#FAF6EC;padding:32px 40px;border-radius:0 0 16px 16px;border:1px solid #e2ddd0;border-top:none">
