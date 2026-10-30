@@ -3,10 +3,7 @@
 
     <!-- Лого -->
     <div class="flex items-center gap-2.5 mb-10">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#2F5233"/>
-        <path d="M12 22V10" stroke="#FAF6EC" stroke-width="1.4"/>
-      </svg>
+      <UiAppLogo :size="36" cut="rgb(238,241,227)" />
       <span style="font-family: 'Bitter', Georgia, serif; font-weight:800; font-size:22px; color:rgb(27,46,27);">АгроПростір</span>
     </div>
 

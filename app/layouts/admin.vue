@@ -3,18 +3,7 @@
     <aside class="hidden lg:flex w-60 bg-white border-r border-agro-border flex-col fixed h-full z-40">
       <div class="p-5 border-b border-agro-border">
         <NuxtLink to="/" class="flex items-center gap-2">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
-            <clipPath id="logo-clip-admin"><rect width="32" height="32" rx="8"/></clipPath>
-            <g clip-path="url(#logo-clip-admin)">
-              <rect width="32" height="32" fill="#B5D4F4"/>
-              <ellipse cx="8" cy="8" rx="5" ry="2.5" fill="white" opacity="0.8"/>
-              <ellipse cx="22" cy="6" rx="4" ry="2" fill="white" opacity="0.7"/>
-              <rect x="0" y="16" width="32" height="3" fill="#3B6D11"/>
-              <rect x="0" y="19" width="32" height="13" fill="#A0622A"/>
-              <rect x="0" y="25" width="32" height="7" fill="#7A4620"/>
-              <line x1="0" y1="19" x2="32" y2="19" stroke="#5C3310" stroke-width="0.5"/>
-            </g>
-          </svg>
+          <UiAppLogo :size="30" />
           <span class="font-bold text-agro-dark">АгроПростір</span>
         </NuxtLink>
       </div>

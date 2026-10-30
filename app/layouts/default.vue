@@ -5,10 +5,7 @@
     >
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
         <NuxtLink to="/" class="flex items-center gap-2.5 shrink-0">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#2F5233"/>
-            <path d="M12 22V10" :stroke="scrolled || !isHome ? '#FAF6EC' : '#FAF6EC'" stroke-width="1.4"/>
-          </svg>
+          <UiAppLogo :size="30" cut="#FAF6EC" />
           <span class="logo-text font-bold text-xl tracking-tight text-[rgb(27,46,27)]">АгроПростір</span>
         </NuxtLink>
 
@@ -78,10 +75,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div class="col-span-2 md:col-span-1">
             <div class="flex items-center gap-2.5 mb-3">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2C7 6 4 10 4 14a8 8 0 0016 0c0-4-3-8-8-12z" fill="#C98A3C"/>
-                <path d="M12 22V10" stroke="#FAF6EC" stroke-width="1.4"/>
-              </svg>
+              <UiAppLogo :size="30" tone="dark" cut="rgb(27,46,27)" />
               <span class="logo-text font-bold text-white">АгроПростір</span>
             </div>
             <p class="text-sm text-white/50 leading-relaxed">Цифровий помічник для фермерів, заготівельників, агрономів і продавців агрохімії.</p>
